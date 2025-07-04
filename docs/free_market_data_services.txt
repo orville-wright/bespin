@@ -54,6 +54,11 @@ Investing.com (investing.com) – Finance website providing free real-time (stre
 FreeRealTime.com – Niche site offering real-time (no-delay) quotes for U.S. stocks. Free streaming quotes and charts directly on the website. Covers all NYSE/Nasdaq symbols with tick-by-tick updates. Limited to U.S. equities. No account needed. Good for live quoting on a webpage, but no API (would require scraping real-time content).
 
 
+IEX Cloud (iexcloud.io) – Stock API from the Investors Exchange. Offers real-time quotes for IEX-traded U.S. stocks and 15-min-delayed quotes for other U.S. markets, plus historical prices and fundamentals. The free tier (requires signup) allows 50,000 core data points/month. Provides up to 5 years of historical data and is low-latency for U.S. equities. Well-documented; many developers recommend IEX for minimal delay, though non-IEX data may be slightly delayed.
+
+
+Marketstack (marketstack.com) – REST API by apilayer delivering global stock market data. It offers real-time intraday (minute-level) U.S. quotes and end-of-day (historical) data for 30,000+ tickers worldwide. Free tier (API key required) allows 100 requests/month. Types: latest quotes (1-min bars), daily historical, company info. Easy JSON interface; good global coverage. Note: free tier is very limited (100/month).
+
 CNBC (cnbc.com) – Business news site with free delayed stock quotes and market data. Offers nearly every U.S. stock and major indices, plus forex/futures tickers. Data can be scraped from quotes pages. Also provides financial news and videos. Quotes are delayed (~15 min for U.S. markets). Useful as a web source (via their Quotes pages) for broad market coverage.
 
 
