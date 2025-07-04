@@ -104,8 +104,9 @@ class ml_nlpreader:
         #self.yfn.update_headers(hpath)
         #self.yfn.update_cookies()
         self.ml_yfn_dataset = ml_yfn_dataset                # set global access to the YFN News reader instance
-        hash_state = ml_yfn_dataset.ext_do_js_get(0)        # get() & process the page JS data
-        
+        #hash_state = ml_yfn_dataset.ext_do_js_get(0)        # get() & process the page JS data using pyppeteer
+        hash_state = ml_yfn_dataset.ext_pw_js_get(0)        # get() & process the page JS data using plasywright
+                
         logging.info( f"%s - globalize url_hinter: [ 1 ]" % cmi_debug )
         self.yfn_uh = url_hinter(1, self.args)              # create instance of urh hinter
         ml_yfn_dataset.yfn_uh = self.yfn_uh                 # share the url hinter with the YFN reader instance

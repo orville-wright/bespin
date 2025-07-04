@@ -3,11 +3,14 @@ from requests_html import HTMLSession
 import pandas as pd
 import numpy as np
 import re
+import os
+import sys
 import logging
 import argparse
 from rich import print
 
 from ml_cvbow import ml_cvbow
+import nltk.data
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from transformers import pipeline
@@ -109,7 +112,7 @@ class ml_sentiment:
         logging.info('%s - IN' % cmi_debug )
 
         logging.info( f'%s - Init ML NLP Tokenizor/Vectorizer...' % cmi_debug )
-        vectorz = ml_cvbow(item_idx, self.args)
+        vectorz = ml_cvbow(item_idx, self.args)   
         stop_words = stopwords.words('english')
         #classifier = pipeline('sentiment-analysis')
         classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis", device="cpu")
@@ -275,9 +278,9 @@ class ml_sentiment:
         if round(posneg_ratio,1) <= 1.5:
             gross_sentiment = "NEUTRAL"
         # Step 6: Print the precise sentiment metrics
-        print( f"Overlal: {gross_sentiment.upper()} / Intensity: ({round(posneg_ratio,1)} : 1)" )
-        print( f"Overall: {data_pos_pct:.2f}% {sentcat_pos} @ Confidence: {(positive_t * 100):.2f}% / Cat score: {precise_sent_pos}" ) 
-        print( f"Overall: {data_neg_pct:.2f}% {sentcat_neg} @ Confidence: {(negative_t * 100):.2f}% / Cat score: {precise_sent_neg}" ) 
+        print( f"Overall:    {gross_sentiment.upper()} / Intensity: ({round(posneg_ratio,1)} : 1)" )
+        print( f"Positivity: {data_pos_pct:.2f}% {sentcat_pos} @ Confidence: {(positive_t * 100):.2f}% / Cat score: {precise_sent_pos}" ) 
+        print( f"Negativity: {data_neg_pct:.2f}% {sentcat_neg} @ Confidence: {(negative_t * 100):.2f}% / Cat score: {precise_sent_neg}" ) 
         print(f"=============================================================================")
 
         sym = symbol

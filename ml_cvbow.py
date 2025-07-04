@@ -2,6 +2,8 @@
 from bs4 import BeautifulSoup
 import logging
 import argparse
+import os
+import sys
 
 # ML capabilities
 from sklearn.feature_extraction.text import CountVectorizer
@@ -36,7 +38,13 @@ class ml_cvbow:
         logging.info('%s - INSTANTIATE' % cmi_debug )
         # init empty DataFrame with present colum names
         self.args = global_args
-        stop_words = set(stopwords.words('english'))
+        nltk_data_path = os.path.abspath("./nltk_data/corpora/")
+        if nltk_data_path not in sys.path:
+            sys.path.append(nltk_data_path)
+            os.environ["NLTK_DATA"] = nltk_data_path
+            logging.info( f"%s - Force nltk_data path / env: {nltk_data_path}" % cmi_debug )
+            
+        #stop_words = set(stopwords.words('english'))
         self.vectorizer = CountVectorizer()
         #self.vectorizer = CountVectorizer(stop_words=stopwords)
         return

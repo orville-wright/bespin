@@ -159,8 +159,9 @@ class un_volumes:
             co_name_lj = (re.sub('[\']', '', co_name_lj) )                 # remove " ' and strip leading/trailing spaces
 
             price_cl = (re.sub('[ $,]', '', price))                        # remove $ sign
-            price_net_cl = (re.sub('[\-+]', '', price_net))                # remove - + signs
-            price_pct_cl = (re.sub('[\-+%]', '', price_pct))               # remove - + % signs
+            price_net_cl = (re.sub(r'[\-+]', '', price_net))                # remove - + signs
+            price_pct_cl = (re.sub(r'[\-+%]', '', price_pct))               # remove - + % signs
+            vol_abs_cl = (re.sub('[,]', '', vol_abs))                      # remove ,
             vol_abs_cl = (re.sub('[,]', '', vol_abs))                      # remove ,
             vol_pct_cl = (re.sub('[%]', '', vol_pct))                      # remover %
 

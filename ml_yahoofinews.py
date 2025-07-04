@@ -13,6 +13,7 @@ import argparse
 import time
 from rich import print
 from rich.markup import escape
+from playwright.sync_api import sync_playwright
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
@@ -178,6 +179,64 @@ class yfnews_reader:
         #print (f"r.html.html: {escape(r.html.html)}...")  # Print first 100 characters of the HTML content for debugging 
         return aurl_hash
 
+###################################### 7.1 ###########################################
+
+    def ext_pw_js_get(self, idx_x):
+        cmi_debug = __name__+"::"+self.ext_pw_js_get.__name__+".#"+str(self.yti)+"."+str(idx_x)
+        
+        # URL validation
+        if not self.yfqnews_url or not isinstance(self.yfqnews_url, str):
+            logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
+            return None
+            
+        logging.info( f'ml_yahoofinews::ext_pw_js_get.#{self.yti}.{idx_x} - %s', self.yfqnews_url )
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+            
+            # Set headers similar to requests_html
+            page.set_extra_http_headers(self.yahoo_headers)
+            
+            # Navigate to the URL with timeout
+            try:
+                page.goto(self.yfqnews_url, timeout=10000)
+                page.wait_for_load_state('networkidle', timeout=10000)
+            except Exception as e:
+                logging.error(f'{cmi_debug} - Failed to load page: {e}')
+                browser.close()
+                return None
+            
+            # Get page content
+            content = page.content()
+            text_content = page.evaluate('() => document.body.innerText')
+            
+            browser.close()
+        
+        logging.info( f'%s - Playwright rendered for Idx: [ {idx_x} ]' % cmi_debug )
+        self.yfn_jsdata = text_content           # store Full JavaScript response TEXT page
+        self.yfn_htmldata = content
+        auh = hashlib.sha256(self.yfqnews_url.encode())     # hash the url
+        aurl_hash = auh.hexdigest()
+        
+        # Create a mock response object to maintain compatibility with existing code
+        class MockResponse:
+            def __init__(self, content, text, url):
+                self.html = MockHtml(content, text)
+                self.text = text
+                self.url = url
+        
+        class MockHtml:
+            def __init__(self, content, text):
+                self.html = content
+                self.text = text
+        
+        mock_response = MockResponse(content, text_content, self.yfqnews_url)
+        self.yfn_jsdb[aurl_hash] = mock_response            # create CACHE entry in jsdb, response, not full page TEXT data !!
+        logging.info( f'%s - CREATED cache entry: [ {aurl_hash} ]' % cmi_debug )
+
+        return aurl_hash
+
 ###################################### 8 ###########################################
 
     def do_simple_get(self, url):
@@ -259,7 +318,7 @@ class yfnews_reader:
         except KeyError as error:
             logging.info( f'%s - MISSING in cache: Must read JS page' % cmi_debug )
             logging.info( f'%s - Force read news url: {self.yfqnews_url}' % cmi_debug )
-            hx = self.do_js_get(bs4_obj_idx)
+            hx = self.ext_pw_js_get(bs4_obj_idx)
             logging.info( f'%s - FRESH JS page in use: [ {bs4_obj_idx} ]' % cmi_debug )
             nsoup = BeautifulSoup(self.yfn_jsdata.text, "html.parser")    # store gloabl. dont use cache object 
             logging.info( f'%s - set BS4 data objects' % cmi_debug )

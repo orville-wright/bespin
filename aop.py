@@ -32,6 +32,7 @@ from sec_md import sec_md
 from fred_md import fred_md
 from polygon_md import polygon_md
 from tiingo_md import tiingo_md
+from alphavantage_md import alphavantage_md
 
 # Globals
 work_inst = 0
@@ -47,6 +48,10 @@ parser.add_argument('--fred', help='Get FRED economic data snapshot', action='st
 parser.add_argument('--polygon', help='Get Polygon.io quote for symbol', action='store', dest='polygon_symbol', required=False, default=False)
 parser.add_argument('--tiingo', help='Get Tiingo comprehensive data for symbol', action='store', dest='tiingo_symbol', required=False, default=False)
 parser.add_argument('--tiingo-news', help='Get Tiingo financial news', action='store_true', dest='bool_tiingo_news', required=False, default=False)
+parser.add_argument('--alphavantage', help='Get Alpha Vantage quote and data for symbol', action='store', dest='alphavantage_symbol', required=False, default=False)
+parser.add_argument('--alphavantage-overview', help='Get Alpha Vantage company overview for symbol', action='store', dest='alphavantage_overview', required=False, default=False)
+parser.add_argument('--alphavantage-intraday', help='Get Alpha Vantage intraday data for symbol', action='store', dest='alphavantage_intraday', required=False, default=False)
+parser.add_argument('--alphavantage-gainers', help='Get Alpha Vantage top gainers/losers', action='store_true', dest='bool_alphavantage_gainers', required=False, default=False)
 parser.add_argument('-c','--cycle', help='Ephemerial top 10 every 10 secs for 60 secs', action='store_true', dest='bool_tenten60', required=False, default=False)
 parser.add_argument('-d','--deep', help='Deep converged multi data list', action='store_true', dest='bool_deep', required=False, default=False)
 parser.add_argument('-n','--newsai', help='ML/NLP News sentiment AI for 1 stock', action='store', dest='newsymbol', required=False, default=False)
@@ -978,6 +983,170 @@ def main():
         except Exception as e:
             print(f"Error fetching Tiingo news: {e}")
             logging.error(f"Tiingo news error: {e}")
+        
+        print(" ")
+
+#################################################################################
+# Alpha Vantage Integration ####################################################
+#################################################################################
+
+    # Alpha Vantage quote and basic data
+    if args['alphavantage_symbol'] is not False:
+        alphavantage_symbol = args['alphavantage_symbol'].upper()
+        print(f"========== Alpha Vantage Data for: {alphavantage_symbol} ==========")
+        
+        try:
+            av = alphavantage_md(1, args)
+            
+            # Get global quote
+            quote = av.get_global_quote(alphavantage_symbol)
+            if quote:
+                print(f"Global Quote:")
+                print(f"  Symbol: {quote.get('symbol')}")
+                print(f"  Price: ${quote.get('price', 0):.2f}")
+                print(f"  Change: ${quote.get('change', 0):.2f} ({quote.get('change_percent', '0')}%)")
+                print(f"  Open: ${quote.get('open', 0):.2f}")
+                print(f"  High: ${quote.get('high', 0):.2f}")
+                print(f"  Low: ${quote.get('low', 0):.2f}")
+                print(f"  Previous Close: ${quote.get('previous_close', 0):.2f}")
+                print(f"  Volume: {quote.get('volume', 0):,}")
+                print(f"  Latest Trading Day: {quote.get('latest_trading_day', 'N/A')}")
+            else:
+                print(f"No quote data available for {alphavantage_symbol}")
+                
+        except Exception as e:
+            print(f"Error getting Alpha Vantage data: {e}")
+            logging.error(f"Alpha Vantage data error for {alphavantage_symbol}: {e}")
+        
+        print(" ")
+
+    # Alpha Vantage company overview
+    if args['alphavantage_overview'] is not False:
+        overview_symbol = args['alphavantage_overview'].upper()
+        print(f"========== Alpha Vantage Company Overview for: {overview_symbol} ==========")
+        
+        try:
+            av = alphavantage_md(2, args)
+            
+            # Get company overview
+            overview = av.get_company_overview(overview_symbol)
+            if overview:
+                print(f"Company Information:")
+                print(f"  Name: {overview.get('name', 'N/A')}")
+                print(f"  Symbol: {overview.get('symbol', 'N/A')}")
+                print(f"  Exchange: {overview.get('exchange', 'N/A')}")
+                print(f"  Currency: {overview.get('currency', 'N/A')}")
+                print(f"  Country: {overview.get('country', 'N/A')}")
+                print(f"  Sector: {overview.get('sector', 'N/A')}")
+                print(f"  Industry: {overview.get('industry', 'N/A')}")
+                
+                print(f"\nValuation Metrics:")
+                print(f"  Market Cap: {overview.get('market_cap', 'N/A')}")
+                print(f"  P/E Ratio: {overview.get('pe_ratio', 'N/A')}")
+                print(f"  PEG Ratio: {overview.get('peg_ratio', 'N/A')}")
+                print(f"  Book Value: {overview.get('book_value', 'N/A')}")
+                print(f"  EPS: {overview.get('eps', 'N/A')}")
+                print(f"  Beta: {overview.get('beta', 'N/A')}")
+                print(f"  52-Week High: {overview.get('52_week_high', 'N/A')}")
+                print(f"  52-Week Low: {overview.get('52_week_low', 'N/A')}")
+                
+                print(f"\nFinancial Metrics:")
+                print(f"  Revenue TTM: {overview.get('revenue_ttm', 'N/A')}")
+                print(f"  Profit Margin: {overview.get('profit_margin', 'N/A')}")
+                print(f"  Operating Margin TTM: {overview.get('operating_margin_ttm', 'N/A')}")
+                print(f"  Return on Assets TTM: {overview.get('return_on_assets_ttm', 'N/A')}")
+                print(f"  Return on Equity TTM: {overview.get('return_on_equity_ttm', 'N/A')}")
+                
+                if overview.get('description'):
+                    print(f"\nDescription: {overview.get('description')[:200]}...")
+                    
+            else:
+                print(f"No company overview available for {overview_symbol}")
+                
+        except Exception as e:
+            print(f"Error getting Alpha Vantage company overview: {e}")
+            logging.error(f"Alpha Vantage overview error for {overview_symbol}: {e}")
+        
+        print(" ")
+
+    # Alpha Vantage intraday data
+    if args['alphavantage_intraday'] is not False:
+        intraday_symbol = args['alphavantage_intraday'].upper()
+        print(f"========== Alpha Vantage Intraday Data for: {intraday_symbol} ==========")
+        
+        try:
+            av = alphavantage_md(3, args)
+            
+            # Get 5-minute intraday data
+            intraday_df = av.get_intraday_data(intraday_symbol, interval='5min', outputsize='compact')
+            if not intraday_df.empty:
+                print(f"Recent 5-minute intraday data (last 10 intervals):")
+                recent_data = intraday_df.tail(10)
+                for idx, bar in recent_data.iterrows():
+                    print(f"  {bar['timestamp'].strftime('%Y-%m-%d %H:%M')}: O:{bar['open']:.2f} H:{bar['high']:.2f} L:{bar['low']:.2f} C:{bar['close']:.2f} V:{bar['volume']:,}")
+                
+                # Calculate some basic stats
+                if len(intraday_df) > 1:
+                    latest = intraday_df.iloc[-1]
+                    previous = intraday_df.iloc[-2]
+                    price_change = latest['close'] - previous['close']
+                    pct_change = (price_change / previous['close']) * 100
+                    
+                    print(f"\nRecent Price Movement:")
+                    print(f"  Latest Close: ${latest['close']:.2f}")
+                    print(f"  Previous Close: ${previous['close']:.2f}")
+                    print(f"  Change: ${price_change:.2f} ({pct_change:.2f}%)")
+                    print(f"  Volume (latest): {latest['volume']:,}")
+                    
+            else:
+                print(f"No intraday data available for {intraday_symbol}")
+                
+        except Exception as e:
+            print(f"Error getting Alpha Vantage intraday data: {e}")
+            logging.error(f"Alpha Vantage intraday error for {intraday_symbol}: {e}")
+        
+        print(" ")
+
+    # Alpha Vantage top gainers/losers
+    if args['bool_alphavantage_gainers'] is True:
+        print("========== Alpha Vantage Top Gainers/Losers ==========")
+        
+        try:
+            av = alphavantage_md(4, args)
+            
+            # Get top gainers and losers
+            gainers_losers = av.get_top_gainers_losers()
+            if gainers_losers:
+                metadata = gainers_losers.get('metadata', {})
+                print(f"Market data as of: {metadata.get('last_updated', 'N/A')}")
+                
+                # Top gainers
+                top_gainers = gainers_losers.get('top_gainers')
+                if not top_gainers.empty:
+                    print(f"\nTop Gainers:")
+                    for idx, stock in top_gainers.head(10).iterrows():
+                        print(f"  {stock.get('ticker', 'N/A')}: ${float(stock.get('price', 0)):.2f} ({stock.get('change_percentage', 'N/A')})")
+                
+                # Top losers
+                top_losers = gainers_losers.get('top_losers')
+                if not top_losers.empty:
+                    print(f"\nTop Losers:")
+                    for idx, stock in top_losers.head(10).iterrows():
+                        print(f"  {stock.get('ticker', 'N/A')}: ${float(stock.get('price', 0)):.2f} ({stock.get('change_percentage', 'N/A')})")
+                
+                # Most actively traded
+                most_active = gainers_losers.get('most_actively_traded')
+                if not most_active.empty:
+                    print(f"\nMost Actively Traded:")
+                    for idx, stock in most_active.head(10).iterrows():
+                        print(f"  {stock.get('ticker', 'N/A')}: ${float(stock.get('price', 0)):.2f} (Vol: {int(float(stock.get('volume', 0))):,})")
+                        
+            else:
+                print("No gainers/losers data available")
+                
+        except Exception as e:
+            print(f"Error getting Alpha Vantage gainers/losers: {e}")
+            logging.error(f"Alpha Vantage gainers/losers error: {e}")
         
         print(" ")
 
