@@ -33,6 +33,13 @@ from fred_md import fred_md
 from polygon_md import polygon_md
 from tiingo_md import tiingo_md
 from alphavantage_md import alphavantage_md
+from finnhub_md import finnhub_md
+from marketstack_md import marketstack_md
+from stockdata_md import stockdata_md
+from twelvedata_md import twelvedata_md
+from eodhistoricaldata_md import eodhistoricaldata_md
+from financialmodelingprep_md import financialmodelingprep_md
+from stooq_md import stooq_md
 
 # Globals
 work_inst = 0
@@ -52,6 +59,14 @@ parser.add_argument('--alphavantage', help='Get Alpha Vantage quote and data for
 parser.add_argument('--alphavantage-overview', help='Get Alpha Vantage company overview for symbol', action='store', dest='alphavantage_overview', required=False, default=False)
 parser.add_argument('--alphavantage-intraday', help='Get Alpha Vantage intraday data for symbol', action='store', dest='alphavantage_intraday', required=False, default=False)
 parser.add_argument('--alphavantage-gainers', help='Get Alpha Vantage top gainers/losers', action='store_true', dest='bool_alphavantage_gainers', required=False, default=False)
+parser.add_argument('--finnhub', help='Get Finnhub quote and data for symbol', action='store', dest='finnhub_symbol', required=False, default=False)
+parser.add_argument('--finnhub-news', help='Get Finnhub financial news for symbol', action='store', dest='finnhub_news_symbol', required=False, default=False)
+parser.add_argument('--marketstack', help='Get Marketstack EOD and intraday data for symbol', action='store', dest='marketstack_symbol', required=False, default=False)
+parser.add_argument('--stockdata', help='Get StockData.org quote and data for symbol', action='store', dest='stockdata_symbol', required=False, default=False)
+parser.add_argument('--twelvedata', help='Get Twelve Data comprehensive data for symbol', action='store', dest='twelvedata_symbol', required=False, default=False)
+parser.add_argument('--eodhistoricaldata', help='Get EOD Historical Data for symbol', action='store', dest='eodhistoricaldata_symbol', required=False, default=False)
+parser.add_argument('--financialmodelingprep', help='Get FinancialModelingPrep data for symbol', action='store', dest='financialmodelingprep_symbol', required=False, default=False)
+parser.add_argument('--stooq', help='Get Stooq historical data for symbol', action='store', dest='stooq_symbol', required=False, default=False)
 parser.add_argument('-c','--cycle', help='Ephemerial top 10 every 10 secs for 60 secs', action='store_true', dest='bool_tenten60', required=False, default=False)
 parser.add_argument('-d','--deep', help='Deep converged multi data list', action='store_true', dest='bool_deep', required=False, default=False)
 parser.add_argument('-n','--newsai', help='ML/NLP News sentiment AI for 1 stock', action='store', dest='newsymbol', required=False, default=False)
@@ -1147,6 +1162,273 @@ def main():
         except Exception as e:
             print(f"Error getting Alpha Vantage gainers/losers: {e}")
             logging.error(f"Alpha Vantage gainers/losers error: {e}")
+        
+        print(" ")
+
+#################################################################################
+# NEW MARKET DATA EXTRACTORS - Finnhub, Marketstack, StockData, etc. ##########
+#################################################################################
+
+    # Finnhub API integration
+    if args['finnhub_symbol'] is not False:
+        finnhub_symbol = args['finnhub_symbol'].upper()
+        print(f"========== Finnhub Data for: {finnhub_symbol} ==========")
+        
+        try:
+            finnhub = finnhub_md(1, args)
+            
+            # Get quote
+            quote = finnhub.get_quote(finnhub_symbol)
+            if quote:
+                print(f"Real-time Quote:")
+                print(f"  Current Price: ${quote.get('c', 0):.2f}")
+                print(f"  Change: ${quote.get('d', 0):.2f} ({quote.get('dp', 0):.2f}%)")
+                print(f"  High: ${quote.get('h', 0):.2f}")
+                print(f"  Low: ${quote.get('l', 0):.2f}")
+                print(f"  Open: ${quote.get('o', 0):.2f}")
+                print(f"  Previous Close: ${quote.get('pc', 0):.2f}")
+            
+            # Get company profile
+            profile = finnhub.get_company_profile(finnhub_symbol)
+            if profile:
+                print(f"\nCompany Profile:")
+                print(f"  Name: {profile.get('name', 'N/A')}")
+                print(f"  Country: {profile.get('country', 'N/A')}")
+                print(f"  Currency: {profile.get('currency', 'N/A')}")
+                print(f"  Exchange: {profile.get('exchange', 'N/A')}")
+                print(f"  Industry: {profile.get('finnhubIndustry', 'N/A')}")
+                print(f"  Market Cap: {profile.get('marketCapitalization', 'N/A')}")
+                
+        except Exception as e:
+            print(f"Error fetching Finnhub data: {e}")
+            logging.error(f"Finnhub data error for {finnhub_symbol}: {e}")
+        
+        print(" ")
+
+    # Finnhub news integration
+    if args['finnhub_news_symbol'] is not False:
+        news_symbol = args['finnhub_news_symbol'].upper()
+        print(f"========== Finnhub News for: {news_symbol} ==========")
+        
+        try:
+            finnhub = finnhub_md(2, args)
+            
+            # Get company news
+            news_df = finnhub.get_company_news(news_symbol)
+            if not news_df.empty:
+                print("Recent Company News:")
+                for idx, article in news_df.head(5).iterrows():
+                    print(f"\n  [{article['datetime'].strftime('%Y-%m-%d %H:%M')}]")
+                    print(f"  {article['headline']}")
+                    print(f"  Source: {article['source']}")
+                    if article.get('summary'):
+                        summary = article['summary'][:100] + "..." if len(article['summary']) > 100 else article['summary']
+                        print(f"  Summary: {summary}")
+            else:
+                print(f"No recent news available for {news_symbol}")
+                
+        except Exception as e:
+            print(f"Error fetching Finnhub news: {e}")
+            logging.error(f"Finnhub news error for {news_symbol}: {e}")
+        
+        print(" ")
+
+    # Marketstack API integration
+    if args['marketstack_symbol'] is not False:
+        marketstack_symbol = args['marketstack_symbol'].upper()
+        print(f"========== Marketstack Data for: {marketstack_symbol} ==========")
+        
+        try:
+            marketstack = marketstack_md(1, args)
+            
+            # Get latest EOD data
+            latest_eod = marketstack.get_eod_latest([marketstack_symbol])
+            if not latest_eod.empty:
+                data = latest_eod.iloc[0]
+                print(f"Latest EOD Data ({data['date'].strftime('%Y-%m-%d')}):")
+                print(f"  Open: ${data['open']:.2f}")
+                print(f"  High: ${data['high']:.2f}")
+                print(f"  Low: ${data['low']:.2f}")
+                print(f"  Close: ${data['close']:.2f}")
+                print(f"  Volume: {data['volume']:,}")
+                
+            # Get recent historical data
+            historical = marketstack.get_eod_historical(marketstack_symbol, limit=5)
+            if not historical.empty:
+                print(f"\nRecent Historical Data (Last 5 days):")
+                for idx, day in historical.iterrows():
+                    print(f"  {day['date'].strftime('%Y-%m-%d')}: ${day['close']:.2f} (Vol: {day['volume']:,})")
+                
+        except Exception as e:
+            print(f"Error fetching Marketstack data: {e}")
+            logging.error(f"Marketstack data error for {marketstack_symbol}: {e}")
+        
+        print(" ")
+
+    # StockData.org API integration
+    if args['stockdata_symbol'] is not False:
+        stockdata_symbol = args['stockdata_symbol'].upper()
+        print(f"========== StockData.org Data for: {stockdata_symbol} ==========")
+        
+        try:
+            stockdata = stockdata_md(1, args)
+            
+            # Get quote
+            quote = stockdata.get_quote(stockdata_symbol)
+            if quote:
+                print(f"Real-time Quote:")
+                for key, value in quote.items():
+                    if key in ['price', 'change', 'change_percent', 'open', 'high', 'low', 'previous_close']:
+                        print(f"  {key.replace('_', ' ').title()}: {value}")
+            
+            # Get recent EOD data
+            eod_data = stockdata.get_eod(stockdata_symbol, limit=5)
+            if not eod_data.empty:
+                print(f"\nRecent EOD Data (Last 5 days):")
+                for idx, day in eod_data.iterrows():
+                    print(f"  {day['date'].strftime('%Y-%m-%d')}: ${day['close']:.2f} (Vol: {day['volume']:,})")
+                
+        except Exception as e:
+            print(f"Error fetching StockData.org data: {e}")
+            logging.error(f"StockData.org data error for {stockdata_symbol}: {e}")
+        
+        print(" ")
+
+    # Twelve Data API integration
+    if args['twelvedata_symbol'] is not False:
+        twelvedata_symbol = args['twelvedata_symbol'].upper()
+        print(f"========== Twelve Data for: {twelvedata_symbol} ==========")
+        
+        try:
+            twelvedata = twelvedata_md(1, args)
+            
+            # Get quote
+            quote = twelvedata.get_quote(twelvedata_symbol)
+            if quote:
+                print(f"Real-time Quote:")
+                print(f"  Symbol: {quote.get('symbol')}")
+                print(f"  Price: ${float(quote.get('close', 0)):.2f}")
+                print(f"  Change: {quote.get('change', 'N/A')}")
+                print(f"  Percent Change: {quote.get('percent_change', 'N/A')}")
+                print(f"  Open: ${float(quote.get('open', 0)):.2f}")
+                print(f"  High: ${float(quote.get('high', 0)):.2f}")
+                print(f"  Low: ${float(quote.get('low', 0)):.2f}")
+                print(f"  Volume: {quote.get('volume', 'N/A')}")
+            
+            # Get time series data
+            time_series = twelvedata.get_time_series(twelvedata_symbol, interval='1day', outputsize=5)
+            if not time_series.empty:
+                print(f"\nRecent Daily Data (Last 5 days):")
+                for idx, day in time_series.iterrows():
+                    print(f"  {day['datetime'].strftime('%Y-%m-%d')}: ${day['close']:.2f} (Vol: {day['volume']:,})")
+                
+        except Exception as e:
+            print(f"Error fetching Twelve Data: {e}")
+            logging.error(f"Twelve Data error for {twelvedata_symbol}: {e}")
+        
+        print(" ")
+
+    # EOD Historical Data API integration
+    if args['eodhistoricaldata_symbol'] is not False:
+        eod_symbol = args['eodhistoricaldata_symbol'].upper()
+        print(f"========== EOD Historical Data for: {eod_symbol} ==========")
+        
+        try:
+            eod = eodhistoricaldata_md(1, args)
+            
+            # Get real-time data
+            realtime = eod.get_realtime_data([eod_symbol])
+            if not realtime.empty:
+                data = realtime.iloc[0]
+                print(f"Real-time Data:")
+                print(f"  Symbol: {data.get('code', 'N/A')}")
+                print(f"  Price: ${float(data.get('close', 0)):.2f}")
+                print(f"  Change: {data.get('change_p', 'N/A')}")
+                print(f"  Open: ${float(data.get('open', 0)):.2f}")
+                print(f"  High: ${float(data.get('high', 0)):.2f}")
+                print(f"  Low: ${float(data.get('low', 0)):.2f}")
+            
+            # Get recent EOD data
+            eod_data = eod.get_eod_data(eod_symbol, 'US')
+            if not eod_data.empty:
+                print(f"\nRecent EOD Data (Last 5 days):")
+                for idx, day in eod_data.tail(5).iterrows():
+                    print(f"  {day['date'].strftime('%Y-%m-%d')}: ${day['close']:.2f} (Vol: {day['volume']:,})")
+                
+        except Exception as e:
+            print(f"Error fetching EOD Historical Data: {e}")
+            logging.error(f"EOD Historical Data error for {eod_symbol}: {e}")
+        
+        print(" ")
+
+    # FinancialModelingPrep API integration
+    if args['financialmodelingprep_symbol'] is not False:
+        fmp_symbol = args['financialmodelingprep_symbol'].upper()
+        print(f"========== FinancialModelingPrep Data for: {fmp_symbol} ==========")
+        
+        try:
+            fmp = financialmodelingprep_md(1, args)
+            
+            # Get quote
+            quote = fmp.get_quote([fmp_symbol])
+            if not quote.empty:
+                data = quote.iloc[0]
+                print(f"Real-time Quote:")
+                print(f"  Symbol: {data.get('symbol')}")
+                print(f"  Price: ${float(data.get('price', 0)):.2f}")
+                print(f"  Change: ${float(data.get('change', 0)):.2f} ({float(data.get('changesPercentage', 0)):.2f}%)")
+                print(f"  Open: ${float(data.get('open', 0)):.2f}")
+                print(f"  High: ${float(data.get('dayHigh', 0)):.2f}")
+                print(f"  Low: ${float(data.get('dayLow', 0)):.2f}")
+                print(f"  Volume: {int(float(data.get('volume', 0))):,}")
+            
+            # Get company profile
+            profile = fmp.get_company_profile(fmp_symbol)
+            if profile:
+                print(f"\nCompany Profile:")
+                print(f"  Name: {profile.get('companyName', 'N/A')}")
+                print(f"  Industry: {profile.get('industry', 'N/A')}")
+                print(f"  Sector: {profile.get('sector', 'N/A')}")
+                print(f"  Market Cap: {profile.get('mktCap', 'N/A')}")
+                print(f"  Beta: {profile.get('beta', 'N/A')}")
+                
+        except Exception as e:
+            print(f"Error fetching FinancialModelingPrep data: {e}")
+            logging.error(f"FinancialModelingPrep data error for {fmp_symbol}: {e}")
+        
+        print(" ")
+
+    # Stooq data integration
+    if args['stooq_symbol'] is not False:
+        stooq_symbol = args['stooq_symbol'].upper()
+        print(f"========== Stooq Data for: {stooq_symbol} ==========")
+        
+        try:
+            stooq = stooq_md(1, args)
+            
+            # Get current quote
+            quote = stooq.get_current_quote(stooq_symbol)
+            if not quote.empty:
+                data = quote.iloc[0]
+                print(f"Current Quote:")
+                print(f"  Symbol: {data.get('Symbol', 'N/A')}")
+                print(f"  Close: ${float(data.get('Close', 0)):.2f}")
+                print(f"  Open: ${float(data.get('Open', 0)):.2f}")
+                print(f"  High: ${float(data.get('High', 0)):.2f}")
+                print(f"  Low: ${float(data.get('Low', 0)):.2f}")
+                print(f"  Volume: {int(float(data.get('Volume', 0))):,}")
+                print(f"  Date: {data.get('Date', 'N/A')}")
+            
+            # Get recent historical data
+            historical = stooq.get_historical_data(stooq_symbol, days_back=30)
+            if not historical.empty:
+                print(f"\nRecent Historical Data (Last 5 days):")
+                for idx, day in historical.tail(5).iterrows():
+                    print(f"  {day['date'].strftime('%Y-%m-%d')}: ${day['close']:.2f} (Vol: {day['volume']:,})")
+                
+        except Exception as e:
+            print(f"Error fetching Stooq data: {e}")
+            logging.error(f"Stooq data error for {stooq_symbol}: {e}")
         
         print(" ")
 
