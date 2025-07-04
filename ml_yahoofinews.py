@@ -7,7 +7,8 @@ from datetime import datetime, date
 import hashlib
 import re
 import logging
-import pandas as pd
+# import pandas as pd
+import modin.pandas as pd
 import numpy as np
 import argparse
 import time
@@ -200,8 +201,8 @@ class yfnews_reader:
             
             # Navigate to the URL with timeout
             try:
-                page.goto(self.yfqnews_url, timeout=10000)
-                page.wait_for_load_state('networkidle', timeout=10000)
+                page.goto(self.yfqnews_url, timeout=5000)
+                page.wait_for_load_state('networkidle', timeout=5000)
             except Exception as e:
                 logging.error(f'{cmi_debug} - Failed to load page: {e}')
                 browser.close()
@@ -213,7 +214,7 @@ class yfnews_reader:
             
             browser.close()
         
-        logging.info( f'%s - Playwright rendered for Idx: [ {idx_x} ]' % cmi_debug )
+        logging.info( f'%s - PW rendered JS for Idx: [ {idx_x} ]' % cmi_debug )
         self.yfn_jsdata = text_content           # store Full JavaScript response TEXT page
         self.yfn_htmldata = content
         auh = hashlib.sha256(self.yfqnews_url.encode())     # hash the url
@@ -561,7 +562,7 @@ class yfnews_reader:
             self.update_headers(ip_headers)     # update coooike object - path: ip_headers
 
             #xhash = self.ext_do_js_get(idx)     # JS Render mode : loads data into self.yfn_jsdata
-            xhash = self.do_simple_get(durl)     # basic HTML mode: for testing non JS Basic HTML get()
+            xhash = self.do_simple_get(durl)     # basic HTML mode: non JS Basic HTML get()
             self.yfqnews_url = durl
             logging.info( f'%s - REPEAT cache lookup: {cached_state}' % cmi_debug )
             # print (f"####### Dump Cache #####\n{self.yfn_jsdb.keys()}")
@@ -764,7 +765,7 @@ class yfnews_reader:
     def extract_article_data(self, item_idx, sentiment_ai):
         """
         Depth 3:
-        Only do this once the article has been evaluated and we knonw exactly where/what each article is
+        Only do this once the article has been evaluated and we know exactly where/what each article is
         Any article we read, should have its resp & BS4 objects cached in yfn_jsdb{}
         Set the Body Data zone, the <p> TAG zone
         Extract all of the full article raw text
@@ -827,7 +828,7 @@ class yfnews_reader:
 
             #xhash = self.do_js_get(item_idx)
             cy_soup = self.yfn_jsdb[cached_state]     # get() response 
-            xhash = self.do_simple_get(durl)          # for testing non JS Basic HTML get()
+            xhash = self.do_simple_get(durl)          # non JS Basic HTML get()
             #self.yfqnews_url = url                   # ""   ""
 
             logging.info( f'%s - Retry cache lookup for: {cached_state}' % cmi_debug )

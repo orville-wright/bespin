@@ -4,7 +4,8 @@ import logging
 import argparse
 import dotenv
 import os
-import pandas as pd
+# import pandas as pd
+import modin.pandas as pd
 from rich import print
 
 from neo4j import GraphDatabase, RoutingControl

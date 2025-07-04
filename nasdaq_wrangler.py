@@ -1,7 +1,8 @@
 #! python3
 import re
 import logging
-import pandas as pd
+# import pandas as pd
+import modin.pandas as pd
 import argparse
 import time
 import numpy as np

@@ -1,7 +1,8 @@
 #! python3
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
+# import pandas as pd
+import modin.pandas as pd
 import logging
 import argparse
 
