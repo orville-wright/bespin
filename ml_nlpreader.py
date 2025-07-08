@@ -90,7 +90,7 @@ class ml_nlpreader:
         news_symbol = str(self.args['newsymbol'])       # symbol provided on CMDLine
         
         ml_yfn_reader = y_cookiemonster(3)
-        ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args )
+        ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args )      # yfnews_reader is class in ml_yahoofinnews.py
         ml_yfn_dataset.init_dummy_session()       # setup cookie jar and headers
         #self.yfn = yfnews_reader(1, news_symbol, self.args )  # create instance of YFN News reader
         #self.yfn.init_dummy_session('finance.yahoo.com/markets/stocks/most-active/')

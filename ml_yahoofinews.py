@@ -7,8 +7,8 @@ from datetime import datetime, date
 import hashlib
 import re
 import logging
-# import pandas as pd
-import modin.pandas as pd
+import pandas as pd
+#import modin.pandas as pd
 import numpy as np
 import argparse
 import time
@@ -269,7 +269,7 @@ class yfnews_reader:
         hot_cookies = requests.utils.dict_from_cookiejar(self.js_resp0.cookies)
         logging.info( f"%s - Swap {len(hot_cookies)} cookies into LOCAL yahoo_headers" % cmi_debug )
 
-        self.yfn_htmldata = self.js_resp0.text
+        self.yfn_htmldata = self.js_resp0.text      # store entire page HTML text in memory in this class
         auh = hashlib.sha256(url.encode())          # hash the url
         aurl_hash = auh.hexdigest()
         logging.info( f'%s  - CREATE cache entry: [ {aurl_hash} ]' % cmi_debug )

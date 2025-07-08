@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import asyncio
-import urllib.request
+from requests_html import HTMLSession
+import requests
 import pandas as pd
 #import modin.pandas as pd
 import logging
@@ -63,7 +63,6 @@ parser.add_argument('--alphavantage', help='Get Alpha Vantage quote and data for
 parser.add_argument('--alphavantage-overview', help='Get Alpha Vantage company overview for symbol', action='store', dest='alphavantage_overview', required=False, default=False)
 parser.add_argument('--alphavantage-intraday', help='Get Alpha Vantage intraday data for symbol', action='store', dest='alphavantage_intraday', required=False, default=False)
 parser.add_argument('--alphavantage-gainers', help='Get Alpha Vantage top gainers/losers', action='store_true', dest='bool_alphavantage_gainers', required=False, default=False)
-parser.add_argument('--alphavantage-news', help='Get Alpha Vantage market news (optionally filter by symbol)', action='store', dest='alphavantage_news_symbol', required=False, default=False)
 parser.add_argument('--finnhub', help='Get Finnhub quote and data for symbol', action='store', dest='finnhub_symbol', required=False, default=False)
 parser.add_argument('--finnhub-news', help='Get Finnhub financial news for symbol', action='store', dest='finnhub_news_symbol', required=False, default=False)
 parser.add_argument('--marketstack', help='Get Marketstack EOD and intraday data for symbol', action='store', dest='marketstack_symbol', required=False, default=False)
@@ -83,58 +82,53 @@ parser.add_argument('-u','--unusual', help='unusual up & down volume', action='s
 parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
 
-# Threading globals
-extract_done = threading.Event()
+#  globals
 yti = 1
-uh = url_hinter(1, args)        # anyone needs to be able to get hints on a URL from anywhere
+
+# global accessors
+symbol = None           # Unique company symbol
+yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
+js_session = None       # SET by this class during __init__ - main requests session
+js_resp0 = None         # HTML session get() - response handle
+js_resp2 = None         # JAVAScript session get() - response handle
+yfn_all_data = None     # JSON dataset contains ALL data
+yfn_htmldata = None     # Page in HTML
+yfn_jsdata = None       # Page in JavaScript-HTML
+yfn_jsdb = {}           # database to hold response handles from multiple js.session_get() ops
+ml_brief = []           # ML TXT matrix for Naieve Bayes Classifier pre Count Vectorizer
+ml_ingest = {}          # ML ingested NLP candidate articles
+ml_sent = None
+ul_tag_dataset = None   # BS4 handle of the <tr> extracted data
+li_superclass = None    # all possible News articles
+yti = 0                 # Unique instance identifier
+cycle = 0               # class thread loop counter
+nlp_x = 0
+get_counter = 0         # count of get() requests
+ext_req = ""            # HTMLSession request handle
+sen_stats_df = None     # Aggregated sentiment stats for this 1 article
+nsoup = None            # BS4 shared handle between UP & DOWN (1 URL, 2 embeded data sets in HTML doc)
+args = []               # class dict to hold global args being passed in from main() methods
+yfn_uh = None           # global url hinter class
+url_netloc = None
+a_urlp = None
+article_url = "https://www.defaul_instance_url.com"
+this_article_url = "https://www.default_interpret_page_url.com"
+dummy_url = "https://finance.yahoo.com/screener/predefined/day_losers"
+
+yahoo_headers = { \
+                    'authority': 'finance.yahoo.com', \
+                    'path': '/screener/predefined/day_gainers/', \
+                    'referer': 'https://finance.yahoo.com/screener/', \
+                    'sec-ch-ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"', \
+                    'sec-ch-ua-mobile': '"?0"', \
+                    'sec-fetch-mode': 'navigate', \
+                    'sec-fetch-user': '"?1', \
+                    'sec-fetch-site': 'same-origin', \
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36' }
 
 #######################################################################
-# Global method for __main__
-# thread function #1
-# DEPRECATED
-
-def do_nice_wait(topg_inst):
-    """Threaded wait that does work to build out the 10x10x60 DataFrame"""
-    logging.info('y_topgainers:: IN Thread - do_nice_wait()' )
-    logging.info('y_topgainers::do_nice_wait() -> inst: %s' % topg_inst.yti )
-    for r in range(6):
-        logging.info('do_nice_wait() cycle: %s' % topg_inst.cycle )
-        time.sleep(5)    # wait immediatley to let remote update
-        topg_inst.get_topg_data()       # extract data from finance.Yahoo.com
-        topg_inst.build_tg_df0()
-        topg_inst.build_top10()
-        topg_inst.build_tenten60(r)     # pass along current cycle
-        print ( ".", end="", flush=True )
-        topg_inst.cycle += 1            # adv loop cycle
-
-        if topg_inst.cycle == 6:
-            logging.info('do_nice_wait() - EMIT exit trigger' )
-            extract_done.set()
-
-    logging.info('do_nice_wait() - Cycle: %s' % topg_inst.cycle )
-    logging.info('do_nice_wait() - EXIT thread inst: %s' % topg_inst.yti )
-
-    return      # dont know if this this requireed or good semantics?
-
-def bkgrnd_worker():
-    """Threaded wait that does work to build out the 10x10x60 DataFrame"""
-    global work_inst
-    logging.info('main::bkgrnd_worker() IN Thread - bkgrnd_worker()' )
-    logging.info('main::bkgrnd_worker() Ref -> inst #: %s' % work_inst.yti )
-    for r in range(4):
-        logging.info('main::bkgrnd_worker():: Loop: %s' % r )
-        time.sleep(30)    # wait immediatley to let remote update
-        work_inst.build_tg_df0()
-        work_inst.build_top10()
-        work_inst.build_tenten60(r)
-
-    logging.info('main::bkgrnd_worker() EMIT exit trigger' )
-    extract_done.set()
-    logging.info('main::bkgrnd_worker() EXIT thread inst #: %s' % work_inst.yti )
-    return      # dont know if this this requireed or good semantics?
-
-
 ############################# main() ##################################
+#######################################################################
 
 def main():
     cmi_debug = "aop::"+__name__+"::main()"
@@ -150,246 +144,234 @@ def main():
     else:
         logging.disable(20)                 # Log lvel = INFO
 
-    if args['newsymbol'] is not False:
-        print ( " " )
-        print ( f"Scanning news for symbol: {args['newsymbol']}" )
-
     print ( " " )
 
-    recommended = {}        # dict of recomendations
+###################################### 1 ###########################################
+# method 6
+    def init_dummy_session(self):
+        self.dummy_resp0 = requests.get(self.dummy_url, stream=True, headers=self.yahoo_headers, cookies=self.yahoo_headers, timeout=5 )
+        #hot_cookies = requests.utils.dict_from_cookiejar(self.dummy_resp0.cookies)
+        return
 
-########### 1 - TOP GAINERS ################
-    if args['bool_tops'] is True:
-        print ( "========== Large Cap / Top Gainers ===============================" )
-        ## new JS data extractor
-        topgainer_reader = y_cookiemonster(1)         # instantiate class of cookiemonster
-        mlx_top_dataset = y_topgainers(1)             # instantiate class
-        mlx_top_dataset.init_dummy_session()          # setup cookie jar and headers
+###################################### 2 ###########################################
+
+    def init_live_session(self, id_url):
+        '''
+        A key objetcive acheived here is populating the existing yahoo_headers with live cookies
+        from the live session. This is done by the requests.get() method
+        But, we dont need the response object, so we dont store it
+        Thats allready been captured at stored in: self.ext_req object
+        '''
+        self.live_resp0 = requests.get(id_url, stream=True, headers=self.yahoo_headers, cookies=self.yahoo_headers, timeout=5 )
+        return
+
+##################################### 3 ############################################
+
+    def update_headers(self, ch):
+
+        # HACK to help logging() f-string bug to handle strings with %
+        # ch = url path (exluding the "https://"")
+        cmi_debug = __name__+"::"+self.update_headers.__name__+".#"+str(self.yti)+"  - "+ch
+        logging.info('%s' % cmi_debug )
+        cmi_debug = __name__+"::"+self.update_headers.__name__+".#"+str(self.yti)
+        self.path = ch
+        self.cookies.update({'path': self.path} )
  
-        mlx_top_dataset.ext_req = topgainer_reader.get_js_data('finance.yahoo.com/markets/stocks/most-active/')
-        mlx_top_dataset.ext_get_data(1)
+        if self.args['bool_xray'] is True:
+            print ( f"=========================== {self.yti} / session cookies ===========================" )
+            for i in self.cookies.items():
+                print ( f"{i}" )
 
-        x = mlx_top_dataset.build_tg_df0()     # build full dataframe
-        mlx_top_dataset.build_top10()          # show top 10
-        mlx_top_dataset.print_top10()          # print it
-        print ( " " )
+        return
+            
+###################################### 4 ###########################################
 
-########### 2 - TOP LOSERS ################
-        print ( "========== Large Cap / Top Loosers ================================" )
-        ## new JS data extractor
-        toploser_reader = y_cookiemonster(2)         # instantiate class of cookiemonster
-        mlx_loser_dataset = y_daylosers(1)           # instantiate class
-        mlx_loser_dataset.init_dummy_session()       # setup cookie jar and headers
- 
-        mlx_loser_dataset.ext_req = toploser_reader.get_js_data('finance.yahoo.com/markets/stocks/losers/')
-        mlx_loser_dataset.ext_get_data(1)
+    def form_endpoint(self, symbol):
+        """
+        This is the explicit NEWS URL that is used for the request get()
+        NOTE: assumes that path header/cookie has been set first
+        #
+        URL endpoints available (examples)
+        All related news        - https://finance.yahoo.com/quote/IBM/?p=IBM
+        Symbol specific news    - https://finance.yahoo.com/quote/IBM/news?p=IBM
+        Symbol press releases   - https://finance.yahoo.com/quote/IBM/press-releases?p=IBM
+        Symbol research reports - https://finance.yahoo.com/quote/IBM/reports?p=IBM
+        """
 
-        x = mlx_loser_dataset.build_tl_df0()     # build full dataframe
-        mlx_loser_dataset.build_top10()          # show top 10
-        mlx_loser_dataset.print_top10()          # print it
-        print ( " " )
+        cmi_debug = __name__+"::"+self.form_endpoint.__name__+".#"+str(self.yti)
+        logging.info( f"%s  - form URL endpoint for: {symbol}" % cmi_debug )
+        self.yfqnews_url = 'https://finance.yahoo.com/'    # use global accessor (so all paths are consistent)
+        logging.info( f"%s  - API endpoint URL: {self.yfqnews_url}" % cmi_debug )
+        # NOTE | WARN: Class global attribute. Used in MANY places once its self set, so be careful
+        return
+
+##################################### 5 ############################################
+
+    def share_hinter(self, hinst):
+        cmi_debug = __name__+"::"+self.share_hinter.__name__+".#"+str(self.yti)
+        logging.info( f'%s - IN {type(hinst)}' % cmi_debug )
+        self.yfn_uh = hinst
+        return
+
+###################################### 6 ###########################################
+
+    def update_cookies(self):
+        # assumes that the requests session has already been established
+        cmi_debug = __name__+"::"+self.update_cookies.__name__+".#"+str(self.yti)
+        logging.info('%s - REDO the cookie extract & update  ' % cmi_debug )
+        self.js_session.cookies.update({'A1': self.js_resp0.cookies['A1']} )    # yahoo cookie hack
+        return
+
+###################################### 7 ###########################################
+
+    def ext_do_js_get(self, idx_x):
+        cmi_debug = __name__+"::"+self.ext_do_js_get.__name__+".#"+str(self.yti)+"."+str(idx_x)
+        
+        # URL validation
+        if not self.yfqnews_url or not isinstance(self.yfqnews_url, str):
+            logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
+            return None
+            
+        logging.info( f'ml_yahoofinews::ext_do_js_get.#{self.yti}.{idx_x} - %s', self.yfqnews_url )
+        r = self.ext_req
+        r.html.render(timeout=10)
+        
+        logging.info( f'%s - JS rendered for Idx: [ {idx_x} ]' % cmi_debug )
+        self.yfn_jsdata = r.html.text           # store Full JAVAScript response TEXT page
+        self.yfn_htmldata = r.html.text
+        auh = hashlib.sha256(self.yfqnews_url.encode())     # hash the url
+        aurl_hash = auh.hexdigest()
+        self.yfn_jsdb[aurl_hash] = r            # create CACHE entry in jsdb, response, not full page TEXT data !!
+        logging.info( f'%s - CREATED cache entry: [ {aurl_hash} ]' % cmi_debug )
+
+        #print (f"r.html.html: {escape(r.html.html)}...")  # Print first 100 characters of the HTML content for debugging 
+        return aurl_hash
+
+###################################### 7.1 ###########################################
+
+    def ext_pw_js_get(self, idx_x):
+        cmi_debug = __name__+"::"+self.ext_pw_js_get.__name__+".#"+str(self.yti)+"."+str(idx_x)
+        
+        # URL validation
+        if not self.yfqnews_url or not isinstance(self.yfqnews_url, str):
+            logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
+            return None
+            
+        logging.info( f'ml_yahoofinews::ext_pw_js_get.#{self.yti}.{idx_x} - %s', self.yfqnews_url )
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+            
+            # Set headers similar to requests_html
+            page.set_extra_http_headers(self.yahoo_headers)
+            
+            # Navigate to the URL with timeout
+            try:
+                page.goto(self.yfqnews_url, timeout=5000)
+                page.wait_for_load_state('networkidle', timeout=5000)
+            except Exception as e:
+                logging.error(f'{cmi_debug} - Failed to load page: {e}')
+                browser.close()
+                return None
+            
+            # Get page content
+            content = page.content()
+            text_content = page.evaluate('() => document.body.innerText')
+            
+            browser.close()
+        
+        logging.info( f'%s - PW rendered JS for Idx: [ {idx_x} ]' % cmi_debug )
+        self.yfn_jsdata = text_content           # store Full JavaScript response TEXT page
+        self.yfn_htmldata = content
+        auh = hashlib.sha256(self.yfqnews_url.encode())     # hash the url
+        aurl_hash = auh.hexdigest()
+        
+        # Create a mock response object to maintain compatibility with existing code
+        class MockResponse:
+            def __init__(self, content, text, url):
+                self.html = MockHtml(content, text)
+                self.text = text
+                self.url = url
+        
+        class MockHtml:
+            def __init__(self, content, text):
+                self.html = content
+                self.text = text
+        
+        mock_response = MockResponse(content, text_content, self.yfqnews_url)
+        self.yfn_jsdb[aurl_hash] = mock_response            # create CACHE entry in jsdb, response, not full page TEXT data !!
+        logging.info( f'%s - CREATED cache entry: [ {aurl_hash} ]' % cmi_debug )
+
+        return aurl_hash
+
+###################################### 8 ###########################################
+
+    def do_simple_get(self, url):
+        """
+        get simple raw HTML data structure (data not processed by JAVAScript engine)
+        NOTE: get URL is assumed to have allready been set (self.yfqnews_url)
+                Copies exact pattern from working y_topgainers.py file
+        """
+        cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)
+        logging.info( f'%s  - CYCLE: {self.get_counter}' % cmi_debug )
+
+        js_session = HTMLSession()                  # Create a new session        
+        with js_session.get(url) as self.js_resp0:  # must do a get() - NO setting cookeis/headers)
+            logging.info(f'%s  - Simple HTML Request get()...' % cmi_debug )
+
+        # HACK to help logging() f-string bug to handle strings with %
+            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+"  - JS get() success: "+url
+            logging.info('%s' % cmi_debug )
+            #logging.info( f"%s - JS_session.get() sucessful: {url}" % cmi_debug )
+            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)    # reset cmi_debug
+            if self.js_resp0.status_code != 200:
+                    logging.error(f'{cmi_debug} - HTTP {self.js_resp0.status_code}: HTML fetch FAILED')
+                    return None
+
+        self.get_counter += 1
+        logging.info( f"%s  - js.render()... diasbled" % cmi_debug )
+        logging.info( f'%s  - Store basic HTML dataset' % cmi_debug )
+        self.js_resp2 = self.js_resp0               # Set js_resp2 to the same response as js_resp0 for now
+        hot_cookies = requests.utils.dict_from_cookiejar(self.js_resp0.cookies)
+        logging.info( f"%s - Swap {len(hot_cookies)} cookies into LOCAL yahoo_headers" % cmi_debug )
+
+        self.yfn_htmldata = self.js_resp0.text
+        auh = hashlib.sha256(url.encode())          # hash the url
+        aurl_hash = auh.hexdigest()
+        logging.info( f'%s  - CREATE cache entry: [ {aurl_hash} ]' % cmi_debug )
+        self.yfn_jsdb[aurl_hash] = self.js_resp0    # create CACHE entry in jsdb !!response, not full page TEXT data !!
+
+        # Xray DEBUG
+        if self.args['bool_xray'] is True:
+            print ( f"========================== {self.yti} / HTML get() session cookies ================================" )
+            logging.info( f'%s  - resp0 type: {type(self.js_resp0)}' % cmi_debug )
+            for i in self.js_resp0.cookies.items():
+                print ( f"{i}" )
+
+        return aurl_hash
 
 ########### 3 10x10x60 ################
-# YAHOO General News reader 
+    # do 10x10x60 build-out cycle
+    # currently fails to produce a unique data set each threat cycle. Don't know why
     if args['bool_tenten60'] is True:
         print ( "============================== Testing Craw4ai YAHOO News REader  =================================" )
         print ( " " )
         ############## hacking on general news
-        genews_reader = y_cookiemonster(3)
+        #genews_reader = y_cookiemonster(3)
         genews_dataset = y_generalnews(3)
         genews_dataset.init_dummy_session()
-
-        #genews_dataset.ext_req = genews_dataset.do_simple_get('https://finance.yahoo.com/')
-        genews_dataset.ext_req = genews_reader.get_js_data('finance.yahoo.com/')
+        update_headers("/news")
+        genews_dataset.ext_req = genews_dataset.do_simple_get()
+        #genews_dataset.ext_req = genews_reader.get_js_data('finance.yahoo.com/')
         genews_dataset.ext_get_data(3)
         gx = genews_dataset.build_df0()
-        print ( " " )
-        print ( " " )
 
-########### Small Cap gainers & loosers ################
-# small caps are isolated outside the regular dataset by yahoo.com
-    if args['bool_scr'] is True:
-        print ( "========== Small Cap / Top Gainers / +5% with Mkt-cap > $299M ==========" )
-        scap_reader = y_cookiemonster(2)             # instantiate class of cookiemonster
-        small_cap_dataset = smallcap_screen(1)       # instantiate class of a Small Scap Screener
-        small_cap_dataset.init_dummy_session()       # setup cookie jar and headers
- 
-        small_cap_dataset.ext_req = scap_reader.get_js_data('finance.yahoo.com/research-hub/screener/small_cap_gainers/')
-        small_cap_dataset.ext_get_data(1)
-        
-        x = small_cap_dataset.build_df0()         # build full dataframe
-        small_cap_dataset.build_top10()           # show top 10
-        small_cap_dataset.print_top10()           # print it
+    else:
+        pass
 
-        recommended.update(small_cap_dataset.screener_logic())
-        print ( " ")
-
-# process Nasdaq.com unusual_vol ################
-    if args['bool_uvol'] is True:
-        print ( "========== Unusually high Volume / Up =======================================================" )
-        un_vol_activity = un_volumes(1, args)       # instantiate NEW nasdaq data class, args = global var
-        un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
-
-        # should test success of extract before attempting DF population
-        un_vol_activity.build_df(0)           # 0 = UP Unusual volume
-        un_vol_activity.build_df(1)           # 1 = DOWN unusual volume
-
-        # find lowest price stock in unusuall UP volume list
-        up_unvols = un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
-        ulp = up_unvols['Cur_price'].min()                  # find lowest price row in DF
-        uminv = up_unvols['Cur_price'].idxmin()             # get index ID of lowest price row
-        u_got_it = up_unvols.loc[uminv]
-
-        ulsym = u_got_it.at['Symbol']              # get symbol of lowest price item @ index_id
-        ulname = u_got_it.at['Co_name']            # get name of lowest price item @ index_id
-        upct = u_got_it.at['Pct_change']           # get %change of lowest price item @ index_id
-
-        print ( f"Best low-buy OPPTY: #{uminv} - {ulname.rstrip()} ({ulsym.rstrip()}) @ ${ulp} / {upct}% gain" )
-        print ( " " )
-        print ( f"{un_vol_activity.up_unvol_listall()} " )
-        print ( " ")
-        print ( "========== Unusually high Volume / Down =====================================================" )
-        print ( f"{un_vol_activity.down_unvol_listall()} " )
-        print ( " ")
-        # Add unusual vol into recommendations list []
-        #recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(un_vol_activity.up_df0.loc[uminv, ['Pct_change']][0]) )
-        recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(upct) )
-
-# generate FINAL combo list ################################################################################
-# combine all the findings into 1 place - single source of truth
-    """
-    DEEP amalysis means - try to understand & inferr plain language reasons as to why these stock are
-    appearing in the final 'Single Source of Truth' combo_df. Having a big list of top mover/highly active
-    stocks isn't meaningful unless you can understand (quickly in real-time) whats going on with each one.
-    From here, you can plan to do something... otherwise, this is just a meaningless list.
-    NOTE: Most of this logic prepares/cleans/wrangles data into a perfect combo_df 'Single Source of Truth'.
-    """
-    if args['bool_deep'] is True and args['bool_scr'] is True and args['bool_uvol'] is True:
-        x = combo_logic(1, mlx_top_dataset, small_cap_dataset, un_vol_activity, args )
-        x.polish_combo_df(1)
-        x.tag_dupes()
-        x.tag_uniques()
-        x.rank_hot()       # currently disabled b/c it errors. pandas statment needs to be simplifed and split
-        #x.find_hottest()
-        x.rank_unvol()     # ditto
-        x.rank_caps()      # ditto
-        x.combo_df.sort_values(by=['Symbol'])         # sort by sumbol name (so dupes are linearly grouped)
-        x.reindex_combo_df()                          # re-order a new index (PERMENANT write)
-
-# Summarize combo list key findings ##################################################################
-        # Curious Outliers
-        # temp_1 = x.combo_df.sort_values(by=['Pct_change'], ascending=False)
-        # temp_1 = x.combo_df.sort_values(by=['Symbol'])                        # sort by sumbol name (so dupes are linearly grouped)
-        # temp_1.reset_index(inplace=True, drop=True)                           # reset index
-
-        x.find_hottest()
-
-        print ( f"========== Hot stock anomolies ===================================================" )
-        if x.combo_dupes_only_listall(1).empty:
-            print ( f"NONE found at moment" )
-        else:
-            print ( f"{x.combo_dupes_only_listall(1)}" )
-
-        print ( " " )
-        print ( f"========== Full System of Truth  ===================================================" )
-        print ( f"\n{x.combo_df}" )    # sort by %
-        print ( " " )
-
-        print ( "========== ** OUTLIERS ** : Unusual UP volume + Top Gainers by +5% ================================" )
-        print ( " " )
-        temp_1 = x.combo_df.sort_values(by=['Pct_change'], ascending=False) 
-        print ( f"{temp_1}" )       # DUPLES in the DF = a curious outlier
-        # print ( f"{temp_1[temp_1.duplicated(['Symbol'], keep='first')]}" )    # DUPLES in the DF = a curious outlier
-        #print ( f"{temp_1[temp_1.duplicated(['Symbol'], keep='last')]}" )       # DUPLES in the DF = a curious outlier
-        print ( " " )
-        print ( f"================= >>COMBO<< Full list of intersting market observations ==================" )
-        #print ( f"{x.combo_listall_nodupes()}" )
-        temp_2 = x.combo_listall_nodupes()                                      # dupes by SYMBOL only
-        print ( f"{temp_2.sort_values(by=['Pct_change'], ascending=False)}" )
-
-        if len(x.rx) == 0:      # rx=[] holds hottest stock with lowest price overall
-            print ( " " )       # empty list[] = no stock found yet (prob very early in trading morning)
-            print ( f"No **hot** stock for >>LOW<< buy-in recommendations list yet" )
-        else:
-            hotidx = x.rx[0]
-            hotsym = x.rx[1]
-            hotp = x.combo_df.at[hotidx, 'Cur_price']
-            #hotp = x.combo_df.loc[[x.combo_df['Symbol'] == hotsym], ['Cur_price']]
-            hotname = x.combo_df.at[hotidx, 'Co_name']
-            hotpct = x.combo_df.at[hotidx, 'Pct_change']
-            #hotname = x.combo_df.loc[hotidx, ['Co_name']][0]
-            print ( " " )       # empty list[] = no stock found yet (prob very early in trading morning)
-
-            #row_index = x.combo_df.loc[x.combo_df['Symbol'] == hotsym.rstrip()].index[0]
-
-            #recommended['3'] = ('Hottest:', hotsym.rstrip(), '$'+str(hotp), hotname.rstrip(), '+%'+str(x.combo_df.loc[hotidx, ['Pct_change']][0]) )
-            recommended['3'] = ('Hottest:', hotsym.rstrip(), '$'+str(hotp), hotname.rstrip(), '+%'+str(x.combo_df.at[hotidx, 'Pct_change']) )
-            print ( f"==============================================================================================" )
-            print ( f"Best low-buy highest %gain **Hot** OPPTY: {hotsym.rstrip()} - {hotname.rstrip()} / {'$'+str(hotp)} / {'+%'+str(hotpct)} gain" )
-            print ( " " )
-            print ( " " )
-
-        # lowest priced stock
-        clp = x.combo_df['Cur_price'].min()
-        cminv = x.combo_df['Cur_price'].idxmin()
-        i_got_min = x.combo_df.loc[cminv]
-
-        clsym = i_got_min.at['Symbol']                # get symbol of lowest price item @ index_id
-        clname = i_got_min.at['Co_name']              # get name of lowest price item @ index_id
-        clupct = i_got_min.at['Pct_change']           # get %change of lowest price item @ index_id
-
-        #clsym = x.combo_df.loc[cminv, ['Symbol']][0]
-        #clname = x.combo_df.loc[cminv, ['Co_name']][0]    
-        #recommended['4'] = ('Large cap:', clsym.rstrip(), '$'+str(clp), clname.rstrip(), '+%'+str(x.combo_df.loc[cminv, ['Pct_change']][0]) )
-
-        recommended['4'] = ('Large cap:', clsym.rstrip(), '$'+str(clp), clname.rstrip(), '+%'+str(clupct) )
-
-        # Biggest % gainer stock
-        cmax = x.combo_df['Pct_change'].idxmax()
-        clp = x.combo_df.loc[cmax, 'Cur_price']
-        i_got_max = x.combo_df.loc[cmax]
-
-        clsym = i_got_max.at['Symbol']                # get symbol of lowest price item @ index_id
-        clname = i_got_max.at['Co_name']              # get name of lowest price item @ index_id
-        clupct = i_got_max.at['Pct_change']           # get %change of lowest price item @ index_id
-        #recommended['5'] = ('Top % gainer:', clsym.rstrip(), '$'+str(clp), clname.rstrip(), '+%'+str(x.combo_df.loc[cmax, ['Pct_change']][0]) )
-
-        recommended['5'] = ('Top % gainer:', clsym.rstrip(), '$'+str(clp), clname.rstrip(), '+%'+str(clupct) )
-        
-
-# Recommendeds ###############################################################
-        #  key    recomendation data     - (example output shown)
-        # =====================================================================
-        #   1:    Small cap % gainer: TXMD $0.818 TherapeuticsMD, Inc. +%7.12
-        #   2:    Unusual vol: SPRT $11.17 support.com, Inc. +%26.79
-        #   3:    Hottest: AUPH $17.93 Aurinia Pharmaceuticals I +%9.06
-        #   4:    Large cap: PHJMF $0.07 PT Hanjaya Mandala Sampoe +%9.2
-        #   5:    Top % gainer: SPRT $19.7 support.com, Inc. +%41.12
-        # todo: we should do a linear regression on the price curve for each item
-
-        print ( " " )
-        print ( f"============ recommendations >>Lowest buy price<< stocks with greatest % gain  =============" )
-        print ( " " )
-        for k, v in recommended.items():
-            print ( f"{k:3}: {v[0]:21} {v[1]:6} {v[3]:28} {v[2]:8} /  {v[4]}" )
-            print ( "--------------------------------------------------------------------------------------------" )
-
-# Summary ############### AVERGAES and computed info ##########################
-        print ( " " )
-        print ( "============== Market activity overview, inisghts & stats =================" )
-        avgs_prc = x.combo_grouped(2).round(2)       # insights
-        avgs_pct = x.combo_grouped(1).round(2)       # insights
-
-        print ( f"Price average over all stock movemnts" )
-        print ( f"{avgs_prc}" )
-        print ( " " )
-        print ( f"Percent  % average over all stock movemnts" )
-        print ( f"{avgs_pct}" )
-
-        #print ( f"Current day average $ gain: ${averages.iloc[-1]['Prc_change'].round(2)}" )
-        #print ( f"Current day percent gain:   %{averages.iloc[-1]['Pct_change'].round(2)}" )
-
-
+########################################################################
+# Techncial ANalysis
 # Get the Bull/Bear Technical performance Sentiment for all stocks in combo DF ######################
     """
     Bullish/Neutral/Bearish Technical indicators for each symbol
@@ -434,172 +416,10 @@ def main():
     else:
         pass
 
-# ##### M/L AI News Reader  #########################################################
-# ##### Currently read all news or ONE stock
-# ###################################################################################
-
-    if args['newsymbol'] is not False:
-            sx = 1
-            cmi_debug = __name__+"::_args_newsymbol.#1"
-            news_symbol = str(args['newsymbol'])        # symbol provided on CMDLine
-            final_sent_df = pd.DataFrame()              # reset DataFrame for each article
-            print ( " " )
-            print ( f"M/L news reader for Stock [ {news_symbol} ] =========================" )
-            news_ai = ml_nlpreader(1, args)
-            sent_ai = ml_sentiment(1, args)
-            news_ai.nlp_read_one(news_symbol, args)     # includes scan_news_feed() & eval_news_feed_stories()
-            kgraphdb = db_graph(1, args)                # inst a class 
-            kgraphdb.con_aopkgdb(1)                     # connect to neo4j db
-
-            ttc = 0     # article specific stats : total tokens
-            twc = 0     # article specific stats : total words
-            tsc = 0     # article specific stats : total scentences / paragra[phs]
-            ttkz = 0    # Cumulative : Total Tokens genertaed
-            twcz = 0    # Cumulative : Total words read
-            tscz = 0    # Cumulative : Total scentences / Paragraphs read
-
-    # ################################################################
-    # MAIN control loop for AI M/L NLP reading & Sentimnent analysis
-    # ################################################################
-            for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
-                aggmean_sent_df = pd.DataFrame()  # reset DataFrame for each article
-                # TESTING code only - to make testing complete quicker (only test 4 docs)
-                thint = news_ai.nlp_summary(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for
-                # TESTING: Long term, this will be a list of all the articles
-                
-                if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)
-                    ttkz += ttc
-                    twcz += twc
-                    tscz += tsc
-                    this_urlhash = sent_ai.active_urlhash
-                    pd.set_option('display.max_rows', None)
-                    pd.set_option('max_colwidth', 30)
-                    aggregate_mean = sent_ai.sen_df0.loc[sent_ai.sen_df0['urlhash'] == this_urlhash].groupby('snt')['rnk'].mean()    # fill NaN with 0.0
-                   
-                    # aggregate_mean DF keys are only set if the sentiment analysis computes a pos/net/neu sentimentfor the article.
-                    # If the article has no matching sentiment, thekeys are not set in the DF.
-                    # Check if the keys exists, and create a default = 0.0 if not
-                    nx, px, zx = 0.0, 0.0, 0.0
-                    try:
-                        px = aggregate_mean.loc['positive']
-                    except KeyError:
-                        logging.info( f'%s - Positive sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
-                        aggregate_mean.loc['positive'] = 0.0
-
-                    try:
-                        nx = aggregate_mean.loc['negative']
-                    except KeyError:
-                        aggregate_mean.loc['negative'] = 0.0
-                        logging.info( f'%s - Negative sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
-
-                    try:
-                        zx = aggregate_mean.loc['neutral']
-                    except KeyError:
-                        logging.info( f'%s - Neutral sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
-                        aggregate_mean.loc['neutral'] = 0.0
-
-                    #print ( f"\n\n### DEBUG: Article Dataframe 3 ####" )
-                    data_payload = [[ \
-                            sn_idx, \
-                            this_urlhash, \
-                            px, \
-                            nx, \
-                            zx ]]
-
-                    # build the Sentiment DF that shows interesting computed sentiment for each article
-                    sent_df_row = pd.DataFrame(data_payload, columns=['art', 'urlhash', 'psnt', 'nsnt', 'zsnt'] )
-                    aggmean_sent_df = pd.concat([aggmean_sent_df, sent_df_row])
-                    merge_row = pd.merge(news_ai.yfn.sen_stats_df, aggmean_sent_df, on=['art', 'urlhash'])
-                    final_sent_df = pd.concat([final_sent_df, merge_row], ignore_index=True)
-
-            ################################################################
-            # END of article processing loop
-            ################################################################
-            # We're not done cycling through all articles and computing sentiment for each one.
-            # Now we can display final stats and results
-            print (f"\n\n============================ Scentement Stats =========================================" )
-            print (f"Total tokens generated: {ttkz} - Total words read: {twcz} - Total scent/paras read {tscz}" )
-            print (f"Human read time: {(twcz / 237):.2f} mins - Total Human processing time: {(twcz / 237) + tscz + (tscz / 2):.2f} mins" )
-            pd.set_option('display.max_rows', None)
-            pd.set_option('display.max_columns', None)
-            print (f"=============================== Article Stats: {news_symbol.upper()} =====================================\n" )
-
-            # DEBUG
-            if args['bool_verbose'] is True:        # Logging level
-                news_ai.yfn.dump_ml_ingest()
-                print (f"{sent_ai.sen_df0}")
- 
-            #sent_ai.sen_df1 = sent_ai.sen_df0.groupby('snt').agg(['count'])
-            pd.set_option("expand_frame_repr", False)
-            aggregation_functions = { \
-                'art': 'nunique', \
-                'urlhash': 'nunique', \
-                'positive': 'sum', \
-                'neutral': 'sum', \
-                'negative': 'sum', \
-                'psnt': 'mean', \
-                'nsnt': 'mean', \
-                'zsnt': 'mean'
-                }
-
-            # Calculate the totals row
-            totals_row = final_sent_df.agg(aggregation_functions)
-            totals_df = pd.DataFrame(totals_row).T
-            totals_df.index = ['Totals']
-            final_sent_df['art'] = final_sent_df['art'].astype(object)
-            totals_df['urlhash'] = ''       # Or np.nan if preferred for a numerical representation
-            df_final = pd.concat([final_sent_df, totals_df])
-            print ( f"{df_final}")
-            print (f"\n")
-
-            positive_t = df_final.iloc[-1]['psnt']
-            negative_t = df_final.iloc[-1]['nsnt']
-            neutral_t = df_final.iloc[-1]['zsnt']
-            positive_c = df_final.iloc[-1]['positive']
-            negative_c = df_final.iloc[-1]['negative']
-            neutral_c = df_final.iloc[-1]['neutral']
-
-            print ( f"================= Final Sentiment Analysis for: {news_symbol.upper()} =========================" )       
-            precise_results = sent_ai.compute_precise_sentiment(
-                news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
-            )
-            print ( f" ")
-            #print (f"{sent_ai.sen_df3}")
-            
-            #################################################################
-            # Neo4j DATBASE FUNCTIONS
-            # KGdb stats
-            try:
-                found_sym = kgraphdb.check_node_exists(1, news_symbol)
-                if found_sym['present'] is True:    # True = symbol already exists
-                    # FIX: add unknown elments later (need to gather them from elsewhere first)
-                    # Article must be created first, then related to their parent symbol node
-                    kgraphdb.create_article_nodes(df_final, news_symbol)
-                    kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                    created = False
-                    pass    # do nothing is Ticker Symbol exists
-            except TypeError:
-                # Type:class 'NoneType' is discovered here...
-                kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
-                #kg_node_id = kgraphdb.create_sym_node(news_symbol)
-                # create a neo4j nodes Relationships, Properties and Types for each article thats associated with this symbol
-                kgraphdb.create_article_nodes(df_final, news_symbol)
-                kgraphdb.create_sym_art_rels(news_symbol, df_final,agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                kgraphdb.news_agency()
-                created = True
-                
-            if args['bool_verbose'] is True:
-                print (f" ")
-                if created is True:    # True = symbol already exists
-                    print ( f"Created new KG node_id: {kg_node_id}" )
-                else:
-                    print ( f"Symbol allready exist - New node NOT created !" )
-                res = kgraphdb.dump_symbols(1)
-                kgraphdb.close_aopkgdb(1, kgraphdb.driver)
-
 #################################################################################
-# 3 differnt methods to get a live quote ########################################
+#                               QUOITES
+#################################################################################
+# 3 differnt methods to get a live quote
 # NOTE: These 3 routines are *examples* of how to get quotes from the 3 live quote classes::
 # TODO: Add a 4th method - via alpaca live API
 
@@ -1114,14 +934,10 @@ def main():
             av = alphavantage_md(4, args)
             
             # Get top gainers and losers
-            cmi_debug = "aop.main()"+"::"+"AV_top-gainer-losers"
-            logging.info( f"%s - IN.#{yti}" % cmi_debug )
             gainers_losers = av.get_top_gainers_losers()
             if gainers_losers:
-                logging.info( f"%s - get DICT metadata / validate: {type(gainers_losers)}" % cmi_debug )
                 metadata = gainers_losers.get('metadata', {})
-                last_updated = gainers_losers.get('last_updated', {})
-                print(f"Market data as of: {last_updated}")
+                print(f"Market data as of: {metadata.get('last_updated', 'N/A')}")
                 
                 # Top gainers
                 top_gainers = gainers_losers.get('top_gainers')
@@ -1150,103 +966,6 @@ def main():
         except Exception as e:
             print(f"Error getting Alpha Vantage gainers/losers: {e}")
             logging.error(f"Alpha Vantage gainers/losers error: {e}")
-        
-        print(" ")
-
-    # Alpha Vantage market news integration
-    if args['alphavantage_news_symbol'] is not False:
-        print("========== Alpha Vantage Market News ==========")
-        
-        try:
-            av_news = alphavantage_md(5, args)
-            
-            # Check if a specific symbol was provided or get general market news
-            if args['alphavantage_news_symbol'].upper() != 'GENERAL':
-                news_symbol = args['alphavantage_news_symbol'].upper()
-                print(f"Getting market news for: {news_symbol}")
-                news_data = av_news.market_news(tickers=news_symbol, limit=10)
-            else:
-                print("Getting general market news...")
-                news_data = av_news.market_news(limit=15)
-            
-            if news_data and 'feed' in news_data:
-                articles = news_data['feed']
-                print(f"Found {len(articles)} news articles")
-                
-                if news_data.get('sentiment_score_definition'):
-                    print(f"\nSentiment Score Definition: {news_data['sentiment_score_definition']}")
-                
-                print("\nRecent Market News:")
-                print("-" * 80)
-                
-                for idx, article in enumerate(articles[:20], 1):  # Show top 20 articles
-                    print(f"\n{idx}. {article.get('title', 'N/A')}")
-                    print(f"   Source: {article.get('source', 'N/A')} | Published: {article.get('time_published', 'N/A')}")
-                    print(f"   url: {article.get('url', 'N/A')}")
-                    # This is where we insert the URL for this stock tick into the LMDB KV Datastore
-                    # LMDB POI-news KV might look like this: (urlhash, [ticker, url, publisher])
-                    
-                    # Show sentiment analysis
-                    sentiment_score = article.get('overall_sentiment_score', 0)
-                    sentiment_label = article.get('overall_sentiment_label', 'N/A')
-                    print(f"   Sentiment: {sentiment_label} (Score: {sentiment_score:.3f})")
-                    
-                    # Show topics if available
-                    topics = article.get('topics', [])
-                    if topics:
-                        topic_list = [topic.get('topic', 'N/A') for topic in topics[:3]]  # Show first 3 topics
-                        print(f"   Topics: {', '.join(topic_list)}")
-                    
-                    # Show ticker sentiment for specific symbols
-                    ticker_sentiment = article.get('ticker_sentiment', [])
-                    if ticker_sentiment:
-                        for ticker_data in ticker_sentiment[:3]:  # Show first 3 tickers
-                            ticker = ticker_data.get('ticker', 'N/A')
-                            relevance = ticker_data.get('relevance_score', 'N/A')
-                            ticker_sent_score = ticker_data.get('ticker_sentiment_score', 'N/A')
-                            ticker_sent_label = ticker_data.get('ticker_sentiment_label', 'N/A')
-                            print(f"   {ticker}: Relevance {relevance}, Sentiment {ticker_sent_label} ({ticker_sent_score})")
-                    
-                    # Show summary if available
-                    summary = article.get('summary', '')
-                    if summary:
-                        # Truncate summary to 100 characters
-                        summary_truncated = summary[:100] + "..." if len(summary) > 100 else summary
-                        print(f"   Summary: {summary_truncated}")
-                    
-                    print("   " + "-" * 78)
-                
-                # Show aggregate sentiment statistics
-                if articles:
-                    total_articles = len(articles)
-                    positive_articles = len([a for a in articles if a.get('overall_sentiment_label') == 'Bullish'])
-                    negative_articles = len([a for a in articles if a.get('overall_sentiment_label') == 'Bearish'])
-                    neutral_articles = len([a for a in articles if a.get('overall_sentiment_label') == 'Neutral'])
-                    
-                    avg_sentiment = sum([float(a.get('overall_sentiment_score', 0)) for a in articles]) / total_articles
-                    
-                    print(f"\nAggregate News Sentiment Analysis:")
-                    print(f"  Total Articles: {total_articles}")
-                    print(f"  Bullish: {positive_articles} ({positive_articles/total_articles*100:.1f}%)")
-                    print(f"  Bearish: {negative_articles} ({negative_articles/total_articles*100:.1f}%)")
-                    print(f"  Neutral: {neutral_articles} ({neutral_articles/total_articles*100:.1f}%)")
-                    print(f"  Average Sentiment Score: {avg_sentiment:.3f}")
-                    
-                    if avg_sentiment > 0.1:
-                        overall_sentiment = "Bullish"
-                    elif avg_sentiment < -0.1:
-                        overall_sentiment = "Bearish"  
-                    else:
-                        overall_sentiment = "Neutral"
-                    
-                    print(f"  Overall Market Sentiment: {overall_sentiment}")
-                    
-            else:
-                print("No news articles available")
-                
-        except Exception as e:
-            print(f"Error fetching Alpha Vantage market news: {e}")
-            logging.error(f"Alpha Vantage market news error: {e}")
         
         print(" ")
 

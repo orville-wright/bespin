@@ -1,8 +1,10 @@
 #! python3
+
+from requests_html import HTMLSession
 import requests
 from bs4 import BeautifulSoup
-# import pandas as pd
-import modin.pandas as pd
+import pandas as pd
+#import modin.pandas as pd
 import logging
 import argparse
 
@@ -53,26 +55,36 @@ class y_cookiemonster:
 ##############################################################################
 # method #1
     def get_scap_data(self):
-        """Connect to finance.yahoo.com and extract (scrape) the raw sring data out of"""
-        """the embedded webpage [Stock:Top Gainers] html data table. Returns a BS4 handle."""
+        """
+        Connect to finance.yahoo.com and extract (scrape) the raw sring data out of
+        current a DEBUF function for General news scraping
+        """
 
         cmi_debug = __name__+"::"+self.get_scap_data.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
-        r = requests.get("https://finance.yahoo.com/gainers" )
-        logging.info('%s - read html stream' % cmi_debug )
-        self.soup = BeautifulSoup(r.text, 'html.parser')
+        url="https://finance.yahoo.com"
+
+        js_session = HTMLSession()                  # Create a new session        
+        with js_session.get(url) as r:          # must do a get() - NO setting cookeis/headers)
+            logging.info(f'%s  - Simple HTML Request get()...' % cmi_debug )
+
+        #r = requests.get("https://finance.yahoo.com/" )
+        logging.info('%s - page read, not JS rendering...' % cmi_debug )
+        #r.text
+        r.html.render(timeout=10)
+
+        #self.soup = BeautifulSoup(r.text, 'html.parser')
         # ATTR style search. Results -> Dict
         # <tr tag in target merkup line has a very complex 'class=' but the attributes are unique. e.g. 'simpTblRow' is just one unique attribute
-        logging.info('%s - save data object handle' % cmi_debug )
-        self.tag_tbody = self.soup.find('tbody')
-        self.all_tag_tr = self.soup.find_all(attrs={"class": "simpTblRow"})   # simpTblRow
+        #logging.info('%s - save data object handle' % cmi_debug )
+        #self.tag_tbody = self.soup.find('tbody')
+        #self.all_tag_tr = self.soup.find_all(attrs={"class": "simpTblRow"})   # simpTblRow
         #self.tr_rows = self.tag_tbody.find(attrs={"class": "simpTblRow"})
-
-        print ( f">>> DEBUG:\n {r.text}" )
+        #print ( f">>> DEBUG:\n {r.text}" )
 
         logging.info('%s - close url handle' % cmi_debug )
         r.close()
-        return
+        return r
 
 ###########################################################################################
 # method #2
@@ -95,28 +107,17 @@ class y_cookiemonster:
         logging.info( f"%s - Init JS_session HTMLsession() setup" % cmi_debug )
 
         js_session = HTMLSession()
-        
-        #js_resp0 = js_session.get( test_url )
-        #js_resp0 = js_session.get( test_url, stream=True, headers=self.yahoo_headers, cookies=self.yahoo_headers, timeout=5 ) as js_resp0:
-        #with js_session.get( test_url, stream=True, headers=self.yahoo_headers, cookies=self.yahoo_headers, timeout=5 ) as js_resp0:
-        # with js_session.get( 'https://www.javatester.org/javascript.html', stream=True, timeout=5 ) as self.js_resp0
         with js_session.get( js_url ) as self.js_resp0:
             logging.info( f"%s - JS_session.get() sucessful: {js_url}" % cmi_debug )
         
         logging.info( f"%s - js.render()... diasbled" % cmi_debug )
-        #self.js_resp0.html.render()
+        self.js_resp0.html.render()
         # this needs to be a setting that can be controlled from the caller.
         # it correnlty times-out with pypuppeteer timeout failure
-
-        # print ( f"{self.js_resp0.text}" )
-        # logging.info( f"%s - html.render() DONE !" % cmi_debug )
+        # note: self.js_resp0.text
 
         hot_cookies = requests.utils.dict_from_cookiejar(self.js_resp0.cookies)
         logging.info( f"%s - Swap {len(self.js_resp0.cookies)} JS cookies into yahoo_headers" % cmi_debug )
         js_session.cookies.update(self.yahoo_headers)
-        #logging.info( f"%s - Dump JS cookie JAR\n {json.dumps(hot_cookies)}" % cmi_debug )
-
-        # self.js_session.cookies.update({'bm_sv': self.js_resp0.cookies['bm_sv']} )    # NASDAQ cookie hack
-        # self.js_session.cookies.update(self.nasdaq_headers)    # load cookie/header hack data set into session
 
         return self.js_resp0

@@ -1,7 +1,7 @@
 #! python3
 from requests_html import HTMLSession
-# import pandas as pd
-import modin.pandas as pd
+import pandas as pd
+#import modin.pandas as pd
 import numpy as np
 import re
 import logging

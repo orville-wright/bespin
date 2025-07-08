@@ -1,5 +1,6 @@
 #! python3
 import requests
+from requests_html import HTMLSession
 from bs4 import BeautifulSoup
 import pandas as pd
 #import modin.pandas as pd
@@ -8,14 +9,30 @@ import re
 import logging
 import argparse
 import time
-from rich import print
+import hashlib
+#from rich import print
+#from rich.markup import escape
+
+import asyncio
+import os
+import json
+import time
+from pathlib import Path
+from typing import List
+
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
+from crawl4ai import JsonCssExtractionStrategy
+from crawl4ai import LLMConfig
+from crawl4ai import BrowserConfig
+
+__cur_dir__ = Path(__file__).parent
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
 
 #####################################################
-class y_topgainers:
-    """Class to extract Top Gainer data set from finance.yahoo.com"""
+class y_generalnews:
+    """Class to extract Genral Macro news from finance.yahoo.com"""
     # global accessors
     tg_df0 = None        # DataFrame - Full list of top gainers
     tg_df1 = None        # DataFrame - Ephemerial list of top 10 gainers. Allways overwritten
@@ -25,6 +42,9 @@ class y_topgainers:
     ext_req = None       # request was handled by y_cookiemonster
     yti = 0
     cycle = 0            # class thread loop counter
+    get_counter = 0      # count of get() requests
+    yfn_jsdb = {}
+    yfn_htmldata = None
 
     dummy_url = "https://finance.yahoo.com/markets/stocks/most-active/"
 
@@ -43,8 +63,8 @@ class y_topgainers:
         logging.info( f'%s Instance.#{yti}' % cmi_debug )
         # init empty DataFrame with present colum names
         self.tg_df0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
-        self.tg_df1 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
-        self.tg_df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
+        #self.tg_df1 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
+        #self.tg_df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
         self.yti = yti
         return
 
@@ -55,6 +75,73 @@ class y_topgainers:
         #self.js_session.cookies.update({'A1': self.js_resp0.cookies['A1']} )    # yahoo cookie hack
         return
 
+#method 1.2
+
+    def update_headers(self, ch):
+
+        # HACK to help logging() f-string bug to handle strings with %
+        cmi_debug = __name__+"::"+self.update_headers.__name__+".#"+str(self.yti)+"  - "+ch
+        logging.info('%s' % cmi_debug )
+        cmi_debug = __name__+"::"+self.update_headers.__name__+".#"+str(self.yti)
+        self.path = ch
+        self.ext_req.cookies.update({'path': self.path} )
+ 
+        if self.args['bool_xray'] is True:
+            print ( f"=========================== {self.yti} / session cookies ===========================" )
+            for i in self.ext_req.cookies.items():
+                print ( f"{i}" )
+
+        return
+
+###############################################################
+
+    def do_simple_get(self, url):
+        """
+        get simple raw HTML data structure (data not processed by JAVAScript engine)
+        NOTE: get URL is assumed to have allready been set (self.yfqnews_url)
+                Copies exact pattern from working y_topgainers.py file
+        """
+        cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)
+        logging.info( f'%s  - CYCLE: {self.get_counter}' % cmi_debug )
+
+        js_session = HTMLSession()                  # Create a new session        
+        with js_session.get(url) as self.js_resp0:  # must do a get() - NO setting cookeis/headers)
+            logging.info(f'%s  - Simple HTML Request get()...' % cmi_debug )
+
+        # HACK to help logging() f-string bug to handle strings with %
+            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+"  - JS get() success: "+url
+            logging.info('%s' % cmi_debug )
+            #logging.info( f"%s - JS_session.get() sucessful: {url}" % cmi_debug )
+            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)    # reset cmi_debug
+            if self.js_resp0.status_code != 200:
+                    logging.error(f'{cmi_debug} - HTTP {self.js_resp0.status_code}: HTML fetch FAILED')
+                    return None
+
+        self.get_counter += 1
+        logging.info( f"%s  - js.render()... diasbled" % cmi_debug )
+        logging.info( f'%s  - Store basic HTML dataset' % cmi_debug )
+        self.js_resp2 = self.js_resp0               # Set js_resp2 to the same response as js_resp0 for now
+        hot_cookies = requests.utils.dict_from_cookiejar(self.js_resp0.cookies)
+        logging.info( f"%s - Swap {len(hot_cookies)} cookies into LOCAL yahoo_headers" % cmi_debug )
+
+        self.yfn_htmldata = self.js_resp0.text
+        auh = hashlib.sha256(url.encode())          # hash the url
+        aurl_hash = auh.hexdigest()
+        logging.info( f'%s  - CREATE cache entry: [ {aurl_hash} ]' % cmi_debug )
+        self.yfn_jsdb[aurl_hash] = self.js_resp0    # create CACHE entry in jsdb !!response, not full page TEXT data !!
+
+        # Xray DEBUG
+        '''
+        if self.args['bool_xray'] is True:
+            print ( f"========================== {self.yti} / HTML get() session cookies ================================" )
+            logging.info( f'%s  - resp0 type: {type(self.js_resp0)}' % cmi_debug )
+            for i in self.js_resp0.cookies.items():
+                print ( f"{i}" )
+        '''
+
+        return self.js_resp0
+
+###################################################################################
 # method #2
     def ext_get_data(self, yti):
         """
@@ -68,62 +155,117 @@ class y_topgainers:
         self.yti = yti
         cmi_debug = __name__+"::"+self.ext_get_data.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
-        logging.info('%s - ext request pre-processed by cookiemonster...' % cmi_debug )
+        logging.info('%s - ext request pre-processed by cookiemonster' % cmi_debug )
         # use preexisting resposne from  managed req (handled by cookie monster) 
+        #self.yfn_htmldata
         r = self.ext_req
-        logging.info( f"%s - BS4 stream processing..." % cmi_debug )
+        logging.info( f"%s - BS4 stream processing... {r.url}" % cmi_debug )
+        #self.soup = BeautifulSoup(self.yfn_htmldata, 'html.parser')
         self.soup = BeautifulSoup(r.text, 'html.parser')
-        self.tag_tbody = self.soup.find('tbody')
-        self.tr_rows = self.tag_tbody.find_all("tr")
-        #self.all_tag_tr = self.soup.find(attrs={"class": "simpTblRow"})
+        # Craw4ai testing...
+        # CSS zone and selectors
+        # BS4 style:  <div> class=column-container yf-1ce4p3e
+        # craw4ai:    div.news-stream.yf-19i1jx3 ul li a.subtle-link.titles
+        # alt:        <ul> stream-items yf-1drgw5l
+        #             class="stream-item story-item yf-1drgw5l"
+        #self.tag_tbody = self.soup.find('column-container yf-1ce4p3e')
+        #self.tag_tbody = self.soup.ul.find('stream-items')
+        # ("div", attrs={"class": "column column--full supportive-data"} )
+        # soup.div.find_all(attrs={'class': 'D(tbc)'} )
+
+        #self.tag_tbody = self.soup.find_all(attrs={"class": "column-container"} )
+        self.tag_tbody = self.soup.find_all(attrs={"class": "news-stream yf-19i1jx3"} )
+        print ( f"#### DEBUG\n#### COUNT: {len(self.tag_tbody)}\n#### DATA: {self.tag_tbody}" )
+        #print ( f"#### DEBUG\n{r.text}" )       # the raw html page we opened. before BS4 processing
+        print ( f"URL extracted: {r.url} ")
+        asyncio.run(self.css_struct_extract_schema(r.url))
+        #self.tr_rows = self.tag_tbody.find_all("li")
         logging.info('%s Page processed by BS4 engine' % cmi_debug )
         return
-    
+
+######################################################################################
+# craw4ai
+    async def css_struct_extract_schema(self, this_url):
+        """Extract structured data using CSS selectors"""
+        # Check if schema file exists
+        print ( f"### DEBUG: Loading YF schema / recvd URL: {this_url}" )
+        schema_file_path = f"{__cur_dir__}/YF_MainNews_schema.json"
+        if os.path.exists(schema_file_path):
+            with open(schema_file_path, "r") as f:
+                schema = json.load(f)
+                print ( f"{json.dumps(schema, indent=2)}" )
+                extraction_strategy = JsonCssExtractionStrategy(schema)
+                config = CrawlerRunConfig(extraction_strategy=extraction_strategy, verbose=True)
+            
+                # Use the fast CSS extraction (no LLM calls during extraction)
+                async with AsyncWebCrawler(config=BrowserConfig(headless=True,
+                                                                verbose=True, use_persistent_context=True,
+                                                                user_data_dir="/home/dbrace/code/bespin/.chrome_cache/",
+                                                                extra_args=["--no-sandbox"]
+                                                                )) as crawler:
+                #async with AsyncWebCrawler() as crawler:
+                    resultx: List[CrawlResult] = await crawler.arun(
+                        "https://finance.yahoo.com/", config=config
+                    )
+
+                    for result in resultx:
+                        print(f"#### DEBUG: URL: {result.url}")
+                        print(f"#### DEBUG: Success: {result.success}")
+                        if result.success:
+                            #print ( f"{result.cleaned_html}" )
+                            data = json.loads(result.extracted_content)
+                            print(json.dumps(data, indent=2))
+                        else:
+                            print("Failed to extract structured data")
+        else:
+            # Generate schema using LLM (one-time setup)
+            print ( f"### DEBUG: FAILED to load YF schema..." )
+            return 1
+                    # Create no-LLM extraction strategy with the generated schema
+        return
+
+######################################################################################
+ 
 # method #3
-    def build_tg_df0(self):
+    def build_df0(self):
         """
         Build-out a fully populated Pandas DataFrame containg all the extracted/scraped fields from the
         html/markup table data Wrangle, clean/convert/format the data correctly.
         """
 
-        cmi_debug = __name__+"::"+self.build_tg_df0.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.build_df0.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
         time_now = time.strftime("%H:%M:%S", time.localtime() )
         logging.info('%s - Create clean NULL DataFrame' % cmi_debug )
         self.tg_df0 = pd.DataFrame()             # new df, but is NULLed
         x = 0
-        self.rows_extr = int( len(self.tag_tbody.find_all('tr')) )
+
+        # CSS zone:  div.news-stream.yf-19i1jx3 ul li a.subtle-link.titles
+        #            <div> class=column-container yf-1ce4p3e
+        self.rows_extr = int( len(self.tag_tbody.find_all('li')) )
         self.rows_tr_rows = int( len(self.tr_rows) )
         #logging.info( f'%s - Rows 1 extracted: {self.rows_extr}' % cmi_debug )
         #logging.info( f'%s - Rows 2 extracted: {self.rows_tr_rows}' % cmi_debug )
 
         for datarow in self.tr_rows:
 
-            """
             # >>>DEBUG<< for whedatarow.stripped_stringsn yahoo.com changes data model...
             y = 1
             print ( f"===================== Debug =========================" )
             #print ( f"Data {y}: {datarow}" )
-            for i in datarow.find_all("td"):
+            for i in datarow.find_all("a"):
                 print ( f"===================================================" )
-                if i.canvas is not None:
-                    print ( f"Data {y}: Found Canvas, skipping..." )
-                else:
-                    print ( f"Data {y}: {i.text}" )
-                    print ( f"Data g: {next(i.stripped_strings)}" )
+                print ( f"Data {y}: {i.text}" )
+                print ( f"Data g: {next(i.stripped_strings)}" )
                 #logging.info( f'%s - Data: {debug_data.strings}' % cmi_debug )
                 y += 1
             print ( f"===================== Debug =========================" )
             # >>>DEBUG<< for when yahoo.com changes data model...
-            """
           
             # Data Extractor Generator
             def extr_gen(): 
-                for i in datarow.find_all("td"):
-                    if i.canvas is not None:
-                        yield ( f"canvas" )
-                    else:
-                        yield ( f"{next(i.stripped_strings)}" )
+                for i in datarow.find_all("li"):
+                    yield ( f"{next(i.stripped_strings)}" )
 
             ################################ 1 ####################################
             extr_strs = extr_gen()

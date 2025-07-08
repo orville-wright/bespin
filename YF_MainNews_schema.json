@@ -1,0 +1,28 @@
+{
+  "name": "YahooFinanceNewsExtraction",
+  "baseSelector": "div.news-stream.yf-19i1jx3 ul li a.subtle-link",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": ".titles",
+      "type": "attribute",
+      "attribute": "title"
+    },
+    {
+      "name": "Teaser",
+      "selector": ".titles",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": ".titles",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Publisher",
+      "selector": "div.publishing.yf-1weyqlp",
+      "type": "text"
+    }
+  ]
+}

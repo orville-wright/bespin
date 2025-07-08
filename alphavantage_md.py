@@ -4,6 +4,7 @@ import pandas as pd
 import logging
 import os
 import dotenv
+import json
 from datetime import datetime, timedelta
 from rich import print
 
@@ -13,29 +14,32 @@ class alphavantage_md:
     Provides real-time quotes, historical data, technical indicators, and company fundamentals
     Requires Alpha Vantage API key (free tier available at https://www.alphavantage.co/support/#api-key)
     """
+
+    instance_id = 0
     
     def __init__(self, instance_id, global_args=None):
+        cmi_debug = __name__+"::"+self.__init__.__name__
         self.instance_id = instance_id
+        logging.info( f'%s  - Instantiate.#{instance_id}' % cmi_debug )
         self.args = global_args or {}
         self.base_url = "https://www.alphavantage.co/query"
         
         # Load environment variables from .env file
         load_status = dotenv.load_dotenv()
+        logging.info( f'%s  - Load keys from .env file' % cmi_debug )
         if load_status is False:
-            logging.warning('Environment variables not loaded from .env file.')
+            logging.warning(f'%s - Env loaded failed !' % cmi_debug)
         
         # Get API key from environment
         self.api_key = os.getenv('ALPHAVANTAGE_API_KEY')
         if not self.api_key:
-            logging.warning("ALPHAVANTAGE_API_KEY not found in environment. Some features may not work.")
+            logging.warning( f"%s - ALPHAVANTAGE_API_KEY not found!" % cmi_debug)
         
         self.session = requests.Session()
         self.quotes_df = pd.DataFrame()
         self.timeseries_df = pd.DataFrame()
         self.indicators_df = pd.DataFrame()
         self.fundamentals_df = pd.DataFrame()
-        
-        logging.info(f"Alpha Vantage data extractor initialized - Instance #{instance_id}")
     
     def get_global_quote(self, symbol):
         """
@@ -52,6 +56,8 @@ class alphavantage_md:
                 'apikey': self.api_key
             }
             
+            cmi_debug = __name__+"::"+self.get_global_quote.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -103,6 +109,8 @@ class alphavantage_md:
                 'apikey': self.api_key
             }
             
+            cmi_debug = __name__+"::"+self.get_intraday_data.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -160,6 +168,8 @@ class alphavantage_md:
                 'apikey': self.api_key
             }
             
+            cmi_debug = __name__+"::"+self.get_daily_data.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )            
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -212,7 +222,9 @@ class alphavantage_md:
                 'symbol': symbol.upper(),
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_weekly_data.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -264,7 +276,9 @@ class alphavantage_md:
                 'symbol': symbol.upper(),
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_monthly_data.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -322,7 +336,9 @@ class alphavantage_md:
                 'series_type': series_type,
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_sma.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -374,7 +390,9 @@ class alphavantage_md:
                 'series_type': series_type,
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_rsi.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -422,7 +440,9 @@ class alphavantage_md:
                 'symbol': symbol.upper(),
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_company_overview.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -501,7 +521,9 @@ class alphavantage_md:
                 'symbol': symbol.upper(),
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_income_statement.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -575,7 +597,9 @@ class alphavantage_md:
                 'keywords': keywords,
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_search_results.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -628,7 +652,9 @@ class alphavantage_md:
                 'function': 'MARKET_STATUS',
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_market_status.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
@@ -662,20 +688,28 @@ class alphavantage_md:
                 'function': 'TOP_GAINERS_LOSERS',
                 'apikey': self.api_key
             }
-            
+
+            cmi_debug = __name__+"::"+self.get_top_gainers_losers.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )               
             response = self.session.get(self.base_url, params=params)
             response.raise_for_status()
             
             data = response.json()
+            #print ( f"#### DEBUG: JSON:\n{json.dumps(data, indent=2)}" ) 
             
             if 'top_gainers' in data:
+                cmi_debug = __name__+"::"+self.get_top_gainers_losers.__name__+".#"+str(self.instance_id)
+                logging.info( f'%s  - Build DICT from JSON get()' % cmi_debug )
                 result = {
                     'metadata': data.get('metadata', {}),
+                    'last_updated': data.get('last_updated', {}),
                     'top_gainers': pd.DataFrame(data.get('top_gainers', [])),
                     'top_losers': pd.DataFrame(data.get('top_losers', [])),
                     'most_actively_traded': pd.DataFrame(data.get('most_actively_traded', []))
                 }
-                return result
+                logging.info( f'%s  - DICT result sucessfully built' % cmi_debug )
+                #print ( f"#### DEBUG: {type(result)}\n{result}" )
+                return result       # dict
             
             # Check for error messages
             if 'Error Message' in data:
@@ -687,6 +721,97 @@ class alphavantage_md:
             
         except Exception as e:
             logging.error(f"Error fetching top gainers/losers: {e}")
+            return {}
+
+    ############################## news ##########################
+    def market_news(self, tickers=None, topics=None, time_from=None, time_to=None, sort='LATEST', limit=50):
+        """
+        Get live and historical market news with sentiment analysis
+        tickers: Filter by stock/crypto/forex symbols (e.g., 'AAPL' or 'AAPL,MSFT')
+        topics: Filter by news categories ('technology', 'earnings', 'blockchain', etc.)
+        time_from: Start time for articles (format: YYYYMMDDTHHMM)
+        time_to: End time for articles (format: YYYYMMDDTHHMM)
+        sort: Sort order ('LATEST', 'EARLIEST', 'RELEVANCE')
+        limit: Number of results (default 50, max 1000)
+        """
+        if not self.api_key:
+            logging.error("Alpha Vantage API key required")
+            return {}
+        
+        try:
+            params = {
+                'function': 'NEWS_SENTIMENT',
+                'apikey': self.api_key
+            }
+            
+            # Add optional parameters if provided
+            if tickers:
+                params['tickers'] = tickers
+            if topics:
+                params['topics'] = topics
+            if time_from:
+                params['time_from'] = time_from
+            if time_to:
+                params['time_to'] = time_to
+            if sort:
+                params['sort'] = sort
+            if limit:
+                params['limit'] = str(limit)
+            
+            cmi_debug = __name__+"::"+self.market_news.__name__+".#"+str(self.instance_id)
+            logging.info( f'%s  - API endpoint get()' % cmi_debug )
+            response = self.session.get(self.base_url, params=params)
+            response.raise_for_status()
+            
+            data = response.json()
+            #print ( f"#### DEBUG: JSON:\n{json.dumps(data, indent=2)}" )
+            
+            if 'feed' in data:
+                cmi_debug = __name__+"::"+self.market_news.__name__+".#"+str(self.instance_id)
+                logging.info( f'%s  - Build result from JSON' % cmi_debug )
+                
+                # Process news articles into structured format
+                articles = []
+                for article in data.get('feed', []):
+                    article_data = {
+                        'title': article.get('title'),
+                        'url': article.get('url'),
+                        'time_published': article.get('time_published'),
+                        'authors': article.get('authors', []),
+                        'summary': article.get('summary'),
+                        'banner_image': article.get('banner_image'),
+                        'source': article.get('source'),
+                        'category_within_source': article.get('category_within_source'),
+                        'source_domain': article.get('source_domain'),
+                        'topics': article.get('topics', []),
+                        'overall_sentiment_score': float(article.get('overall_sentiment_score', 0)),
+                        'overall_sentiment_label': article.get('overall_sentiment_label'),
+                        'ticker_sentiment': article.get('ticker_sentiment', [])
+                    }
+                    articles.append(article_data)
+                
+                result = {
+                    'items': data.get('items'),
+                    'sentiment_score_definition': data.get('sentiment_score_definition'),
+                    'relevance_score_definition': data.get('relevance_score_definition'),
+                    'feed': articles
+                }
+                
+                logging.info( f'%s  - News data successfully processed' % cmi_debug )
+                return result
+            
+            # Check for error messages
+            if 'Error Message' in data:
+                logging.error(f"Alpha Vantage API error: {data['Error Message']}")
+            elif 'Note' in data:
+                logging.warning(f"Alpha Vantage API note: {data['Note']}")
+            elif 'Information' in data:
+                logging.warning(f"Alpha Vantage API info: {data['Information']}")
+            
+            return {}
+            
+        except Exception as e:
+            logging.error(f"Error fetching market news: {e}")
             return {}
 
 ############################## MAIN #############################################
@@ -742,6 +867,16 @@ def main():
         market_status = av.get_market_status()
         if market_status:
             print(f"Market status retrieved successfully")
+        
+        # Test market news
+        print(f"\nGetting market news for {test_symbol}...")
+        news_data = av.market_news(tickers=test_symbol, limit=5)
+        if news_data and 'feed' in news_data:
+            print(f"News articles retrieved: {len(news_data['feed'])}")
+            if news_data['feed']:
+                first_article = news_data['feed'][0]
+                print(f"Latest article: {first_article.get('title')}")
+                print(f"Sentiment: {first_article.get('overall_sentiment_label')} ({first_article.get('overall_sentiment_score')})")
         
     except Exception as e:
         print(f"Error in main: {e}")
