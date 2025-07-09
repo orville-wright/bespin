@@ -44,6 +44,7 @@ from eodhistoricaldata_md import eodhistoricaldata_md
 from financialmodelingprep_md import financialmodelingprep_md
 from stooq_md import stooq_md
 from y_generalnews import y_generalnews
+from barrons_news import barrons_news
 
 # Globals
 work_inst = 0
@@ -192,17 +193,18 @@ def main():
 ########### 3 10x10x60 ################
 # YAHOO General News reader 
     if args['bool_tenten60'] is True:
-        print ( "============================== Testing Craw4ai YAHOO News REader  =================================" )
-        print ( " " )
+        barrons_news_reader = barrons_news(1)
+        asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
+        
         ############## hacking on general news
-        genews_reader = y_cookiemonster(3)
-        genews_dataset = y_generalnews(3)
-        genews_dataset.init_dummy_session()
-
-        #genews_dataset.ext_req = genews_dataset.do_simple_get('https://finance.yahoo.com/')
-        genews_dataset.ext_req = genews_reader.get_js_data('finance.yahoo.com/')
-        genews_dataset.ext_get_data(3)
-        gx = genews_dataset.build_df0()
+        # this work is trying to use craw4ai to scrap finaince.yahoo.com under severe anti-bot guardrails
+        #genews_reader = y_cookiemonster(3)
+        #genews_dataset = y_generalnews(3)
+        #genews_dataset.init_dummy_session()
+        #genews_dataset.ext_req = genews_dataset.do_simple_get('https://finance.yahoo.com')
+        #genews_dataset.ext_req = genews_reader.get_js_data('barrons.com/real-time/2')
+        #genews_dataset.ext_get_data(3)
+        #gx = genews_dataset.build_df0()
         print ( " " )
         print ( " " )
 

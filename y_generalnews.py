@@ -159,9 +159,12 @@ class y_generalnews:
         # use preexisting resposne from  managed req (handled by cookie monster) 
         #self.yfn_htmldata
         r = self.ext_req
-        logging.info( f"%s - BS4 stream processing... {r.url}" % cmi_debug )
+        #print (f"###DEBUG:\n{r.text}")
+        
+        logging.info( f"%s - Craw4ai stream processing... {r.url}" % cmi_debug )
         #self.soup = BeautifulSoup(self.yfn_htmldata, 'html.parser')
-        self.soup = BeautifulSoup(r.text, 'html.parser')
+        #self.soup = BeautifulSoup(r.text, 'html.parser')
+        
         # Craw4ai testing...
         # CSS zone and selectors
         # BS4 style:  <div> class=column-container yf-1ce4p3e
@@ -174,8 +177,8 @@ class y_generalnews:
         # soup.div.find_all(attrs={'class': 'D(tbc)'} )
 
         #self.tag_tbody = self.soup.find_all(attrs={"class": "column-container"} )
-        self.tag_tbody = self.soup.find_all(attrs={"class": "news-stream yf-19i1jx3"} )
-        print ( f"#### DEBUG\n#### COUNT: {len(self.tag_tbody)}\n#### DATA: {self.tag_tbody}" )
+        #self.tag_tbody = self.soup.find_all(attrs={"class": "news-stream yf-19i1jx3"} )
+        #print ( f"#### DEBUG\n#### COUNT: {len(self.tag_tbody)}\n#### DATA: {self.tag_tbody}" )
         #print ( f"#### DEBUG\n{r.text}" )       # the raw html page we opened. before BS4 processing
         print ( f"URL extracted: {r.url} ")
         asyncio.run(self.css_struct_extract_schema(r.url))
@@ -199,22 +202,21 @@ class y_generalnews:
             
                 # Use the fast CSS extraction (no LLM calls during extraction)
                 async with AsyncWebCrawler(config=BrowserConfig(headless=True,
-                                                                verbose=True, use_persistent_context=True,
-                                                                user_data_dir="/home/dbrace/code/bespin/.chrome_cache/",
-                                                                extra_args=["--no-sandbox"]
+                                                                verbose=True,
                                                                 )) as crawler:
                 #async with AsyncWebCrawler() as crawler:
-                    resultx: List[CrawlResult] = await crawler.arun(
-                        "https://finance.yahoo.com/", config=config
+                    results: List[CrawlResult] = await crawler.arun(
+                        this_url, config=config
                     )
 
-                    for result in resultx:
+                    for result in results:
                         print(f"#### DEBUG: URL: {result.url}")
                         print(f"#### DEBUG: Success: {result.success}")
                         if result.success:
                             #print ( f"{result.cleaned_html}" )
                             data = json.loads(result.extracted_content)
                             print(json.dumps(data, indent=2))
+                            print (f"###DEBUG:\n{result}")
                         else:
                             print("Failed to extract structured data")
         else:
