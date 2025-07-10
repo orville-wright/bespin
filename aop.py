@@ -45,6 +45,7 @@ from financialmodelingprep_md import financialmodelingprep_md
 from stooq_md import stooq_md
 from y_generalnews import y_generalnews
 from barrons_news import barrons_news
+from benzinga_news import benzinga_news
 
 # Globals
 work_inst = 0
@@ -195,6 +196,9 @@ def main():
     if args['bool_tenten60'] is True:
         barrons_news_reader = barrons_news(1)
         asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
+        
+        benzinga_news_reader = benzinga_news(1)
+        asyncio.run(benzinga_news_reader.craw4ai_str_schema_extr())
         
         ############## hacking on general news
         # this work is trying to use craw4ai to scrap finaince.yahoo.com under severe anti-bot guardrails

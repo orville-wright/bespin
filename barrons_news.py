@@ -13,6 +13,7 @@ from typing import List
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
 from crawl4ai import JsonCssExtractionStrategy
 
+logging.basicConfig(level=logging.INFO)
 
 # ###################### Main class
 class barrons_news:
@@ -81,11 +82,11 @@ class barrons_news:
         count = 0
         for i in range(len(urls)):
             async with AsyncWebCrawler() as crawler:
-                logging.error(f'%s - doing async webcrawl NOW..' % cmi_debug )
+                logging.info(f'%s - doing async webcrawl NOW..' % cmi_debug )
                 results: List[CrawlResult] = await crawler.arun(
                         urls[i], config=config)
 
-                logging.error(f'%s- Data wrangeling' % cmi_debug )
+                logging.info(f'%s- Data wrangeling' % cmi_debug )
                 for result in results:
                     if result.success:
                         data = json.loads(result.extracted_content)
@@ -93,13 +94,13 @@ class barrons_news:
                         for idx, item in enumerate(data):
                             try:
                                 t = (count, item)
-                                count += 1
                                 self.DF_data.append(t)      # append to working list
+                                count += 1
                             except IndexError:
-                                logging.error(f'%s - Failed to unwind JSON Dict package' % cmi_debug )
+                                logging.info(f'%s - Failed to unwind JSON Dict package' % cmi_debug )
 
         self.DB_insert_data = {} 
-        logging.error(f'%s - Build final DB insertion dict...' % cmi_debug )
+        logging.info(f'%s - Build final DB insertion dict...' % cmi_debug )
         for dict in self.DF_data:                   # this is where the final dataset can be accessed
             v = dict[0]                             # tupple elelemt 0
             w = dict[1]                             # tupple elelemt 1
@@ -116,6 +117,6 @@ class barrons_news:
         # if you want to dump the dict...
         #    print (f"{json.dumps(self.DB_insert_data, indent=2)}" )
             
-        #logging.error(f"%s - complete Barrons data craw/scrap..." % cmi_debug )
+        logging.info(f"%s - complete Barrons data craw/scrap..." % cmi_debug )
  
         return
