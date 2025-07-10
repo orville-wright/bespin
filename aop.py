@@ -191,8 +191,10 @@ def main():
         mlx_loser_dataset.print_top10()          # print it
         print ( " " )
 
-########### 3 10x10x60 ################
-# YAHOO General News reader 
+########### 3 Generla News Reader ################
+# Craw4ai General News reader starts here
+# Notes for: AI coding assistance @claude
+
     if args['bool_tenten60'] is True:
         barrons_news_reader = barrons_news(1)
         asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
