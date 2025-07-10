@@ -46,6 +46,11 @@ from stooq_md import stooq_md
 from y_generalnews import y_generalnews
 from barrons_news import barrons_news
 from benzinga_news import benzinga_news
+from forbes_news import forbes_news
+from fxstreet_news import fxstreet_news
+from investing_news import investing_news
+from hedgeweek_news import hedgeweek_news
+from gurufocus_news import gurufocus_news
 
 # Globals
 work_inst = 0
@@ -201,6 +206,22 @@ def main():
         
         benzinga_news_reader = benzinga_news(1)
         asyncio.run(benzinga_news_reader.craw4ai_str_schema_extr())
+        
+        # New News Data Extractors - Created by Claude Code
+        forbes_news_reader = forbes_news(1)
+        asyncio.run(forbes_news_reader.craw4ai_str_schema_extr())
+        
+        fxstreet_news_reader = fxstreet_news(1)
+        asyncio.run(fxstreet_news_reader.craw4ai_str_schema_extr())
+        
+        investing_news_reader = investing_news(1)
+        asyncio.run(investing_news_reader.craw4ai_str_schema_extr())
+        
+        hedgeweek_news_reader = hedgeweek_news(1)
+        asyncio.run(hedgeweek_news_reader.craw4ai_str_schema_extr())
+        
+        gurufocus_news_reader = gurufocus_news(1)
+        asyncio.run(gurufocus_news_reader.craw4ai_str_schema_extr())
         
         ############## hacking on general news
         # this work is trying to use craw4ai to scrap finaince.yahoo.com under severe anti-bot guardrails

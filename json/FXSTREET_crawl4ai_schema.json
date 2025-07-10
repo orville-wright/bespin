@@ -1,0 +1,27 @@
+{
+  "name": "FXStreetNewsSelector",
+  "baseSelector": "div.fxs_fxstreet_news_widget div.fxs_fxstreet_news_widget_item",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "h3 a",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "h3 a",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Author",
+      "selector": "div.fxs_fxstreet_news_widget_item_author",
+      "type": "text"
+    },
+    {
+      "name": "Time",
+      "selector": "div.fxs_fxstreet_news_widget_item_time",
+      "type": "text"
+    }
+  ]
+}

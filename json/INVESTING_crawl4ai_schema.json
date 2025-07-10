@@ -1,0 +1,27 @@
+{
+  "name": "InvestingNewsSelector",
+  "baseSelector": "div.largeTitle article",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "a.title",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "a.title",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Author",
+      "selector": "div.articleDetails span.author",
+      "type": "text"
+    },
+    {
+      "name": "Time",
+      "selector": "div.articleDetails time",
+      "type": "text"
+    }
+  ]
+}

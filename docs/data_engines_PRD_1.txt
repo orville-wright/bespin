@@ -27,3 +27,7 @@ Write a python Data extract eng script for each webpage (the scrip must be title
 When you are completed building the new New Data Extractors, update the @aop.py main script and add new code to it… to call the News Data Extractor engines. There is ref-point @claude in the @aop.py file to show you where this section exists.
 
 For each new “News Data Extractor" engine, use the github MCP to create a github ISSUE “Epic” to describe your proposed plan. Update the github issue when each Data extractor is completed and commit the changes after each data extractor is finished. Also do this for the @aop.py changes.
+- The github user id to use is: orville-wright
+- The github user.email is: orville.wright@yahoo.com
+- The github reposity that this code is in is: https://github.com/orville-wright/bespin
+- The github Personal Access Token to use for access to this report is: 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
