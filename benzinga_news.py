@@ -93,6 +93,7 @@ class benzinga_news:
                     #print (f"({json.dumps(data, indent=2)}")
                     logging.info( f'%s - cycle over data list..' % cmi_debug )
                     for idx, item in enumerate(data):
+                        logging.info( f'{item}')
                         try:
                             t = (count, item)
                             try:

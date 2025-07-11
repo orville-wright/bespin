@@ -93,6 +93,9 @@ class forbes_news:
                             except KeyError as missing_key:
                                 logging.info(f'%s - BAD Data / Missing JSON Key: {missing_key}' % cmi_debug )
                                 # skip element. Its not what we want. Its a partial dupe/add/something bad
+                            except Exception as e:
+                                logging.info(f'%s - ERROR: {e}' % cmi_debug )
+                                # Some kind of error
                             count += 1
                         except IndexError:
                             logging.info(f'%s - Failed to unwind JSON Dict package' % cmi_debug )
