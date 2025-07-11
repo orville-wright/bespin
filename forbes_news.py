@@ -82,11 +82,13 @@ class forbes_news:
                     data = json.loads(result.extracted_content)
                     logging.info( f'%s - cycle over data list..' % cmi_debug )
                     for idx, item in enumerate(data):
+                        kt = 0
                         try:
                             t = (count, item)
                             try:
                                 item["Title"]
                                 item["Ext_url"]
+                                logging.info( f'%s - Validated good JSON keys [ {kt} ]...' % cmi_debug )
                                 self.DF_data.append(t)      # NO key errors = append to working list
                             except KeyError as missing_key:
                                 logging.info(f'%s - BAD Data / Missing JSON Key: {missing_key}' % cmi_debug )
@@ -97,9 +99,12 @@ class forbes_news:
 
         self.DB_insert_data = {} 
         logging.info(f"%s - Build final DB insertion dict..." % cmi_debug )
+        logging.info(f"{cmi_debug} - {json.dumps(data, indent=2)}")
+        print (f"{self.DF_data}")
         dedupe_set = set()
         realigned_v = 0
         for dict in self.DF_data:                   # this is where the final dataset can be accessed
+            logging.info(f'{cmi_debug} - Unwind data structure...' )
             v = dict[0]                             # tuple element 0 = index num
             w = dict[1]                             # tuple element 1 = dict{}
             url = dict[1]["Ext_url"]                # get url
@@ -112,11 +117,13 @@ class forbes_news:
                 dedupe_set.add(ihash)               # add ihash to dupe_set for next membership test
                 w["urlhash"] = ihash                # insert new urlhash element into the dict
                 w["Ext_url"] = url                  # update with full URL
+                logging.info( f'{cmi_debug} - Add row to DB {v} / {w[:20]}' )
+                print (f"Adding row: {v}...{w}")
                 row = {realigned_v: w}              # form final dict data structure
                 self.DB_insert_data.update(row)     # append row
                 realigned_v += 1
             else:
-                logging.info(f"%s - Duplicate data: at {v} / skipping..." % cmi_debug )
+                logging.info(f"{cmi_debug} - Duplicate data: at {v} / skipping..." )
                 pass
  
         # This is where we will insert each element in the LMDB KV Database

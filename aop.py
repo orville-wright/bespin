@@ -201,27 +201,27 @@ def main():
 # Notes for: AI coding assistance @claude
 
     if args['bool_tenten60'] is True:
-        barrons_news_reader = barrons_news(1)
-        asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
+        #barrons_news_reader = barrons_news(1)
+        #asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
         
-        benzinga_news_reader = benzinga_news(1)
-        asyncio.run(benzinga_news_reader.craw4ai_str_schema_extr())
+        #benzinga_news_reader = benzinga_news(1)
+        #asyncio.run(benzinga_news_reader.craw4ai_str_schema_extr())
         
         # New News Data Extractors - Created by Claude Code
         forbes_news_reader = forbes_news(1)
         asyncio.run(forbes_news_reader.craw4ai_str_schema_extr())
         
-        fxstreet_news_reader = fxstreet_news(1)
-        asyncio.run(fxstreet_news_reader.craw4ai_str_schema_extr())
+        #fxstreet_news_reader = fxstreet_news(1)
+        #asyncio.run(fxstreet_news_reader.craw4ai_str_schema_extr())
         
-        investing_news_reader = investing_news(1)
-        asyncio.run(investing_news_reader.craw4ai_str_schema_extr())
+        #investing_news_reader = investing_news(1)
+        #asyncio.run(investing_news_reader.craw4ai_str_schema_extr())
         
-        hedgeweek_news_reader = hedgeweek_news(1)
-        asyncio.run(hedgeweek_news_reader.craw4ai_str_schema_extr())
+        #hedgeweek_news_reader = hedgeweek_news(1)
+        #asyncio.run(hedgeweek_news_reader.craw4ai_str_schema_extr())
         
-        gurufocus_news_reader = gurufocus_news(1)
-        asyncio.run(gurufocus_news_reader.craw4ai_str_schema_extr())
+        #gurufocus_news_reader = gurufocus_news(1)
+        #asyncio.run(gurufocus_news_reader.craw4ai_str_schema_extr())
         
         ############## hacking on general news
         # this work is trying to use craw4ai to scrap finaince.yahoo.com under severe anti-bot guardrails
