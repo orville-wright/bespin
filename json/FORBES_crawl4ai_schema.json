@@ -1,6 +1,6 @@
 {
   "name": "ForbesNewsSelector",
-  "baseSelector": "div[data-module='stream'] div[data-module='stream-item']",
+  "baseSelector": "section.lA6JG.csf-row.et-rows.row_5daf730cdc048 div div div div div div div div",
   "fields": [
     {
       "name": "Title",
@@ -15,12 +15,7 @@
     },
     {
       "name": "Author",
-      "selector": "div[data-module='byline'] a",
-      "type": "text"
-    },
-    {
-      "name": "Time",
-      "selector": "time",
+      "selector": "div p a",
       "type": "text"
     }
   ]

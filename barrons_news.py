@@ -118,5 +118,5 @@ class barrons_news:
         #    print (f"{json.dumps(self.DB_insert_data, indent=2)}" )
             
         logging.info(f"%s - complete Barrons data craw/scrap..." % cmi_debug )
- 
+        print (f"[Complete] + Barrons News Data Extractor | Rows: {len(self.DB_insert_data)}" )
         return

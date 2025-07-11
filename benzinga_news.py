@@ -137,5 +137,5 @@ class benzinga_news:
         # if you want to dump the dict...
         logging.info(f"{cmi_debug} -\n{json.dumps(self.DB_insert_data, indent=2)}")
         logging.info(f"{cmi_debug} - complete Benzinga data craw/scrape" )
- 
+        print (f"[Complete] + Benzinga News Data Extractor | Rows: {len(self.DB_insert_data)}" )
         return
