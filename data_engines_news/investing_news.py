@@ -8,17 +8,17 @@ import hashlib
 from pathlib import Path
 from typing import List
   
-from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, BrowserConfig, CrawlResult
 from crawl4ai import JsonCssExtractionStrategy
 
 logging.basicConfig(level=logging.INFO)
 
 # ###################### Main class
-class fxstreet_news:
+class investing_news:
     """
     Class to crawl data from Forbes via Crawl4ai
     Using CSS Structured JSON Schema method
-    Schema is in JSON file: /json/FXSTREET_crawl4ai_schema.json
+    Schema is in JSON file: /json/INVESTING_crawl4ai_schema.json
     """
     # global class attributes
     inst_id = 0
@@ -34,9 +34,11 @@ class fxstreet_news:
         self.inst_id = inst_id
         __cur_dir__ = Path(__file__).parent
         self.cur_dir = __cur_dir__
-        self.json_file = f"{self.cur_dir}/json/FXSTREET_crawl4ai_schema.json"
+        self.json_file = f"{self.cur_dir}/json/INVESTING_crawl4ai_schema.json"
 
-    # ###################### method : 1
+###########################################################################################
+
+# method : 1
     async def craw4ai_str_schema_extr(self):
         # WARN: This is an asyncio function. must be called by asyncio.run()
         cmi_debug = __name__+"::"+self.craw4ai_str_schema_extr.__name__+".#"+str(self.inst_id)
@@ -54,20 +56,28 @@ class fxstreet_news:
         extraction_strategy = JsonCssExtractionStrategy(schema)
         logging.info( f'%s - INIT craw4ai Crawler RunConfig()...' % cmi_debug )
 
-        config = CrawlerRunConfig(extraction_strategy=extraction_strategy, scan_full_page=True)
+        js_cmds = [
+            "window.scrollTo(0, document.body.scrollHeight);",
+            "await new Promise(resolve => setTimeout(resolve, 2000));"
+        ]
+        
+        #js_cmds = [
+        #    "window.scrollTo(0, document.body.scrollHeight);"
+        #]
+        config = CrawlerRunConfig(extraction_strategy=extraction_strategy, scan_full_page=True, scroll_delay=0.2, js_code=js_cmds)
         # This is where we define the external data sources that this scraper will scrape
         # WARN: Each url must match the JSON schema in: FORBES_crawl4ai_schema.json or the
         #       crawl4ai scraper will not extract any data.
         
         # use urls[list] if we need ot loop through a list of differnt urls with same SCHEMA.
 
-        url = "https://www.fxstreet.com/news?q=&hPP=17&idx=FxsIndexPro&p="
+        url = "https://www.investing.com/news"
         # Multiple pages foir this News sevvice can be explcitily accessed by
         # manipulating the URL to advance to tghe next page. NO JS or Button code needed
-        
+        #self.page_cycle = 0
 
         # helper funtion for AsyncWebCrawler() as crawler:
-        def multi_page_wrangeler(self, cycle, result):
+        def longscroll_page_wrangeler(self, cycle, result):
             count = int(cycle)
             cmi_debug = __name__+"::"+"data_wrangler_sanitizer"+".#"+str(self.inst_id)
             logging.info(f'%s - Data wrangling' % cmi_debug )
@@ -102,19 +112,20 @@ class fxstreet_news:
                 pass
                 
             return
-                            
-        #self.page_cycle = 0
-        for i in range (0,6):
-            cmi_debug = __name__+"::"+"async_data_get"+".#"+str(self.inst_id)
-            url = "https://www.fxstreet.com/news?q=&hPP=17&idx=FxsIndexPro&p="+str(i)
-            async with AsyncWebCrawler() as crawler:
-                logging.info(f'%s - doing async webcrawl NOW..' % cmi_debug )
-                result = await crawler.arun(
-                        url, config=config)
-                multi_page_wrangeler(self, i, result)
-            logging.info( f"{cmi_debug} - Multi pager cycler complete: [ {i} ] / {result.success}" )
 
-    ##########################################################
+        cmi_debug = __name__+"::"+"async_data_get"+".#"+str(self.inst_id)
+        #async with AsyncWebCrawler() as crawler:
+        async with AsyncWebCrawler(config=BrowserConfig(headless=True)) as crawler:
+
+            logging.info(f'%s - doing async webcrawl NOW..' % cmi_debug )
+            result = await crawler.arun(
+                    url, config=config)
+            longscroll_page_wrangeler(self, 0, result)      # 0 = 1 cycle, as we only have 1 long page fro this website
+            
+            logging.info( f"{cmi_debug} - Long page scroller cycle complete: {result.success}" )
+
+
+##########################################################
         cmi_debug = __name__+"::"+"prepare_final_DF_data"+".#"+str(self.inst_id)
         self.DB_insert_data = {} 
         logging.info(f"%s   - Build final DB insertion dict..." % cmi_debug )
@@ -147,7 +158,7 @@ class fxstreet_news:
         # This is where we will insert each element in the LMDB KV Database
         # after all data scraping has completed, not in the middle of network transaction/scraping
         # as that will slow down the data scraper.       
-        logging.info(f"{cmi_debug} -\n{json.dumps(self.DB_insert_data, indent=2)}")
-        logging.info(f"{cmi_debug} - complete Forbes data crawl/scrape" )
-        print (f"[Complete] + FXstreet News Data Extractor | Rows: {len(self.DB_insert_data)}" )
-        return
+        logging.info(f"{cmi_debug}  - Dump dict\n{json.dumps(self.DB_insert_data, indent=2)}")
+        logging.info(f"{cmi_debug}  - complete Forbes data crawl/scrape" )
+        print (f"[Complete] + Investing.com News Data Extractor | Rows: {len(self.DB_insert_data)}" )
+        return int(len(self.DB_insert_data))

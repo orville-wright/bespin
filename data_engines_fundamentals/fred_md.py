@@ -47,47 +47,10 @@ class fred_md:
         }
         
         logging.info(f"FRED economic data extractor initialized - Instance #{instance_id}")
-    
-    def get_series_data(self, series_id, limit=100, start_date=None):
-        """
-        Get data for a specific FRED series
-        """
-        if not self.api_key:
-            logging.error("FRED API key required")
-            return pd.DataFrame()
-        
-        try:
-            params = {
-                'series_id': series_id,
-                'api_key': self.api_key,
-                'file_type': 'json',
-                'limit': limit
-            }
-            
-            if start_date:
-                params['start_date'] = start_date
-            
-            url = f"{self.base_url}/series/observations"
-            response = self.session.get(url, params=params)
-            response.raise_for_status()
-            
-            data = response.json()
-            observations = data.get('observations', [])
-            
-            if not observations:
-                return pd.DataFrame()
-            
-            df = pd.DataFrame(observations)
-            df['date'] = pd.to_datetime(df['date'])
-            df['value'] = pd.to_numeric(df['value'], errors='coerce')
-            df = df.dropna(subset=['value'])
-            
-            return df
-            
-        except Exception as e:
-            logging.error(f"Error fetching FRED series {series_id}: {e}")
-            return pd.DataFrame()
-    
+ 
+ ########################### end init ######################################## 
+ 
+    ######################### 1 ###############################  
     def get_economic_snapshot(self):
         """
         Get current snapshot of key economic indicators
@@ -95,17 +58,22 @@ class fred_md:
         snapshot = {}
         
         for name, series_id in self.indicators.items():
-            df = self.get_series_data(series_id, limit=1)
+            df = self.get_fred_data(series_id, limit=1)
+            #print (f"\n#### DEBUG:\n{df}" )
             if not df.empty:
                 latest = df.iloc[-1]
                 snapshot[name] = {
                     'value': latest['value'],
+                    'rt_sdate': latest['realtime_start'],
+                    'rt_edate': latest['realtime_end'],
                     'date': latest['date'].strftime('%Y-%m-%d'),
+                    
                     'series_id': series_id
                 }
         
         return snapshot
-    
+
+    ######################### 2 ###############################    
     def get_yield_curve(self):
         """
         Get current Treasury yield curve data
@@ -126,12 +94,13 @@ class fred_md:
         
         yield_data = {}
         for maturity, series_id in yield_series.items():
-            df = self.get_series_data(series_id, limit=1)
+            df = self.get_fred_data(series_id, limit=1)
             if not df.empty:
                 yield_data[maturity] = df.iloc[-1]['value']
         
         return yield_data
     
+    ######################### 3 ###############################    
     def get_economic_trends(self, days_back=365):
         """
         Get trends for key economic indicators over specified period
@@ -140,7 +109,7 @@ class fred_md:
         trends = {}
         
         for name, series_id in self.indicators.items():
-            df = self.get_series_data(series_id, limit=1000, start_date=start_date)
+            df = self.get_fred_data(series_id, limit=1000, start_date=start_date)
             if len(df) > 1:
                 current = df.iloc[-1]['value']
                 previous = df.iloc[0]['value']
@@ -157,6 +126,7 @@ class fred_md:
         
         return trends
     
+    ######################### 4 ###############################    
     def search_series(self, search_text, limit=25):
         """
         Search for FRED data series by text
@@ -189,3 +159,45 @@ class fred_md:
         except Exception as e:
             logging.error(f"Error searching FRED series: {e}")
             return pd.DataFrame()
+
+    ######################### 5 ###############################
+    def get_fred_data(self, series_id, limit=100, start_date=None):
+            """
+            Get data for a specific FRED series
+            """
+            if not self.api_key:
+                logging.error("FRED API key required")
+                return pd.DataFrame()
+            
+            try:
+                params = {
+                    'series_id': series_id,
+                    'api_key': self.api_key,
+                    'file_type': 'json',
+                    'limit': limit
+                }
+                
+                if start_date:
+                    params['start_date'] = start_date
+                
+                url = f"{self.base_url}/series/observations"
+                response = self.session.get(url, params=params)
+                response.raise_for_status()
+                
+                data = response.json()
+                observations = data.get('observations', [])
+                
+                if not observations:
+                    return pd.DataFrame()
+                
+                df = pd.DataFrame(observations)
+                df['date'] = pd.to_datetime(df['date'])
+                df['value'] = pd.to_numeric(df['value'], errors='coerce')
+                df = df.dropna(subset=['value'])
+                
+                #print (f"\n{df}")
+                return df
+                
+            except Exception as e:
+                logging.error(f"Error fetching FRED series {series_id}: {e}")
+                return pd.DataFrame()

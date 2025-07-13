@@ -1,27 +1,22 @@
 {
   "name": "HedgeweekNewsSelector",
-  "baseSelector": "div.news-item",
+  "baseSelector": "div.elementor-widget-wrap.elementor-element-populated",
   "fields": [
     {
       "name": "Title",
-      "selector": "h3 a",
+      "selector": "div div h3 a",
       "type": "text"
     },
     {
       "name": "Ext_url",
-      "selector": "h3 a",
+      "selector": "div div h3 a",
       "type": "attribute",
       "attribute": "href"
     },
     {
-      "name": "Author",
-      "selector": "div.news-meta span.author",
-      "type": "text"
-    },
-    {
-      "name": "Time",
-      "selector": "div.news-meta span.date",
-      "type": "text"
+  "name": "Teaser",
+  "selector": "section div div div div div div.dce-excerpt",
+  "type": "text"
     }
   ]
 }

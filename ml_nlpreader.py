@@ -87,7 +87,7 @@ class ml_nlpreader:
         self.args = global_args
         cmi_debug = __name__+"::"+self.nlp_read_one.__name__
         logging.info( f'%s   - IN.#{self.yti}' % cmi_debug )
-        news_symbol = str(self.args['newsymbol'])       # symbol provided on CMDLine
+        news_symbol = str(self.args['newsai_sent'])       # symbol provided on CMDLine
         
         ml_yfn_reader = y_cookiemonster(3)
         ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args )      # yfnews_reader is class in ml_yahoofinnews.py

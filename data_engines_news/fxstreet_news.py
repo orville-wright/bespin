@@ -14,11 +14,11 @@ from crawl4ai import JsonCssExtractionStrategy
 logging.basicConfig(level=logging.INFO)
 
 # ###################### Main class
-class forbes_news:
+class fxstreet_news:
     """
     Class to crawl data from Forbes via Crawl4ai
     Using CSS Structured JSON Schema method
-    Schema is in JSON file: /json/FORBES_crawl4ai_schema.json
+    Schema is in JSON file: /json/FXSTREET_crawl4ai_schema.json
     """
     # global class attributes
     inst_id = 0
@@ -34,7 +34,7 @@ class forbes_news:
         self.inst_id = inst_id
         __cur_dir__ = Path(__file__).parent
         self.cur_dir = __cur_dir__
-        self.json_file = f"{self.cur_dir}/json/FORBES_crawl4ai_schema.json"
+        self.json_file = f"{self.cur_dir}/json/FXSTREET_crawl4ai_schema.json"
 
     # ###################### method : 1
     async def craw4ai_str_schema_extr(self):
@@ -53,60 +53,66 @@ class forbes_news:
         logging.info( f'%s - INIT craw4ai extraction strategy...' % cmi_debug )
         extraction_strategy = JsonCssExtractionStrategy(schema)
         logging.info( f'%s - INIT craw4ai Crawler RunConfig()...' % cmi_debug )
-              
-        js_cmds = [
-            "window.scrollTo(0, document.body.scrollHeight);",
-            "document.querySelector('section.lA6JG.csf-row.et-rows.row_5daf730cdc048 div div div div div div button')?.click;"
-        ]
 
         config = CrawlerRunConfig(extraction_strategy=extraction_strategy, scan_full_page=True)
-        #onfig = CrawlerRunConfig(extraction_strategy=extraction_strategy, scan_full_page=True, js_code=js_cmds)
         # This is where we define the external data sources that this scraper will scrape
         # WARN: Each url must match the JSON schema in: FORBES_crawl4ai_schema.json or the
         #       crawl4ai scraper will not extract any data.
         
         # use urls[list] if we need ot loop through a list of differnt urls with same SCHEMA.
-        urls = [
-            "https://www.forbes.com/news/"
-        ]
-        url = "https://www.forbes.com/news/"
+
+        url = "https://www.fxstreet.com/news?q=&hPP=17&idx=FxsIndexPro&p="
+        # Multiple pages foir this News sevvice can be explcitily accessed by
+        # manipulating the URL to advance to tghe next page. NO JS or Button code needed
         
-        cmi_debug = __name__+"::"+"async_data_get"+".#"+str(self.inst_id)
-        async with AsyncWebCrawler() as crawler:
-            logging.info(f'%s - doing async webcrawl NOW..' % cmi_debug )
-            result = await crawler.arun(
-                    url, config=config)
-            
+
+        # helper funtion for AsyncWebCrawler() as crawler:
+        def multi_page_wrangeler(self, cycle, result):
+            count = int(cycle)
             cmi_debug = __name__+"::"+"data_wrangler_sanitizer"+".#"+str(self.inst_id)
             logging.info(f'%s - Data wrangling' % cmi_debug )
-            count = 0
             kt = 0
-            for result in result:
-                if result.success:
-                    logging.info( f'%s - extract json content Len: {len(result.extracted_content)}...' % cmi_debug )
-                    data = json.loads(result.extracted_content)
-                    #print (f"{data}")
-                    for idx, item in enumerate(data):
-                        logging.info( f"{cmi_debug} - cycle [ {idx} / Analyze data: {str(item)[:30]}..." )
-                        kt = 0
+
+            if result.success:
+                logging.info( f'%s - extract json content Len: {len(result.extracted_content)}...' % cmi_debug )
+                data = json.loads(result.extracted_content)
+                #print (f"{data}")
+                for idx, item in enumerate(data):
+                    logging.info( f"{cmi_debug} - cycle [ {idx} / Analyze data: {str(item)[:30]}..." )
+                    kt = 0
+                    try:
+                        t = (count, item)
                         try:
-                            t = (count, item)
-                            try:
-                                item["Title"]
-                                item["Ext_url"]
-                                logging.info( f'%s - Validated good JSON keys...' % cmi_debug )
-                                self.DF_data.append(t)      # NO key errors = append to working list
-                            except KeyError as missing_key:
-                                logging.info(f'%s - BAD Data / Missing JSON Key: {missing_key}' % cmi_debug )
-                                # skip element. Do NOT add to DF_data - Its not what we want. Its a partial dupe/add/something bad
-                            except Exception as e:
-                                logging.info(f'%s - ERROR: {e}' % cmi_debug )
-                                # Some kind of error - skipp and do NOT add to DB_data
-                            count += 1
-                        except IndexError:
+                            item["Title"]
+                            item["Ext_url"]
+                            logging.info( f'%s - Validated good JSON keys...' % cmi_debug )
+                            self.DF_data.append(t)      # NO key errors = append to working list
+                        except KeyError as missing_key:
+                            logging.info(f'%s - BAD Data / Missing JSON Key: {missing_key}' % cmi_debug )
+                            # skip element. Do NOT add to DF_data - Its not what we want. Its a partial dupe/add/something bad
+                        except Exception as e:
+                            logging.info(f'%s - ERROR: {e}' % cmi_debug )
+                            # Some kind of error - skipp and do NOT add to DB_data
+                        count += 1
+                    except IndexError:
                             logging.info(f'%s - Failed to unwind JSON Dict package' % cmi_debug )
-                            
                 logging.info( f"{cmi_debug} - Wrangler sanitizer complete: [ {count} ] / {kt}] / {result.success}" )
+            else:
+                logging.info(f'%s - JSON data payload is empty' % cmi_debug )
+                pass
+                
+            return
+                            
+        #self.page_cycle = 0
+        for i in range (0,6):
+            cmi_debug = __name__+"::"+"async_data_get"+".#"+str(self.inst_id)
+            url = "https://www.fxstreet.com/news?q=&hPP=17&idx=FxsIndexPro&p="+str(i)
+            async with AsyncWebCrawler() as crawler:
+                logging.info(f'%s - doing async webcrawl NOW..' % cmi_debug )
+                result = await crawler.arun(
+                        url, config=config)
+                multi_page_wrangeler(self, i, result)
+            logging.info( f"{cmi_debug} - Multi pager cycler complete: [ {i} ] / {result.success}" )
 
     ##########################################################
         cmi_debug = __name__+"::"+"prepare_final_DF_data"+".#"+str(self.inst_id)
@@ -143,5 +149,5 @@ class forbes_news:
         # as that will slow down the data scraper.       
         logging.info(f"{cmi_debug} -\n{json.dumps(self.DB_insert_data, indent=2)}")
         logging.info(f"{cmi_debug} - complete Forbes data crawl/scrape" )
-        print (f"[Complete] + Forbes News Data Extractor | Rows: {len(self.DB_insert_data)}" )
-        return
+        print (f"[Complete] + FXstreet News Data Extractor | Rows: {len(self.DB_insert_data)}" )
+        return int(len(self.DB_insert_data))

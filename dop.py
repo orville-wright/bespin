@@ -32,8 +32,8 @@ from y_cookiemonster import y_cookiemonster
 from ml_sentiment import ml_sentiment
 from db_graph import db_graph
 from sec_md import sec_md
-from fred_md import fred_md
-from polygon_md import polygon_md
+from data_engines_fundamentals.fred_md import fred_md
+from data_engines_fundamentals.polygon_md import polygon_md
 from tiingo_md import tiingo_md
 from alphavantage_md import alphavantage_md
 from finnhub_md import finnhub_md

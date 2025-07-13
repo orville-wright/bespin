@@ -43,13 +43,13 @@ class ml_sentiment:
     # Techcnial analysys dict defines sentiment score to description mapping
     s_categories = {
             200: (['Bullishly positive', 200]),
-            100: (['Very Positive', 100]),
+            100: (['Trending bullish', 100]),
             50: (['Positive', 50]),
             25: (['Trending positive', 25]),
             0: (['Neutral', 0]),
             -25: (['Trending negative', -25]),
             -50: (['Negative', -50]),
-            -100: (['Very Negative', -100]),
+            -100: (['Somewhat Bearish', -100]),
             -200: (['Bearishly negative', -200])
             }
         

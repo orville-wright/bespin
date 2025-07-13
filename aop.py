@@ -30,27 +30,30 @@ from y_techevents import y_techevents
 from nasdaq_wrangler import nq_wrangler
 from y_cookiemonster import y_cookiemonster
 from ml_sentiment import ml_sentiment
-from db_graph import db_graph
-from sec_md import sec_md
-from fred_md import fred_md
-from polygon_md import polygon_md
-from tiingo_md import tiingo_md
+
 from alphavantage_md import alphavantage_md
-from finnhub_md import finnhub_md
-from marketstack_md import marketstack_md
-from stockdata_md import stockdata_md
-from twelvedata_md import twelvedata_md
+from db_graph import db_graph
+from data_engines_fundamentals.fred_md import fred_md
 from eodhistoricaldata_md import eodhistoricaldata_md
 from financialmodelingprep_md import financialmodelingprep_md
+from finnhub_md import finnhub_md
+from marketstack_md import marketstack_md
+from sec_md import sec_md
+from stockdata_md import stockdata_md
+from data_engines_fundamentals.polygon_md import polygon_md
 from stooq_md import stooq_md
+from tiingo_md import tiingo_md
+from twelvedata_md import twelvedata_md
 from y_generalnews import y_generalnews
-from barrons_news import barrons_news
-from benzinga_news import benzinga_news
-from forbes_news import forbes_news
-from fxstreet_news import fxstreet_news
-from investing_news import investing_news
-from hedgeweek_news import hedgeweek_news
-from gurufocus_news import gurufocus_news
+
+# Data Extractor engines
+from data_engines_news.barrons_news import barrons_news
+from data_engines_news.benzinga_news import benzinga_news
+from data_engines_news.forbes_news import forbes_news
+from data_engines_news.fxstreet_news import fxstreet_news
+from data_engines_news.investing_news import investing_news
+from data_engines_news.hedgeweek_news import hedgeweek_news
+from data_engines_news.gurufocus_news import gurufocus_news
 
 # Globals
 work_inst = 0
@@ -79,9 +82,9 @@ parser.add_argument('--twelvedata', help='Get Twelve Data comprehensive data for
 parser.add_argument('--eodhistoricaldata', help='Get EOD Historical Data for symbol', action='store', dest='eodhistoricaldata_symbol', required=False, default=False)
 parser.add_argument('--financialmodelingprep', help='Get FinancialModelingPrep data for symbol', action='store', dest='financialmodelingprep_symbol', required=False, default=False)
 parser.add_argument('--stooq', help='Get Stooq historical data for symbol', action='store', dest='stooq_symbol', required=False, default=False)
-parser.add_argument('-c','--cycle', help='Ephemerial top 10 every 10 secs for 60 secs', action='store_true', dest='bool_tenten60', required=False, default=False)
+parser.add_argument('--news-cycle', help='Full news cycle extartc from eveny data engine', action='store_true', dest='news_cycle', required=False, default=False)
 parser.add_argument('-d','--deep', help='Deep converged multi data list', action='store_true', dest='bool_deep', required=False, default=False)
-parser.add_argument('-n','--newsai', help='ML/NLP News sentiment AI for 1 stock', action='store', dest='newsymbol', required=False, default=False)
+parser.add_argument('-n','--newsai-sent', help='ML/NLP News sentiment AI for 1 stock', action='store', dest='newsai_sent', required=False, default=False)
 parser.add_argument('-p','--perf', help='Tech event performance sentiment', action='store_true', dest='bool_te', required=False, default=False)
 parser.add_argument('-q','--quote', help='Get ticker price action quote', action='store', dest='qsymbol', required=False, default=False)
 parser.add_argument('-s','--screen', help='Small cap screener logic', action='store_true', dest='bool_scr', required=False, default=False)
@@ -157,9 +160,9 @@ def main():
     else:
         logging.disable(20)                 # Log lvel = INFO
 
-    if args['newsymbol'] is not False:
+    if args['newsai_sent'] is not False:
         print ( " " )
-        print ( f"Scanning news for symbol: {args['newsymbol']}" )
+        print ( f"AI is reading news & computing sentiment for symbol: {args['newsai_sent']}" )
 
     print ( " " )
 
@@ -200,23 +203,23 @@ def main():
 # Craw4ai General News reader starts here
 # Notes for: AI coding assistance @claude
 
-    if args['bool_tenten60'] is True:
+    if args['news_cycle'] is True:
         #'''
+        ext_count = 0
         barrons_news_reader = barrons_news(1)
-        asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
+        ext_count += asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
         benzinga_news_reader = benzinga_news(1)
-        asyncio.run(benzinga_news_reader.craw4ai_str_schema_extr())
+        ext_count += asyncio.run(benzinga_news_reader.craw4ai_str_schema_extr())
         forbes_news_reader = forbes_news(1)
-        asyncio.run(forbes_news_reader.craw4ai_str_schema_extr())
+        ext_count += asyncio.run(forbes_news_reader.craw4ai_str_schema_extr())
         fxstreet_news_reader = fxstreet_news(1)
-        asyncio.run(fxstreet_news_reader.craw4ai_str_schema_extr())
+        ext_count += asyncio.run(fxstreet_news_reader.craw4ai_str_schema_extr())
         investing_news_reader = investing_news(1)
-        asyncio.run(investing_news_reader.craw4ai_str_schema_extr())
+        ext_count += asyncio.run(investing_news_reader.craw4ai_str_schema_extr())
+        hedgeweek_news_reader = hedgeweek_news(1)
+        ext_count += asyncio.run(hedgeweek_news_reader.craw4ai_str_schema_extr())
         #'''
-        
-        #hedgeweek_news_reader = hedgeweek_news(1)
-        #asyncio.run(hedgeweek_news_reader.craw4ai_str_schema_extr())
-        
+            
         #gurufocus_news_reader = gurufocus_news(1)
         #asyncio.run(gurufocus_news_reader.craw4ai_str_schema_extr())
         
@@ -229,7 +232,7 @@ def main():
         #genews_dataset.ext_req = genews_reader.get_js_data('barrons.com/real-time/2')
         #genews_dataset.ext_get_data(3)
         #gx = genews_dataset.build_df0()
-        print ( " " )
+        print (f"Total News artciels extarcted: {ext_count}" )
         print ( " " )
 
 ########### Small Cap gainers & loosers ################
@@ -464,13 +467,13 @@ def main():
 # ##### Currently read all news or ONE stock
 # ###################################################################################
 
-    if args['newsymbol'] is not False:
+    if args['newsai_sent'] is not False:
             sx = 1
-            cmi_debug = __name__+"::_args_newsymbol.#1"
-            news_symbol = str(args['newsymbol'])        # symbol provided on CMDLine
+            cmi_debug = __name__+"::newsai_sent.#1"
+            news_symbol = str(args['newsai_sent'])        # symbol provided on CMDLine
             final_sent_df = pd.DataFrame()              # reset DataFrame for each article
             print ( " " )
-            print ( f"M/L news reader for Stock [ {news_symbol} ] =========================" )
+            print ( f"AI  news reader sentimennt compute for Stock [ {news_symbol} ] =========================" )
             news_ai = ml_nlpreader(1, args)
             sent_ai = ml_sentiment(1, args)
             news_ai.nlp_read_one(news_symbol, args)     # includes scan_news_feed() & eval_news_feed_stories()
@@ -849,31 +852,46 @@ def main():
     # FRED economic data integration
     if args['bool_fred'] is True:
         print("========== FRED Economic Data Snapshot ==========")
-        
+        cmi_debug = __name__+"::"+"Fred_econ_data"+".#1"
         try:
             fred = fred_md(1, args)
             
             # Get economic snapshot
             snapshot = fred.get_economic_snapshot()
+            #print (f"\n{snapshot}")
             if snapshot:
-                print("Key Economic Indicators:")
+                print("Key Economic Snapshot Major Indicators:")               
                 for indicator, data in snapshot.items():
-                    print(f"  {indicator.replace('_', ' ').title()}: {data['value']} ({data['date']})")
-            
+                    print(f"  {indicator.replace('_', ' ').title()}: {data['value']} ({data['rt_sdate']} - {data['rt_edate']}) | ({data['date']} ({data['series_id']})")
+
+            # Get get_economic trends
+            snapshot = fred.get_economic_trends()
+            #print (f"\n{snapshot}")
+            if snapshot:
+                print("\nKey Economic Trends:")
+                for indicator, data in snapshot.items():
+                    print(f"  {indicator.replace('_', ' ').title()}: {data['current']} ({data['start_period']}) ({data['change']}) ({data['pct_change']}) ({data['period_days']})" )
+                
+
             # Get yield curve
             yield_curve = fred.get_yield_curve()
             if yield_curve:
                 print(f"\nTreasury Yield Curve:")
                 for maturity, rate in yield_curve.items():
                     print(f"  {maturity.replace('_', ' ')}: {rate}%")
-                    
+
+                #for maturity, rate in yield_curve.items():
+                #    print(f"  {maturity.replace('_', ' ')}: {rate}%")
+                                        
         except Exception as e:
             print(f"Error fetching FRED data: {e}")
             logging.error(f"FRED data error: {e}")
         
         print(" ")
 
-    # Polygon.io integration
+#####################################################################
+##### Polygon.io integration
+#####
     if args['polygon_symbol'] is not False:
         polygon_symbol = args['polygon_symbol'].upper()
         print(f"========== Polygon.io Data for: {polygon_symbol} ==========")
@@ -887,16 +905,20 @@ def main():
                 print(f"Market Status: {market_status.get('market', 'Unknown')}")
             
             # Get last quote
+            # This is not a PREMIUM service. (not free). It will fail with a Free levle API key.
             quote = polygon.get_last_quote(polygon_symbol)
-            if quote:
-                print(f"Last Quote:")
-                print(f"  Bid: ${quote.get('bid', 'N/A')} x {quote.get('bid_size', 'N/A')}")
-                print(f"  Ask: ${quote.get('ask', 'N/A')} x {quote.get('ask_size', 'N/A')}")
-                if quote.get('spread'):
-                    print(f"  Spread: ${quote['spread']:.4f}")
+            if quote["status"] != "NOT_AUTHORIZED":
+                if quote:
+                    print(f"Last Quote:")
+                    print(f"  Bid: ${quote.get('bid', 'N/A')} x {quote.get('bid_size', 'N/A')}")
+                    print(f"  Ask: ${quote.get('ask', 'N/A')} x {quote.get('ask_size', 'N/A')}")
+                    if quote.get('spread'):
+                        print(f"  Spread: ${quote['spread']:.4f}")
+            else:
+                print (f"Last Quote data not available: {quote["reason"]}" )
             
             # Get ticker details
-            details = polygon.get_ticker_details(polygon_symbol)
+            details = polygon.get_company_info(polygon_symbol)
             if details:
                 print(f"\nCompany Details:")
                 print(f"  Name: {details.get('name', 'N/A')}")
@@ -906,19 +928,26 @@ def main():
                     print(f"  Market Cap: ${details['market_cap']:,}")
             
             # Get recent daily bars
+            # NOTE: The class fucntion get_aggregates() has multiple posible data outputs that could be retruned...
+            # 1. an old JSON payload
+            # 2. an new customer LIST[] payload
+            # 3. a pure Datafame
+            # 4. and below... all that info is manually reformetted in this custom output 
             bars = polygon.get_aggregates(polygon_symbol, timespan='day', limit=5)
             if not bars.empty:
+                idx = 1
                 print(f"\nRecent Daily Bars:")
                 for idx, bar in bars.iterrows():
-                    print(f"  {bar['timestamp'].strftime('%Y-%m-%d')}: O:{bar['open']:.2f} H:{bar['high']:.2f} L:{bar['low']:.2f} C:{bar['close']:.2f} V:{bar['volume']:,}")
-                    
+                    print(f"  {idx:03d} - {bar['symbol']} - {bar['time'].strftime('%Y-%m-%d')}: O:{bar['open']:.2f} H:{bar['high']:.2f} L:{bar['low']:.2f} C:{bar['close']:.2f} V:{bar['vol']:,}")
+                    idx += 1
         except Exception as e:
             print(f"Error fetching Polygon data: {e}")
-            logging.error(f"Polygon data error for {polygon_symbol}: {e}")
+            logging.error(f"Polygon data error extractor for: {polygon_symbol} - {e}")
         
         print(" ")
 
-    # Tiingo comprehensive data integration
+#####################################################################
+##### Tiingo comprehensive data integration
     if args['tiingo_symbol'] is not False:
         tiingo_symbol = args['tiingo_symbol'].upper()
         print(f"========== Tiingo Comprehensive Data for: {tiingo_symbol} ==========")
