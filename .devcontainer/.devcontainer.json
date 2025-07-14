@@ -1,0 +1,13 @@
+{
+ "name": "Bespin PostgreSQL Dev Container",
+ "dockerComposeFile": ["./docker-compose.yml"],
+ "service": "db",
+ "workspaceFolder": "/workspaces/bespin",
+ "extensions": [
+   "ms-python.python",
+   "ms-azuretools.vscode-docker",
+   "ms-vscode-remote.remote-containers"
+ ],
+ "forwardPorts": [5432],
+ "postCreateCommand": "pip install -r requirements.txt",
+}
