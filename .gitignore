@@ -149,3 +149,9 @@ tasks/
 
 .chrome_cache
 .chrome_cache/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

@@ -1,0 +1,26 @@
+{
+  "name": "bespin",
+  "version": "1.0.0",
+  "description": "Main dev repo for  the Bespin Agentic Quant project",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orville-wright/bespin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/orville-wright/bespin/issues"
+  },
+  "homepage": "https://github.com/orville-wright/bespin#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "@types/node": "^24.0.13"
+  }
+}
