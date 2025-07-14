@@ -1,0 +1,13 @@
+{
+  "objective": "Resesarch the stat of the art into webscraping stock market news data from free news websites",
+  "strategy": "research",
+  "mode": "distributed",
+  "maxAgents": 5,
+  "timeout": 60,
+  "parallel": true,
+  "monitor": true,
+  "output": "json",
+  "outputDir": "./reports",
+  "timestamp": "2025-07-14T18:29:06.539Z",
+  "id": "swarm-research-distributed-1752517746539"
+}
