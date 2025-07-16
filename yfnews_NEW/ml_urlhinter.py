@@ -47,12 +47,13 @@ class url_hinter:
         input_url = recvd_url
 
         # INFO: U code only - This metainfo does NOT define locality. You cant inferr locality truth from it.
+        # only works on yahoo.com domains also.
         uhint_code = {
                     'news': ('Local News', 0),
                     'm': ('Fake local micro news', 1),
                     'live': ('Fake local micro news', 1),
                     'video': ('Video story', 2),
-                    'rabs': ('External filler page', 3),
+                    'rabs': ('Injected add link', 3),
                     'research': ('Research report', 4),
                     'about': ('Premium subscription add', 5),
                     'udef': ('Not yet defined', 9),
@@ -127,13 +128,13 @@ class url_hinter:
         tcode = {
                 0.0: ('Full Local article page', 0),
                 1.0: ('Fake local micro-stub', 0),
-                1.1: ('External publication link', 1),
+                1.1: ('Injected add link', 1),
                 2.0: ('OP-Ed page', 0),
                 2.1: ('OP-Ed stub', 1),
                 3.0: ('Curated report page', 0),
                 3.1: ('Curated report stub', 1),
-                4.0: ('Video story page', 0),
-                4.1: ('Video story stub', 1),
+                4.0: ('Video story page', 4),
+                4.1: ('Video story stub', 4),
                 5.0: ('Micro-ad insert', 1),
                 5.1: ('Micro-ad insert', 3),
                 6.0: ('Premium subscription add', 0),

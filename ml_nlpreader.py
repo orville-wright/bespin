@@ -125,9 +125,9 @@ class ml_nlpreader:
 
 ####################################### 3 ##########################################
 # method 3
-    def nlp_summary(self, yti, ml_idx):
+    def nlp_summary(self, yti, ml_ingest_idx):
         """
-        **CRTIICAL: Assumes ml_ingest has already been pre-populated
+        CRTIICAL: Assumes ml_ingest has already been pre-populated
         Reads 1 item from the ml_ingest{} and processes it...
         """
 
@@ -145,17 +145,20 @@ class ml_nlpreader:
 
         print ( " ")
 
-        sn_row = self.ml_yfn_dataset.ml_ingest[ml_idx]          # select the row from the ml_ingest{} dict
+        sn_row = self.ml_yfn_dataset.ml_ingest[ml_ingest_idx]          # select the row from the ml_ingest{} dict
         if sn_row['type'] == 0:                                 # REAL valid news article, inferred from Depth 0
-            print( f"{sn_row['symbol']} / Valid News article: {ml_idx}" )
+            print( f"{sn_row['symbol']} / Valid News article: {ml_ingest_idx}" )
             t_url = urlparse(sn_row['url'])                                 # WARN: a rlparse() url_named_tupple (NOT the raw url)
             uhint, uhdescr = self.yfn_uh.uhinter(0, t_url)
             thint = (sn_row['thint'])                                       # the hint we guessed at while interrogating page <tags>
             logging.info ( f"%s       - Logic.#0 Hints for url: [ t:0 / u:{uhint} / h: {thint} ] / {uhdescr}" % cmi_debug )
 
-            # WARNING : Do deep M/L AI analysis on the page
-            # Heavy compute
-            r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page(ml_idx, sn_row)    # go deep, with everything we knonw about this item
+            # ################### ! ######################
+            # WARNING : Do deep M/L AI analysis on the page via interpret_page() <- this is where the mahgic happens
+            # interpret_page does network extrat of each article URL. 
+            # So 200 articles = 200 individual page reads!! (which could have timesouts and re-reads)
+            # Each article is crawled for key elemets, including entre article TEXT... for sentiment analysis
+            r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page(ml_ingest_idx, sn_row)    # go deep, with everything we knonw about this item
             logging.info ( f"%s       - Inferr conf: {r_xturl}" % cmi_debug )
             p_r_xturl = urlparse(r_xturl)
             inf_type = self.yfn_uh.confidence_lvl(thint)                  # returned var is a tupple - (descr, locality code)
@@ -170,14 +173,14 @@ class ml_nlpreader:
 
         # Fake New Micro-Ad, but could possibly be news...
         elif sn_row['type'] == 1:
-            print( f"{sn_row['symbol']} / Fake News article - Micro-add: {ml_idx} - AI will not eval sentiment" )
+            print( f"{sn_row['symbol']} / Fake News article - Micro-add: {ml_ingest_idx} - AI will not eval sentiment" )
             t_url = urlparse(sn_row['url'])
             uhint, uhdescr = self.yfn_uh.uhinter(1, t_url)      # hint on ORIGIN url
             thint = (sn_row['thint'])                   # the hint we guess at while interrogating page <tags>
             logging.info ( f"%s       - Logic.#1 hint origin url: t:1 / u:{uhint} / h: {thint} {uhdescr}" % cmi_debug )
 
             # WARN: Do deep M/L AI page analysis, with everything we know about this item
-            r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page(ml_idx, sn_row)    
+            r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page(ml_ingest_idx, sn_row)    
             logging.info ( f"%s       - Logic.#1 hint ext url: {r_xturl}" % cmi_debug )
             p_r_xturl = urlparse(r_xturl)
             inf_type = self.yfn_uh.confidence_lvl(thint)
@@ -194,11 +197,11 @@ class ml_nlpreader:
         
         # Video story. Prob no real news text
         elif sn_row['type'] == 2:
-            print( f"{sn_row['symbol']} / Video article - Not readable: {ml_idx} - AI will not eval sentiment" )
+            print( f"{sn_row['symbol']} / Video article - Not readable: {ml_ingest_idx} - AI will not eval sentiment" )
             t_url = urlparse(sn_row['url'])
             thint = (sn_row['thint'])
             inf_type = self.yfn_uh.confidence_lvl(thint)
-            print ( f"Article: {ml_idx} - {inf_type[0]}: 2 - NOT an NLP candidate" )
+            print ( f"Article: {ml_ingest_idx} - {inf_type[0]}: 2 - NOT an NLP candidate" )
             print ( f"URL:     {sn_row['url']}" )
             print ( f"Origin:  [ {t_url.netloc} ] / {inf_type[0]} / ", end="" )
             print ( f"{locality_code.get(inf_type[1], 'in flux')}" )
@@ -208,19 +211,19 @@ class ml_nlpreader:
         elif sn_row['type'] == 5:                     # possibly not news, Yahoo Premium subscription add
             thint = (sn_row['thint'])
             inf_type = self.yfn_uh.uhinter.confidence_lvl(thint)
-            print ( f"Article: {ml_idx} - {inf_type[0]}: 5 - NOT an NLP candidate" )
+            print ( f"Article: {ml_ingest_idx} - {inf_type[0]}: 5 - NOT an NLP candidate" )
             logging.info ( f"%s - skipping..." % cmi_debug )
             thint = (sn_row['thint'])
             return thint
         
         elif sn_row['type'] == 9:                     # possibly not news? (Micro Ad)
-            print ( f"Article: {ml_idx} - Type 9 - NOT yet defined - NOT an NLP candidate" )
+            print ( f"Article: {ml_ingest_idx} - Type 9 - NOT yet defined - NOT an NLP candidate" )
             logging.info ( f"%s - skipping..." % cmi_debug )
             thint = (sn_row['thint'])
             return thint
         
         else:
-            print ( f"Article: {ml_idx} - ERROR unknown article type" )
+            print ( f"Article: {ml_ingest_idx} - ERROR unknown article type" )
             logging.info ( f"%s - #? skipping..." % cmi_debug )
             thint = (sn_row['thint'])
 

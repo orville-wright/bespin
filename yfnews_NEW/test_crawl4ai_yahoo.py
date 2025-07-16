@@ -18,12 +18,13 @@ from ml_sentiment import ml_sentiment
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# #####################################################################################
 def main():
     """
     Main test function
     """
     print("="*80)
-    print("Yahoo Finance News Scraper - crawl4ai Version")
+    print("Test #1 - pure mode no async()")
     print("="*80)
     
     # Configuration
@@ -34,38 +35,32 @@ def main():
     }
     
     # Test symbol
-    test_symbol = "AAPL"  # Apple Inc.
+    test_symbol = "ORCL"  # Apple Inc.
     
-    print(f"\nTesting with symbol: {test_symbol}")
+    print(f"\nTest #1 with symbol: {test_symbol}")
     print("-" * 40)
     
     try:
-        # Initialize the NLP reader
         nlp_reader = ml_nlpreader(1, global_args)
-        
-        # Run full analysis workflow
         results = nlp_reader.run_full_analysis(test_symbol)
-        
         print("\n" + "="*80)
         print("TEST COMPLETED SUCCESSFULLY")
         print("="*80)
-        
         if results:
-            print(f"\nResults for {test_symbol}:")
+            print(f"\nMOCK Sentiment Results for {test_symbol}:")
             for symbol, data in results.items():
                 print(f"  - Processed {data['articles_processed']} articles")
                 print(f"  - Total tokens: {data['total_tokens']}")
                 print(f"  - Sentiment distribution: {data['sentiment_counts']}")
         else:
             print("No results generated - check logs for issues")
-            
     except Exception as e:
         print(f"\nERROR: {e}")
         logging.error(f"Test failed: {e}", exc_info=True)
         return 1
-    
     return 0
 
+# #####################################################################################
 async def async_test():
     """
     Async test function for direct crawl4ai testing
@@ -74,7 +69,7 @@ async def async_test():
     from ml_urlhinter import url_hinter
     
     print("\n" + "="*60)
-    print("DIRECT CRAWL4AI TEST")
+    print("Test #2 : async() mode test")
     print("="*60)
     
     global_args = {
@@ -82,29 +77,21 @@ async def async_test():
         'bool_verbose': True
     }
     
-    test_symbol = "TSLA"
-    
+    test_symbol = "IBM"
     try:
         # Create instances
         yfn_reader = yfnews_reader(1, test_symbol, global_args)
         uh = url_hinter(1, global_args)
         yfn_reader.share_hinter(uh)
-        
-        # Form endpoint
         yfn_reader.form_endpoint(test_symbol)
-        
-        # Extract news using crawl4ai
+        logging.error(f"Doing crawl4 extract now...")
         hash_state = await yfn_reader.crawl4ai_extract_news(0)
         
         if hash_state:
-            # Process the data
             yfn_reader.scan_news_feed(test_symbol, 0, 1, 0, hash_state)
             yfn_reader.eval_news_feed_stories(test_symbol)
-            
-            print(f"\nExtracted {len(yfn_reader.ml_ingest)} articles")
-            
-            # Show some results
-            for idx, article in list(yfn_reader.ml_ingest.items())[:3]:  # Show first 3
+            print(f"\nExtracted Total: {len(yfn_reader.ml_ingest)} articles")
+            for idx, article in list(yfn_reader.ml_ingest.items())[:3]:
                 print(f"\nArticle {idx}:")
                 print(f"  Title: {article.get('title', 'N/A')}")
                 print(f"  URL: {article.get('url', 'N/A')}")
@@ -117,6 +104,7 @@ async def async_test():
         print(f"Async test failed: {e}")
         logging.error(f"Async test failed: {e}", exc_info=True)
 
+# #####################################################################################
 def test_schema_loading():
     """
     Test JSON schema loading
@@ -125,7 +113,7 @@ def test_schema_loading():
     from pathlib import Path
     
     print("\n" + "="*60)
-    print("JSON SCHEMA TEST")
+    print("Test #3 - JSON SCHEMA TEST")
     print("="*60)
     
     schema_file = Path(__file__).parent / "YAHOO_FINANCE_crawl4ai_schema.json"
@@ -149,6 +137,7 @@ def test_schema_loading():
     
     return True
 
+# #####################################################################################
 if __name__ == "__main__":
     print("Starting Yahoo Finance crawl4ai conversion tests...")
     

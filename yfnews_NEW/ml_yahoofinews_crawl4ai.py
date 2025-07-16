@@ -30,30 +30,31 @@ class yfnews_reader:
     """
 
     # global accessors
-    symbol = None           # Unique company symbol
-    yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
-    yfn_all_data = None     # JSON dataset contains ALL data
-    yfn_crawl_data = None   # Crawl4ai extracted data
-    yfn_jsdb = {}           # database to hold response handles from multiple crawl operations
+    a_urlp = None
+    args = []               # class dict to hold global args being passed in from main() methods
+    cur_dir = None
+    cycle = 0               # class thread loop counter
+    extracted_articles = None  # crawl4ai extracted articles
+    get_counter = 0         # count of get() requests
+    json_schema_file = None
+    li_superclass = None    # all possible News articles
     ml_brief = []           # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
     ml_ingest = {}          # ML ingested NLP candidate articles
     ml_sent = None
-    extracted_articles = None  # crawl4ai extracted articles
-    li_superclass = None    # all possible News articles
-    yti = 0                 # Unique instance identifier
-    cycle = 0               # class thread loop counter
     nlp_x = 0
-    get_counter = 0         # count of get() requests
     sen_stats_df = None     # Aggregated sentiment stats for this 1 article
-    args = []               # class dict to hold global args being passed in from main() methods
-    yfn_uh = None           # global url hinter class
+    symbol = None           # Unique company symbol
     url_netloc = None
-    a_urlp = None
+    yfn_all_data = None     # JSON dataset contains ALL data
+    yfn_crawl_data = None   # Crawl4ai extracted data
+    yfn_jsdb = {}           # database to hold response handles from multiple crawl operations
+    yfn_uh = None           # global url hinter class
+    yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
+    yti = 0                 # Unique instance identifier
+    
     article_url = "https://www.defaul_instance_url.com"
     this_article_url = "https://www.default_interpret_page_url.com"
-    cur_dir = None
-    json_schema_file = None
-    
+
     yahoo_headers = {
         'authority': 'finance.yahoo.com',
         'path': '/screener/predefined/day_gainers/',
@@ -106,13 +107,12 @@ class yfnews_reader:
         self.yfn_uh = hinst
         return
 
+# ##########################################################################################################
     async def crawl4ai_extract_news(self, idx_x):
         """
         Use crawl4ai to extract news data from Yahoo Finance using JSON schema
         """
         cmi_debug = __name__+"::" + self.crawl4ai_extract_news.__name__+".#"+str(self.yti)+"."+str(idx_x)
-        
-        # URL validation
         if not self.yfqnews_url or not isinstance(self.yfqnews_url, str):
             logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
             return None
@@ -128,49 +128,49 @@ class yfnews_reader:
                 schema = json.load(f)
             logging.info(f'%s - crawl4ai JSON schema loaded' % cmi_debug)
         else:
-            logging.error(f'%s - FAILED to load JSON crawl4ai schema file: [ {self.json_schema_file} ]...' % cmi_debug)
+            logging.error(f'%s - FAILED to load crawl4ai schema: [ {self.json_schema_file} ]...' % cmi_debug)
             return None
 
         # Setup crawl4ai extraction strategy
         logging.info(f'%s - INIT crawl4ai extraction strategy...' % cmi_debug)
         extraction_strategy = JsonCssExtractionStrategy(schema)
-        
-        # JavaScript commands to handle dynamic content
         js_cmds = [
             "window.scrollTo(0, document.body.scrollHeight);",
-            "await new Promise(resolve => setTimeout(resolve, 2000));"
+            "await new Promise(resolve => setTimeout(resolve, 1500));"
         ]
         
         config = CrawlerRunConfig(
             extraction_strategy=extraction_strategy,
             scan_full_page=True,
             js_code=js_cmds,
+            verbose=True,
             cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
         )
 
         #    headers=self.yahoo_headers,
         # Execute crawl4ai
+        dedupe_set = set()
         try:
             async with AsyncWebCrawler() as crawler:
                 logging.info(f'%s - doing async webcrawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)
-                
                 if result.success:
                     logging.info(f'%s - crawl4ai extraction successful' % cmi_debug)
                     self.yfn_crawl_data = json.loads(result.extracted_content)
-                    
-                    # Create URL hash for caching
                     auh = hashlib.sha256(self.yfqnews_url.encode())
                     aurl_hash = auh.hexdigest()
                     
-                    # Cache the result
-                    self.yfn_jsdb[aurl_hash] = {
-                        'url': self.yfqnews_url,
-                        'data': self.yfn_crawl_data,
-                        'result': result
-                    }
-                    
-                    logging.info(f'%s - CREATED cache entry: [ {aurl_hash} ]' % cmi_debug)
+                    if aurl_hash not in dedupe_set:             # dedupe membership test
+                        dedupe_set.add(aurl_hash)               # add ihash to dupe_set for next membership test
+                        self.yfn_jsdb[aurl_hash] = {            # build dict data row
+                            'url': self.yfqnews_url,
+                            'data': self.yfn_crawl_data,
+                            'result': result
+                        }
+                    else:
+                        logging.info(f"%s - # Duplicate data: Skipping..." % cmi_debug )
+                        pass
+                    logging.info(f'%s  - CREATED URL cache entry: [ {aurl_hash} ]' % cmi_debug)
                     return aurl_hash
                 else:
                     logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
@@ -180,6 +180,7 @@ class yfnews_reader:
             logging.error(f'{cmi_debug} - Exception during crawl4ai extraction: {e}')
             return None
 
+# ##########################################################################################################
     def scan_news_feed(self, symbol, depth, scan_type, bs4_obj_idx, hash_state):
         """
         Symbol : Stock symbol NEWS FEED for articles (e.g. https://finance.yahoo.com/quote/OTLY/news?p=OTLY )
@@ -229,6 +230,7 @@ class yfnews_reader:
         
         return
 
+# ##########################################################################################################
     def eval_news_feed_stories(self, symbol):
         """
         Depth 1 - scanning news feed stories and some metadata (depth 1)
@@ -330,6 +332,7 @@ class yfnews_reader:
         
         return
 
+# ##########################################################################################################
     def interpret_page(self, item_idx, data_row):
         """
         Depth 2 Page interpreter
@@ -366,13 +369,13 @@ class yfnews_reader:
             return uhint, thint, durl
             
         elif uhint == 3:  # External publication
-            logging.info(f"%s - Depth: 2.3 / External publication / [ u: {uhint} h: {thint} ]" % cmi_debug)
+            logging.info(f"%s - Depth: 2.3 / Injected add link / [ u: {uhint} h: {thint} ]" % cmi_debug)
             data_row.update({"viable": 0})
             self.ml_ingest[item_idx] = data_row
             return uhint, thint, durl
             
-        elif uhint == 4:  # Research report
-            logging.info(f"%s - Depth: 2.4 / Research report / [ u: {uhint} h: {thint} ]" % cmi_debug)
+        elif uhint == 4:  # Video story
+            logging.info(f"%s - Depth: 2.4 / Video story / [ u: {uhint} h: {thint} ]" % cmi_debug)
             data_row.update({"viable": 0})
             self.ml_ingest[item_idx] = data_row
             return uhint, thint, durl
@@ -383,6 +386,7 @@ class yfnews_reader:
             self.ml_ingest[item_idx] = data_row
             return uhint, 9.9, durl
 
+# ##########################################################################################################
     def extract_article_data(self, item_idx, sentiment_ai):
         """
         Depth 3: Extract article data for sentiment analysis
@@ -442,7 +446,7 @@ class yfnews_reader:
         except Exception as e:
             logging.error(f'%s - Error in sentiment analysis: {e}' % cmi_debug)
             return 0, 0, 0
-
+# ##########################################################################################################
     def dump_ml_ingest(self):
         """
         Dump the contents of ml_ingest{}, which holds the NLP candidates

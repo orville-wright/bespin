@@ -46,7 +46,11 @@ class url_hinter:
         cmi_debug = __name__+"::uhinter.eng#"+str(self.yti)+"_cyc#"+str(hcycle)
         input_url = recvd_url
 
-        # INFO: U code only - This metainfo does NOT define locality. You cant inferr locality truth from it.
+        # tupple struct
+        # {dict key: "string"} - path string splitout from urlparse.path(split'/',2)
+        # 0:                   - String explination
+        # 1 :                  - UHUNT code - defining this uhint - CRITICAL- this is used alot everywhere !!
+        # note: UHUNT does NOT define locality. You cant inferr locality truth from it.
         uhint_code = {
                     'news': ('Local News', 0),
                     'm': ('Fake local micro news', 1),
@@ -67,7 +71,7 @@ class url_hinter:
         if t_check:
             a_url = urlparse(input_url)                 # conv url string into apparsed named tuple object
             if a_url.netloc == "finance.yahoo.com":
-                urlp_attr = a_url.path.split('/', 2)    # work on path=object ONLY
+                urlp_attr = a_url.path.split('/', 2)    # work on path=object ONLY e.g. "/path/to/page" - but only get first element
                 uhint = uhint_code.get(urlp_attr[1])    # retrieve uhint code/descr tuple from split section #1
                 logging.info ( f"%s - Logic +0 Decoded url: [{a_url.netloc}] / Type: [{urlp_attr[1]}] / u:{uhint[1]} / {uhint[0]}" % cmi_debug )
                 return uhint[1], uhint[0]

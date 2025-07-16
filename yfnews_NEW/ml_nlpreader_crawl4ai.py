@@ -98,7 +98,8 @@ class ml_nlpreader:
             0: 'Local 0',
             1: 'Local 1', 
             2: 'Local 2',
-            3: 'Remote',
+            3: 'Remote url 3',
+            4: 'Local video 4',
             9: 'Unknown locality'
         }
 
@@ -111,10 +112,10 @@ class ml_nlpreader:
         sn_row = self.ml_yfn_dataset.ml_ingest[ml_idx]
         
         if sn_row['type'] == 0:  # REAL valid news article
-            print(f"{sn_row['symbol']} / Valid News article: {ml_idx}")
             t_url = urlparse(sn_row['url'])
             uhint, uhdescr = self.yfn_uh.uhinter(0, t_url)
             thint = sn_row['thint']
+            print(f"{sn_row['symbol']} / Valid News article: {ml_idx}")
             logging.info(f"%s       - Logic.#0 Hints for url: [ t:0 / u:{uhint} / h: {thint} ] / {uhdescr}" % cmi_debug)
             
             # Do deep analysis on the page
@@ -131,23 +132,23 @@ class ml_nlpreader:
             return thint
             
         elif sn_row['type'] == 1:  # Fake News Micro-Ad
-            print(f"{sn_row['symbol']} / Fake News article - Micro-ad: {ml_idx} - AI will not eval sentiment")
             t_url = urlparse(sn_row['url'])
             uhint, uhdescr = self.yfn_uh.uhinter(1, t_url)
             thint = sn_row['thint']
+            print(f"{sn_row['symbol']} / Fake News article - Micro-ad: {ml_idx} - AI will not Read sentiment")
             logging.info(f"%s       - Logic.#1 hint origin url: t:1 / u:{uhint} / h: {thint} {uhdescr}" % cmi_debug)
             
             r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page(ml_idx, sn_row)
             try:
                 url_test = len(r_xturl)
-                logging.info(f"%s       - Logic.#1 hint ext url: {r_xturl}" % cmi_debug)
                 p_r_xturl = urlparse(r_xturl)
                 inf_type = self.yfn_uh.confidence_lvl(thint)
-                print(f"Article type:  [ 1 / {sn_row['url']} ]")
-                print(f"Origin:  [ {t_url.netloc} ] / {uhdescr} / {inf_type[0]} / ", end="")
+                logging.info(f"%s       - Logic.#1 hint ext url: {r_xturl}" % cmi_debug)
+                print(f"Article type:  [ +1 / {sn_row['url']} ]")
+                print(f"Origin:        [ {t_url.netloc} ] / {uhdescr} / {inf_type[0]} / ", end="")
                 print(f"{locality_code.get(inf_type[1], 'in flux')}")
                 uhint, uhdescr = self.yfn_uh.uhinter(31, p_r_xturl)
-                print(f"Hints:   {uhdescr} / ", end="")
+                print(f"Hints:         [ {uhdescr} / ", end="")
                 print(f"{locality_code.get(uhint, 'in flux')} [ u:{uhint} ]")
                 logging.info(f"%s - skipping..." % cmi_debug)
                 return thint
@@ -155,24 +156,36 @@ class ml_nlpreader:
                 logging.info(f"%s       - BAD artile URL {url_test} : {e}" % cmi_debug)
                 return thint
 
-        elif sn_row['type'] == 2:  # Video story
-            print(f"{sn_row['symbol']} / Video article - Not readable: {ml_idx} - AI will not eval sentiment")
+        elif sn_row['type'] == 2:  # Video story - this is an initial guess. It culd be wring. 
             t_url = urlparse(sn_row['url'])
             thint = sn_row['thint']
             inf_type = self.yfn_uh.confidence_lvl(thint)
-            print(f"Article: {ml_idx} - {inf_type[0]}: 2 - NOT an NLP candidate")
-            print(f"URL:     {sn_row['url']}")
-            print(f"Origin:  [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
+            print(f"{sn_row['symbol']} / {inf_type[0]}: {ml_idx} - Not readable AI will not eval sentiment")
+            print(f"Article:   [ +{inf_type[1]} / {inf_type[0]}  - NOT an NLP candidate")
+            print(f"URL:       [ {sn_row['url']}")
+            print(f"Origin:    [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
             print(f"{locality_code.get(inf_type[1], 'in flux')}")
             logging.info(f"%s - skipping..." % cmi_debug)
             return thint
             
-        elif sn_row['type'] == 3:  # External publication
-            print(f"{sn_row['symbol']} / Random Filler item - Not readable: {ml_idx} - AI will not Read sentiment")
+        elif sn_row['type'] == 3:  # Injected add link
             t_url = urlparse(sn_row['url'])
             thint = sn_row['thint']
             inf_type = self.yfn_uh.confidence_lvl(thint)
-            print(f"Article: {ml_idx} - {inf_type[0]}: 2 - AI will not Read sentiment")
+            print(f"{sn_row['symbol']} / {inf_type[0]}: {ml_idx} - AI will not Read sentiment")
+            print(f"Article:   [ +{inf_type[1]} / {inf_type[0]} - AI will not Read sentiment")
+            print(f"URL:       [ {sn_row['url']}")
+            print(f"Origin:    [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
+            print(f"{locality_code.get(inf_type[1], 'in flux')}")
+            logging.info(f"%s - skipping..." % cmi_debug)
+            return thint
+
+        elif sn_row['type'] == 4:  # Video story
+            t_url = urlparse(sn_row['url'])
+            thint = sn_row['thint']
+            inf_type = self.yfn_uh.confidence_lvl(thint)
+            print(f"{sn_row['symbol']} / Video 4 article - Not readable: {ml_idx} - AI will not eval sentiment")
+            print(f"Article: {ml_idx} - {inf_type[0]}: 2 - NOT an NLP candidate")
             print(f"URL:     {sn_row['url']}")
             print(f"Origin:  [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
             print(f"{locality_code.get(inf_type[1], 'in flux')}")

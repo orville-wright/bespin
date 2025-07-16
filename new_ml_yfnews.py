@@ -1,7 +1,8 @@
 #! python3
 from requests_html import HTMLSession
-import requests
+import argparse
 from bs4 import BeautifulSoup
+import requests
 from urllib.parse import urlparse
 from datetime import datetime, date
 import hashlib
@@ -10,7 +11,7 @@ import logging
 import pandas as pd
 #import modin.pandas as pd
 import numpy as np
-import argparse
+from pathlib import Path
 import time
 from rich import print
 from rich.markup import escape
@@ -68,6 +69,9 @@ class yfnews_reader:
                         'sec-fetch-site': 'same-origin', \
                         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36' }
 
+    ################
+    # Init
+    ################
     def __init__(self, yti, symbol, global_args):
         self.yti = yti
         cmi_debug = __name__+"::"+self.__init__.__name__
@@ -78,18 +82,20 @@ class yfnews_reader:
         self.nlp_x = 0
         self.cycle = 1
         self.sent_df0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
+
+        __cur_dir__ = Path(__file__).parent
+        self.cur_dir = __cur_dir__
+        self.json_schema_file = f"{self.cur_dir}/YAHOO_FINANCE_crawl4ai_schema.json"
         
         return
 
-###################################### 1 ###########################################
-# method 6
+################## 1 ####################
     def init_dummy_session(self):
         self.dummy_resp0 = requests.get(self.dummy_url, stream=True, headers=self.yahoo_headers, cookies=self.yahoo_headers, timeout=5 )
         #hot_cookies = requests.utils.dict_from_cookiejar(self.dummy_resp0.cookies)
         return
 
-###################################### 2 ###########################################
-
+################# 2 #####################
     def init_live_session(self, id_url):
         '''
         A key objetcive acheived here is populating the existing yahoo_headers with live cookies
@@ -100,8 +106,7 @@ class yfnews_reader:
         self.live_resp0 = requests.get(id_url, stream=True, headers=self.yahoo_headers, cookies=self.yahoo_headers, timeout=5 )
         return
 
-##################################### 3 ############################################
-
+################ 3 #####################
     def update_headers(self, ch):
         # HACK to help logging() f-string bug to handle strings with %
         cmi_debug = __name__+"::"+self.update_headers.__name__+".#"+str(self.yti)+"  - "+ch
@@ -113,11 +118,9 @@ class yfnews_reader:
             print ( f"=========================== {self.yti} / session cookies ===========================" )
             for i in self.ext_req.cookies.items():
                 print ( f"{i}" )
-
         return
             
-###################################### 4 ###########################################
-
+################ 4 #####################
     def form_endpoint(self, symbol):
         """
         This is the explicit NEWS URL that is used for the request get()
@@ -137,16 +140,14 @@ class yfnews_reader:
         # NOTE | WARN: Class global attribute. Used in MANY places once its self set, so be careful
         return
 
-##################################### 5 ############################################
-
+################ 5 #####################
     def share_hinter(self, hinst):
         cmi_debug = __name__+"::"+self.share_hinter.__name__+".#"+str(self.yti)
         logging.info( f'%s - IN {type(hinst)}' % cmi_debug )
         self.yfn_uh = hinst
         return
 
-###################################### 6 ###########################################
-
+################ 6 #####################
     def update_cookies(self):
         # assumes that the requests session has already been established
         cmi_debug = __name__+"::"+self.update_cookies.__name__+".#"+str(self.yti)
@@ -154,8 +155,7 @@ class yfnews_reader:
         self.js_session.cookies.update({'A1': self.js_resp0.cookies['A1']} )    # yahoo cookie hack
         return
 
-###################################### 7 ###########################################
-
+################ 7 #####################
     def ext_do_js_get(self, idx_x):
         cmi_debug = __name__+"::"+self.ext_do_js_get.__name__+".#"+str(self.yti)+"."+str(idx_x)
         
@@ -179,8 +179,7 @@ class yfnews_reader:
         #print (f"r.html.html: {escape(r.html.html)}...")  # Print first 100 characters of the HTML content for debugging 
         return aurl_hash
 
-###################################### 7.1 ###########################################
-
+################ 7.2 #####################
     def ext_pw_js_get(self, idx_x):
         cmi_debug = __name__+"::"+self.ext_pw_js_get.__name__+".#"+str(self.yti)+"."+str(idx_x)
         
@@ -237,8 +236,7 @@ class yfnews_reader:
 
         return aurl_hash
 
-###################################### 8 ###########################################
-
+################ 8 #####################
     def do_simple_get(self, url):
         """
         get simple raw HTML data structure (data not processed by JAVAScript engine)
@@ -283,12 +281,18 @@ class yfnews_reader:
 
         return aurl_hash
 
-###################################### 9 ###########################################
-
+#########################################
+        # 1 - scan_news_feed : opens main news page, sets BS4 data zone
+        # 2 - eval_news_feed_stories : ultimate build ml_ingest DB
+        # 3 - interpret_page : 
+        # 4 - extract_article_data
+################ 9 #####################
     def scan_news_feed(self, symbol, depth, scan_type, bs4_obj_idx, hash_state):
         """
-        Symbol : Stock symbol NEWS FEED for articles (e.g. https://finance.yahoo.com/quote/OTLY/news?p=OTLY )
-        Depth 0 : Surface scan of all news articles in the news section for a stock ticker
+        Read main news page for this soock, set BS4 zones for extracting list of all news articles
+        - doesnt do any reak data extraction
+        Symbol : symbol NEWS FEED  (e.g. https://finance.yahoo.com/quote/OTLY/news?p=OTLY )
+        Depth 0 : Surface scan of all news articles in the news section for a ticker
         Scan_type:  0 = html | 1 = Javascript render engine
         Share class accessors of where the New Articles live i.e. the <li> section
         """
@@ -305,16 +309,15 @@ class yfnews_reader:
             self.yfn_jsdb[hash_state]       # check if the URL hash is in the cache
             logging.info( f'%s - URL EXISTS in cache: {hash_state}' % cmi_debug )
             cx_soup = self.yfn_jsdb[hash_state]
-            self.nsoup = BeautifulSoup(cx_soup.html.html, "html.parser")   # !!!! this was soup = but I have no idea where "soup" gets set
-            logging.info( f'%s - set BS4 data objects' % cmi_debug )
             
+#            ### BS4 data extraction here...
+            self.nsoup = BeautifulSoup(cx_soup.html.html, "html.parser")
+            logging.info( f'%s - set BS4 data objects' % cmi_debug )
             # Major area that gets BROKEN by Yahoo Finance changes
             self.ul_tag_dataset = self.nsoup.find_all("section", class_="yf-1ce4p3e")        # produces : list iterator
             # self.ul_tag_dataset.div.div.div.div.ul.find_all()  # find the first article in the list}
-
             container_node = self.ul_tag_dataset[0]
-            self.li_superclass = container_node.find_all('li')
-
+#            self.li_superclass = container_node.find_all('li')
         except KeyError as error:
             logging.info( f'%s - MISSING in cache: Must read JS page' % cmi_debug )
             logging.info( f'%s - Force read news url: {self.yfqnews_url}' % cmi_debug )
@@ -331,7 +334,7 @@ class yfnews_reader:
             xxx = self.ul_tag_dataset[0]
             self.li_superclass = xxx.find_all('li')
 
-  
+# This is usefull but not sure I can do this with crawl4ai  
         logging.info( f'%s - Depth: 0 / Found News containers: {len(self.ul_tag_dataset[0])}' % cmi_debug )
         logging.info( f'%s - Depth: 0 / Found Sub cotainers:   {len(list(self.ul_tag_dataset[0].children))} / Tags: {len(list(self.ul_tag_dataset[0].descendants))}' % cmi_debug )
         logging.info( f'%s - Depth: 0 / Found News Articles:   {len(self.li_superclass)}' % cmi_debug)
@@ -362,11 +365,12 @@ class yfnews_reader:
         return
 
 ###################################### 10 ###########################################
-
+# CRITICAL function
+# at the end ml_ingest.update() builds ml_ingest DB
     def eval_news_feed_stories(self, symbol):
         """
-        Depth 1 - scanning news feed stories and some metatdata (depth 1)
-        INFO: we are NOT looking deeply inside each metat data article (depth 1) yet
+        Depth 1 - scan Main news feed stories for this ticker, gather some metatdata (depth 1)
+        INFO: we are NOT looking deeply inside each article  yet
         NOTE: assumes connection was previously setup & html data structures are pre-loaded
               leverages default JS session/request handle
               Depth 1 -Iinterrogate items within the main [News Feed page]
@@ -397,46 +401,46 @@ class yfnews_reader:
         self.article_teaser ="ERROR_default_data_0"
         ml_atype = 0
 
-        ## GENERATOR: Scan & find critical tags
-        def atag_gen():                         #  extract <h3>, agency, author, publish date
-            a_counter = 0
-            for li_tag in self.li_superclass:   # BS4 object set from scan_news_feed()
-                self.nlp_x += 1
-                for element in li_tag.descendants:
-                    if element.name == "a":
-                        a_counter += 1
-                        if element.h3 is not None:
-                            yield ( f"{a_counter}")
-                            yield ( f"{element.h3.text}" )
-                            if element.has_attr('href') is True:
+        ## GENERATOR: Scan, find & yield critical HTML page tags #### See OUTPUTS below...
+        def atag_gen():                                             # extract <h3>, agency, author, publish date
+            a_counter = 0                                           # reset <a> counter = 0
+            for li_tag in self.li_superclass:                       # BS4 object set from scan_news_feed()
+                self.nlp_x += 1                                     # count <li> hits
+                for element in li_tag.descendants:                  # cycle trough HTML paghe element list
+                    if element.name == "a":                         # <a> ?
+                        a_counter += 1                              # count <a> hits
+                        if element.h3 is not None:                  # <h3> ?
+                            yield ( f"{a_counter}")                 # output #1 - count of <a>
+                            yield ( f"{element.h3.text}" )          # output #2 - count of h3.text
+                            if element.has_attr('href') is True:    # href attribute ?
                                 #yield ( f'ZONE : {a_counter} : H3URL : {element.get("href")}' )
-                                yield ( f'{element.get("href")}' )
+                                yield ( f'{element.get("href")}' )  # output #3 - URL href string
                                 news_ag = li_tag.find(attrs={'class': 'publishing yf-1weyqlp'}) 
                                 if news_ag is not None:
                                     news_ag = news_ag.text.split("•")
-                                    yield ( f"{news_ag[0]}")
+                                    yield ( f"{news_ag[0]}")        # output #4 - News agency string
                                 else:
-                                    yield ( f"Failed to extract News Agency" )
-
+                                    yield ( f"Failed to extract News Agency" )  # output #5 - ERROR staus
         ########## end Generatior
 
-        scan_a_zone = atag_gen()
+        scan_a_zone = atag_gen()    # setup the genrtator to work with us
         try:
             cg = 1
             news_agency ="ERROR_default_data_1"
             logging.info( f'%s - Article Zone scanning / ml_ingest populating...' % cmi_debug )
             while True:
-                li_a_zone = next(scan_a_zone)
+                li_a_zone = next(scan_a_zone)       # trigger generate output
                 self.article_teaser = next(scan_a_zone)
                 print ( f"================== Article: [ {cg} ] / A-Zone: [ {li_a_zone} ] ==================" )
-                self.article_url = next(scan_a_zone)
-                self.a_urlp = urlparse(self.article_url)
-                news_agency = next(scan_a_zone)
+                self.article_url = next(scan_a_zone)        # output #3 frpm Generate 
+                self.a_urlp = urlparse(self.article_url)    # break URL into components (scheme, netloc, path, params, query, and fragment)
+                news_agency = next(scan_a_zone)             # NOTE: crawl4ai nmeeds to expose: self.a_urlp
                 inf_type = "Undefined"
 
-                for safety_cycle in range(1):    # ABUSE for/loop BREAK as logic control exit (poor mans switch/case)
-                    if self.a_urlp.scheme == "https" or self.a_urlp.scheme == "http":    # check URL scheme specifier
-                        uhint, uhdescr = self.yfn_uh.uhinter(hcycle, self.article_url)       # raw url string
+# this is important !!!
+                for safety_cycle in range(1):           # ABUSE for/loop BREAK as logic control exit (poor mans switch/case)
+                    if self.a_urlp.scheme == "https" or self.a_urlp.scheme == "http":        # CRITICAL: check URL scheme specifier
+                        uhint, uhdescr = self.yfn_uh.uhinter(hcycle, self.article_url)       # CRITICAL: get hints of WTF this url is ?
                         logging.info( f'%s - Source url [{self.a_urlp.netloc}] / u:{uhint} / {uhdescr}' % (cmi_debug) )
                         pure_url = 1                    # explicit pure URL to remote entity
                         if uhint == 0: thint = 0.0      # Fake news / remote-stub @ YFN stub
@@ -467,7 +471,6 @@ class yfnews_reader:
                         inf_type = self.yfn_uh.confidence_lvl(thint)                # return var is tuple
                         hcycle += 1
                         break       # ...need 1 more level of analysis analysis to get headline & teaser text
-
                 print ( f"New article:      {symbol} / [ {cg} ] / Depth 1" )
                 print ( f"News item:        {inf_type[0]} / Origin confidence: [ t:{ml_atype} u:{uhint} h:{thint} ]" )
                 print ( f"News agency:      {news_agency}" )
@@ -475,13 +478,11 @@ class yfnews_reader:
                 print ( f"Article URL:      {self.article_url}" )
                 #print ( f"Article headline: {article_headline}" )
                 print ( f"Article teaser:   {self.article_teaser}" )
-
                 self.ml_brief.append(self.article_teaser)           # add Article teaser long TXT into ML pre count vectorizer matrix
                 auh = hashlib.sha256(self.article_url.encode())     # hash the url
                 aurl_hash = auh.hexdigest()
                 print ( f"Unique url hash:  {aurl_hash}" )
                 print ( f" " )
-
                 # build NLP candidate dict for deeper pre-NLP article analysis in Level 1
                 # ONLY insert type 0, 1 articles as NLP candidates !!
                 # WARN: after interpret_page() this DICT may contain new fields i.e. 'exturl:'
@@ -495,16 +496,16 @@ class yfnews_reader:
                     "teaser" : self.article_teaser
                 }
                 logging.info( f'%s - Add to ML Ingest DB: [ {cg} ]' % (cmi_debug) )
-                self.ml_ingest.update({self.nlp_x : nd})
+                self.ml_ingest.update({self.nlp_x : nd})    # CRITICA: this is the most import dict. The list of candidates 
                 cg += 1
-
         except StopIteration:
             pass
 
         return
 
 ###################################### 11 ###########################################
-# method 11
+# CRITICAL function
+# Must be given ml_ingest DB 
     def interpret_page(self, item_idx, data_row):
         """
         Depth 2 Page interpreter
@@ -894,7 +895,7 @@ class yfnews_reader:
 
         return total_tokens, total_words, total_scent
 
-###################################### 13 ###########################################
+################ ? #####################
 
     def dump_ml_ingest(self):        # >>Xray DEBUG<<
         """
