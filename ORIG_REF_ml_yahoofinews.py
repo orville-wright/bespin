@@ -27,35 +27,35 @@ class yfnews_reader:
     """
 
     # global accessors
-    symbol = None           # Unique company symbol
-    yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
+    a_urlp = None
+    args = []               # class dict to hold global args being passed in from main() methods
+    cycle = 0               # class thread loop counter
+    ext_req = ""            # HTMLSession request handle
+    get_counter = 0         # count of get() requests
     js_session = None       # SET by this class during __init__ - main requests session
     js_resp0 = None         # HTML session get() - response handle
     js_resp2 = None         # JAVAScript session get() - response handle
+    li_superclass = None    # all possible News articles
+    ml_brief = []           # ML TXT matrix for Naieve Bayes Classifier pre Count Vectorizer
+    ml_ingest = {}          # ML ingested NLP candidate articles
+    ml_sent = None
+    nlp_x = 0
+    nsoup = None            # BS4 shared handle between UP & DOWN (1 URL, 2 embeded data sets in HTML doc)
+    sen_stats_df = None     # Aggregated sentiment stats for this 1 article
+    symbol = None           # Unique company symbol
+    ul_tag_dataset = None   # BS4 handle of the <tr> extracted data
+    url_netloc = None
+    yfn_uh = None           # global url hinter class
+    yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
     yfn_all_data = None     # JSON dataset contains ALL data
     yfn_htmldata = None     # Page in HTML
     yfn_jsdata = None       # Page in JavaScript-HTML
     yfn_jsdb = {}           # database to hold response handles from multiple js.session_get() ops
-    ml_brief = []           # ML TXT matrix for Naieve Bayes Classifier pre Count Vectorizer
-    ml_ingest = {}          # ML ingested NLP candidate articles
-    ml_sent = None
-    ul_tag_dataset = None   # BS4 handle of the <tr> extracted data
-    li_superclass = None    # all possible News articles
     yti = 0                 # Unique instance identifier
-    cycle = 0               # class thread loop counter
-    nlp_x = 0
-    get_counter = 0         # count of get() requests
-    ext_req = ""            # HTMLSession request handle
-    sen_stats_df = None     # Aggregated sentiment stats for this 1 article
-    nsoup = None            # BS4 shared handle between UP & DOWN (1 URL, 2 embeded data sets in HTML doc)
-    args = []               # class dict to hold global args being passed in from main() methods
-    yfn_uh = None           # global url hinter class
-    url_netloc = None
-    a_urlp = None
-    article_url = "https://www.defaul_instance_url.com"
-    this_article_url = "https://www.default_interpret_page_url.com"
-    dummy_url = "https://finance.yahoo.com/screener/predefined/day_losers"
 
+    article_url = "https://www.defaul_instance_url.com"
+    dummy_url = "https://finance.yahoo.com/screener/predefined/day_losers"
+    this_article_url = "https://www.default_interpret_page_url.com"
     yahoo_headers = { \
                         'authority': 'finance.yahoo.com', \
                         'path': '/screener/predefined/day_gainers/', \
@@ -783,7 +783,7 @@ class yfnews_reader:
         cached_state = data_row['urlhash']
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
-            external = True
+            external = True     # not a local yahoo.com hosted article
         else:
             durl = data_row['url']
             external = False

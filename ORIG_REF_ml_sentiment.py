@@ -307,4 +307,3 @@ class ml_sentiment:
         logging.info( f'%s - Global Sentiment DF updated...' % cmi_debug )        
 
         return results
-

@@ -26,10 +26,12 @@ class ml_nlpreader:
     yfn_uh = None           # URL Hinter instance for the YFN reader
     yti = 0
     cycle = 0               # class thread loop counter
+    yfn = None              # class of @ml_yahoofinews_crawl4ai.py/yfnews_reader
 
     def __init__(self, yti, global_args):
         cmi_debug = __name__+"::" + self.__init__.__name__
         logging.info(f'%s   - Instantiate.#{yti}' % cmi_debug)
+        self.yfn = yfnews_reader(1, "DUMMY0", global_args )        # instantiate a class of fyn frpm @ ml_yahoofinews_craw4ai
         self.args = global_args
         self.yti = yti
         return
@@ -47,14 +49,14 @@ class ml_nlpreader:
         self.args = global_args
         cmi_debug = __name__+"::" + self.async_nlp_read_one.__name__
         logging.info(f'%s   - IN.#{self.yti}' % cmi_debug)
-        
         news_symbol = str(news_symbol).upper()
-        ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args)
-        ml_yfn_dataset.form_endpoint(news_symbol)
+        
+        ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args)       # create class instance from @ml_yahoofinews_crawl4ai
+        ml_yfn_dataset.form_endpoint(news_symbol)                       # extablish the exct news url endpoint for this stock symbol to crawl
         logging.info(f"%s - globalize url_hinter: [ 1 ]" % cmi_debug)
         self.yfn_uh = url_hinter(1, self.args)
         ml_yfn_dataset.yfn_uh = self.yfn_uh
-        hash_state = await ml_yfn_dataset.crawl4ai_extract_news(0)
+        hash_state = await ml_yfn_dataset.c4_get_article_list(0)
         
         if hash_state:
             # Process the extracted news data

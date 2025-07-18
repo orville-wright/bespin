@@ -35,7 +35,7 @@ class url_hinter:
         0 = local full article - (URL starts with /news/... and has FQDN: https://finance.yahoo.com/
         1 = Fake local micro stub article - (URL starts with /m/.... and has FQDN:  https://finance.yahoo.com/
         2 = local full video - (URL starts with /video/... and has FQDN: https://finance.yahoo.com/
-        3 = BAD random inserted filler page - (URL is a pure link to remote article:  https://www.independent.co.uk/news/...
+        3 = remote full article - (URL is a pure link to remote article:  https://www.independent.co.uk/news/...
         4 = research report - (URL starts with /research/... origin FQDN:  https://finance.yahoo.com/research/reports/.....
         5 = Yahoo Premium plan subscription sign-up page
         9 = Not yet defined
@@ -52,7 +52,7 @@ class url_hinter:
                     'm': ('Fake local micro news', 1),
                     'live': ('Fake local micro news', 1),
                     'video': ('Video story', 2),
-                    'rabs': ('External filler page', 3),
+                    'rabs': ('External publication', 3),
                     'research': ('Research report', 4),
                     'about': ('Premium subscription add', 5),
                     'udef': ('Not yet defined', 9),
@@ -149,4 +149,3 @@ class url_hinter:
         logging.info ( f"%s    - Inferr localty hint: [{thint}]" % cmi_debug )
         thint_descr = tcode.get(thint)    # tuple : page type description / locality code 0=local/1=remote
         return thint_descr
-
