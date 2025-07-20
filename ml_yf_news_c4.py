@@ -569,8 +569,10 @@ class yfnews_reader:
             logging.info( f'%s - Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
             logging.info( f'%s - Cache URL object : {cx_soup.url}' % cmi_debug )
             logging.info( f'%s - BS4 read url now...' % cmi_debug )
+
             # This is where we refactor to crawl4ai
-            self.nsoup = BeautifulSoup(escape(dataset_1), "html.parser")        # BS4 read()
+            self.nsoup = BeautifulSoup(escape(dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
+
         except KeyError:
             logging.info( f'%s - MISSING from cache - must read page' % cmi_debug )
             logging.info( f'%s - Cache URL object   : {type(durl)}' % cmi_debug )
@@ -595,8 +597,10 @@ class yfnews_reader:
                 logging.info ( f'%s - Cache url:     {cy_soup.url}' % cmi_debug )
                 logging.info ( f'%s - Cache req/get: {type(cy_soup)}' % cmi_debug )
                 logging.info ( f'%s - Cache Dataset: {type(self.yfn_jsdata)}' % cmi_debug )
-                self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")
+                
                 # This is where we refactor to crawl4ai
+                self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")        # BS4 read() <- replace with crawl4ai
+
             else:
                 logging.info( f'%s - FAIL to set BS4 data !' % cmi_debug )
                 return 10, 10.0, "ERROR_unknown_state!"
