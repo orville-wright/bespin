@@ -197,24 +197,31 @@ class yfnews_reader:
         return
 
     # ################ 7
-    async def c4_get_article_list(self, idx_x):
+    async def yahoofin_news_depth0(self, idx_x):
         """
-        NOTE: Use crawl4ai to extract full list of top level news artciles
-              Use js_cmds to crawl all next_page() to capture all 200+ artciles in page stream
-              Store full craw4ai result in GLOABl class accessor: self.yfn_jsdb
+        Depth -> 0
+        crawl4ai extractor of Top-level crawler
+        Use js_cmds to for next_page() to capture all 200+ artciles to end of page stream
+        Store full craw4ai result in GLOBAL class accessor: self.yfn_jsdb
+        INFO:
+        Surface scan of Top-level news articles list in the news section for 1 stock symbol
+        Hash_state: Unique hash of the URL that is being scanned
+        Scans YF main News page of an explicit stock ticker. Skimming for all news articles
+        Symbol: Stock symbol NEWS FEED for articles (e.g. https://finance.yahoo.com/quote/OTLY/news?p=OTLY )
+        Scan_type: 0 = html | 1 = crawl4ai extraction (deprecated)
+        Share class accessors of where the New Articles live
         """
-        cmi_debug = __name__+"::" + self.c4_get_article_list.__name__+".#"+str(self.yti)+"."+str(idx_x)
+        cmi_debug = __name__+"::" + self.yahoofin_news_depth0.__name__+".#"+str(self.yti)+"."+str(idx_x)
         if not self.yfqnews_url or not isinstance(self.yfqnews_url, str):       # set  @async_nlp_read_one by form_endpoint()
             logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
             return None
 
-        logging.info(f'ml_yahoofinews_crawl4ai::c4_get_article_list.#{self.yti}.{idx_x} - %s', self.yfqnews_url)
-        logging.info(f'%s - crawl4ai json schema file: [ {self.YF_sym_main_schema} ]' % cmi_debug)
+        logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} - %s', self.yfqnews_url)
+        logging.info(f'%s - Load C4 json schema file: [ {self.YF_sym_main_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.YF_sym_main_schema}"        
         if os.path.exists(listall_schema_file_path):
             with open(listall_schema_file_path, "r") as f:
                 schema = json.load(f)
-            logging.info(f'%s - crawl4ai schema loaded' % cmi_debug)
         else:
             logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_main_schema} ]' % cmi_debug)
             return None
@@ -235,7 +242,7 @@ class yfnews_reader:
 
         try:
             async with AsyncWebCrawler() as crawler:
-                logging.info(f'%s - doing async webcrawl NOW...' % cmi_debug)
+                logging.info(f'%s - Exec async webcrawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
                 if result.success:
                     logging.info(f'%s - crawl4ai extraction successful' % cmi_debug)
@@ -260,6 +267,7 @@ class yfnews_reader:
     # ################ 7
     async def c4_get_1_article_dataset(self, idx_x):
         """
+        INFO: Depth 3 extraction method
         NOTE: Replaces old extract_article_data() method that relied on BeautifulSoup4
               Scrapes all data elemets from 1 single enws article using craw4ai
               This method is called many times to extract artciel TEXT
@@ -323,60 +331,65 @@ class yfnews_reader:
             return None
 
     # ################
-    def scan_news_feed(self, symbol, depth, scan_type, hash_state):
+    def list_newsfeed_candidates(self, symbol, depth, scan_type, hash_state):
         """
-        hash_state: Unique hash of the URL that is being scanned
-        Scans YF main News page of an explicit stock ticker. Skimming for all news articles
-        Symbol   : Stock symbol NEWS FEED for articles (e.g. https://finance.yahoo.com/quote/OTLY/news?p=OTLY )
-        Depth 0  : Surface scan of all news articles in the news section for a stock ticker
-        Scan_type: 0 = html | 1 = crawl4ai extraction
-        Share class accessors of where the New Articles live
+        DEPTH -> 0
+        Test and report the Depth 0 scan sucess
+        - URL hash exists in cache
+        - This means URL opened & crawled and data extracted
+        - sets GLOBALLY sets Dataset accessor -> self.extracted_articles
+        - calc and set helper GLOBAL attribute: articles_found counter 
+        
+        Does a  nice REPORT of the Depth 0 surface scan
+        This does NOT get() or extartc and data, or create ml_ingest dataset
         """
-        cmi_debug = __name__+"::" + self.scan_news_feed.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::" + self.list_newsfeed_candidates.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug)
         symbol = symbol.upper()
         depth = int(depth) 
-        logging.info(f'%s - Scan news: {symbol} @ {self.yfqnews_url}' % cmi_debug)
-        logging.info(f"%s - URL Hinter cycle: {self.yfn_uh.hcycle} " % cmi_debug)
         
         if scan_type == 1:  # crawl4ai extraction
-            logging.info(f'%s - Check urlhash cache state: {hash_state}' % cmi_debug)
+            logging.info(f'%s - Check Depth 0 cache state: {hash_state}' % cmi_debug)
             try:
-                cached_data = self.yfn_jsdb[hash_state]     # get resp - was set by c4_get_article_list()
-                logging.info(f'%s - URL exists in cache: {hash_state}' % cmi_debug)
+                cached_data = self.yfn_jsdb[hash_state]     # get resp - set by craw4al @ yahoofin_news_depth0()
+                logging.info(f'%s - URL exists in cache...' % cmi_debug)
                 
-                self.extracted_articles = cached_data['data']       # CRITICIAL:  gloablly sets the extratced >>dataset<< to work on for tis article
-                
-                logging.info(f'%s - set crawl4ai data objects' % cmi_debug)                
+                # CRITICIAL:  gloablly sets the extratced >>dataset<< to work on for tis article
+                self.extracted_articles = cached_data['data']                    
                 if isinstance(self.extracted_articles, list):       # test for list
                     article_count = len(self.extracted_articles)    # Count articles found
-                    logging.info(f'%s - Depth: 0 / Found News Articles: {article_count}' % cmi_debug)
-                    print(f"=========================== Articles found: {article_count} ================================")
+                    logging.info(f'%s - Depth: 0 Surface skim / Found News Articles: {article_count}' % cmi_debug)
+                    print(f"============================== Articles found: {article_count} ===================================")
                     for i, article in enumerate(self.extracted_articles):       # cycle trough articles >>dataset<<
                         if article.get('Title'):
-                            print(f"Item: {i+1}: {article.get('Title', 'No title')[:50]}... / (Possible News article)")
+                            safe_i = i + 1
+                            print(f"Item: {i+1:03}: {article.get('Title', 'No title')[:60]}... / (Possible News article)")
                         else:
-                            print(f"Item: {i+1}: Empty no article data")
+                            print(f"Item: {i+1:003}: Empty no article data")
                 else:
                     logging.warning(f'%s - No articles found in extraction' % cmi_debug)
                     
             except KeyError:
-                logging.error(f'%s - URL not in cache: {hash_state}' % cmi_debug)
+                logging.error(f'%s - ERROR URL hash not in cache: {hash_state}' % cmi_debug)
                 return None
         self.articles_found = article_count
-        return
+        return self.articles_found
 
     # ################
     def eval_news_feed_stories(self, symbol):
         """
-        Depth 1 - scanning news feed stories and some metadata (depth 1)
+        Depth : 1
+        Scanning news feed stories and some metadata (@ depth 1)
+        Extract key data elements from each article via crawl4ai dataset indexing @ self.extracted_articles
+        Build a ML ingest DB dataset of articles
+        Dedupe hash's
+        No network get() requests are made here
         """
         cmi_debug = __name__+"::" + self.eval_news_feed_stories.__name__+".#"+str(self.yti)
         logging.info('%s - IN ' % cmi_debug)
         time_now = time.strftime("%H:%M:%S", time.localtime())
         symbol = symbol.upper()
-        
-        if not self.extracted_articles:         # GLOBAL class accessor : this is the article >>dataset<< that was extracted by crawl4ai
+        if not self.extracted_articles:         # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
             logging.error(f'%s - No extracted articles available' % cmi_debug)
             return
         
@@ -384,12 +397,12 @@ class yfnews_reader:
         hcycle = 1
         dedupe_set = set()
         logging.info(f'%s - Article Zone scanning / ml_ingest populating...' % cmi_debug)
-        for article in self.extracted_articles: # GLOBAL class accessor : this is the article >>dataset<< that was extracted by crawl4ai
+        for article in self.extracted_articles: # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
             self.nlp_x += 1
             art_title = article.get('Title', 'ERROR_no_title')      # extract craw4al element
-            article_url = article.get('Ext_url', '')                    # extract craw4al element
+            article_url = article.get('Ext_url', '')                # extract craw4al element
             art_publisher = article.get('Publisher', 'ERROR_no_publisher • ERROR_no_pub_time')  # extract craw4al element
-            art_teaser = article.get('Teaser', 'ERROR_no_teaser')          # extract craw4al element
+            art_teaser = article.get('Teaser', 'ERROR_no_teaser')   # extract craw4al element
             try:
                 publisher = publisher.split('•')[0].strip()
                 update_time = publisher.split('•')[1].strip()
@@ -464,7 +477,9 @@ class yfnews_reader:
     # ################
     def interpret_page(self, item_idx, data_row):
         """
-        Depth 2 Page interpreter
+        Depth : 2 
+        Page interpreter. Noit a network get() request done here
+        Sets uhint, thint, durl for each article logic processing at Depth 3
         Simplified version that works with crawl4ai extracted data
         """
         cmi_debug = __name__+"::" + self.interpret_page.__name__+".#"+str(item_idx)
@@ -510,7 +525,7 @@ class yfnews_reader:
             return uhint, thint, durl
             
         else:
-            logging.info(f"%s - Depth: 2.x / Unknown type / [ u: {uhint} h: {thint} ]" % cmi_debug)
+            logging.info(f"%s - Depth: 2.? / Unknown type / [ u: {uhint} h: {thint} ]" % cmi_debug)
             data_row.update({"viable": 0})
             self.ml_ingest[item_idx] = data_row
             return uhint, 9.9, durl
@@ -521,13 +536,17 @@ class yfnews_reader:
     # This can be refactors to craw4al, but currently uses BS4
     def extract_article_data(self, item_idx, sentiment_ai):
         """
-        Depth 3:
+        Depth : 3
+        This function is controleed from main()
+        Extractor:  BS4
+        Build the Text corpus for 1 article
+        Calls sentiment computation for 1 article
         Only do this once the article has been evaluated and we know exactly where/what each article is
         Any article we read, should have its resp & BS4 objects cached in yfn_jsdb{}
         Set the Body Data zone, the <p> TAG zone
         Extract all of the full article raw text
         Store it in a Database
-        Associate it to themetadata info for this article
+        Associate it to the metadata info for this article
         Its now available for the LLM to read and process
         """
 

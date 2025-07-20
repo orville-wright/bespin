@@ -1,14 +1,14 @@
 #! python3
-import asyncio
-import logging
-import argparse
-from urllib.parse import urlparse
-from datetime import datetime, date
-from rich import print
 
+import argparse
+import asyncio
+from datetime import datetime, date
+import logging
 from ml_yf_news_c4 import yfnews_reader
 from ml_urlhinter import url_hinter
 from ml_sentiment import ml_sentiment
+from urllib.parse import urlparse
+from rich import print
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
@@ -22,11 +22,11 @@ class ml_nlpreader:
 
     # global accessors
     args = []               # class dict to hold global args being passed in from main() methods
+    cycle = 0               # class thread loop counter
     ml_yfn_dataset = None   # Yahoo Finance News reader instance
+    yfn = None              # class of @ml_yahoofinews_crawl4ai.py/yfnews_reader
     yfn_uh = None           # URL Hinter instance for the YFN reader
     yti = 0
-    cycle = 0               # class thread loop counter
-    yfn = None              # class of @ml_yahoofinews_crawl4ai.py/yfnews_reader
 
     def __init__(self, yti, global_args):
         cmi_debug = __name__+"::" + self.__init__.__name__
@@ -39,6 +39,9 @@ class ml_nlpreader:
     # ##############################################################################
     async def async_nlp_read_one(self, news_symbol, global_args):
         """
+        DEPTH -> 0 and -> 1
+        Main controler for depth 0 and 0 data extraction
+
         Async version of nlp_read_one that uses crawl4ai
         The machine will now read!
         Read finance.yahoo.com / News 'Brief headlines' using crawl4ai
@@ -51,49 +54,40 @@ class ml_nlpreader:
         logging.info(f'%s   - IN.#{self.yti}' % cmi_debug)
         news_symbol = str(news_symbol).upper()
         
-        ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args)       # create class instance from @ml_yahoofinews_crawl4ai
-        ml_yfn_dataset.form_endpoint(news_symbol)                       # extablish the exct news url endpoint for this stock symbol to crawl
-        logging.info(f"%s - globalize url_hinter: [ 1 ]" % cmi_debug)
-        self.yfn_uh = url_hinter(1, self.args)
+        ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args)       # Instantiate
+        ml_yfn_dataset.form_endpoint(news_symbol)                       # extablish the exct news url endpoint
+        logging.info(f"%s - globalize url_hinter @ #1" % cmi_debug)
+        self.yfn_uh = url_hinter(1, self.args)                          # instantiate URL hinter 
         ml_yfn_dataset.yfn_uh = self.yfn_uh
-        hash_state = await ml_yfn_dataset.c4_get_article_list(0)
-        
-        if hash_state:
-            # Process the extracted news data
-            ml_yfn_dataset.scan_news_feed(news_symbol, 0, 1, hash_state)
-            ml_yfn_dataset.eval_news_feed_stories(news_symbol)
-            
-            # Store the dataset for further processing
-            self.ml_yfn_dataset = ml_yfn_dataset
-            
+
+        # 3 Main steps execuete here - Depth -> 0 + Depth -> 1
+        # plau a repirt of the Depth 0 Top Level skim run
+        hash_state = await ml_yfn_dataset.yahoofin_news_depth0(0)   # scrape NOW @ Depth 0 yahoofin_news_depth0()
+
+        if hash_state:												# Depth: 0
+            articles_found = ml_yfn_dataset.list_newsfeed_candidates(news_symbol, 0, 1, hash_state)
+            ml_yfn_dataset.eval_news_feed_stories(news_symbol)		# Depth: 1            
+            self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(f" ")
-            print(f"Successfully processed {len(ml_yfn_dataset.ml_ingest)} articles")
-            
-            # Debug: dump ML ingest data
-            if self.args.get('bool_xray', False):
+            print(f"Successfully skimmed: {articles_found} / Evaled: {len(ml_yfn_dataset.ml_ingest)} articles @ Depth: 0")
+            if self.args.get('bool_xray', False):                   # DEBUG: xray
                 ml_yfn_dataset.dump_ml_ingest()
         else:
-            logging.error(f"%s - Failed to extract news data" % cmi_debug)
+            logging.error(f"%s - No Top lvel artciels were found !!" % cmi_debug)
         
         return
 
-
     # ##############################################################################
-    def nlp_read_one(self, news_symbol, global_args):
+    def nlp_summary_report(self, yti, ml_idx):
         """
-        Sync wrapper for async nlp_read_one
-        """
-        return asyncio.run(self.async_nlp_read_one(news_symbol, global_args))
-
-    # ##############################################################################
-    def nlp_summary(self, yti, ml_idx):
-        """
-        **CRITICAL: Assumes ml_ingest has already been pre-populated
-        Reads 1 item from the ml_ingest{} and processes it...
-        Updated to work with crawl4ai extracted data
+        CRITICAL: Assumes ml_ingest has already been pre-populated
+        NOTE: Reads 1 (ONE) article ONLY from the ml_ingest{} DB and processes it...
+              Executes Dept 2 analysis via ml_yfn_dataset::interpret_page()   - no get() or BS4
+        
+        Needs updating to crawl4ai data extraction (currenlt BS4)
         """
         self.yti = yti
-        cmi_debug = __name__+"::" + self.nlp_summary.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::" + self.nlp_summary_report.__name__+".#"+str(self.yti)
         logging.info(f'%s - IN.#{yti}' % cmi_debug)
         
         locality_code = {
@@ -120,7 +114,7 @@ class ml_nlpreader:
             thint = sn_row['thint']
             logging.info(f"%s       - Logic.#0 Hints for url: [ t:0 / u:{uhint} / h: {thint} ] / {uhdescr}" % cmi_debug)
             
-            # Do deep analysis on the page
+            # Do deep analysis on the page @ Depth 2
             r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page(ml_idx, sn_row)
             logging.info(f"%s       - Inferred conf: {r_xturl}" % cmi_debug)
             p_r_xturl = urlparse(r_xturl)
@@ -212,102 +206,3 @@ class ml_nlpreader:
             thint = sn_row['thint']
             return thint
 
-    # ####################################################################################
-
-    def process_sentiment_analysis(self, target_symbols=None):
-        """
-        Process sentiment analysis for articles in ml_ingest
-        """
-        cmi_debug = __name__+"::" + self.process_sentiment_analysis.__name__
-        logging.info(f'%s - Processing sentiment analysis' % cmi_debug)
-        if not self.ml_yfn_dataset or not self.ml_yfn_dataset.ml_ingest:
-            logging.error(f'%s - No ML ingest data available' % cmi_debug)
-            return
-        
-        #################################################################`
-        # DELETE ME - Vibe coded mock BS
-        # AI M/L NLP reader
-        # Initialize sentiment analyzer
-        sentiment_ai = ml_sentiment(self.yti, self.args)
-        results = {}
-        for item_idx, data_row in self.ml_yfn_dataset.ml_ingest.items():
-            if data_row.get('viable', 0) == 1:  # Only process viable articles
-                symbol = data_row['symbol']
-                if target_symbols and symbol not in target_symbols:     # WTF is this for?
-                    continue
-                
-                logging.info(f'%s - Compute sentiment for: {item_idx} / {symbol}' % cmi_debug)
-                try:
-                    tokens, words, scent = self.ml_yfn_dataset.extract_article_data(item_idx, sentiment_ai)
-                    if symbol not in results:
-                        results[symbol] = {
-                            'articles_processed': 0,
-                            'total_tokens': 0,
-                            'total_words': 0,
-                            'sentiment_counts': {'positive': 0, 'negative': 0, 'neutral': 0}
-                        }
-                    
-                    results[symbol]['articles_processed'] += 1
-                    results[symbol]['total_tokens'] += tokens
-                    results[symbol]['total_words'] += words
-                    
-                    # Aggregate sentiment counts
-                    for sentiment_type in ['positive', 'negative', 'neutral']:
-                        results[symbol]['sentiment_counts'][sentiment_type] += sentiment_ai.sentiment_count[sentiment_type]
-                        
-                except Exception as e:
-                    logging.error(f'%s - Error processing article {item_idx}: {e}' % cmi_debug)
-                    continue
-        
-        # Print results summary
-        print("\n" + "="*80)
-        print("SENTIMENT ANALYSIS RESULTS")
-        print("="*80)
-        
-        for symbol, data in results.items():
-            print(f"\nSymbol: {symbol}")
-            print(f"Articles processed: {data['articles_processed']}")
-            print(f"Total tokens: {data['total_tokens']}")
-            print(f"Total words: {data['total_words']}")
-            print(f"Sentiment distribution:")
-            print(f"  Positive: {data['sentiment_counts']['positive']}")
-            print(f"  Negative: {data['sentiment_counts']['negative']}")
-            print(f"  Neutral: {data['sentiment_counts']['neutral']}")
-            
-            total_sentiment = sum(data['sentiment_counts'].values())
-            if total_sentiment > 0:
-                pos_pct = (data['sentiment_counts']['positive'] / total_sentiment) * 100
-                neg_pct = (data['sentiment_counts']['negative'] / total_sentiment) * 100
-                neu_pct = (data['sentiment_counts']['neutral'] / total_sentiment) * 100
-                
-                print(f"  Positive: {pos_pct:.1f}%")
-                print(f"  Negative: {neg_pct:.1f}%")
-                print(f"  Neutral: {neu_pct:.1f}%")
-                
-        return results
-
-    # #####################################################################################
-    def run_full_analysis(self, symbol):
-        """
-        Run complete analysis workflow for a symbol
-        """
-        cmi_debug = __name__+"::" + self.run_full_analysis.__name__
-        logging.info(f'%s - Running full analysis for: {symbol}' % cmi_debug)
-        
-        # Step 1: Extract news data
-        self.nlp_read_one(symbol, self.args)
-        
-        # Step 2: Process sentiment analysis
-        results = self.process_sentiment_analysis([symbol])
-        
-        # Step 3: Generate summary
-        if self.ml_yfn_dataset and self.ml_yfn_dataset.ml_ingest:
-            print(f"\n" + "="*60)
-            print(f"DETAILED ARTICLE ANALYSIS FOR {symbol}")
-            print("="*60)
-            
-            for idx in self.ml_yfn_dataset.ml_ingest.keys():
-                self.nlp_summary(self.yti, idx)
-                print("-" * 40)
-        
-        return results
