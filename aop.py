@@ -476,7 +476,8 @@ def main():
             print ( f"AI  news reader sentimennt compute for Stock [ {news_symbol} ] =========================" )
             news_ai = ml_nlpreader(1, args)
             sent_ai = ml_sentiment(1, args)
-            news_ai.nlp_read_one(news_symbol, args)     # includes scan_news_feed() & eval_news_feed_stories()
+            asyncio.run(news_ai.async_nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
+            
             kgraphdb = db_graph(1, args)                # inst a class 
             kgraphdb.con_aopkgdb(1)                     # connect to neo4j db
 
@@ -489,15 +490,16 @@ def main():
 
     # ################################################################
     # MAIN control loop for AI M/L NLP reading & Sentimnent analysis
+    # NLP Sentiment compute  secuted from here  @ extract_article_data()
     # ################################################################
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()  # reset DataFrame for each article
                 # TESTING code only - to make testing complete quicker (only test 4 docs)
-                thint = news_ai.nlp_summary(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for
+                thint = news_ai.nlp_summary_report(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for
                 # TESTING: Long term, this will be a list of all the articles
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)
+                    ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # AI ML compute execed here
                     ttkz += ttc
                     twcz += twc
                     tscz += tsc
@@ -543,16 +545,10 @@ def main():
                     final_sent_df = pd.concat([final_sent_df, merge_row], ignore_index=True)
 
             ################################################################
-            # END of article processing loop
+            # END of AI ML NLP article processing loop
             ################################################################
-            # We're not done cycling through all articles and computing sentiment for each one.
-            # Now we can display final stats and results
-            print (f"\n\n============================ Scentement Stats =========================================" )
-            print (f"Total tokens generated: {ttkz} - Total words read: {twcz} - Total scent/paras read {tscz}" )
-            print (f"Human read time: {(twcz / 237):.2f} mins - Total Human processing time: {(twcz / 237) + tscz + (tscz / 2):.2f} mins" )
-            pd.set_option('display.max_rows', None)
-            pd.set_option('display.max_columns', None)
-            print (f"=============================== Article Stats: {news_symbol.upper()} =====================================\n" )
+            # DONE  cycling through all articles and computing sentiment for each one.
+            # Display final stats and results
 
             # DEBUG
             if args['bool_verbose'] is True:        # Logging level
@@ -588,6 +584,14 @@ def main():
             positive_c = df_final.iloc[-1]['positive']
             negative_c = df_final.iloc[-1]['negative']
             neutral_c = df_final.iloc[-1]['neutral']
+            arts_read = df_final.iloc[-1]['art']
+            row_count = len(df_final)
+
+            print (f"\n\n=============================== Total AI Sentiment Stats: {news_symbol.upper()} =====================================\n" )
+            print (f"Model tokens generated: {ttkz} - Total words read: {twcz} - Total scent/paras read {tscz}" )
+            print (f"Human to read time: {(twcz / 237):.2f} mins ({((twcz / 237)/60):.1f} hours) - Total Human processing time: {(twcz / 237) + tscz + (tscz / 2):.2f} mins" )
+            pd.set_option('display.max_rows', None)
+            pd.set_option('display.max_columns', None)
 
             print ( f"================= Final Sentiment Analysis for: {news_symbol.upper()} =========================" )       
             precise_results = sent_ai.compute_precise_sentiment(
