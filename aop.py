@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 # my private classes & methods
 from alpaca_md import alpaca_md
 from bigcharts_md import bc_quote
-from ml_nlpreader_crawl4ai import ml_nlpreader
+from ml_yf_nlp_reader_c4 import ml_nlpreader
 from ml_sentiment import ml_sentiment
 from ml_urlhinter import url_hinter
 from nasdaq_uvoljs import un_volumes
@@ -40,13 +40,13 @@ from finnhub_md import finnhub_md
 from marketstack_md import marketstack_md
 from sec_md import sec_md
 from stockdata_md import stockdata_md
-from data_engines_fundamentals.polygon_md import polygon_md
 from stooq_md import stooq_md
 from tiingo_md import tiingo_md
 from twelvedata_md import twelvedata_md
 from y_generalnews import y_generalnews
 
 # Data Extractor engines
+from data_engines_fundamentals.polygon_md import polygon_md
 from data_engines_news.barrons_news import barrons_news
 from data_engines_news.benzinga_news import benzinga_news
 from data_engines_news.forbes_news import forbes_news

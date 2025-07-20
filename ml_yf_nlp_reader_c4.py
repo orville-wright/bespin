@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from datetime import datetime, date
 from rich import print
 
-from ml_yahoofinews_crawl4ai import yfnews_reader
+from ml_yf_news_c4 import yfnews_reader
 from ml_urlhinter import url_hinter
 from ml_sentiment import ml_sentiment
 
@@ -60,7 +60,7 @@ class ml_nlpreader:
         
         if hash_state:
             # Process the extracted news data
-            ml_yfn_dataset.scan_news_feed(news_symbol, 0, 1, 0, hash_state)
+            ml_yfn_dataset.scan_news_feed(news_symbol, 0, 1, hash_state)
             ml_yfn_dataset.eval_news_feed_stories(news_symbol)
             
             # Store the dataset for further processing

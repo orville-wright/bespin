@@ -35,6 +35,7 @@ class yfnews_reader:
     a_urlp = None
     args = []               # class dict to hold global args being passed in from main() methods
     article_url = "https://www.defaul_instance_url.com"
+    articles_found = 0
     cur_dir = None
     cycle = 0               # class thread loop counter
     dummy_resp0 = None
@@ -322,7 +323,7 @@ class yfnews_reader:
             return None
 
     # ################
-    def scan_news_feed(self, symbol, depth, scan_type, bs4_obj_idx, hash_state):
+    def scan_news_feed(self, symbol, depth, scan_type, hash_state):
         """
         hash_state: Unique hash of the URL that is being scanned
         Scans YF main News page of an explicit stock ticker. Skimming for all news articles
@@ -350,17 +351,19 @@ class yfnews_reader:
                 if isinstance(self.extracted_articles, list):       # test for list
                     article_count = len(self.extracted_articles)    # Count articles found
                     logging.info(f'%s - Depth: 0 / Found News Articles: {article_count}' % cmi_debug)
-                    print(f"=============== Articles found: {article_count} ====================")
+                    print(f"=========================== Articles found: {article_count} ================================")
                     for i, article in enumerate(self.extracted_articles):       # cycle trough articles >>dataset<<
                         if article.get('Title'):
-                            print(f"Item: {i+1}: {article.get('Title', 'No title')[:70]} / (News article)")
+                            print(f"Item: {i+1}: {article.get('Title', 'No title')[:50]}... / (Possible News article)")
                         else:
                             print(f"Item: {i+1}: Empty no article data")
                 else:
-                    logging.warning(f'%s - No articles found in extraction' % cmi_debug)  
+                    logging.warning(f'%s - No articles found in extraction' % cmi_debug)
+                    
             except KeyError:
                 logging.error(f'%s - URL not in cache: {hash_state}' % cmi_debug)
                 return None
+        self.articles_found = article_count
         return
 
     # ################
@@ -369,7 +372,7 @@ class yfnews_reader:
         Depth 1 - scanning news feed stories and some metadata (depth 1)
         """
         cmi_debug = __name__+"::" + self.eval_news_feed_stories.__name__+".#"+str(self.yti)
-        logging.info('%s - IN \\n' % cmi_debug)
+        logging.info('%s - IN ' % cmi_debug)
         time_now = time.strftime("%H:%M:%S", time.localtime())
         symbol = symbol.upper()
         
@@ -383,23 +386,30 @@ class yfnews_reader:
         logging.info(f'%s - Article Zone scanning / ml_ingest populating...' % cmi_debug)
         for article in self.extracted_articles: # GLOBAL class accessor : this is the article >>dataset<< that was extracted by crawl4ai
             self.nlp_x += 1
-            article_title = article.get('Title', 'ERROR_no_title')
-            article_url = article.get('Ext_url', '')
-            publisher = article.get('Publisher', 'ERROR_no_publisher')
-            if '•' in publisher:
+            art_title = article.get('Title', 'ERROR_no_title')      # extract craw4al element
+            article_url = article.get('Ext_url', '')                    # extract craw4al element
+            art_publisher = article.get('Publisher', 'ERROR_no_publisher • ERROR_no_pub_time')  # extract craw4al element
+            art_teaser = article.get('Teaser', 'ERROR_no_teaser')          # extract craw4al element
+            try:
                 publisher = publisher.split('•')[0].strip()
+                update_time = publisher.split('•')[1].strip()
+            except Exception as e:
+                logging.info(f'%s - Error @ {cg} extract pub info: {e}...' % cmi_debug)
+                art_publisher = "ERROR_no_publisher"
+                update_time = "ERROR_no_pub_time"
             
-            print(f"=== Article: [ {cg} ] ===========================================")
+            print(f"Eval cycle:    Depth 1  ({cg} / {self.articles_found}) ============================================")
             if article_url:
-                if article_url.startswith('http'):
+                if article_url.startswith('http'):              # quick safety check that we have a real URL
                     self.article_url = article_url
-                    self.a_urlp = urlparse(self.article_url)
-                    pure_url = 1
+                    self.a_urlp = urlparse(self.article_url)    # break doin the URL into components
+                    schmeme = self.a_urlp.scheme                # http or https
+                    self.url_netloc = self.a_urlp.netloc
+                    path = self.a_urlp.path                     # /path/to/article
                 else:
-                    self.article_url = f"https://finance.yahoo.com{article_url}"
-                    self.a_urlp = urlparse(self.article_url)
-                    pure_url = 0
-                
+                    logging.info(f'%s - Mangled source url: {article_url}' % cmi_debug)
+                    return 1
+                    
                 uhint, uhdescr = self.yfn_uh.uhinter(hcycle, self.article_url)
                 logging.info(f'%s - Source url [{self.a_urlp.netloc}] / u:{uhint} / {uhdescr}' % cmi_debug)
                 if uhint == 0: thint = 0.0      # real news / local page
@@ -411,33 +421,34 @@ class yfnews_reader:
                 else: thint = 9.9               # unknown
                 
                 inf_type = self.yfn_uh.confidence_lvl(thint)
-                self.url_netloc = self.a_urlp.netloc
                 ml_atype = uhint
                 
-                print(f"New article:      {symbol} / [ {cg} ] / Depth 1")
-                print(f"News item:        {inf_type[0]} / Origin confidence: [ t:{ml_atype} u:{uhint} h:{thint} ]")
-                print(f"News agency:      {publisher}")
-                print(f"News origin:      {self.url_netloc}")
-                print(f"Article URL:      {self.article_url}")
-                print(f"Article title:    {article_title}")
-                self.ml_brief.append(article_title)             # WARNING: I dont knonw whjy this is done
+                print(f"News article:  {symbol} [ {path} ]")
+                print(f"Article type:  {inf_type[0]}")
+                print(f"News agency:   {art_publisher} - {update_time} - {time_now}")
+                print(f"origin:        {self.url_netloc} - conf: [ t:{ml_atype} u:{uhint} h:{thint} ]")
+                print(f"Full URL:      {self.article_url}")
+                print(f"Short title:   {art_title}")
+                print(f"Long teaser:   {art_teaser}")
+                
+                self.ml_brief.append(art_title)             # WARNING: I dont knonw whjy this is done
                 auh = hashlib.sha256(self.article_url.encode()) # Generate URL hash
                 aurl_hash = auh.hexdigest()                     # compute hash
                 if aurl_hash not in dedupe_set:                 # dedupe membership test
                     dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
                     logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
                     print(f" ")
-                    # Build AI NLP candidate dict
+                    # Build full AI NLP candidate dict row
                     nd = {
                         "symbol": symbol,
                         "urlhash": aurl_hash,
                         "type": ml_atype,
                         "thint": thint,
                         "uhint": uhint,
-                        "url": self.article_url,
-                        "teaser": article_title,
-                        "publisher": publisher,
-                        "title": article_title
+                        "publisher": art_publisher,
+                        "title": art_title,
+                        "teaser": art_teaser,
+                        "url": self.article_url
                     }
                     self.ml_ingest.update({self.nlp_x: nd})
                     cg += 1
@@ -447,7 +458,7 @@ class yfnews_reader:
                     print(f"Duplicate URL hash found / Skipping... {aurl_hash[:30]}...")
                     continue  # Skip to next article if duplicate URL hash found
             else:
-                logging.warning(f'%s - No URL found for article: {article_title[:45]}...' % cmi_debug)
+                logging.warning(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
         return
 
     # ################
