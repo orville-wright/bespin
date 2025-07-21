@@ -23,7 +23,7 @@ from nasdaq_uvoljs import un_volumes
 from nasdaq_quotes import nquote
 from shallow_logic import combo_logic
 from bigcharts_md import bc_quote
-from alpaca_md import alpaca_md
+from data_engines_fundamentals.alpaca_md import alpaca_md
 from ml_urlhinter import url_hinter
 from ml_nlpreader import ml_nlpreader
 from y_techevents import y_techevents
@@ -35,7 +35,7 @@ from sec_md import sec_md
 from data_engines_fundamentals.fred_md import fred_md
 from data_engines_fundamentals.polygon_md import polygon_md
 from tiingo_md import tiingo_md
-from alphavantage_md import alphavantage_md
+from data_engines_fundamentals.alphavantage_md import alphavantage_md
 from finnhub_md import finnhub_md
 from marketstack_md import marketstack_md
 from stockdata_md import stockdata_md

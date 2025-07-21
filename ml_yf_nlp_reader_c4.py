@@ -37,7 +37,7 @@ class ml_nlpreader:
         return
 
     # ##############################################################################
-    async def async_nlp_read_one(self, news_symbol, global_args):
+    async def nlp_read_one(self, news_symbol, global_args):
         """
         DEPTH -> 0 and -> 1
         Main controler for depth 0 and 0 data extraction
@@ -45,12 +45,12 @@ class ml_nlpreader:
         Async version of nlp_read_one that uses crawl4ai
         The machine will now read!
         Read finance.yahoo.com / News 'Brief headlines' using crawl4ai
-        Reads ALL news articles for only ONE stock symbol.
+        Reads ALL news articles for only ONE stock symbol (why this method is title "read_one").
         """
         print(" ")
         print(f"ML (NLP) / News Sentiment for 1 symbol [ {news_symbol} ]")
         self.args = global_args
-        cmi_debug = __name__+"::" + self.async_nlp_read_one.__name__
+        cmi_debug = __name__+"::" + self.nlp_read_one.__name__
         logging.info(f'%s   - IN.#{self.yti}' % cmi_debug)
         news_symbol = str(news_symbol).upper()
         
@@ -61,7 +61,7 @@ class ml_nlpreader:
         ml_yfn_dataset.yfn_uh = self.yfn_uh
 
         # 3 Main steps execuete here - Depth -> 0 + Depth -> 1
-        # plau a repirt of the Depth 0 Top Level skim run
+        # print a report of the Depth 0 Top Level skim run
         hash_state = await ml_yfn_dataset.yahoofin_news_depth0(0)   # scrape NOW @ Depth 0 yahoofin_news_depth0()
 
         if hash_state:												# Depth: 0
@@ -75,7 +75,7 @@ class ml_nlpreader:
         else:
             logging.error(f"%s - No Top lvel artciels were found !!" % cmi_debug)
         
-        return
+        return articles_found
 
     # ##############################################################################
     def nlp_summary_report(self, yti, ml_idx):

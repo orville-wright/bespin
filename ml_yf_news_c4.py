@@ -36,6 +36,7 @@ class yfnews_reader:
     args = []               # class dict to hold global args being passed in from main() methods
     article_url = "https://www.defaul_instance_url.com"
     articles_found = 0
+    articles_crawled = {}
     cur_dir = None
     cycle = 0               # class thread loop counter
     dummy_resp0 = None
@@ -43,7 +44,7 @@ class yfnews_reader:
     extracted_articles = None  # crawl4ai extracted articles
     get_counter = 0         # count of get() requests
     YF_sym_main_schema = None
-    YF_sym_art_schema = None
+    YF_sym_article_schema = None
     li_superclass = None    # all possible News articles
     live_resp0 = None
     ml_brief = []           # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
@@ -56,8 +57,11 @@ class yfnews_reader:
     url_netloc = None
     yfn_uh = None           # global url hinter class
     yfn_all_data = None     # JSON dataset contains ALL data
+    yfn_all_result = None   # JSON dataset contains ALL data
     yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
     yfn_crawl_data = None   # Crawl4ai extracted data
+    yfn_c4_data = None      # Crawl4ai extracted data
+    yfn_c4_result = {}      # Crawl4ai extracted data
     yfn_jsdb = {}           # database to hold response handles from multiple crawl operations
     yti = 0                 # Unique instance identifier
     
@@ -89,7 +93,7 @@ class yfnews_reader:
         __cur_dir__ = Path(__file__).parent
         self.cur_dir = __cur_dir__
         self.YF_sym_main_schema = f"{self.cur_dir}/json/YF_sym_main_schema.json"
-        self.YF_sym_art_schema = f"{self.cur_dir}/json/YF_sym_article_schema.json"
+        self.YF_sym_article_schema = f"{self.cur_dir}/json/YF_sym_article_schema.json"
         return
 
     # ################ 1
@@ -243,72 +247,6 @@ class yfnews_reader:
         try:
             async with AsyncWebCrawler() as crawler:
                 logging.info(f'%s - Exec async webcrawl NOW...' % cmi_debug)
-                result = await crawler.arun(self.yfqnews_url, config=config)                
-                if result.success:
-                    logging.info(f'%s - crawl4ai extraction successful' % cmi_debug)
-                    self.yfn_crawl_data = json.loads(result.extracted_content)
-                    auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
-                    aurl_hash = auh.hexdigest()                     # genertae
-                    self.yfn_jsdb[aurl_hash] = {
-                        'url': self.yfqnews_url,
-                        'data': self.yfn_crawl_data,
-                        'result': result
-                    }
-                    
-                    logging.info(f'%s - Create cache entry: [ {aurl_hash} ]' % cmi_debug)
-                    return aurl_hash
-                else:
-                    logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
-                    return None                    
-        except Exception as e:
-            logging.error(f'{cmi_debug} - Error during crawl4ai extraction: {e}')
-            return None
-
-    # ################ 7
-    async def c4_get_1_article_dataset(self, idx_x):
-        """
-        INFO: Depth 3 extraction method
-        NOTE: Replaces old extract_article_data() method that relied on BeautifulSoup4
-              Scrapes all data elemets from 1 single enws article using craw4ai
-              This method is called many times to extract artciel TEXT
-              from candidate articles discoverd from scanning the main news feed
-        NOTE: Craw4ai has inbuilt capability to cycle through a list[] or URL's, or we can loop though
-              each URL indivudlally by calling back ito this method for each URL
-              Initial impliementation is to loop through each URL individually as it allow post-processing each crawled article
-        """
-        cmi_debug = __name__+"::" + self.c4_get_1_article_dataset.__name__+".#"+str(self.yti)+"."+str(idx_x)
-        if not self.yfqnews_url or not isinstance(self.yfqnews_url, str):       # set  @async_nlp_read_one by form_endpoint()
-            logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
-            return None
-
-        logging.info(f'ml_yahoofinews_crawl4ai::c4_get_1_article_dataset.#{self.yti}.{idx_x} - %s', self.yfqnews_url)
-        logging.info(f'%s - crawl4ai schema file: [ {self.YF_sym_art_schema} ]' % cmi_debug)
-        schema_file_path = f"{self.YF_sym_art_schema}"
-        if os.path.exists(schema_file_path):
-            with open(schema_file_path, "r") as f:
-                schema = json.load(f)
-            logging.info(f'%s - crawl4ai schema loaded' % cmi_debug)
-        else:
-            logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_art_schema} ]' % cmi_debug)
-            return None
-
-        logging.info(f'%s - INIT crawl4ai extraction strategy...' % cmi_debug)
-        extraction_strategy = JsonCssExtractionStrategy(schema)
-        js_cmds = [
-            "window.scrollTo(0, document.body.scrollHeight);",
-            "await new Promise(resolve => setTimeout(resolve, 2000));"
-        ]
-        
-        config = CrawlerRunConfig(
-            extraction_strategy=extraction_strategy,
-            scan_full_page=True,
-            js_code=js_cmds,
-            cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
-        )
-
-        try:
-            async with AsyncWebCrawler() as crawler:
-                logging.info(f'%s - doing async webcrawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
                 if result.success:
                     logging.info(f'%s - crawl4ai extraction successful' % cmi_debug)
@@ -668,7 +606,254 @@ class yfnews_reader:
 
         return total_tokens, total_words, total_scent
 
-     # ###############
+    # #####################################################################################
+    # sync crawl4 implementation of extract_article_data()
+        # HEAVY network data extractor
+    # Reads each URL, and crawls that page, extracting key elements
+    # This can be refactors to craw4al, but currently uses BS4
+    def extr_artdata_depth3(self, item_idx, sentiment_ai):
+        """
+        Depth : 3
+        This function is controleed from main()
+        Extractor:  crawl4
+        Build the Text corpus for 1 article
+        Calls sentiment computation for 1 article
+        Only do this once the article has been evaluated and we know exactly where/what each article is
+        Any article we read, should have its resp & crawl4 objects cached in yfn_jsdb{}
+        CSS HTML selectors defined in YF_sym_srticle_schema.json
+        Extract all of the full article raw text via crawl4ai selectors
+        Store it in a Database
+        Associate it to the metadata info for this article
+        Its now available for the LLM to read and process
+        """
+
+        cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(self.yti)
+        logging.info( f'%s - IN / Scanning article... [ {item_idx} ]' % cmi_debug )
+        data_row = self.ml_ingest[item_idx]
+        symbol = data_row['symbol']
+        durl = None
+        if 'exturl' in data_row.keys():
+            durl = data_row['exturl']
+            external = True                 # not a local yahoo.com hosted article
+            logging.info( f'%s - Ext url found in ml_ingest DB - skipping...' % cmi_debug )
+        else:
+            durl = data_row['url']
+            external = False               # this is a local yahoo.com hosted article
+            cached_state = data_row['urlhash']
+            symbol = symbol.upper()
+            logging.info( f'%s - urlhash cache lookup: {cached_state}' % cmi_debug )
+            cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
+            logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
+            cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
+            try:    # cehck for cached_state in yfn_jsdb
+                self.yfn_jsdb[cached_state]         # fast key KeyError test for key: urlhash 
+                cx = self.yfn_jsdb[cached_state]    # pickup the full dict @ key: urlhash
+                logging.info( f'%s - Found cahce entry: Render data from cached resp...' % cmi_debug )
+                self.yfn_cxresult = cx['result']      # store the rendered raw data
+                dataset_1 = self.yfn_c4_data
+                logging.info( f'%s - Cached object    : {cached_state}' % cmi_debug )
+                logging.info( f'%s - Cache cx         : {type(cx)}' % cmi_debug )
+                logging.info( f'%s - Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
+                logging.info( f'%s - Cache URL object : {cx['url']}' % cmi_debug )
+                logging.info( f'%s - Sent URL object  : {durl}' % cmi_debug )
+                logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )   
+                # Do it this way so that...
+                # - we  can spawn multiple async tasks in parallel
+                # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
+                # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3
+                result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
+                # result is:
+                #   { 'url': self.yfqnews_url,
+                #     'data': self.yfn_crawl_data,
+                #     'result': result  }
+                self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction
+            except KeyError:
+                logging.info( f'%s - MISSING from cache...' % cmi_debug )
+                logging.info( f'%s - Eval URL object type: {type(durl)}' % cmi_debug )
+                cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
+                logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
+                cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
+                # see same note above
+                result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
+                self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction
+                # see same note above for result structure
+                
+                self.yfqnews_url = durl
+                cy = self.yfn_c4_result[cached_state]   # pikup up result dict
+                logging.info( f'%s - Retry cache lookup: {cached_state}' % cmi_debug ) 
+                if self.yfn_c4_result[cached_state]:
+                    logging.info( f'%s - Located entry:  {cached_state}' % cmi_debug )
+                    self.yfn_c4_data = cy['result']      # store the rendered raw data
+                    dataset_2 = result                  # Basic HTML engine  get()
+                    logging.info( f'%s - c4 pure Result   : {type(result)}' % cmi_debug )
+                    logging.info( f'%s - Cached result    : {type(self.yfn_c4_data)}' % cmi_debug )
+                    logging.info( f'%s - Cache cy data    : {type(cy['data'])}' % cmi_debug )
+                    logging.info( f'%s - Cache Dataset    : {type(dataset_2)}' % cmi_debug )
+                    logging.info( f'%s - Cache URL object : {cy['url']}' % cmi_debug )
+                    logging.info( f'%s - Sent URL object  : {durl}' % cmi_debug )
+                    logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )  
+                    # Do it this way so that...
+                    # - we  can spawn multiple async tasks in parallel
+                    # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
+                    # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3
+                    # result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
+                    # result is:
+                    #   { 'url': self.yfqnews_url,
+                    #     'data': self.yfn_crawl_data,
+                    #     'result': result  }
+                    # self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction                    
+                else:
+                    logging.info( f'%s - FAIL to craw article {item_idx}' % cmi_debug )
+                    return None
+            except Exception as e:
+                logging.error(f'{cmi_debug} - Artcile [{item_idx} data Craw failed: {e}')
+                return None
+            
+        # we can now extract all the <p> zone TEXT from the article
+        # and pass it to the sentiment_ai module for NLP processing
+        logging.info( f'%s - Extract Article TEXT for AI Sentiment reader: {durl[:30]}...' % (cmi_debug) )
+        if external is True:    # page is Micro stub Fake news article
+            logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
+            return
+            # Do not do deep data extraction
+            # just use the CAPTION Teaser text from the YFN local url
+            # we extracted that in interpret_page()
+        else:
+            logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
+            # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})          # full news article - locally hosted
+            # local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})      # comes above/before article
+            # local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})  # full news article - locally hosted
+            # BS4 all <p> zones (not just 1)
+            
+            p = 0
+            #c4_dict = self.articles_crawled[item_idx]
+            #c4_dict = self.yfn_c4_data[item_idx]
+            c4_dict = self.yfn_c4_result[cached_state]
+            print (f"##### DEBUG 1: {type(c4_dict)}")
+            print (f"##### DEBUG 2: {type(c4_dict['url'])}")
+            print (f"##### DEBUG 3: {type(c4_dict['data'])}")
+            print (f"##### DEBUG 4: {type(c4_dict['result'])}")
+            
+            #self.extracted_elements = c4_dict['data']  # get the craw4al result for this article
+            # get the craw4al result for this article
+            #for element in self.extracted_elements: # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
+            for i, element in enumerate(c4_dict['data']):
+                art_c0 = element.get('Content', 'ERROR_no_title')      # extract craw4al element
+                art_a0 = element.get('Article', 'ERROR_no_teaser')   # extract craw4al element
+                #art_c1 = element[p]      # extract craw4al element
+                #p += 1
+                print (f"c0: {art_c0}")
+                print (f"a0: {art_a0}")
+                print (f"i:  {i}")
+            
+            
+            #print (f"{result.cleaned_html}")
+            article = self.articles_crawled[item_idx]  # get the craw4al result for this article
+            content_text = article.get('Content', 'ERROR_no_content')  # extract craw4al element 
+            article_text = article.get('Article', 'ERROR_no_article')  # extract craw4al element
+            
+            print (f"========================================= Article: {item_idx} ===============================================")
+            print (f"##### DEBUG\n 1: {content_text}")
+            print (f"========================================= Article: {item_idx} ===============================================")
+            print (f"##### DEBUG\n 2: {article_text}")
+            print (f"========================================= Article: {item_idx} ===============================================")
+            breakpoint()  # DEBUG: inspect the article data
+            
+            #title_text = article.get('Title', 'ERROR_no_title')    # extract craw4al element
+            
+            ####################################################################
+            ##### AI M/L Gen AI NLP starts here !!!                      #######
+            ##### Heavy CPU utilization / local LLM Model & no GPU       #######
+            ####################################################################
+            #
+            hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
+            logging.info( f'%s - Init M/L NLP Tokenizor sentiment-analyzer pipeline...' % cmi_debug )
+            total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs)
+
+            print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
+
+            # set up a dataframe to hold the aggregated sentiment for this article in columns.
+            # This is helpful for merging the info with other dataframes later on
+            self.sen_data = [[ \
+                        item_idx, \
+                        hs, \
+                        sentiment_ai.sentiment_count['positive'], \
+                        sentiment_ai.sentiment_count['neutral'], \
+                        sentiment_ai.sentiment_count['negative'] ]]
+
+            sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
+            self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
+            
+            # create emtries in the Neo4j Graph database
+            # - check if KG has existing node entry for this symbol+news_article
+            # if not... create one
+            print ( f"======================================== End: {item_idx} ===============================================")
+
+        return total_tokens, total_words, total_scent
+  
+    # ################ 7
+    async def c4_engine_depth3(self, durl, item_idx):
+        """
+        Heler function for extr_artdata_depth3() ONLY - not a public API
+        Just the crawl4ai engine for Depth 3
+        Dont do anyting else
+        """
+        config = None
+        schema = None
+        cmi_debug = __name__+"::" + self.c4_engine_depth3.__name__+".#"+str(self.yti)+"."+str(item_idx)
+        if not durl or not isinstance(durl, str):       # empty str or not type(str)
+            logging.error(f'{cmi_debug} - Invalid URL: {durl}')
+            return None
+
+        logging.info(f'%s  - Load schema file: [ {self.YF_sym_article_schema} ]' % cmi_debug)
+        schema_file_path = f"{self.YF_sym_article_schema}"
+        if os.path.exists(schema_file_path):
+            with open(schema_file_path, "r") as f:
+                schema = json.load(f)
+                logging.info(f'%s  - crawl4ai schema loaded' % cmi_debug)
+                #self.YF_sym_article_schema = schema
+                logging.info(f'%s  - INIT extraction strategy...' % cmi_debug)
+                extraction_strategy = JsonCssExtractionStrategy(schema)
+                '''
+                js_cmds = [
+                    "window.scrollTo(0, document.body.scrollHeight);",
+                    "await new Promise(resolve => setTimeout(resolve, 2000));"
+                    ]
+                '''
+                config = CrawlerRunConfig(
+                    extraction_strategy=extraction_strategy,
+                    scan_full_page=True,
+                    cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
+                    )
+        else:
+            logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_article_schema} ]' % cmi_debug)
+            return None
+
+        try:
+            async with AsyncWebCrawler() as crawler:
+                logging.info(f'%s - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
+                result = await crawler.arun(durl, config=config)                
+                if result.success:
+                    logging.info(f'%s  - crawl4ai extraction successful' % cmi_debug)
+                    self.yfn_crawl_data = json.loads(result.extracted_content)
+                    auh = hashlib.sha256(durl.encode()) # prep hash
+                    aurl_hash = auh.hexdigest()         # genertae hash WARN: need to do dedupe check !!
+                    # GLOBALLY set the yfn_jsdb DB dict for this artcile @ key = aurl_hash, vale = { }
+                    self.yfn_c4_result[aurl_hash] = {
+                        'url': durl,
+                        'data': self.yfn_crawl_data,
+                        'result': result
+                    }
+                    logging.info(f'%s  - Created cache entry: [ {aurl_hash} ]' % cmi_debug)
+                    return result
+                else:
+                    logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
+                    return None                    
+        except Exception as e:
+            logging.error(f'{cmi_debug} - Error during crawl4ai extraction: {e}')
+            return None
+             
+    # ###############
     def dump_ml_ingest(self):
         """
         Dump the contents of ml_ingest{}, which holds the NLP candidates

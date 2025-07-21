@@ -16,7 +16,7 @@ from rich import print
 logging.basicConfig(level=logging.INFO)
 
 # my private classes & methods
-from alpaca_md import alpaca_md
+from data_engines_fundamentals.alpaca_md import alpaca_md
 from bigcharts_md import bc_quote
 from ml_yf_nlp_reader_c4 import ml_nlpreader
 from ml_sentiment import ml_sentiment
@@ -31,18 +31,18 @@ from y_smallcaps import smallcap_screen
 from y_techevents import y_techevents
 from y_topgainers import y_topgainers
 
-from alphavantage_md import alphavantage_md
+from data_engines_fundamentals.alphavantage_md import alphavantage_md
 from db_graph import db_graph
 from data_engines_fundamentals.fred_md import fred_md
-from eodhistoricaldata_md import eodhistoricaldata_md
-from financialmodelingprep_md import financialmodelingprep_md
-from finnhub_md import finnhub_md
-from marketstack_md import marketstack_md
-from sec_md import sec_md
-from stockdata_md import stockdata_md
-from stooq_md import stooq_md
-from tiingo_md import tiingo_md
-from twelvedata_md import twelvedata_md
+from data_engines_fundamentals.eodhistoricaldata_md import eodhistoricaldata_md
+from data_engines_fundamentals.financialmodelingprep_md import financialmodelingprep_md
+from data_engines_fundamentals.finnhub_md import finnhub_md
+from data_engines_fundamentals.marketstack_md import marketstack_md
+from data_engines_fundamentals.sec_md import sec_md
+from data_engines_fundamentals.stockdata_md import stockdata_md
+from data_engines_fundamentals.stooq_md import stooq_md
+from data_engines_fundamentals.tiingo_md import tiingo_md
+from data_engines_fundamentals.twelvedata_md import twelvedata_md
 from y_generalnews import y_generalnews
 
 # Data Extractor engines
@@ -93,11 +93,12 @@ parser.add_argument('-u','--unusual', help='unusual up & down volume', action='s
 parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
 
-# Threading globals
-extract_done = threading.Event()
+# GLobal arrtibutes
+articles_found = 0         # number of articles found by the AI news reader for 1 synble scan run
 yti = 1
 uh = url_hinter(1, args)        # anyone needs to be able to get hints on a URL from anywhere
 
+extract_done = threading.Event()
 #######################################################################
 # Global method for __main__
 # thread function #1
@@ -476,7 +477,7 @@ def main():
             print ( f"AI  news reader sentimennt compute for Stock [ {news_symbol} ] =========================" )
             news_ai = ml_nlpreader(1, args)
             sent_ai = ml_sentiment(1, args)
-            asyncio.run(news_ai.async_nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
+            articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
             
             kgraphdb = db_graph(1, args)                # inst a class 
             kgraphdb.con_aopkgdb(1)                     # connect to neo4j db
@@ -499,7 +500,8 @@ def main():
                 # TESTING: Long term, this will be a list of all the articles
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # AI ML compute execed here
+                    ttc, twc, tsc = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)   # AI ML compute execed here
+                    #ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # AI ML compute execed here
                     ttkz += ttc
                     twcz += twc
                     tscz += tsc

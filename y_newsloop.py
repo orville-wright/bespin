@@ -14,6 +14,8 @@ import json
 logging.basicConfig(level=logging.INFO)
 
 #####################################################
+# NOTE: I dont know where is file originated from
+#     it may be a reminbent of VIbe coding crawl4 proejct
 
 class y_newsfilter:
     """
