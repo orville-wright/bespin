@@ -1,5 +1,5 @@
 {
-  "name": "YahooFinanceNewsSelector",
+  "name": "YF_symbol_news_Selector",
   "baseSelector": "div.body.yf-1ir6o1g",
   "fields": [
     {

@@ -607,9 +607,8 @@ class yfnews_reader:
         return total_tokens, total_words, total_scent
 
     # #####################################################################################
-    # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1
     # sync crawl4 implementation of extract_article_data()
-    # HEAVY network data extractor
+        # HEAVY network data extractor
     # Reads each URL, and crawls that page, extracting key elements
     # This can be refactors to craw4al, but currently uses BS4
     def extr_artdata_depth3(self, item_idx, sentiment_ai):
@@ -681,9 +680,9 @@ class yfnews_reader:
                 
                 self.yfqnews_url = durl
                 cy = self.yfn_c4_result[cached_state]   # pikup up result dict
-                logging.info( f'%s - Retry cache lookup:    {cached_state}' % cmi_debug ) 
+                logging.info( f'%s - Retry cache lookup: {cached_state}' % cmi_debug ) 
                 if self.yfn_c4_result[cached_state]:
-                    logging.info( f'%s - Located entry:     {cached_state}' % cmi_debug )
+                    logging.info( f'%s - Located entry:  {cached_state}' % cmi_debug )
                     self.yfn_c4_data = cy['result']      # store the rendered raw data
                     dataset_2 = result                  # Basic HTML engine  get()
                     logging.info( f'%s - c4 pure Result   : {type(result)}' % cmi_debug )
@@ -738,10 +737,6 @@ class yfnews_reader:
             #self.extracted_elements = c4_dict['data']  # get the craw4al result for this article
             # get the craw4al result for this article
             #for element in self.extracted_elements: # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
-            
-            print (f"##### DEBUG 5: {c4_dict['data'][0]}")
-            print (f"##### DEBUG 5: {len(c4_dict['data'])}")
-            
             for i, element in enumerate(c4_dict['data']):
                 art_c0 = element.get('Content', 'ERROR_no_title')      # extract craw4al element
                 art_a0 = element.get('Article', 'ERROR_no_teaser')   # extract craw4al element
@@ -818,35 +813,29 @@ class yfnews_reader:
                 logging.info(f'%s  - crawl4ai schema loaded' % cmi_debug)
                 #self.YF_sym_article_schema = schema
                 logging.info(f'%s  - INIT extraction strategy...' % cmi_debug)
-                extraction_strategy = JsonCssExtractionStrategy(schema, verbose=True)
+                extraction_strategy = JsonCssExtractionStrategy(schema)
+                '''
                 js_cmds = [
                     "window.scrollTo(0, document.body.scrollHeight);",
                     "await new Promise(resolve => setTimeout(resolve, 2000));"
                     ]
-                
-                # scan_full_page=True,
-                # js_code = js_cmds
+                '''
                 config = CrawlerRunConfig(
                     extraction_strategy=extraction_strategy,
-                    scan_full_page=True,  # Scan the full page for content
+                    scan_full_page=True,
                     cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
                     )
         else:
             logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_article_schema} ]' % cmi_debug)
             return None
 
-        logging.info(f'%s - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
         try:
             async with AsyncWebCrawler() as crawler:
-                result = await crawler.arun(durl, config=config)
-            
+                logging.info(f'%s - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
+                result = await crawler.arun(durl, config=config)                
                 if result.success:
                     logging.info(f'%s  - crawl4ai extraction successful' % cmi_debug)
                     self.yfn_crawl_data = json.loads(result.extracted_content)
-                    print (f"(##### DEBUG: {self.yfn_crawl_data})" )
-                    print (f"(##### DEBUG: count: {len(self.yfn_crawl_data)}" )
-                    print (f"(##### DEBUG: Type:  {type(self.yfn_crawl_data)}" )
-                    
                     auh = hashlib.sha256(durl.encode()) # prep hash
                     aurl_hash = auh.hexdigest()         # genertae hash WARN: need to do dedupe check !!
                     # GLOBALLY set the yfn_jsdb DB dict for this artcile @ key = aurl_hash, vale = { }
