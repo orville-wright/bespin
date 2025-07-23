@@ -55,12 +55,12 @@ class ml_cvbow:
         - Allows flexiblty to work on many corpus', many times.
         """
         cmi_debug = __name__+"::"+self.fitandtransform.__name__+".#"+str(self.yti)
-        logging.info('%s - IN / Vectorizing corpus...' % cmi_debug )
+        logging.info('%s - Init Vectorizor Fit/Transform on corpus...' % cmi_debug )
 
         # fit_transform is is equivalent to fit followed by transform, but more efficiently implemented
         # the data & attributes available are also differnet to fit followed by transform
         self.ft_tdmatrix = self.vectorizer.fit_transform(self.corpus)
-        logging.info('%s - OUT / Vectorizing complete !' % cmi_debug )
+        logging.info('%s -  Vectorizor fit complete. TD Matrix built !' % cmi_debug )
         return self.ft_tdmatrix
 
 ####################################### 2 ########################################
@@ -129,9 +129,9 @@ class ml_cvbow:
         Term_doc_Matrix must already have been FIT and TRASNFORMED.
         """
         cmi_debug = __name__+"::"+self.get_hfword.__name__+".#"+str(self.yti)
-        logging.info('%s - IN' % cmi_debug )
+        logging.info('%s - Analyze High Freq words from TD Matrix' % cmi_debug )
 
-	# working & decoding native scikit-learn CSR data (i.e. Compressed Sparse Row matrix data)
+	    # working & decoding native scikit-learn CSR data (i.e. Compressed Sparse Row matrix data)
         #print ( f"DATA: {self.ft_tdmatrix.data}" )
         #print ( f"INDICES: {self.ft_tdmatrix.indices}" )
         #print ( f"INDPTR: {self.ft_tdmatrix.indptr}" )
@@ -155,6 +155,7 @@ class ml_cvbow:
             vmax_words.append("None")
 
         vmax_words.append(int(vmax))
+        logging.info('%s - High Freq words identieid & computed !' % cmi_debug )
         return vmax_words        # the English word with the highest frequency count
 
 ####################################### 5 ########################################

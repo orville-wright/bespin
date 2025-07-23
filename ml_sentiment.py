@@ -68,8 +68,9 @@ class ml_sentiment:
         Save key ML sentiment info to global sentimennt Dataframe
         data_set = a dict
         """
-        self.yti = yti
         cmi_debug = __name__+"::"+self.save_sentiment.__name__
+        logging.info( f'%s - Save sentiment metrics to DF...' % cmi_debug )
+        self.yti = yti
         logging.info( f"%s - IN.#{yti}" % cmi_debug )
         x = self.df0_row_count      # get last row added to DF
         x += 1
@@ -111,15 +112,14 @@ class ml_sentiment:
               crawl4ai extarcts the buulk raw text in 1 list[] and discards the HTML <p> tags.
               crawl4ai text must be chunked @ model truncation length, i.e.  tokenizer_mml
         """
+        cmi_debug = __name__+"::"+self.compute_sentiment.__name__+".#"+str(self.yti)
         self.item_idx = item_idx
         self.yti = item_idx
-        cmi_debug = __name__+"::"+self.compute_sentiment.__name__+".#"+str(self.yti)
-        logging.info('%s - IN' % cmi_debug )
-
-        logging.info( f'%s - Init ML NLP Tokenizor/Vectorizer...' % cmi_debug )
+        logging.info( f'%s    - Init M/L NLP Tokenizor, Vectorizer & Stopwords engine...' % cmi_debug )
         self.vectorz = ml_cvbow(item_idx, self.args)   
         self.stop_words = stopwords.words('english')
         #classifier = pipeline('sentiment-analysis')
+        logging.info( f'%s    - Init HF classifier Model: mrm8488/distilroberta...' % cmi_debug )
         classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis", device="cpu")
         tokenizer_mml = classifier.tokenizer.model_max_length
         self.ttc = 0
@@ -131,9 +131,9 @@ class ml_sentiment:
         
         #if self.args['bool_verbose'] is True:        # Logging level
         if ext_type == 1:  # crawl4ai extractor
-            print ( f"Transformer truncation preset: {tokenizer_mml} - for News article [ {item_idx} ]" )
+            logging.info( f"%s    - Transformer truncation preset: {tokenizer_mml}" % cmi_debug )
             chunked_raw_scentxt = self.c4_chunker(scentxt, tokenizer_mml)
-            logging.info( f"%s - Chunked rows generated: {len(chunked_raw_scentxt)} / total chars {(tokenizer_mml * len(chunked_raw_scentxt))}" % cmi_debug )
+            logging.info( f"%s    - Text Blocklet rows generated: {len(chunked_raw_scentxt)} / total chars {(tokenizer_mml * len(chunked_raw_scentxt))}" % cmi_debug )
             # do NLP tokenization and count metrics - craw4ai extractor
             for i, chunk in chunked_raw_scentxt.items():    # cycle through all scentenses/paragraphs sent to us
                 ngram_count = len(re.findall(r'\w+', chunk))
@@ -213,10 +213,11 @@ class ml_sentiment:
 ##################################### 3 ####################################
 
     def c4_chunker(self, scentxt, tokenizer_mml):
-        cmi_debug = __name__+"::"+self.c4_chunker.__name__+".#"+str(self.yti)
         """
         Chunks the scentxt into smaller blocks based on tokenizer max length
         """        
+        cmi_debug = __name__+"::"+self.c4_chunker.__name__+".#"+str(self.yti)
+        logging.info( f"%s - Start article chunker @ len: {tokenizer_mml} chars" % cmi_debug )
         if not scentxt:
             return {}
         
@@ -224,10 +225,11 @@ class ml_sentiment:
         chunk_index = 0
         start = 0
         while start < len(scentxt):
-            end = start + tokenizer_mml    # Calculate the end position for this chunk
-            if end >= len(scentxt):     # test fro last chunk / exact boundary, take it as is
+            end = start + tokenizer_mml     # Calculate the end position for this chunk
+            if end >= len(scentxt):         # test fro last chunk / exact boundary, take it as is
                 chunk = scentxt[start:].strip()
-                if chunk:  # Only add non-empty chunks
+                if chunk:                   # Only add non-empty chunks
+                    logging.info( f"%s - Built Text Blocklet [ {chunk_index} ] / {len(chunk)} chars" % cmi_debug )
                     chunks[chunk_index] = chunk
                 break
      
@@ -238,12 +240,14 @@ class ml_sentiment:
                 chunk_end = last_space
             chunk = scentxt[start:chunk_end].strip()    # Extract the chunk and add to list
             if chunk:   # Only add non-empty chunks
+                logging.info( f"%s - Text Blocklet constructed: {chunk_index} @ {len(chunk)} chars" % cmi_debug )
                 chunks[chunk_index] = chunk
                 chunk_index += 1
             
             # Move start position for next chunk
             start = chunk_end + (1 if chunk_end < len(scentxt) and scentxt[chunk_end] == ' ' else 0)
-        
+
+        logging.info( f"%s - Chunker completed - {chunk_index+1} Text Blocklets built" % cmi_debug )
         return chunks
 ##################################### 3 ####################################
     def compute_precise_sentiment(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):

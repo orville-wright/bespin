@@ -728,9 +728,15 @@ class yfnews_reader:
             logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
             c4_dict = self.yfn_c4_result[cached_state]
             for i, element in enumerate(c4_dict['data']):
-                art_all_p = element.get('Content', 'ERROR_no_title')      # extract craw4al element
-            #print (f"{art_all_p}")
-            
+                try:
+                    art_all_p = element.get('Content', 'ERROR_no_title')      # extract craw4al element
+                    #print (f"{art_all_p}")
+                except Exception as e:
+                    # something bad happened during crawl4ai article extraction
+                    # default NEUTRAL Text blocklet
+                    art_all_p = "Further review may be conducted if necessary, but no immediate action is required at this time."
+                    continue 
+                
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
             logging.info( f'%s - Init M/L NLP Tokenizor sentiment-analyzer pipeline...' % cmi_debug )
             total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 1) # 1 = crawl4ai extractor
