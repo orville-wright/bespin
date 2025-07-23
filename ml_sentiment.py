@@ -103,18 +103,22 @@ class ml_sentiment:
         return
 
 ##################################### 2 ####################################
-    def compute_sentiment(self, symbol, item_idx, scentxt, urlhash):
+    def compute_sentiment(self, symbol, item_idx, scentxt, urlhash, ext_type):
         """
         Tokenize and compute scentcen chunk sentiment
         scentxtx = BS4 all <p> zones that look/feel like scentence/paragraph text
+        WARN: scentxt is a list of BS4 html <p> elements, NOT the raw text. It must be treated as a html data row.
+              crawl4ai extarcts the buulk raw text in 1 list[] and discards the HTML <p> tags.
+              crawl4ai text must be chunked @ model truncation length, i.e.  tokenizer_mml
         """
+        self.item_idx = item_idx
         self.yti = item_idx
         cmi_debug = __name__+"::"+self.compute_sentiment.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
 
         logging.info( f'%s - Init ML NLP Tokenizor/Vectorizer...' % cmi_debug )
-        vectorz = ml_cvbow(item_idx, self.args)   
-        stop_words = stopwords.words('english')
+        self.vectorz = ml_cvbow(item_idx, self.args)   
+        self.stop_words = stopwords.words('english')
         #classifier = pipeline('sentiment-analysis')
         classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis", device="cpu")
         tokenizer_mml = classifier.tokenizer.model_max_length
@@ -125,59 +129,122 @@ class ml_sentiment:
         self.sentiment_count["neutral"] = 0
         self.active_urlhash = urlhash
         
-        if self.args['bool_verbose'] is True:        # Logging level
-            print ( f"Transformer max tokens preset: {tokenizer_mml} : for News article [ {item_idx} ]" )
-
-        for i in range(0, len(scentxt)):    # cycle through all scentenses/paragraphs sent to us
-            ngram_count = len(re.findall(r'\w+', scentxt[i].text))
-            ngram_tkzed = word_tokenize(scentxt[i].text)
-            self.ttc += int(len(ngram_tkzed))           # total vectroized tokensgenrated by tokenizer 
-            if vectorz.is_scentence(scentxt[i].text):
-                chunk_type = "Scent"
-            elif vectorz.is_paragraph(scentxt[i].text):
-                chunk_type = "Parag"
-            else:
-                chunk_type = "Randm"
-            p_sentiment = classifier(scentxt[i].text, truncation=True)      # WARN: truncating long scentences !!!
-
-            if self.args['bool_verbose'] is True:        # Logging level
-                print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokens: {len(ngram_tkzed):03} / alphas: {len(scentxt[i].text):03} ]", end="" )
-
-            ngram_sw_remv = [word for word in ngram_tkzed if word.lower() not in stop_words]    # remove stopwords
-            ngram_final = ' '.join(ngram_sw_remv)   # reform the scentence
-
-            hfw = []    # force hfw list to be empty
-            try:
-                if int(ngram_count) > 0:
-                    vectorz.reset_corpus(ngram_final)
-                    vectorz.fitandtransform()
-                    #vectorz.view_tdmatrix()     # Debug: dump Vectorized Tranformer info
-                    hfw = vectorz.get_hfword()
+        #if self.args['bool_verbose'] is True:        # Logging level
+        if ext_type == 1:  # crawl4ai extractor
+            print ( f"Transformer truncation preset: {tokenizer_mml} - for News article [ {item_idx} ]" )
+            chunked_raw_scentxt = self.c4_chunker(scentxt, tokenizer_mml)
+            logging.info( f"%s - Chunked rows generated: {len(chunked_raw_scentxt)} / total chars {(tokenizer_mml * len(chunked_raw_scentxt))}" % cmi_debug )
+            # do NLP tokenization and count metrics - craw4ai extractor
+            for i, chunk in chunked_raw_scentxt.items():    # cycle through all scentenses/paragraphs sent to us
+                ngram_count = len(re.findall(r'\w+', chunk))
+                ngram_tkzed = word_tokenize(chunk)
+                self.ttc += int(len(ngram_tkzed))           # total vectroized tokensgenrated by tokenizer 
+                if self.vectorz.is_scentence(chunk):
+                    chunk_type = "Scent"
+                elif self.vectorz.is_paragraph(chunk):
+                    chunk_type = "Parag"
                 else:
-                    hfw.append("Empty")
-                self.twc += ngram_count    # save and count up Total Word Count
-                ngram_sw_remv = ""
-                ngram_final= ""
-                ngram_count = 0     # words in scnentence/paragraph
-                ngram_tkzed = 0     # vectorized tokens genertaed per scentence/paragraph
-                sen_result = p_sentiment[0]
-                raw_score = sen_result['score']
-                rounded_score = np.floor(raw_score * (10 ** 7) ) / (10 ** 7)
-                
+                    chunk_type = "Randm"
+                # INIT NLP classifier - WARN: truncating long scentences !!!
+                clsfr_result = classifier(chunk, truncation=True)      # WARN: ???
                 if self.args['bool_verbose'] is True:        # Logging level
-                    print ( f" / HFN: {hfw} / Sentiment: {sen_result['label']} {(rounded_score * 100):.5f} %")
+                    print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokens: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
 
-                logging.info( f'%s - Save chunklist to DF for article [ {item_idx} ]...' % cmi_debug )
-                sen_package = dict(sym=symbol, urlhash=urlhash, article=item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
-                self.save_sentiment(item_idx, sen_package)      # page, data
-                self.sentiment_count[sen_result['label']] += 1  # count sentiment type
-            except RuntimeError:
-                print ( f"Model exception !!")
-            except ValueError:
-                print ( f"Empty vocabulary !!")
+                self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0])
 
+        else:   # # do NLP tokenization and count metrics - BS4 extractor
+            for i in range(0, len(scentxt)):    # cycle through all scentenses/paragraphs sent to us
+                ngram_count = len(re.findall(r'\w+', scentxt[i].text))
+                ngram_tkzed = word_tokenize(scentxt[i].text)
+                self.ttc += int(len(ngram_tkzed))           # total vectroized tokensgenrated by tokenizer 
+                if self.vectorz.is_scentence(scentxt[i].text):
+                    chunk_type = "Scent"
+                elif self.vectorz.is_paragraph(scentxt[i].text):
+                    chunk_type = "Parag"
+                else:
+                    chunk_type = "Randm"
+                # INIT NLP classifier - WARN: truncating long scentences !!!
+                clsfr_result = classifier(scentxt[i].text, truncation=True)
+                if self.args['bool_verbose'] is True:        # Logging level
+                    print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokens: {len(ngram_tkzed):03} / alphas: {len(scentxt[i].text):03} ]", end="" )
+ 
+                self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0])
+    
         return self.ttc, self.twc, i
+    
+    # ##################################
+    # Helper function
+    def nlp_sent_engine(self, i, symbol, ngram_tkzed, ngram_count, clsfr_result):
+        cmi_debug = __name__+"::"+self.nlp_sent_engine.__name__+".#"+str(self.yti)
+        ngram_sw_remv = [word for word in ngram_tkzed if word.lower() not in self.stop_words]
+        ngram_final = ' '.join(ngram_sw_remv)   # reform the scentence with stopwords removed
+        hfw = []    # force hfw list to be empty
+        try:
+            if int(ngram_count) > 0:
+                self.vectorz.reset_corpus(ngram_final)
+                self.vectorz.fitandtransform()
+                #vectorz.view_tdmatrix()     # Debug: dump Vectorized Tranformer info
+                hfw = self.vectorz.get_hfword()
+            else:
+                hfw.append("Empty")
+            self.twc += ngram_count    # save and count up Total Word Count
+            ngram_sw_remv = ""
+            ngram_final= ""
+            ngram_count = 0     # words in scnentence/paragraph
+            ngram_tkzed = 0     # vectorized tokens genertaed per scentence/paragraph
+            sen_result = clsfr_result
+            raw_score = sen_result['score']
+            rounded_score = np.floor(raw_score * (10 ** 7) ) / (10 ** 7)
+            
+            if self.args['bool_verbose'] is True:        # Logging level
+                print ( f" / HFN: {hfw} / Sentiment: {sen_result['label']} {(rounded_score * 100):.5f}%")
 
+            logging.info( f'%s - Save chunklist to DF for article [ {self.item_idx} ]...' % cmi_debug )
+            sen_package = dict(sym=symbol, urlhash=self.active_urlhash, article=self.item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
+            self.save_sentiment(self.item_idx, sen_package)      # page, data
+            self.sentiment_count[sen_result['label']] += 1  # count sentiment type
+        except RuntimeError:
+            print ( f"Model exception !!")
+        except ValueError:
+            print ( f"Empty vocabulary !!")
+    
+        return
+        #return self.ttc, self.twc, i
+##################################### 3 ####################################
+
+    def c4_chunker(self, scentxt, tokenizer_mml):
+        cmi_debug = __name__+"::"+self.c4_chunker.__name__+".#"+str(self.yti)
+        """
+        Chunks the scentxt into smaller blocks based on tokenizer max length
+        """        
+        if not scentxt:
+            return {}
+        
+        chunks = {}
+        chunk_index = 0
+        start = 0
+        while start < len(scentxt):
+            end = start + tokenizer_mml    # Calculate the end position for this chunk
+            if end >= len(scentxt):     # test fro last chunk / exact boundary, take it as is
+                chunk = scentxt[start:].strip()
+                if chunk:  # Only add non-empty chunks
+                    chunks[chunk_index] = chunk
+                break
+     
+            last_space = scentxt.rfind(' ', start, end) # Find last space within chunk to avoid breaking words
+            if last_space == -1 or last_space <= start: # If no space, break at chunk_size
+                chunk_end = end
+            else:
+                chunk_end = last_space
+            chunk = scentxt[start:chunk_end].strip()    # Extract the chunk and add to list
+            if chunk:   # Only add non-empty chunks
+                chunks[chunk_index] = chunk
+                chunk_index += 1
+            
+            # Move start position for next chunk
+            start = chunk_end + (1 if chunk_end < len(scentxt) and scentxt[chunk_end] == ' ' else 0)
+        
+        return chunks
 ##################################### 3 ####################################
     def compute_precise_sentiment(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
         """
@@ -282,7 +349,6 @@ class ml_sentiment:
         print( f"Overall:    {gross_sentiment.upper()} / Intensity: ({round(posneg_ratio,1)} : 1)" )
         print( f"Positivity: {data_pos_pct:.2f}% {sentcat_pos} @ Confidence: {(positive_t * 100):.2f}% / Cat score: {precise_sent_pos}" ) 
         print( f"Negativity: {data_neg_pct:.2f}% {sentcat_neg} @ Confidence: {(negative_t * 100):.2f}% / Cat score: {precise_sent_neg}" ) 
-        print(f"=============================================================================")
 
         sym = symbol
         pos_pct = f"{data_pos_pct:.2f}"

@@ -493,6 +493,7 @@ def main():
     # MAIN control loop for AI M/L NLP reading & Sentimnent analysis
     # NLP Sentiment compute  secuted from here  @ extract_article_data()
     # ################################################################
+            ai_sent_start_time = time.perf_counter()  # Mark the start time
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()  # reset DataFrame for each article
                 # TESTING code only - to make testing complete quicker (only test 4 docs)
@@ -500,8 +501,8 @@ def main():
                 # TESTING: Long term, this will be a list of all the articles
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    #ttc, twc, tsc = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)   # still not working - crawlaai !!
-                    ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # AI ML compute execed here
+                    ttc, twc, tsc = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)   # craw4ai enbine - still not working - crawlaai !!
+                    #ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS$ engine - AI ML compute execed here
                     ttkz += ttc
                     twcz += twc
                     tscz += tsc
@@ -588,18 +589,21 @@ def main():
             neutral_c = df_final.iloc[-1]['neutral']
             arts_read = df_final.iloc[-1]['art']
             row_count = len(df_final)
+            hpt_mins = (twcz / 237) + tscz + (tscz / 2)
+            hpt_hours = ((twcz / 237) + tscz + (tscz / 2)) / 60
+            
+            ai_sent_end_time = time.perf_counter()                          # Mark the end time
+            ai_sent_time = ai_sent_end_time - ai_sent_start_time            # compute total time
 
-            print (f"\n\n=============================== Total AI Sentiment Stats: {news_symbol.upper()} =====================================\n" )
-            print (f"Model tokens generated: {ttkz} - Total words read: {twcz} - Total scent/paras read {tscz}" )
-            print (f"Human to read time: {(twcz / 237):.2f} mins ({((twcz / 237)/60):.1f} hours) - Total Human processing time: {(twcz / 237) + tscz + (tscz / 2):.2f} mins" )
-            pd.set_option('display.max_rows', None)
-            pd.set_option('display.max_columns', None)
-
-            print ( f"================= Final Sentiment Analysis for: {news_symbol.upper()} =========================" )       
+            print ( f"========================= Final Sentiment Analysis for: {news_symbol.upper()} ================================" )       
             precise_results = sent_ai.compute_precise_sentiment(
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
             )
-            print ( f" ")
+            print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
+            print (f"Tokens generated: {ttkz} - Words read: {twcz} / Sscent/paras read {tscz} / AI time taken: {(ai_sent_time / 60):.2f} mins" )
+            print (f"Human read time: {(twcz / 237):.2f} mins ({((twcz / 237)/60):.1f} hours) - Human alaysis time: {hpt_mins:.2f} mins ({hpt_hours:.1f}) hours" )
+            pd.set_option('display.max_rows', None)
+            pd.set_option('display.max_columns', None)
             #print (f"{sent_ai.sen_df3}")
             
             #################################################################

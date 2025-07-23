@@ -65,7 +65,7 @@ class ml_nlpreader:
         hash_state = await ml_yfn_dataset.yahoofin_news_depth0(0)   # scrape NOW @ Depth 0 yahoofin_news_depth0()
 
         if hash_state:												# Depth: 0
-            articles_found = ml_yfn_dataset.list_newsfeed_candidates(news_symbol, 0, 1, hash_state)
+            articles_found = ml_yfn_dataset.list_news_candidates_depth0(news_symbol, 0, 1, hash_state)
             ml_yfn_dataset.eval_news_feed_stories(news_symbol)		# Depth: 1            
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(f" ")
@@ -82,7 +82,7 @@ class ml_nlpreader:
         """
         CRITICAL: Assumes ml_ingest has already been pre-populated
         NOTE: Reads 1 (ONE) article ONLY from the ml_ingest{} DB and processes it...
-              Executes Dept 2 analysis via ml_yfn_dataset::interpret_page()   - no get() or BS4
+              Executes Dept 2 analysis via ml_yfn_dataset::interpret_page_depth2()   - no get() or BS4
         
         Needs updating to crawl4ai data extraction (currenlt BS4)
         """
@@ -108,14 +108,14 @@ class ml_nlpreader:
         
         # ################# 1: Real valid news article
         if sn_row['type'] == 0:  # REAL valid news article
-            print(f"{sn_row['symbol']} / Valid News article: {ml_idx}")
+            print(f"{sn_row['symbol']} / Valid News article: {ml_idx} / ({self.ml_yfn_dataset.articles_found})")
             t_url = urlparse(sn_row['url'])
             uhint, uhdescr = self.yfn_uh.uhinter(0, t_url)
             thint = sn_row['thint']
             logging.info(f"%s       - Logic.#0 Hints for url: [ t:0 / u:{uhint} / h: {thint} ] / {uhdescr}" % cmi_debug)
             
             # Do deep analysis on the page @ Depth 2
-            r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page(ml_idx, sn_row)
+            r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page_depth2(ml_idx, sn_row)
             logging.info(f"%s       - Inferred conf: {r_xturl}" % cmi_debug)
             p_r_xturl = urlparse(r_xturl)
             inf_type = self.yfn_uh.confidence_lvl(thint)
@@ -135,7 +135,7 @@ class ml_nlpreader:
             thint = sn_row['thint']
             logging.info(f"%s       - Logic.#1 hint origin url: t:1 / u:{uhint} / h: {thint} {uhdescr}" % cmi_debug)
             
-            r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page(ml_idx, sn_row) # Depth 2 analysis of page
+            r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page_depth2(ml_idx, sn_row) # Depth 2 analysis of page
             
             try:
                 url_test = len(r_xturl)

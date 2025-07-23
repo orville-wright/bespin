@@ -55,11 +55,12 @@ class ml_cvbow:
         - Allows flexiblty to work on many corpus', many times.
         """
         cmi_debug = __name__+"::"+self.fitandtransform.__name__+".#"+str(self.yti)
-        logging.info('%s - IN / Vectorizing corpus ' % cmi_debug )
+        logging.info('%s - IN / Vectorizing corpus...' % cmi_debug )
 
         # fit_transform is is equivalent to fit followed by transform, but more efficiently implemented
         # the data & attributes available are also differnet to fit followed by transform
         self.ft_tdmatrix = self.vectorizer.fit_transform(self.corpus)
+        logging.info('%s - OUT / Vectorizing complete !' % cmi_debug )
         return self.ft_tdmatrix
 
 ####################################### 2 ########################################
@@ -160,6 +161,7 @@ class ml_cvbow:
     def reset_corpus(self, new_corpus):
         """
         reset the corpus and initialize it with something new
+        new_corpus = string of data
         """
         cmi_debug = __name__+"::"+self.reset_corpus.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )

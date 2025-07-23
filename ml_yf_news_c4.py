@@ -220,6 +220,8 @@ class yfnews_reader:
             logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
             return None
 
+# hack this to test crawl4 ai <li.p.text>
+
         logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} - %s', self.yfqnews_url)
         logging.info(f'%s - Load C4 json schema file: [ {self.YF_sym_main_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.YF_sym_main_schema}"        
@@ -269,7 +271,7 @@ class yfnews_reader:
             return None
 
     # ################
-    def list_newsfeed_candidates(self, symbol, depth, scan_type, hash_state):
+    def list_news_candidates_depth0(self, symbol, depth, scan_type, hash_state):
         """
         DEPTH -> 0
         Test and report the Depth 0 scan sucess
@@ -281,7 +283,7 @@ class yfnews_reader:
         Does a  nice REPORT of the Depth 0 surface scan
         This does NOT get() or extartc and data, or create ml_ingest dataset
         """
-        cmi_debug = __name__+"::" + self.list_newsfeed_candidates.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::" + self.list_news_candidates_depth0.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug)
         symbol = symbol.upper()
         depth = int(depth) 
@@ -319,8 +321,8 @@ class yfnews_reader:
         Depth : 1
         Scanning news feed stories and some metadata (@ depth 1)
         Extract key data elements from each article via crawl4ai dataset indexing @ self.extracted_articles
-        Build a ML ingest DB dataset of articles
-        Dedupe hash's
+        Build a ML ingest DB dataset of articles fro fast post processing
+        Dedupe hash's of articles
         No network get() requests are made here
         """
         cmi_debug = __name__+"::" + self.eval_news_feed_stories.__name__+".#"+str(self.yti)
@@ -413,14 +415,14 @@ class yfnews_reader:
         return
 
     # ################
-    def interpret_page(self, item_idx, data_row):
+    def interpret_page_depth2(self, item_idx, data_row):
         """
         Depth : 2 
         Page interpreter. Noit a network get() request done here
         Sets uhint, thint, durl for each article logic processing at Depth 3
         Simplified version that works with crawl4ai extracted data
         """
-        cmi_debug = __name__+"::" + self.interpret_page.__name__+".#"+str(item_idx)
+        cmi_debug = __name__+"::" + self.interpret_page_depth2.__name__+".#"+str(item_idx)
         
         symbol = data_row['symbol']
         ttype = data_row['type']
@@ -468,10 +470,11 @@ class yfnews_reader:
             self.ml_ingest[item_idx] = data_row
             return uhint, 9.9, durl
 
-    # ################
-    # HEAVY network data extractor
-    # Reads each URL, and crawls that page, extracting key elements
-    # This can be refactors to craw4al, but currently uses BS4
+    # #############################################
+    # WARN: Heacy network data extractor. 
+    #       Does full get() request for every viable news article found
+    # Reads each URL, and crawls that page, extracting key elements e.g. <p>.text
+    # Trying to refactor to craw4al, but currently uses BS4
     def extract_article_data(self, item_idx, sentiment_ai):
         """
         Depth : 3
@@ -505,7 +508,7 @@ class yfnews_reader:
         symbol = symbol.upper()
 
         # TODO:
-        # since this code is exact duplicate of interpret_page(), we
+        # since this code is exact duplicate of interpret_page_depth2(), we
         # shoud make this a method and call it when needed
         # it would retrun self.nsoup and set self.yfn_jsdata
         logging.info( f'%s - urlhash cache lookup: {cached_state}' % cmi_debug )
@@ -568,7 +571,7 @@ class yfnews_reader:
             return
             # Do not do deep data extraction
             # just use the CAPTION Teaser text from the YFN local url
-            # we extracted that in interpret_page()
+            # we extracted that in interpret_page_depth2()
         else:
             logging.info( f'%s - set BS4 data zones for article: [ {item_idx} ]' % cmi_debug )
             local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
@@ -583,7 +586,7 @@ class yfnews_reader:
             #
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
             logging.info( f'%s - Init M/L NLP Tokenizor sentiment-analyzer pipeline...' % cmi_debug )
-            total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs)
+            total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
 
             print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
 
@@ -712,68 +715,25 @@ class yfnews_reader:
             
         # we can now extract all the <p> zone TEXT from the article
         # and pass it to the sentiment_ai module for NLP processing
+        ####################################################################
+        ##### AI M/L Gen AI NLP starts here !!!                      #######
+        ##### Heavy CPU utilization / local LLM Model & no GPU       #######
+        ####################################################################
+        #
         logging.info( f'%s - Extract Article TEXT for AI Sentiment reader: {durl[:30]}...' % (cmi_debug) )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
             return
-            # Do not do deep data extraction
-            # just use the CAPTION Teaser text from the YFN local url
-            # we extracted that in interpret_page()
         else:
             logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
-            # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})          # full news article - locally hosted
-            # local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})      # comes above/before article
-            # local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})  # full news article - locally hosted
-            # BS4 all <p> zones (not just 1)
-            
-            p = 0
-            #c4_dict = self.articles_crawled[item_idx]
-            #c4_dict = self.yfn_c4_data[item_idx]
             c4_dict = self.yfn_c4_result[cached_state]
-            print (f"##### DEBUG 1: {type(c4_dict)}")
-            print (f"##### DEBUG 2: {type(c4_dict['url'])}")
-            print (f"##### DEBUG 3: {type(c4_dict['data'])}")
-            print (f"##### DEBUG 4: {type(c4_dict['result'])}")
-            
-            #self.extracted_elements = c4_dict['data']  # get the craw4al result for this article
-            # get the craw4al result for this article
-            #for element in self.extracted_elements: # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
-            
-            print (f"##### DEBUG 5: {c4_dict['data'][0]}")
-            print (f"##### DEBUG 5: {len(c4_dict['data'])}")
-            
             for i, element in enumerate(c4_dict['data']):
-                art_c0 = element.get('Content', 'ERROR_no_title')      # extract craw4al element
-                art_a0 = element.get('Article', 'ERROR_no_teaser')   # extract craw4al element
-                #art_c1 = element[p]      # extract craw4al element
-                #p += 1
-                print (f"c0: {art_c0}")
-                print (f"a0: {art_a0}")
-                print (f"i:  {i}")
+                art_all_p = element.get('Content', 'ERROR_no_title')      # extract craw4al element
+            #print (f"{art_all_p}")
             
-            
-            #print (f"{result.cleaned_html}")
-            article = self.articles_crawled[item_idx]  # get the craw4al result for this article
-            content_text = article.get('Content', 'ERROR_no_content')  # extract craw4al element 
-            article_text = article.get('Article', 'ERROR_no_article')  # extract craw4al element
-            
-            print (f"========================================= Article: {item_idx} ===============================================")
-            print (f"##### DEBUG\n 1: {content_text}")
-            print (f"========================================= Article: {item_idx} ===============================================")
-            print (f"##### DEBUG\n 2: {article_text}")
-            print (f"========================================= Article: {item_idx} ===============================================")
-            breakpoint()  # DEBUG: inspect the article data
-            
-            #title_text = article.get('Title', 'ERROR_no_title')    # extract craw4al element
-            
-            ####################################################################
-            ##### AI M/L Gen AI NLP starts here !!!                      #######
-            ##### Heavy CPU utilization / local LLM Model & no GPU       #######
-            ####################################################################
-            #
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
             logging.info( f'%s - Init M/L NLP Tokenizor sentiment-analyzer pipeline...' % cmi_debug )
-            total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs)
+            total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 1) # 1 = crawl4ai extractor
 
             print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
 
@@ -839,14 +799,9 @@ class yfnews_reader:
         try:
             async with AsyncWebCrawler() as crawler:
                 result = await crawler.arun(durl, config=config)
-            
                 if result.success:
                     logging.info(f'%s  - crawl4ai extraction successful' % cmi_debug)
                     self.yfn_crawl_data = json.loads(result.extracted_content)
-                    print (f"(##### DEBUG: {self.yfn_crawl_data})" )
-                    print (f"(##### DEBUG: count: {len(self.yfn_crawl_data)}" )
-                    print (f"(##### DEBUG: Type:  {type(self.yfn_crawl_data)}" )
-                    
                     auh = hashlib.sha256(durl.encode()) # prep hash
                     aurl_hash = auh.hexdigest()         # genertae hash WARN: need to do dedupe check !!
                     # GLOBALLY set the yfn_jsdb DB dict for this artcile @ key = aurl_hash, vale = { }
