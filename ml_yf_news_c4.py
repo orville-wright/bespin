@@ -111,7 +111,7 @@ class yfnews_reader:
         Thats allready been captured at stored in: self.ext_req object
         '''
         cmi_debug = __name__+"::"+self.init_live_session.__name__+".#"+str(self.yti)
-        logging.info(f"%s    - Do basic get()..." % cmi_debug )
+        logging.info(f"%s    - Force live cookie update via basic get()..." % cmi_debug )
         self.live_resp0 = requests.get(id_url, stream=True, headers=self.yahoo_headers, cookies=self.yahoo_headers, timeout=5 )
         logging.info(f"%s    - Saved get() resp {type(self.live_resp0)}" % cmi_debug )
         return self.live_resp0
@@ -150,9 +150,9 @@ class yfnews_reader:
     # ################ 5
     def do_simple_get(self, url):
         """
-        get simple raw HTML data structure (data not processed by JAVAScript engine)
+        Simple basic HTML data get()  (data not processed by JAVAScript engine)
         NOTE: get URL is assumed to have allready been set (self.yfqnews_url)
-              Copies exact pattern from working y_topgainers.py file
+              creates the urlhash entry via: yfn_jsdb[aurl_hash] = get(resp)
         """
         cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)
         logging.info( f'%s  - CYCLE: {self.get_counter}' % cmi_debug )
@@ -170,19 +170,19 @@ class yfnews_reader:
                     logging.error(f'{cmi_debug} - get() failed with error: {self.js_resp0.status_code}')
                     return None
 
-        logging.info(f'{cmi_debug} - get() success status: {self.js_resp0.status_code}')
+        logging.info(f'{cmi_debug}  - get() success status: {self.js_resp0.status_code}')
         self.get_counter += 1
-        logging.info( f"%s  - js.render()... diasbled" % cmi_debug )
+        logging.info( f"%s  - js.render() engine... DISABLED" % cmi_debug )
         logging.info( f'%s  - Store basic HTML dataset' % cmi_debug )
         self.js_resp2 = self.js_resp0               # Set js_resp2 to the same response as js_resp0 for now
         hot_cookies = requests.utils.dict_from_cookiejar(self.js_resp0.cookies)
         logging.info( f"%s  - Swap {len(hot_cookies)} cookies into LOCAL yahoo_headers" % cmi_debug )
 
-        self.yfn_htmldata = self.js_resp0.text      # store entire page HTML text in memory in this class
+        self.yfn_htmldata = self.js_resp0.text      # class GLOBAL store page HTML text in memory in this class
         auh = hashlib.sha256(url.encode())          # hash the url
         aurl_hash = auh.hexdigest()
         logging.info( f'%s  - CREATE cache entry: [ {aurl_hash} ]' % cmi_debug )
-        self.yfn_jsdb[aurl_hash] = self.js_resp0    # create CACHE entry in jsdb with value: js_resp0 (not full page TEXT data)
+        self.yfn_jsdb[aurl_hash] = self.js_resp0    # create jsdb CACHE entry @ key=aurl_hash, value=js_resp0 (i.e. get()::resp, not  page TEXT data)
 
         # Xray DEBUG
         if self.args['bool_xray'] is True:
@@ -547,9 +547,10 @@ class yfnews_reader:
             self.update_headers(ip_headers)
 
             #xhash = self.do_js_get(item_idx)           # for JS get()
-            xhash = self.do_simple_get(durl)            # Basic HTML get() - non_JS rendered
-            cy_soup = self.yfn_jsdb[cached_state]       # pikup up get() response 
-            logging.info( f'%s - Retry cache lookup: {cached_state}' % cmi_debug ) 
+            xhash = self.do_simple_get(durl)            # xhash now == cached_state (what we were given, but faield to find in cache))
+            cy_soup = self.yfn_jsdb[xhash]              # pikup up get() response from the has generate from do_simple_get()
+            
+            logging.info( f'%s - Retry cache lookup:     {cached_state}' % cmi_debug ) 
             if self.yfn_jsdb[cached_state]:
                 logging.info( f'%s - Found cache entry: {cached_state}' % cmi_debug )
                 self.yfn_jsdata = cy_soup.text
@@ -565,13 +566,10 @@ class yfnews_reader:
                 logging.info( f'%s - FAIL to set BS4 data !' % cmi_debug )
                 return 10, 10.0, "ERROR_unknown_state!"
 
-        logging.info( f'%s - Extract Article TEXT for AI Sentiment reader: {durl[:30]}...' % (cmi_debug) )
+        logging.info( f'%s - BS4 extractor - get Article TEXT for AI Sentiment NLP...' % (cmi_debug) )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
             return
-            # Do not do deep data extraction
-            # just use the CAPTION Teaser text from the YFN local url
-            # we extracted that in interpret_page_depth2()
         else:
             logging.info( f'%s - set BS4 data zones for article: [ {item_idx} ]' % cmi_debug )
             local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
@@ -586,7 +584,7 @@ class yfnews_reader:
                 ####################################################################
                 #
                 hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-                logging.info( f'%s - Init M/L NLP Tokenizor sentiment-analyzer pipeline...' % cmi_debug )
+                logging.info( f'%s  - Init M/L NLP Tokenizor sentiment-analyzer pipeline...' % cmi_debug )
                 total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
 
                 print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
@@ -607,9 +605,9 @@ class yfnews_reader:
                 # - check if KG has existing node entry for this symbol+news_article
                 # if not... create one
                 print ( f"======================================== End: {item_idx} ===============================================")
-            except Exception as e:
-                logging.info( f'%s - BS4 ERROR accessing <p> zones: {e}' % cmi_debug )
-                return 0, 0, 0      # I think this is correct for ERROR state here
+            except Exception as e:    
+                logging.info( f"#### - BS4 ERROR accessing p zones: {e}" )
+                return 0, 0, 0
 
         return total_tokens, total_words, total_scent
 

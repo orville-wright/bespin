@@ -44,7 +44,7 @@ class ml_cvbow:
         #self.vectorizer = CountVectorizer(stop_words=stopwords)
         return
 
-####################################### 1 #########################################
+# ########## 1
     def fitandtransform(self):
         """
         Learn the vocabulary dictionary and return document-term matrix.
@@ -60,10 +60,10 @@ class ml_cvbow:
         # fit_transform is is equivalent to fit followed by transform, but more efficiently implemented
         # the data & attributes available are also differnet to fit followed by transform
         self.ft_tdmatrix = self.vectorizer.fit_transform(self.corpus)
-        logging.info('%s -  Vectorizor fit complete. TD Matrix built !' % cmi_debug )
+        logging.info('%s - Vectorizor fit complete. TD Matrix built !' % cmi_debug )
         return self.ft_tdmatrix
 
-####################################### 2 ########################################
+# ########## 2
     def fitonly(self):
         """
         ONLY learn the vocabulary of tokens in raw docusment, but dont build a Term Document matrix.
@@ -78,7 +78,7 @@ class ml_cvbow:
         self.fo_tokens = self.vectorizer.fit(self.corpus)
         return self.fo_tokens
 
-####################################### 3 ########################################
+# ########## 3
     def view_tdmatrix(self):
         """
         Decode the full CSR matrix and view the elements in a human readable table.
@@ -108,28 +108,28 @@ class ml_cvbow:
 
         return
 
-###################################### 6 ###########################################
-# method 13
+# ########## 4
     def is_scentence(self, p_line):
          if p_line.strip().endswith(('.', '?', '!')):
              return True
          else:
              return False
 
+# ########## 5
     def is_paragraph(self, p_line):
          if p_line.count('.') > 1 or p_line.count('?') > 1 or p_line.count('!') > 1:
              return True
          else:
              return False
 
-####################################### 4 ########################################
+# ########## 6
     def get_hfword(self):
         """
         Decode the full CSR matrix and extract the HIGHEST FREQUENCY WORD from the data.
         Term_doc_Matrix must already have been FIT and TRASNFORMED.
         """
         cmi_debug = __name__+"::"+self.get_hfword.__name__+".#"+str(self.yti)
-        logging.info('%s - Analyze High Freq words from TD Matrix' % cmi_debug )
+        logging.info('%s      - Analyze High Freq words from TD Matrix' % cmi_debug )
 
 	    # working & decoding native scikit-learn CSR data (i.e. Compressed Sparse Row matrix data)
         #print ( f"DATA: {self.ft_tdmatrix.data}" )
@@ -155,10 +155,10 @@ class ml_cvbow:
             vmax_words.append("None")
 
         vmax_words.append(int(vmax))
-        logging.info('%s - High Freq words identieid & computed !' % cmi_debug )
+        logging.info('%s      - High Freq words identieid & computed !' % cmi_debug )
         return vmax_words        # the English word with the highest frequency count
 
-####################################### 5 ########################################
+# ########## 7
     def reset_corpus(self, new_corpus):
         """
         reset the corpus and initialize it with something new

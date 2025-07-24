@@ -68,10 +68,9 @@ class ml_sentiment:
         Save key ML sentiment info to global sentimennt Dataframe
         data_set = a dict
         """
+        self.yti = yti
         cmi_debug = __name__+"::"+self.save_sentiment.__name__
         logging.info( f'%s - Save sentiment metrics to DF...' % cmi_debug )
-        self.yti = yti
-        logging.info( f"%s - IN.#{yti}" % cmi_debug )
         x = self.df0_row_count      # get last row added to DF
         x += 1
 
@@ -115,13 +114,14 @@ class ml_sentiment:
         cmi_debug = __name__+"::"+self.compute_sentiment.__name__+".#"+str(self.yti)
         self.item_idx = item_idx
         self.yti = item_idx
-        logging.info( f'%s    - Init M/L NLP Tokenizor, Vectorizer & Stopwords engine...' % cmi_debug )
+        logging.info( f'%s     - Init M/L NLP Tokenizor, Vectorizer & Stopwords engine...' % cmi_debug )
         self.vectorz = ml_cvbow(item_idx, self.args)   
         self.stop_words = stopwords.words('english')
         #classifier = pipeline('sentiment-analysis')
-        logging.info( f'%s    - Init HF classifier Model: mrm8488/distilroberta...' % cmi_debug )
-        classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis", device="cpu")
-        tokenizer_mml = classifier.tokenizer.model_max_length
+        logging.info( f'%s     - Init HF classifier model pipeline: mrm8488/distilroberta...' % cmi_debug )
+        # this is the real AI model LLM computation. GPU goes brrrr....!!
+        self.classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis", device="cpu")
+        self.tokenizer_mml = self.classifier.tokenizer.model_max_length
         self.ttc = 0
         self.twc = 0
         self.sentiment_count["positive"] = 0
@@ -131,46 +131,62 @@ class ml_sentiment:
         
         #if self.args['bool_verbose'] is True:        # Logging level
         if ext_type == 1:  # crawl4ai extractor
-            logging.info( f"%s    - Transformer truncation preset: {tokenizer_mml}" % cmi_debug )
-            chunked_raw_scentxt = self.c4_chunker(scentxt, tokenizer_mml)
-            logging.info( f"%s    - Text Blocklet rows generated: {len(chunked_raw_scentxt)} / total chars {(tokenizer_mml * len(chunked_raw_scentxt))}" % cmi_debug )
+            logging.info( f"%s    - C4 engine - Transformer truncation preset: {self.tokenizer_mml}" % cmi_debug )
+            chunked_raw_scentxt = self.c4_chunker(scentxt, self.tokenizer_mml)   # pre-process text into Blocklets < tokenizer_mml
+            logging.info( f"%s    - Text Blocklet rows generated: {len(chunked_raw_scentxt)} / total chars {(self.tokenizer_mml * len(chunked_raw_scentxt))}" % cmi_debug )
             # do NLP tokenization and count metrics - craw4ai extractor
-            for i, chunk in chunked_raw_scentxt.items():    # cycle through all scentenses/paragraphs sent to us
-                ngram_count = len(re.findall(r'\w+', chunk))
-                ngram_tkzed = word_tokenize(chunk)
-                self.ttc += int(len(ngram_tkzed))           # total vectroized tokensgenrated by tokenizer 
-                if self.vectorz.is_scentence(chunk):
-                    chunk_type = "Scent"
-                elif self.vectorz.is_paragraph(chunk):
-                    chunk_type = "Parag"
-                else:
-                    chunk_type = "Randm"
-                # INIT NLP classifier - WARN: truncating long scentences !!!
-                clsfr_result = classifier(chunk, truncation=True)      # WARN: ???
-                if self.args['bool_verbose'] is True:        # Logging level
-                    print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokens: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
-
-                self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0])
-
-        else:   # # do NLP tokenization and count metrics - BS4 extractor
+            self.dict_processor(symbol, chunked_raw_scentxt)
+            self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0])      
+        else:   # BS4 -  NLP tokenization and count metrics - BS4 extracted dataset
+            logging.info( f"%s     - BS4 engine - Transformer truncation preset: {self.tokenizer_mml}" % cmi_debug )
             for i in range(0, len(scentxt)):    # cycle through all scentenses/paragraphs sent to us
-                ngram_count = len(re.findall(r'\w+', scentxt[i].text))
-                ngram_tkzed = word_tokenize(scentxt[i].text)
-                self.ttc += int(len(ngram_tkzed))           # total vectroized tokensgenrated by tokenizer 
-                if self.vectorz.is_scentence(scentxt[i].text):
-                    chunk_type = "Scent"
-                elif self.vectorz.is_paragraph(scentxt[i].text):
-                    chunk_type = "Parag"
-                else:
-                    chunk_type = "Randm"
-                # INIT NLP classifier - WARN: truncating long scentences !!!
-                clsfr_result = classifier(scentxt[i].text, truncation=True)
-                if self.args['bool_verbose'] is True:        # Logging level
-                    print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokens: {len(ngram_tkzed):03} / alphas: {len(scentxt[i].text):03} ]", end="" )
- 
-                self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0])
-    
+                truncated = "Clean"
+                if len(scentxt[i].text) > self.tokenizer_mml:    # only chunk the text into blocklets on truncation altert
+                    chunked_raw_scentxt = self.c4_chunker(scentxt[i].text, self.tokenizer_mml)   # result = {} of blocklets
+                    truncated = "Trctd!"
+                    for _k, _v in chunked_raw_scentxt.items():
+                        self.dict_processor(symbol, _v)
+                    continue
+                else:   # BS4 text row processor for text blockets < tokenizer_mml
+                    ngram_count = len(re.findall(r'\w+', scentxt[i].text))
+                    ngram_tkzed = word_tokenize(scentxt[i].text)
+                    self.ttc += int(len(ngram_tkzed))           # total vectroized tokensgenrated by tokenizer 
+                    if self.vectorz.is_scentence(scentxt[i].text):
+                        chunk_type = "Scent"
+                    elif self.vectorz.is_paragraph(scentxt[i].text):
+                        chunk_type = "Parag"
+                    else:
+                        chunk_type = "Randm"
+
+                    # Exec AI NLP classifier !!
+                    clsfr_result = self.classifier(scentxt[i].text, truncation=True)
+                    if self.args['bool_verbose'] is True:        # Logging level
+                        print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(scentxt[i].text):03} ({truncated}) ] ", end="" )
+
+                    self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0])
+
         return self.ttc, self.twc, i
+
+    # Helper function
+    def dict_processor(self, symbol, _text_dict):
+        logging.info( f"%s     - Dict text processing engine: {self.tokenizer_mml}" % cmi_debug )
+        for i, chunk in _text_dict.items():    # cycle through all scentenses/paragraphs sent to us
+            ngram_count = len(re.findall(r'\w+', chunk))
+            ngram_tkzed = word_tokenize(chunk)
+            self.ttc += int(len(ngram_tkzed))           # total vectroized tokensgenrated by tokenizer 
+            if self.vectorz.is_scentence(chunk):
+                chunk_type = "Scent"
+            elif self.vectorz.is_paragraph(chunk):
+                chunk_type = "Parag"
+            else:
+                chunk_type = "Randm"
+            # INIT NLP classifier - WARN: truncating long scentences !!!
+            clsfr_result = self.classifier(chunk, truncation=True)      # WARN: ???
+            if self.args['bool_verbose'] is True:        # Logging level
+                print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokens: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
+
+            self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0])
+        return
     
     # ##################################
     # Helper function
@@ -197,7 +213,7 @@ class ml_sentiment:
             rounded_score = np.floor(raw_score * (10 ** 7) ) / (10 ** 7)
             
             if self.args['bool_verbose'] is True:        # Logging level
-                print ( f" / HFN: {hfw} / Sentiment: {sen_result['label']} {(rounded_score * 100):.5f}%")
+                print ( f" / HFN: {hfw} / Sent: {sen_result['label']} {(rounded_score * 100):.5f}%")
 
             logging.info( f'%s - Save chunklist to DF for article [ {self.item_idx} ]...' % cmi_debug )
             sen_package = dict(sym=symbol, urlhash=self.active_urlhash, article=self.item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
@@ -211,25 +227,26 @@ class ml_sentiment:
         return
         #return self.ttc, self.twc, i
 ##################################### 3 ####################################
-
+# Helper function
     def c4_chunker(self, scentxt, tokenizer_mml):
         """
-        Chunks the scentxt into smaller blocks based on tokenizer max length
+        Chunks a frame of text into smaller blocklets that do not exceed the LLM tokenizer max length
+        in order to avoid truncation of text and ebale full text sentiment analysis (no loss of words)
         """        
         cmi_debug = __name__+"::"+self.c4_chunker.__name__+".#"+str(self.yti)
-        logging.info( f"%s - Start article chunker @ len: {tokenizer_mml} chars" % cmi_debug )
-        if not scentxt:
-            return {}
+        logging.info( f"%s - Start article chunker @: {tokenizer_mml} for {len(scentxt)}" % cmi_debug )
+        if not scentxt:     # incomming frame of text. For craw4ai, this is the entire articel text.
+            return {}       # for BS4, this is a row of <p> tag txt
         
-        chunks = {}
-        chunk_index = 0
-        start = 0
+        chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of tesxt > tokenizer_mml"
+        chunk_index = 0     # dict key
+        start = 0           # text blocklet len counter
         while start < len(scentxt):
-            end = start + tokenizer_mml     # Calculate the end position for this chunk
-            if end >= len(scentxt):         # test fro last chunk / exact boundary, take it as is
+            end = start + tokenizer_mml     # Calculate end pos for this chunk
+            if end >= len(scentxt):         # test for last chunk / exact boundary, take it as is
                 chunk = scentxt[start:].strip()
                 if chunk:                   # Only add non-empty chunks
-                    logging.info( f"%s - Built Text Blocklet [ {chunk_index} ] / {len(chunk)} chars" % cmi_debug )
+                    logging.info( f"%s - Text Blocklet constructed: {chunk_index} @ {len(chunk)} chars" % cmi_debug )
                     chunks[chunk_index] = chunk
                 break
      
@@ -247,8 +264,9 @@ class ml_sentiment:
             # Move start position for next chunk
             start = chunk_end + (1 if chunk_end < len(scentxt) and scentxt[chunk_end] == ' ' else 0)
 
-        logging.info( f"%s - Chunker completed - {chunk_index+1} Text Blocklets built" % cmi_debug )
-        return chunks
+        logging.info( f"%s - Chunker safely fabricated: {chunk_index+1} Text Blocklets" % cmi_debug )
+        return chunks   # {} of perfect blockelts < tokenizer_mml
+
 ##################################### 3 ####################################
     def compute_precise_sentiment(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
         """

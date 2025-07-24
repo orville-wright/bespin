@@ -600,9 +600,9 @@ def main():
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
             )
             print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
-            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {tscz} / AI time taken: {(ai_sent_time / 60):.2f} mins" )
-            print (f"Human read time: {(twcz / 237):.2f} mins ({((twcz / 237)/60):.1f} hours) - Human alaysis time: {hpt_mins:.2f} mins ({hpt_hours:.1f}) hours" )
-            print (f"AI performance: {(hpt_mins / (ai_sent_time / 60)):.1f} X Faster than a Human / ${(hpt_hours * 150):.1f} saved" )
+            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {tscz}  |   Time taken: {(ai_sent_time / 60):.2f} mins" )
+            print (f"Human read time:  {(twcz / 237):.2f} mins ({((twcz / 237)/60):.1f} hours)  | Human alaysis time: {hpt_mins:.2f} mins ({hpt_hours:.1f}) hours" )
+            print (f"AI performance:   {(hpt_mins / (ai_sent_time / 60)):.1f} Faster than a Human  |   ${(hpt_hours * 150):.1f} Analyst work" )
             print (f" ")
             
             pd.set_option('display.max_rows', None)
