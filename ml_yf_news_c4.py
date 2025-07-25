@@ -521,7 +521,7 @@ class yfnews_reader:
             self.yfn_jsdb[cached_state]         # fast key KeyError existance test
             cx_soup = self.yfn_jsdb[cached_state]
             logging.info( f'%s - Found cahce entry: Render data from cache...' % cmi_debug )
-            #cx_soup.html.render()           # since we dont cache the raw data, we need to render the page again
+            cx_soup.html.render()            # since we dont cache the raw data, we need to render the page again
             self.yfn_jsdata = cx_soup.text   # store the rendered raw data
             dataset_1 = self.yfn_jsdata
             logging.info( f'%s - Cached object    : {cached_state}' % cmi_debug )
@@ -529,17 +529,14 @@ class yfnews_reader:
             logging.info( f'%s - Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
             logging.info( f'%s - Cache URL object : {cx_soup.url}' % cmi_debug )
             logging.info( f'%s - BS4 read url now...' % cmi_debug )
-
             # This is where we refactor to crawl4ai
             self.nsoup = BeautifulSoup(escape(dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
-
         except KeyError:
             logging.info( f'%s - MISSING from cache - must read page' % cmi_debug )
             logging.info( f'%s - Cache URL object   : {type(durl)}' % cmi_debug )
             cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
- 
             self.yfqnews_url = durl
             ip_urlp = urlparse(durl)
             ip_headers = ip_urlp.path
@@ -557,16 +554,19 @@ class yfnews_reader:
                 dataset_2 = self.yfn_htmldata           # Basic HTML engine  get()
                 logging.info ( f'%s - Cache url:     {cy_soup.url}' % cmi_debug )
                 logging.info ( f'%s - Cache req/get: {type(cy_soup)}' % cmi_debug )
-                logging.info ( f'%s - Cache Dataset: {type(self.yfn_jsdata)}' % cmi_debug )
-                
+                logging.info ( f'%s - Cache Dataset: {type(self.yfn_jsdata)}' % cmi_debug )     
                 # This is where we refactor to crawl4ai
                 self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")        # BS4 read() <- replace with crawl4ai
-
             else:
                 logging.info( f'%s - FAIL to set BS4 data !' % cmi_debug )
-                return 10, 10.0, "ERROR_unknown_state!"
-
-        logging.info( f'%s - BS4 extractor - get Article TEXT for AI Sentiment NLP...' % (cmi_debug) )
+                return 10, 10.0, "ERROR_unknown_state"
+        except Exception as e:
+            logging.info ( f'%s - BS4 ERROR exception: {e}' % cmi_debug )
+            return 10, 10.0, "ERROR_unknown_state"
+  
+        # from here we extracr thet text datq
+        cmi_debug = __name__+"::extract_article_data.p_tags.#0"
+        logging.info( f'%s - BS4 extractor - get Article TEXT for AI Sentiment NLP...' % cmi_debug )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
             return
@@ -584,7 +584,7 @@ class yfnews_reader:
                 ####################################################################
                 #
                 hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-                logging.info( f'%s  - Init M/L NLP Tokenizor sentiment-analyzer pipeline...' % cmi_debug )
+                logging.info( f'%s  - Init M/L NLP Tokenizor pipeline 0...' % cmi_debug )
                 total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
 
                 print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
@@ -606,7 +606,7 @@ class yfnews_reader:
                 # if not... create one
                 print ( f"======================================== End: {item_idx} ===============================================")
             except Exception as e:    
-                logging.info( f"#### - BS4 ERROR accessing p zones: {e}" )
+                logging.info( f"%s - BS4 ERROR in p zones: {e}" % cmi_debug)
                 return 0, 0, 0
 
         return total_tokens, total_words, total_scent
@@ -740,7 +740,7 @@ class yfnews_reader:
                     continue 
                 
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-            logging.info( f'%s - Init M/L NLP Tokenizor sentiment-analyzer pipeline...' % cmi_debug )
+            logging.info( f'%s - Init M/L NLP Tokenizor pipeline 1...' % cmi_debug )
             total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 1) # 1 = crawl4ai extractor
 
             print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")

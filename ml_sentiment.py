@@ -142,7 +142,9 @@ class ml_sentiment:
             for i in range(0, len(scentxt)):    # cycle through all scentenses/paragraphs sent to us
                 truncated = "Clean"
                 if len(scentxt[i].text) > self.tokenizer_mml:    # only chunk the text into blocklets on truncation altert
-                    chunked_raw_scentxt = self.c4_chunker(scentxt[i].text, self.tokenizer_mml)   # result = {} of blocklets
+                    _std = dict()                   # init an empty dict
+                    _std["0"] = scentxt[i].text
+                    chunked_raw_scentxt = self.c4_chunker(_std, self.tokenizer_mml)   # result = {} of blocklets
                     truncated = "Trctd!"
                     for _k, _v in chunked_raw_scentxt.items():
                         self.dict_processor(symbol, _v)
@@ -159,6 +161,7 @@ class ml_sentiment:
                         chunk_type = "Randm"
 
                     # Exec AI NLP classifier !!
+                    logging.info( f"%s - Exec NLP classfier 0..." % cmi_debug )
                     clsfr_result = self.classifier(scentxt[i].text, truncation=True)
                     if self.args['bool_verbose'] is True:        # Logging level
                         print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(scentxt[i].text):03} ({truncated}) ] ", end="" )
@@ -169,7 +172,8 @@ class ml_sentiment:
 
     # Helper function
     def dict_processor(self, symbol, _text_dict):
-        logging.info( f"%s     - Dict text processing engine: {self.tokenizer_mml}" % cmi_debug )
+        cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
+        logging.info( f"%s - Dict text processor engine: {self.tokenizer_mml}" % cmi_debug )
         for i, chunk in _text_dict.items():    # cycle through all scentenses/paragraphs sent to us
             ngram_count = len(re.findall(r'\w+', chunk))
             ngram_tkzed = word_tokenize(chunk)
@@ -181,6 +185,7 @@ class ml_sentiment:
             else:
                 chunk_type = "Randm"
             # INIT NLP classifier - WARN: truncating long scentences !!!
+            logging.info( f"%s - Exec NLP classfier 1..." % cmi_debug )
             clsfr_result = self.classifier(chunk, truncation=True)      # WARN: ???
             if self.args['bool_verbose'] is True:        # Logging level
                 print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokens: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
@@ -223,6 +228,8 @@ class ml_sentiment:
             print ( f"Model exception !!")
         except ValueError:
             print ( f"Empty vocabulary !!")
+        except Exception as e:
+            print ( f"ERROR in sent engine: {e}")
     
         return
         #return self.ttc, self.twc, i
@@ -234,10 +241,10 @@ class ml_sentiment:
         in order to avoid truncation of text and ebale full text sentiment analysis (no loss of words)
         """        
         cmi_debug = __name__+"::"+self.c4_chunker.__name__+".#"+str(self.yti)
-        logging.info( f"%s - Start article chunker @: {tokenizer_mml} for {len(scentxt)}" % cmi_debug )
-        if not scentxt:     # incomming frame of text. For craw4ai, this is the entire articel text.
+        logging.info( f"%s - Start article chunker @: {tokenizer_mml} row: {len(scentxt)} / {sum(scentxt.values())} chars" % cmi_debug )
+        if not scentxt:     # empty
             return {}       # for BS4, this is a row of <p> tag txt
-        
+        logging.info( f"%s - Chunking Blockletts..." % cmi_debug )
         chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of tesxt > tokenizer_mml"
         chunk_index = 0     # dict key
         start = 0           # text blocklet len counter
@@ -260,10 +267,8 @@ class ml_sentiment:
                 logging.info( f"%s - Text Blocklet constructed: {chunk_index} @ {len(chunk)} chars" % cmi_debug )
                 chunks[chunk_index] = chunk
                 chunk_index += 1
-            
-            # Move start position for next chunk
-            start = chunk_end + (1 if chunk_end < len(scentxt) and scentxt[chunk_end] == ' ' else 0)
-
+                start = chunk_end + (1 if chunk_end < len(scentxt) and scentxt[chunk_end] == ' ' else 0)
+        
         logging.info( f"%s - Chunker safely fabricated: {chunk_index+1} Text Blocklets" % cmi_debug )
         return chunks   # {} of perfect blockelts < tokenizer_mml
 
