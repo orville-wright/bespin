@@ -87,7 +87,7 @@ class db_graph:
         """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.create_sym_node.__name__+".#"+str(self.yti)
-        logging.info( f'%s - Creating enhanced graph node for ticker symbol: [ {ticker_symbol} ]...' % cmi_debug )
+        # logging.info( f'%s - Creating enhanced graph node for ticker symbol: [ {ticker_symbol} ]...' % cmi_debug )
 
         with self.driver.session(database="neo4j") as session:
             if sentiment_df is not None and not sentiment_df.empty:
@@ -142,7 +142,7 @@ class db_graph:
         node_data_package = dict of data we want created in GraphDB
         """
         cmi_debug = __name__+"::"+self.dump_symbols.__name__+".#"+str(self.yti)
-        logging.info( f'%s - RUning Query to dump Sumbols list ]...' % cmi_debug )
+        logging.info( f'%s - Runing Query to dump Sumbols list ]...' % cmi_debug )
 
         # a Graph node looks like this:
         # its a class of:  neo4j._data.Record
@@ -157,12 +157,12 @@ class db_graph:
             scount = 1
             buffer = result.fetch(500)      # pull 500 enteries into the buffer
             print ( f"Results BUFFER has [ {len(buffer)} ] elements\n")
-
+            '''
             for i in buffer:                # working on: neo4j._data.Record 
                 print ( f"ITEM: {scount} : \t SYMBOL found: {i['s']._properties['symbol']} \t ID: {i['s']._properties['id']}" )
                 print ( f"========================================================================================" )
                 scount += 1
-
+            '''
             rec_done = result.consume()       # ResultSummary objects
             return rec_done
 
@@ -221,7 +221,7 @@ class db_graph:
                 if existing_record:
                     # Node already exists, skip creation
                     skipped_nodes.append((existing_record["existing_id"], str(row['urlhash'])))
-                    logging.info( f'%s - Article node with label {dynamic_label} already exists, skipping creation for urlhash: {row["urlhash"]}' % cmi_debug )
+                    # logging.info( f'%s - Article node with label {dynamic_label} already exists, skipping creation for urlhash: {row["urlhash"]}' % cmi_debug )
                     continue
                 
                 # Node doesn't exist, create it using APOC
@@ -256,7 +256,7 @@ class db_graph:
                 
                 record = result.single()
                 created_nodes.append((record["node_id"], str(row['urlhash'])))
-                logging.info( f'%s - Created article node with labels [Article, {dynamic_label}]: {record["node_id"]} for urlhash: {row["urlhash"]}' % cmi_debug )
+                # logging.info( f'%s - Created article node with labels [Article, {dynamic_label}]: {record["node_id"]} for urlhash: {row["urlhash"]}' % cmi_debug )
         
         logging.info( f'%s - Summary: {len(created_nodes)} nodes created, {len(skipped_nodes)} nodes skipped (already existed)' % cmi_debug )
         return created_nodes     # Returns a list of tuples (node_id, urlhash) for created nodes
@@ -273,7 +273,7 @@ class db_graph:
         """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.create_sym_art_rels.__name__+".#"+str(self.yti)
-        logging.info( f'%s - Creating HAS_ARTICLE relationships for symbol: [ {symbol} ]...' % cmi_debug )
+        # logging.info( f'%s - Creating HAS_ARTICLE relationships for symbol: [ {symbol} ]...' % cmi_debug )
 
         created_relationships = []
         skipped_relationships = []
@@ -304,7 +304,7 @@ class db_graph:
                 if existing_rel:
                     # Relationship already exists, skip creation
                     skipped_relationships.append(str(row['urlhash']))
-                    logging.info( f'%s - REL already exists: {symbol} - {row["urlhash"]}, skipping...' % cmi_debug )
+                    # logging.info( f'%s - REL already exists: {symbol} - {row["urlhash"]}, skipping...' % cmi_debug )
                     continue
                 
                 # Relationship doesn't exist, create it
@@ -337,12 +337,14 @@ class db_graph:
                 )
                 
                 record = result.single()
+                '''
                 if record:
                     created_relationships.append(str(row['urlhash']))
                     logging.info( f'%s - Created HAS_ARTICLE relationship for urlhash: {row["urlhash"]}' % cmi_debug )
                 else:
                     logging.warning( f'%s - REL Create FAIL urlhash: {row["urlhash"]}' % cmi_debug )
-        
+                '''
+                
         logging.info( f'%s - Summary: {len(created_relationships)} relationships created, {len(skipped_relationships)} relationships skipped (already existed)' % cmi_debug )
         return created_relationships
 
@@ -405,7 +407,7 @@ class db_graph:
                 if existing_rel:
                     # Relationship already exists, skip creation
                     skipped_relationships.append(symbol)
-                    logging.info( f'%s - STOCK_NEWS rel exists for symbol: {symbol}, skipping' % cmi_debug )
+                    # logging.info( f'%s - STOCK_NEWS rel exists for symbol: {symbol}, skipping' % cmi_debug )
                     continue
                 
                 # Create STOCK_NEWS relationship: YahooFinance -> Symbol
@@ -421,12 +423,14 @@ class db_graph:
                 rel_result = session.run(create_rel_query, symbol=symbol)
                 rel_record = rel_result.single()
                 
+                '''
                 if rel_record:
                     created_relationships.append(symbol)
                     logging.info( f'%s - Created STOCK_NEWS rel -> {symbol}' % cmi_debug )
                 else:
                     logging.warning( f'%s - Create rel FAILED for symbol: {symbol}' % cmi_debug )
-        
+                '''
+                
         logging.info( f'%s - YF node create: {yahoo_node_created} : {len(created_relationships)} : {len(skipped_relationships)} skipped' % cmi_debug )
         return {
             "node_created": yahoo_node_created,

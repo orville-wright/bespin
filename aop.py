@@ -556,7 +556,7 @@ def main():
             # DEBUG
             if args['bool_verbose'] is True:        # Logging level
                 news_ai.yfn.dump_ml_ingest()
-                print (f"{sent_ai.sen_df0}")
+                #print (f"{sent_ai.sen_df0}")
  
             #sent_ai.sen_df1 = sent_ai.sen_df0.groupby('snt').agg(['count'])
             pd.set_option("expand_frame_repr", False)
@@ -578,7 +578,7 @@ def main():
             final_sent_df['art'] = final_sent_df['art'].astype(object)
             totals_df['urlhash'] = ''       # Or np.nan if preferred for a numerical representation
             df_final = pd.concat([final_sent_df, totals_df])
-            print ( f"{df_final}")
+            # print ( f"{df_final}")
             print (f"\n")
 
             positive_t = df_final.iloc[-1]['psnt']

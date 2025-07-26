@@ -51,6 +51,7 @@ class yfnews_reader:
     ml_ingest = {}          # ML ingested NLP candidate articles
     ml_sent = None
     nlp_x = 0
+    sent_ai = None
     sen_stats_df = None     # Aggregated sentiment stats for this 1 article
     symbol = None           # Unique company symbol
     this_article_url = "https://www.default_interpret_page_url.com"
@@ -496,6 +497,7 @@ class yfnews_reader:
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
         cached_state = data_row['urlhash']
+        self.sent_ai = sentiment_ai
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
@@ -560,12 +562,9 @@ class yfnews_reader:
             else:
                 logging.info( f'%s - FAIL to set BS4 data !' % cmi_debug )
                 return 10, 10.0, "ERROR_unknown_state"
-        except Exception as e:
-            logging.info ( f'%s - BS4 ERROR exception: {e}' % cmi_debug )
-            return 10, 10.0, "ERROR_unknown_state"
   
         # from here we extracr thet text datq
-        cmi_debug = __name__+"::extract_article_data.p_tags.#0"
+        #cmi_debug = __name__+"::extract_article_data.p_tags.#0"
         logging.info( f'%s - BS4 extractor - get Article TEXT for AI Sentiment NLP...' % cmi_debug )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
@@ -575,41 +574,47 @@ class yfnews_reader:
             local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
             local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})        # comes above/before article
             local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})   # full news article - locally hosted
-            try:
-                local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
+            # try:
+            local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
 
-                ####################################################################
-                ##### AI M/L Gen AI NLP starts here !!!                      #######
-                ##### Heavy CPU utilization / local LLM Model & no GPU       #######
-                ####################################################################
-                #
-                hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-                logging.info( f'%s  - Init M/L NLP Tokenizor pipeline 0...' % cmi_debug )
-                total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
+            ####################################################################
+            ##### AI M/L Gen AI NLP starts here !!!                      #######
+            ##### Heavy CPU utilization / local LLM Model & no GPU       #######
+            ####################################################################
+            #
+            hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
+            logging.info( f'%s  - Exec NLP sent classifier pipeline.#0...' % cmi_debug )
+            #total_tokens, total_words, total_scent = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
+            total_tokens, total_words, total_scent = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
+            sent_z = self.sent_ai.sentiment_count['neutral']
+            sent_p = self.sent_ai.sentiment_count['positive']
+            sent_n = self.sent_ai.sentiment_count['negative']
+            
+            print ( f"Total tokens generated: {total_tokens} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
+            
+            # set up a dataframe to hold the aggregated sentiment for this article in columns.
+            # This is helpful for merging the info with other dataframes later on
+            self.sen_data = [[
+                        item_idx,
+                        hs,
+                        sent_p,
+                        sent_z,
+                        sent_n
+                        ]]
 
-                print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
-
-                # set up a dataframe to hold the aggregated sentiment for this article in columns.
-                # This is helpful for merging the info with other dataframes later on
-                self.sen_data = [[ \
-                            item_idx, \
-                            hs, \
-                            sentiment_ai.sentiment_count['positive'], \
-                            sentiment_ai.sentiment_count['neutral'], \
-                            sentiment_ai.sentiment_count['negative'] ]]
-
-                sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
-                self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
-                
-                # create emtries in the Neo4j Graph database
-                # - check if KG has existing node entry for this symbol+news_article
-                # if not... create one
-                print ( f"======================================== End: {item_idx} ===============================================")
-            except Exception as e:    
-                logging.info( f"%s - BS4 ERROR in p zones: {e}" % cmi_debug)
-                return 0, 0, 0
-
-        return total_tokens, total_words, total_scent
+            sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
+            self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
+            
+            # create emtries in the Neo4j Graph database
+            # - check if KG has existing node entry for this symbol+news_article
+            # if not... create one
+            print ( f"======================================== End: {item_idx} ===============================================")
+            return total_tokens, total_words, total_scent
+            '''
+            except Exception as bs4e:
+                 logging.info( f'%s  - ERROR BS4 classifier pipeline.#0: {bs4e}' % cmi_debug )
+            return 0, 0, 0
+            '''
 
     # #####################################################################################
     # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1
@@ -740,7 +745,7 @@ class yfnews_reader:
                     continue 
                 
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-            logging.info( f'%s - Init M/L NLP Tokenizor pipeline 1...' % cmi_debug )
+            logging.info( f'%s - Init NLP Tokenizor pipeline 1...' % cmi_debug )
             total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 1) # 1 = crawl4ai extractor
 
             print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
@@ -836,7 +841,8 @@ class yfnews_reader:
         print("===== Dump: ML Ingest DB / Depth 1 / AI NLP candidates ==================")
         
         for k, d in self.ml_ingest.items():
-            print (f"Index: {k:03}\n{d}")
+            pass
+            #print (f"Index: {k:03}\n{d}")
             '''
             print(f"{k:03} {d['symbol']:.5} / {d['urlhash']} Hints: [t:{d['type']} u:{d['uhint']} h:{d['thint']}]")
             if 'exturl' in d.keys():

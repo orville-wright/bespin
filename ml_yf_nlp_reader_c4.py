@@ -112,11 +112,11 @@ class ml_nlpreader:
             t_url = urlparse(sn_row['url'])
             uhint, uhdescr = self.yfn_uh.uhinter(0, t_url)
             thint = sn_row['thint']
-            logging.info(f"%s       - Logic.#0 Hints for url: [ t:0 / u:{uhint} / h: {thint} ] / {uhdescr}" % cmi_debug)
+            logging.info(f"%s - Logic.#0 Hints for url: [ t:0 / u:{uhint} / h: {thint} ] / {uhdescr}" % cmi_debug)
             
             # Do deep analysis on the page @ Depth 2
             r_uhint, r_thint, r_xturl = self.ml_yfn_dataset.interpret_page_depth2(ml_idx, sn_row)
-            logging.info(f"%s       - Inferred conf: {r_xturl}" % cmi_debug)
+            logging.info(f"%s - Inferred conf: {r_xturl}" % cmi_debug)
             p_r_xturl = urlparse(r_xturl)
             inf_type = self.yfn_uh.confidence_lvl(thint)
             print(f"Article type:  [ +{uhint} ] / {sn_row['url']}")
