@@ -501,8 +501,8 @@ def main():
                 # TESTING: Long term, this will be a list of all the articles
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    #ttc, twc, tsc = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)   # craw4ai enbine - still not working - crawlaai !!
-                    ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS$ engine - AI ML compute execed here
+                    ttc, twc, tsc = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)   # craw4ai enbine - still not working - crawlaai !!
+                    #ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS$ engine - AI ML compute execed here
                     ttkz += ttc
                     twcz += twc
                     tscz += tsc
