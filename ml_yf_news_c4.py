@@ -472,7 +472,7 @@ class yfnews_reader:
             return uhint, 9.9, durl
 
     # #############################################
-    # WARN: Heacy network data extractor. 
+    # WARN: Heavy network data extractor. 
     #       Does full get() request for every viable news article found
     # Reads each URL, and crawls that page, extracting key elements e.g. <p>.text
     # Trying to refactor to craw4al, but currently uses BS4
@@ -584,8 +584,8 @@ class yfnews_reader:
             #
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
             logging.info( f'%s  - Exec NLP sent classifier pipeline.#0...' % cmi_debug )
-            #total_tokens, total_words, total_scent = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
-            total_tokens, total_words, total_scent = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
+            #total_tokens, total_words, total_scent, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
+            total_tokens, total_words, total_scent, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
             sent_z = self.sent_ai.sentiment_count['neutral']
             sent_p = self.sent_ai.sentiment_count['positive']
             sent_n = self.sent_ai.sentiment_count['negative']
@@ -604,12 +604,17 @@ class yfnews_reader:
 
             sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
+            final_results.update({
+                'positive_count': self.sent_ai.sentiment_count['positive'],
+                'neutral_count': self.sent_ai.sentiment_count['neutral'],
+                'negative_count': self.sent_ai.sentiment_count['negative']
+                })
             
             # create emtries in the Neo4j Graph database
             # - check if KG has existing node entry for this symbol+news_article
             # if not... create one
             print ( f"======================================== End: {item_idx} ===============================================")
-            return total_tokens, total_words, total_scent
+            return total_tokens, total_words, total_scent, final_results
             '''
             except Exception as bs4e:
                  logging.info( f'%s  - ERROR BS4 classifier pipeline.#0: {bs4e}' % cmi_debug )
@@ -715,10 +720,10 @@ class yfnews_reader:
                     # self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction                    
                 else:
                     logging.info( f'%s - FAIL to craw article {item_idx}' % cmi_debug )
-                    return None
+                    return 0, 0, 0    # I think this is the correct return status
             except Exception as e:
                 logging.error(f'{cmi_debug} - Artcile [{item_idx} data Craw failed: {e}')
-                return None
+                return 0, 0, 0
             
         # we can now extract all the <p> zone TEXT from the article
         # and pass it to the sentiment_ai module for NLP processing
@@ -730,7 +735,7 @@ class yfnews_reader:
         logging.info( f'%s - Extract Article TEXT for AI Sentiment reader: {durl[:30]}...' % (cmi_debug) )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
-            return
+            return 0, 0, 0
         else:
             logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
             c4_dict = self.yfn_c4_result[cached_state]
@@ -748,28 +753,34 @@ class yfnews_reader:
             logging.info( f'%s - Exec NLP sentiment analyzer: 1 / sending: {type(art_all_p)}' % cmi_debug )
  
             # 0 = data in crawl4ai extractor format
-            total_tokens, total_words, total_scent = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
+            total_tokens, total_words, total_scent, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
  
-            print ( f"Total tokens generated: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
+            print ( f"Total tokenz: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
 
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
             # This is helpful for merging the info with other dataframes later on
-            self.sen_data = [[ \
-                        item_idx, \
-                        hs, \
-                        sentiment_ai.sentiment_count['positive'], \
-                        sentiment_ai.sentiment_count['neutral'], \
-                        sentiment_ai.sentiment_count['negative'] ]]
+            self.sen_data = [[
+                        item_idx,
+                        hs,
+                        sentiment_ai.sentiment_count['positive'],
+                        sentiment_ai.sentiment_count['neutral'],
+                        sentiment_ai.sentiment_count['negative']
+                        ]]
 
             sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
-            
+
+            final_results.update({
+                'positive_count': sentiment_ai.sentiment_count['positive'],
+                'neutral_count': sentiment_ai.sentiment_count['neutral'],
+                'negative_count': sentiment_ai.sentiment_count['negative']
+                })
             # create emtries in the Neo4j Graph database
             # - check if KG has existing node entry for this symbol+news_article
             # if not... create one
             print ( f"======================================== End: {item_idx} ===============================================")
 
-        return total_tokens, total_words, total_scent
+        return total_tokens, total_words, total_scent, final_results
   
     # ################ 7
     async def c4_engine_depth3(self, durl, item_idx):

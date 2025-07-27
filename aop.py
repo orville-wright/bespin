@@ -11,6 +11,7 @@ import threading
 import re
 from urllib.parse import urlparse
 from rich import print
+import pprint
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
@@ -501,8 +502,15 @@ def main():
                 # TESTING: Long term, this will be a list of all the articles
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    ttc, twc, tsc = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)   # craw4ai enbine - still not working - crawlaai !!
-                    #ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS$ engine - AI ML compute execed here
+
+                    ttc, twc, tsc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)   # craw4ai enbine - still not working - crawlaai !!
+                    #ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine - AI ML compute execed here
+
+                    print (f"##### DEBUG: ttkz: {type(ttkz)} / ttkz: {type(ttc)}")
+                    print (f"##### DEBUG: twcz: {type(twcz)} / twc: {type(twc)}")
+                    print (f"##### DEBUG: tscz: {type(tscz)} / tsc: {type(tsc)}")
+                    print (f"##### DEBUG:\n{tsc}")
+                    print (f"##### DEBIG 513:\n{final_results}")
                     ttkz += ttc
                     twcz += twc
                     tscz += tsc
