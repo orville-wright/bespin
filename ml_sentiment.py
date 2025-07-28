@@ -135,7 +135,6 @@ class ml_sentiment:
             for i in range(0, len(scentxt)):
                 logging.info( f"%s - Eval TEXT char length: {len(scentxt[i].text)}" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
                 truncated = "Undef"
-                self.tokenizer_mml = 100  # WARN: DEBUG !!!
                 if len(scentxt[i].text) > self.tokenizer_mml:      # only chunk into blocklets on truncation altert
                     truncated = "Trctd!"
                     logging.info( f"%s - Send BS4 TEXT LIST to chunker.#01..." % cmi_debug )
@@ -210,7 +209,9 @@ class ml_sentiment:
             if blocklet:   # Only add non-empty chunks
                 chunks[chunk_index] = blocklet         # add to final output dict
                 chunk_index += 1
-                run_total += int(len(blocklet[0]))
+                _b = len(blocklet)
+                run_total += _b
+                #run_total += int(len(blocklet[0]))
                 logging.info( f"%s - Eng.#2 Blocklet constructed: {chunk_index:03} @ {len(blocklet):03} chars [ {run_total:04} ]" % cmi_debug )
                 start = chunk_end + (1 if chunk_end < len(st_list) and st_list[chunk_end] == ' ' else 0)
         
@@ -242,7 +243,6 @@ class ml_sentiment:
             logging.info( f"============ LLM Classifying Blocklet ============================================")
             logging.info( f"%s - Exec NLP classfier.#00 @ DICT_eng.#00..." % cmi_debug )
             clsfr_result = self.classifier(chunk, truncation=True)      # input = chunk {} - 1 element
-            print (f"##### DEBUG 215:\n{clsfr_result}") 
             _k = f'{i:03}'  # nicly formated dict{} key
             self.cr_package[_k] = ({
                             'symbol': symbol,

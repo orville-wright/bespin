@@ -563,7 +563,7 @@ class yfnews_reader:
                 self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")        # BS4 read() <- replace with crawl4ai
             else:
                 logging.info( f'%s - FAIL to set BS4 data !' % cmi_debug )
-                return 0, 0, 0, {'label': 'neutral', 'score': 0.5}
+                return 0, 0, {'label': 'neutral', 'score': 0.5}
                 # total_tokens, total_words, total_scent, final_results
                 
         # from here we extracr thet text datq
@@ -571,7 +571,7 @@ class yfnews_reader:
         logging.info( f'%s - BS4 extractor - get Article TEXT for AI Sentiment NLP...' % cmi_debug )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
-            return 0, 0, 0, {'label': 'neutral', 'score': 0.5}
+            return 0, 0, {'label': 'neutral', 'score': 0.5}
             # total_tokens, total_words, total_scent, final_results
         else:
             logging.info( f'%s - set BS4 data zones for article: [ {item_idx} ]' % cmi_debug )
@@ -623,12 +623,7 @@ class yfnews_reader:
             # - check if KG has existing node entry for this symbol+news_article
             # if not... create one
             print ( f"======================================== End: {item_idx} ===============================================")
-            return total_tokens, total_words, total_scent, final_results
-            '''
-            except Exception as bs4e:
-                 logging.info( f'%s  - ERROR BS4 classifier pipeline.#0: {bs4e}' % cmi_debug )
-            return 0, 0, 0
-            '''
+            return total_tokens, total_words, final_results
 
     # #####################################################################################
     # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1

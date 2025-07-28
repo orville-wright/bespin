@@ -503,8 +503,8 @@ def main():
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
                     # WARN: this will execuet sentiment_ai.compute_sentiment()
-                    #ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai) # craw4ai engine
-                    ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine
+                    ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai) # craw4ai engine
+                    #ttc, twc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine
                     #pprint.pprint(final_results, indent=4, sort_dicts=True)
                     ttkz += ttc
                     twcz += twc
@@ -592,8 +592,8 @@ def main():
             neutral_c = df_final.iloc[-1]['neutral']
             arts_read = df_final.iloc[-1]['art']
             row_count = len(df_final)
-            hpt_mins = (twcz / 237) + tscz + (tscz / 2)
-            hpt_hours = ((twcz / 237) + tscz + (tscz / 2)) / 60
+            hpt_mins = (twcz / 175) + tscz + (tscz / 2)
+            hpt_hours = ((twcz / 175) + tscz + (tscz / 2)) * 60
             
             ai_sent_end_time = time.perf_counter()                          # Mark the end time
             ai_sent_time = ai_sent_end_time - ai_sent_start_time            # compute total time
