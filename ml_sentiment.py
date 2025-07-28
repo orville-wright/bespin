@@ -25,16 +25,17 @@ class ml_sentiment:
 
     # global accessors
     active_urlhash = None  # Current URL hash being processed
-    args = []            # class dict to hold global args being passed in from main() methods
+    args = []           # class dict to hold global args being passed in from main() methods
     art_buffer = []     # Buffer to hold article text for processing
-    classifier = None    # NLP classidier pipeline
-    cycle = 0            # class thread loop counter
+    classifier = None   # NLP classidier pipeline
+    cr_package = None   # full reslts dict{} of dict_processor ruin
+    cycle = 0           # class thread loop counter
     df0_row_count = 0
-    mlnlp_uh = None      # URL Hinter instance
-    sen_df0 = None       # sentiment for this artile ONLY (gets overwritten each time per article)
-    sen_df1 = None       # uNUSED
-    sen_df2 = None       # ? unknown
-    sen_df3 = None       # A long lasting DF to collect all sentiment data
+    mlnlp_uh = None     # URL Hinter instance
+    sen_df0 = None      # sentiment for this artile ONLY (gets overwritten each time per article)
+    sen_df1 = None      # uNUSED
+    sen_df2 = None      # ? unknown
+    sen_df3 = None      # A long lasting DF to collect all sentiment data
     sen_data = []       # Data to be added to the DataFrame
     sentiment_count = { 'positive': 0, 'negative': 0, 'neutral': 0 }  # Sentiment counts for this article
     ttc = 0             # Total Tokens generated in the scnetcne being analyzed
@@ -60,6 +61,7 @@ class ml_sentiment:
         logging.info( f'%s   - Instantiate.#{yti}' % cmi_debug )
         self.args = global_args                            # Only set once per INIT. all methods are set globally
         self.yti = yti
+        self.cr_package = dict()
         return
 
 ##################################### 2 ####################################
@@ -67,10 +69,11 @@ class ml_sentiment:
         """
         called by:  extract_article_data -> compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0)
         
-        Tokenize and compute scentcen chunk sentiment
-        scentxtx = BS4 all <p> zones that look/feel like scentence/paragraph text
-        WARN: scentxt is a list of BS4 html <p> elements, NOT the raw text. It must be treated as a html data row.
-              crawl4ai extarcts the buulk raw text in 1 list[] and discards the HTML <p> tags.
+        Tokenize and compute scentence chunk sentiment
+        scentxt = BS4 all <p> zones that look/feel like scentence/paragraph text
+                = Crawl4ai its 1 bulk block of article text
+        WARN: scentxt is a list of BS4 extracted html <p> htlm elements, NOT the raw text. It must be treated as a html data row.
+              crawl4ai extarcts the bulk raw text in 1 list[] and discards the HTML <p> tags.
               crawl4ai text must be chunked @ model truncation length, i.e.  tokenizer_mml
         """
         #if self.args['bool_verbose'] is True:        # Logging level
@@ -89,61 +92,75 @@ class ml_sentiment:
         self.ttc = 0
         self.twc = 0
         self.cr = None
+        self.tsenparas = 0
+        self.final_results = dict()
+        self.final_results["sent_paras"] = 0
         self.sentiment_count["positive"] = 0
         self.sentiment_count["negative"] = 0
         self.sentiment_count["neutral"] = 0
         self.active_urlhash = urlhash
+        if len(scentxt) == 0:
+            self.final_results.update({ 'noart_data': 1 })
+            logging.info( f"%s - ERROR Crawl4ai failed to read article (multiple reasons possible)!" % cmi_debug )
+            return 0, 0, self.final_results
+        else:
+            pass
         if self.ext_type == 0:
-            logging.info( f"%s - Crawl4ai engine.#1 - GPT Truncation @ {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
+            logging.info( f"%s - Crawl4ai engine.#1 GPT Truncation @ {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
             # input MUST be a crawl4ai prepred list of full article text. 
             # - c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
             # The chunker has a higher probabliyt of needing to do a lot more work for c4
-            # try:
             for i in range(0, len(scentxt)):
-                logging.info( f"%s - Eval TEXT char length: {len(scentxt[i])} chars" % cmi_debug )
+                logging.info( f"%s - Eval bulk TEXT length: {len(scentxt[i])} chars" % cmi_debug )
                 truncated = "Undef"
                 if len(scentxt[i]) >= self.tokenizer_mml: # self.tokenizer_mml:    # only chunk into blocklets on truncation altert
                     truncated = "Trctd!"
-                    blocklet_d = self.c4_chunker(scentxt[i], self.tokenizer_mml)   # result = {} of blocklets
-
-                    logging.info( f"##### DEBUG 1: blocklet_d: {type(blocklet_d)}" )
-                    self.ttc, self.twc, self.cr, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    blocklet_d = self.c4_chunker(scentxt[i], self.tokenizer_mml, self.ext_type)   # result = {} of blocklets
+                    logging.info( f"##### DEBUG 109 - Status: {truncated} - blocklet_d: {type(blocklet_d)}" )
+                    self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
                 else:
-                    logging.info( f"%s - No truncation: Short p TEXT " % cmi_debug )
-                    self.ttc, self.twc, self.cr, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    truncated = "Clean"
+                    logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
+                    self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
 
-            return self.ttc, self.twc, self.cr, final_results
-            # except:
-            #    logging.info( f"%s - ERROR: Compute sent BS4 pre-processor" % cmi_debug )
-            #return 0, 0, 0
+            return self.ttc, self.twc, final_results
         else:
             logging.info( f"%s - BS4 engine.#1 - Transformer truncation: {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
             # WARN: must be a BS4 prepared list of article text
             # - BS4 only sends is a list of each individual (p tags) element
             # - 1 at a time from within the articel body
-            # The chunker has a higher probablity of not needing to do any work on smaller BS4 fragments        
+            # The chunker has a higher probablity of not needing to do any work on smaller BS4 fragments  
+            bs4rows = int(len(scentxt))
+            bs4_row = 0
             for i in range(0, len(scentxt)):
-                print (f"##### DEBUG 2:\n{scentxt[i]}")
-                logging.info( f"%s - Eval TEXT char length: {len(scentxt[i])}" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
+                logging.info( f"%s - Eval TEXT char length: {len(scentxt[i].text)}" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
                 truncated = "Undef"
                 self.tokenizer_mml = 100  # WARN: DEBUG !!!
                 if len(scentxt[i].text) > self.tokenizer_mml:      # only chunk into blocklets on truncation altert
                     truncated = "Trctd!"
+                    logging.info( f"%s - Send BS4 TEXT LIST to chunker.#01..." % cmi_debug )
+                    blocklet_l = list()
+                    #blocklet_l.update({ bs4_row: scentxt[i].text }) # create 1 row dict for dict_processor() (Too Long <p>) text blocklet needs chunking)
+                    blocklet_l.append(scentxt[i].text) # create 1 row list[], extracting <p> text (from html.element) for dict_processor() ( needs chunking)
+                    blocklet_d = self.c4_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # send = list[], result = {} of chunked blocklets
+                    self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    bs4_row += 1
+                else:
+                    truncated = "Clean"
+                    logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
+                    blocklet_d = dict()
+                    blocklet_d.update({ bs4_row: scentxt[i].text }) # create 1 row dict for dict_processor() (ths is a short/clean <p>) text blocklet
+                    self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    bs4_row += 1
 
-                    logging.info( f"%s - Build BS4 TEXT dict for chunker.#01..." % cmi_debug )
-                    blocklet_d = self.c4_chunker(scentxt[i], self.tokenizer_mm)   # send = list[], result = {} of chunked blocklets
-
-                    #for scentxt_k, scentxt_d in blocklet_d.items():
-                    logging.info( f"%s - Classification cycle: {scentxt_k}" % cmi_debug )
-                    self.ttc, self.twc, self.cr, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
-            return self.ttc, self.twc, self.cr, final_results
+            return self.ttc, self.twc, final_results
     
     #####################################
     # Helper function
-    def c4_chunker(self, st_list, tokenizer_mml):
+    def c4_chunker(self, st_list, tokenizer_mml, ext_type):
         """
-        Chunks a frame of  text data into smaller blocklets not exceeding the LLM tokenizer max length
-        - input must be a list[]
+        Chunks a frame of article text data into smaller blocklets not exceeding LLM tokenizer max length
+        WARN: input **must** be a list[]
         - lists provide O(1) indexed access. Are more 2-3x more memory efficent than a dict{}
         - lists optomize for index/slice lookups, dicts{} optomize for key lookups 
         - avoid truncation of text and ebale full text sentiment analysis (no loss of words)
@@ -158,6 +175,16 @@ class ml_sentiment:
             return {}       # for BS4, this is a row of <p> tag txt
         #total_chars = sum(len(v) for v in st_list.values())     # total of all chars in all rows
         abs_tchars = sum(len(s) for s in st_list)
+        '''
+        if self.ext_type == 0:   # crawl4ai chunker logic
+            abs_tchars = sum(len(s) for s in st_list)
+        else:
+            print (f"##### DEBUG 182:\n{st_list}")
+            print (f"##### DEBUG 182:\n{st_list[0].text}")
+            list(st_list.values())[0])  
+            abs_tchars = len(st_list[0].text)   # a BS4 emelent list[] only has 1 row
+        '''
+            
         logging.info( f"%s - Start chunker for chars: {abs_tchars} @ truncation: {tokenizer_mml}" % cmi_debug )
         chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of text > tokenizer_mml"
         chunk_index = 0     # dict key
@@ -165,25 +192,26 @@ class ml_sentiment:
         run_total = 0       # cumulative total
         while start < abs_tchars:
             end = start + tokenizer_mml     # Calculate end pos for this chunk
-            if end >= abs_tchars:           # test for last chunk / exact boundary, take it as is
+            if end >= abs_tchars:           # test if end would overrun max len of chunk
                 chunk = st_list[start:][:end]
-                if chunk:                   # Only add non-empty chunks
-                    run_total += len(chunk)
-                    logging.info( f"%s - Blocklet constructed: {chunk_index:03} @ {len(chunk):03} chars [ {run_total:04} ]" % cmi_debug )
+                if chunk:                   # do we have a non-empy chunk? only add non-empty chunks
+                    run_total += len(chunk[0])
+                    logging.info( f"%s - Eng.#1 Blocklet constructed: {chunk_index:03} @ {len(chunk[0]):03} chars [ {run_total:04} ]" % cmi_debug )
                     chunks[chunk_index] = chunk     # add to final output dict
                 break
-     
-            last_space = st_list.rfind(' ', start, end) # Find last space within chunk to avoid breaking words
-            if last_space == -1 or last_space <= start: # If no space, break at chunk_size
+ 
+            st_string = f"{st_list[0]}"
+            last_space = st_string.rfind(' ', start, end) # Find last space within chunk to avoid breaking words
+            if last_space == -1 or last_space <= start: # If no space (-1), break at chunk_size
                 chunk_end = end
             else:
                 chunk_end = last_space
-            chunk = st_list[start:chunk_end]    # Extract the chunk and add to list
-            if chunk:   # Only add non-empty chunks
-                chunks[chunk_index] = chunk         # add to final output dict
+            blocklet = st_list[0][start:chunk_end]        # Extract the chunk and add to list
+            if blocklet:   # Only add non-empty chunks
+                chunks[chunk_index] = blocklet         # add to final output dict
                 chunk_index += 1
-                run_total += len(chunk)
-                logging.info( f"%s - Blocklet constructed: {chunk_index:03} @ {len(chunk):03} chars [ {run_total:04} ]" % cmi_debug )
+                run_total += int(len(blocklet[0]))
+                logging.info( f"%s - Eng.#2 Blocklet constructed: {chunk_index:03} @ {len(blocklet):03} chars [ {run_total:04} ]" % cmi_debug )
                 start = chunk_end + (1 if chunk_end < len(st_list) and st_list[chunk_end] == ' ' else 0)
         
         #logging.info( f"%s - Chunker fabricated: {chunk_index+1} Text Blocklets" % cmi_debug )
@@ -198,42 +226,46 @@ class ml_sentiment:
         - Heavy CPU utilization will be triggered
         '''
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
-        logging.info( f"%s - Dict text processor engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
+        logging.info( f"%s - Global chunking engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
         for i, chunk in _text_dict.items():    # cycle through all scentenses/paragraphs sent to us
             ngram_count = len(re.findall(r'\w+', chunk))  # could of words
             ngram_tkzed = word_tokenize(chunk)            # split TEXT chunk into NLP LLM tokens !! output -> list[]
-            self.ttc += int(len(ngram_tkzed))             # total vectroized tokensgenrated by tokenizer 
+            self.ttc += int(len(ngram_tkzed))             # total vectroized tokens genrated by tokenizer 
             if self.vectorz.is_scentence(chunk):
                 chunk_type = "Scent"
+                self.tsenparas += int(1)                         # keep count of scentences
             elif self.vectorz.is_paragraph(chunk):
-                chunk_type = "Parag"
+                chunk_type = "Parag"                      # keep count of paragraphs
+                self.tsenparas += int(1)
             else:
                 chunk_type = "Randm"
-
+            logging.info( f"============ LLM Classifying Blocklet ============================================")
             logging.info( f"%s - Exec NLP classfier.#00 @ DICT_eng.#00..." % cmi_debug )
             clsfr_result = self.classifier(chunk, truncation=True)      # input = chunk {} - 1 element
-            print (f"##### DEBUG 215:\n{clsfr_result}")
-
-            cr_package = dict()
-            cr_package.update({
+            print (f"##### DEBUG 215:\n{clsfr_result}") 
+            _k = f'{i:03}'  # nicly formated dict{} key
+            self.cr_package[_k] = ({
                             'symbol': symbol,
                             'chunk': f"{i:03}",
                             'n-grams': f"{ngram_count:03}",
                             'tokenz': f"{len(ngram_tkzed):03}",
                             'alphas': f"{len(chunk):03}",
                             'sent_type': clsfr_result[0]['label'],
-                            'sent_score': clsfr_result[0]['score']
-                            })
+                            'sent_score': clsfr_result[0]['score'] })
+
+            # add lone element outside of emebed dict
+            self.cr_package.update({ 'sent_paras': int(self.tsenparas) })
+
             if self.args['bool_verbose'] is True:        # Logging level
                 print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
 
-            final_results = self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0], cr_package)
-        return self.ttc, ngram_count, clsfr_result[0], final_results
+            final_results = self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0], self.cr_package)
+        return self.ttc, ngram_count, final_results
 
  ###################
     # Helper function
     def nlp_sent_engine(self, i, symbol, ngram_tkzed, ngram_count, clsfr_result, cr_package):
-        '''
+        """
         - removes stopwords
         - Calculates High Frequency Words inside the HOT classified LLM Transformer
         - Computes sentimnent scores
@@ -242,7 +274,7 @@ class ml_sentiment:
         - tracks global sentiment count metrics for (Pos, Neg, Neutral)
         - completes results_package
         - reports LLM Transform model classifiation excpetions
-        '''
+        """
         cmi_debug = __name__+"::"+self.nlp_sent_engine.__name__+".#"+str(self.yti)
         ngram_sw_remv = [word for word in ngram_tkzed if word.lower() not in self.stop_words]
         ngram_final = ' '.join(ngram_sw_remv)   # reform the scentence with stopwords removed
@@ -318,11 +350,10 @@ class ml_sentiment:
         self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
         self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
         self.df0_row_count = x
-        logging.info( f"%s ================ Sentiment DF Updated {item_idx} / {chk:03} ================" % cmi_debug )
+        logging.info( f"%s Sentiment DF Updated / Article: {item_idx} / {chk:03}" % cmi_debug )
         return
 
 ##################################### 3 ####################################
-# vibe coded junk - DELETE ME !!!
     def compute_precise_sentiment(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
         """
         Compute precise sentiment analysis based on aggregated data from df_final
@@ -450,4 +481,3 @@ class ml_sentiment:
         logging.info( f'%s - Global Sentiment DF updated...' % cmi_debug )        
 
         return results
-

@@ -156,14 +156,14 @@ class yfnews_reader:
               creates the urlhash entry via: yfn_jsdb[aurl_hash] = get(resp)
         """
         cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)
-        logging.info( f'%s  - CYCLE: {self.get_counter}' % cmi_debug )
+        logging.info( f'%s  - get()_CYCLE: {self.get_counter}' % cmi_debug )
 
         js_session = HTMLSession()                  # Create a new session        
         with js_session.get(url) as self.js_resp0:  # must do a get() - NO setting cookeis/headers)
             logging.info(f'%s  - Simple HTML Request get()...' % cmi_debug )
 
         # HACK to help logging() f-string bug to handle strings with %
-            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+"  - JS get(): "+url
+            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+url
             logging.info('%s' % cmi_debug )
             #logging.info( f"%s - JS_session.get() sucessful: {url}" % cmi_debug )
             cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)    # reset cmi_debug
@@ -479,17 +479,23 @@ class yfnews_reader:
     def extract_article_data(self, item_idx, sentiment_ai):
         """
         Depth : 3
+        TODO: rename this function to ext_artdata_BS4
         This function is controleed from main()
+        Returns:
+        - total_tokens, total_words, total_scent, final_results
+        - these vars come from: compute_sentiment()
+        
         Extractor:  BS4
-        Build the Text corpus for 1 article
-        Calls sentiment computation for 1 article
-        Only do this once the article has been evaluated and we know exactly where/what each article is
-        Any article we read, should have its resp & BS4 objects cached in yfn_jsdb{}
-        Set the Body Data zone, the <p> TAG zone
-        Extract all of the full article raw text
-        Store it in a Database
-        Associate it to the metadata info for this article
-        Its now available for the LLM to read and process
+        - Build the Text corpus for 1 (one) article only
+        - Calls sentiment computation for 1 article
+        
+        Only do this once the article has been evaluated and we know where/what article TEXT is
+        -  article must have its get() resp & BS4 objects cached in yfn_jsdb{}
+        - Sets the Body Data zone, the <p> TAG zone
+        - Extracts all of the full article raw text from <p> tags
+        - Stores it in a Database
+        - Associate it to the metadata info for this article
+        Its now available for the LLM to compute sentiment
         """
 
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(self.yti)
@@ -501,18 +507,14 @@ class yfnews_reader:
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
-            logging.info( f'%s - exturl found in ml_ingest DB' % cmi_debug )
+            logging.info( f'%s - Found exturl ml_ingest DB' % cmi_debug )
         else:
             durl = data_row['url']
             external = False               # this is a local yahoo.com hosted article
-            logging.info( f'%s - exturl not found in ml_ingest DB' % cmi_debug )
+            logging.info( f'%s - No exturl in ml_ingest DB' % cmi_debug )
 
         symbol = symbol.upper()
 
-        # TODO:
-        # since this code is exact duplicate of interpret_page_depth2(), we
-        # shoud make this a method and call it when needed
-        # it would retrun self.nsoup and set self.yfn_jsdata
         logging.info( f'%s - urlhash cache lookup: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
         logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
@@ -561,14 +563,16 @@ class yfnews_reader:
                 self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")        # BS4 read() <- replace with crawl4ai
             else:
                 logging.info( f'%s - FAIL to set BS4 data !' % cmi_debug )
-                return 10, 10.0, "ERROR_unknown_state"
-  
+                return 0, 0, 0, {'label': 'neutral', 'score': 0.5}
+                # total_tokens, total_words, total_scent, final_results
+                
         # from here we extracr thet text datq
         #cmi_debug = __name__+"::extract_article_data.p_tags.#0"
         logging.info( f'%s - BS4 extractor - get Article TEXT for AI Sentiment NLP...' % cmi_debug )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
-            return
+            return 0, 0, 0, {'label': 'neutral', 'score': 0.5}
+            # total_tokens, total_words, total_scent, final_results
         else:
             logging.info( f'%s - set BS4 data zones for article: [ {item_idx} ]' % cmi_debug )
             local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
@@ -584,13 +588,18 @@ class yfnews_reader:
             #
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
             logging.info( f'%s  - Exec NLP sent classifier pipeline.#0...' % cmi_debug )
-            #total_tokens, total_words, total_scent, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
-            total_tokens, total_words, total_scent, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0) # 0 = BS4 extractor
+            # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
+            # 0 = Crawl4ai extractor
+            # 1 = BS4 extractor
+            #
+            #total_tokens, total_words, total_scent, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0)
+            total_tokens, total_words, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
+            #
             sent_z = self.sent_ai.sentiment_count['neutral']
             sent_p = self.sent_ai.sentiment_count['positive']
             sent_n = self.sent_ai.sentiment_count['negative']
             
-            print ( f"Total tokens generated: {total_tokens} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
+            print ( f"##### DEBUG 597:\nTotal tokens generated: {total_tokens} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
             
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
             # This is helpful for merging the info with other dataframes later on
@@ -630,7 +639,8 @@ class yfnews_reader:
     def extr_artdata_depth3(self, item_idx, sentiment_ai):
         """
         Depth : 3
-        This function is controleed from main()
+        TODO: rename this function to ext_artdata_C4
+        This function is controlled from main()
         Extractor:  crawl4
         Build the Text corpus for 1 article
         Calls sentiment computation for 1 article
@@ -722,7 +732,7 @@ class yfnews_reader:
                     logging.info( f'%s - FAIL to craw article {item_idx}' % cmi_debug )
                     return 0, 0, 0    # I think this is the correct return status
             except Exception as e:
-                logging.error(f'{cmi_debug} - Artcile [{item_idx} data Craw failed: {e}')
+                logging.error(f'{cmi_debug} - Artcile [{item_idx} data Crawl failed: {e}')
                 return 0, 0, 0
             
         # we can now extract all the <p> zone TEXT from the article
@@ -753,8 +763,7 @@ class yfnews_reader:
             logging.info( f'%s - Exec NLP sentiment analyzer: 1 / sending: {type(art_all_p)}' % cmi_debug )
  
             # 0 = data in crawl4ai extractor format
-            total_tokens, total_words, total_scent, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
- 
+            total_tokens, total_words, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
             print ( f"Total tokenz: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
 
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
@@ -780,7 +789,7 @@ class yfnews_reader:
             # if not... create one
             print ( f"======================================== End: {item_idx} ===============================================")
 
-        return total_tokens, total_words, total_scent, final_results
+        return total_tokens, total_words, final_results
   
     # ################ 7
     async def c4_engine_depth3(self, durl, item_idx):

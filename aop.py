@@ -485,9 +485,9 @@ def main():
 
             ttc = 0     # article specific stats : total tokens
             twc = 0     # article specific stats : total words
-            tsc = 0     # article specific stats : total scentences / paragra[phs]
+            tsc = 0     # article specific stats : total scentences / paragraphs
             ttkz = 0    # Cumulative : Total Tokens genertaed
-            twcz = 0    # Cumulative : Total words read
+            twcz = 0    # Cumulative : Total words read 
             tscz = 0    # Cumulative : Total scentences / Paragraphs read
 
     # ################################################################
@@ -497,23 +497,18 @@ def main():
             ai_sent_start_time = time.perf_counter()  # Mark the start time
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()  # reset DataFrame for each article
-                # TESTING code only - to make testing complete quicker (only test 4 docs)
+                #
                 thint = news_ai.nlp_summary_report(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for
-                # TESTING: Long term, this will be a list of all the articles
+                #
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-
-                    ttc, twc, tsc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)   # craw4ai enbine - still not working - crawlaai !!
-                    #ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine - AI ML compute execed here
-
-                    print (f"##### DEBUG: ttkz: {type(ttkz)} / ttkz: {type(ttc)}")
-                    print (f"##### DEBUG: twcz: {type(twcz)} / twc: {type(twc)}")
-                    print (f"##### DEBUG: tscz: {type(tscz)} / tsc: {type(tsc)}")
-                    print (f"##### DEBUG:\n{tsc}")
-                    print (f"##### DEBIG 513:\n{final_results}")
+                    # WARN: this will execuet sentiment_ai.compute_sentiment()
+                    #ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai) # craw4ai engine
+                    ttc, twc, tsc = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine
+                    #pprint.pprint(final_results, indent=4, sort_dicts=True)
                     ttkz += ttc
                     twcz += twc
-                    tscz += tsc
+                    tscz += final_results['sent_paras']
                     this_urlhash = sent_ai.active_urlhash
                     pd.set_option('display.max_rows', None)
                     pd.set_option('max_colwidth', 30)
