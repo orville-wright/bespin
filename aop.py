@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
-import urllib.request
+import random
 import pandas as pd
 #import modin.pandas as pd
 import logging
@@ -507,13 +507,17 @@ def main():
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
                     # scraper loadbalancer, Anti-bot avoidance
                     # WARN: this will execuet sentiment_ai.compute_sentiment()
-                    # Lod balance between craw4ai and BS4 data scrapers and chunkers
+                    # Load balance between craw4ai and BS4 data scrapers and chunkers
                     if load_balancer == 0:
-                        ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai) # craw4ai engine
-                        load_balancer = 1
+                        ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
-                        ttc, twc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine
-                        load_balancer = 0 
+                        ttc, twc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine 
+                    rnd_loadbr = random.randint(1, 100)     # randomize load balancer decison
+                    if rnd_loadbr % 2 == 0:
+                        load_balancer = 0
+                    else:
+                        load_balancer = 1
+                        
                     #pprint.pprint(final_results, indent=4, sort_dicts=True)
                     ttkz += ttc
                     twcz += twc
