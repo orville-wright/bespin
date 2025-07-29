@@ -102,7 +102,7 @@ class ml_sentiment:
         if len(scentxt) == 0:
             self.final_results.update({ 'noart_data': 1 })
             logging.info( f"%s - ERROR Crawl4ai failed to read article (multiple reasons possible)!" % cmi_debug )
-            return 0, 0, self.final_results
+            return 0, 0, 0
         else:
             pass
         if self.ext_type == 0:
@@ -227,12 +227,16 @@ class ml_sentiment:
         This function EXECUTES the LLM NLP Classified pipeline
         - Heavy CPU utilization will be triggered
         '''
+        tc = 0
+        ttc = 0
+        ngram_count = 0
+        tnc = 0
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
         logging.info( f"%s - Global chunking engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
         for i, chunk in _text_dict.items():    # cycle through all scentenses/paragraphs sent to us
             ngram_count = len(re.findall(r'\w+', chunk))  # could of words
             ngram_tkzed = word_tokenize(chunk)            # split TEXT chunk into NLP LLM tokens !! output -> list[]
-            self.ttc += int(len(ngram_tkzed))             # total vectroized tokens genrated by tokenizer 
+            tc += int(len(ngram_tkzed))             # total vectroized tokens genrated by tokenizer 
             if self.vectorz.is_scentence(chunk):
                 chunk_type = "Scent"
                 self.tsenparas += int(1)                         # keep count of scentences
@@ -256,12 +260,13 @@ class ml_sentiment:
 
             # add lone element outside of emebed dict
             self.cr_package.update({ 'sent_paras': int(self.tsenparas) })
-
+            ttc += tc
+            tnc += ngram_count
             if self.args['bool_verbose'] is True:        # Logging level
                 print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
 
             final_results = self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0], self.cr_package)
-        return self.ttc, ngram_count, final_results
+        return ttc, ngram_count, final_results
 
  ###################
     # Helper function
@@ -355,7 +360,7 @@ class ml_sentiment:
         return
 
 ##################################### 3 ####################################
-    def compute_precise_sentiment(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
+    def sentiment_metrics(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
         """
         Compute precise sentiment analysis based on aggregated data from df_final
         
@@ -372,7 +377,7 @@ class ml_sentiment:
         Returns:
         - Dictionary containing precise sentiment metrics
         """
-        cmi_debug = __name__+"::"+self.compute_precise_sentiment.__name__
+        cmi_debug = __name__+"::"+self.sentiment_metrics.__name__
         logging.info( f'%s - Computing precise sentiment analysis' % cmi_debug )
 
         # Step 1: Determine overall gross sentiment
@@ -464,18 +469,18 @@ class ml_sentiment:
         pos_pct = f"{data_pos_pct:.2f}"
         neg_pct = f"{data_neg_pct:.2f}"
 
-        self.s_data = [[ \
-            sym, \
-            gross_sentiment, \
-            round(posneg_ratio,1), \
-            pos_pct, \
-            sentcat_pos, \
-            precise_sent_pos, \
-            neg_pct, \
-            sentcat_neg, \
-            precise_sent_neg, \
-            positive_t, \
-            negative_t, \
+        self.s_data = [[
+            sym,
+            gross_sentiment,
+            round(posneg_ratio,1),
+            pos_pct,
+            sentcat_pos,
+            precise_sent_pos,
+            neg_pct,
+            sentcat_neg,
+            precise_sent_neg,
+            positive_t,
+            negative_t,
             neutral_t ]]
         
         self.df0_row = pd.DataFrame(self.s_data, columns=[ 'Symbol', 'Sentiment', 'Ratio', 'P_pct', 'P_cat', 'P_score', 'N_pct', 'N_cat', 'N_score', 'P_mean', 'N_mean', 'Z_mean' ] )

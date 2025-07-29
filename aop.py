@@ -495,14 +495,11 @@ def main():
     # NLP Sentiment compute  secuted from here  @ extract_article_data()
     # ################################################################
             ai_sent_start_time = time.perf_counter()  # Mark the start time
-            c4_load = round((articles_found / 2))
-            bs4_load = articles_found - c4_load
             load_balancer = 0
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()  # reset DataFrame for each article
                 #
                 thint = news_ai.nlp_summary_report(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for
-                #
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
                     # scraper loadbalancer, Anti-bot avoidance
@@ -517,6 +514,8 @@ def main():
                         load_balancer = 0
                     else:
                         load_balancer = 1
+                    if ttc == 0 and twc == 0 and final_results == 0:
+                        continue
                         
                     #pprint.pprint(final_results, indent=4, sort_dicts=True)
                     ttkz += ttc
@@ -612,7 +611,7 @@ def main():
             ai_sent_time = ai_sent_end_time - ai_sent_start_time            # compute total time
 
             print ( f"========================= Final Sentiment Analysis for: {news_symbol.upper()} ================================" )       
-            precise_results = sent_ai.compute_precise_sentiment(
+            precise_results = sent_ai.sentiment_metrics(
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
             )
             print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
