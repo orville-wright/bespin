@@ -495,6 +495,9 @@ def main():
     # NLP Sentiment compute  secuted from here  @ extract_article_data()
     # ################################################################
             ai_sent_start_time = time.perf_counter()  # Mark the start time
+            c4_load = round((articles_found / 2))
+            bs4_load = articles_found - c4_load
+            load_balancer = 0
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()  # reset DataFrame for each article
                 #
@@ -502,9 +505,15 @@ def main():
                 #
                 
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
+                    # scraper loadbalancer, Anti-bot avoidance
                     # WARN: this will execuet sentiment_ai.compute_sentiment()
-                    #ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai) # craw4ai engine
-                    ttc, twc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine
+                    # Lod balance between craw4ai and BS4 data scrapers and chunkers
+                    if load_balancer == 0:
+                        ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai) # craw4ai engine
+                        load_balancer = 1
+                    else:
+                        ttc, twc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine
+                        load_balancer = 0 
                     #pprint.pprint(final_results, indent=4, sort_dicts=True)
                     ttkz += ttc
                     twcz += twc
