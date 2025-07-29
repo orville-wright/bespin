@@ -108,14 +108,16 @@ class ml_sentiment:
         if self.ext_type == 0:
             logging.info( f"%s - Crawl4ai engine.#1 GPT Truncation @ {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
             # input MUST be a crawl4ai prepred list of full article text. 
-            # - c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
-            # The chunker has a higher probabliyt of needing to do a lot more work for c4
+            # c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
+            # therfore chunker has a higher probabliy of needing to do a lot more work for c4
             for i in range(0, len(scentxt)):
                 logging.info( f"%s - Eval bulk TEXT length: {len(scentxt[i])} chars" % cmi_debug )
                 truncated = "Undef"
                 if len(scentxt[i]) >= self.tokenizer_mml: # self.tokenizer_mml:    # only chunk into blocklets on truncation altert
                     truncated = "Trctd!"
-                    blocklet_d = self.c4_chunker(scentxt[i], self.tokenizer_mml, self.ext_type)   # result = {} of blocklets
+                    blocklet_l = list()
+                    blocklet_l.append(scentxt[i])  # force create a full article text list, since chunker needs this input structure
+                    blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # result = {} of blocklets
                     logging.info( f"##### DEBUG 109 - Status: {truncated} - blocklet_d: {type(blocklet_d)}" )
                     self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
                 else:
@@ -127,9 +129,9 @@ class ml_sentiment:
         else:
             logging.info( f"%s - BS4 engine.#1 - Transformer truncation: {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
             # WARN: must be a BS4 prepared list of article text
-            # - BS4 only sends is a list of each individual (p tags) element
+            # - BS4 only sends a list of each individual <p> tags element
             # - 1 at a time from within the articel body
-            # The chunker has a higher probablity of not needing to do any work on smaller BS4 fragments  
+            # The chunker has good probablity of not  doing as much work as C4 b/c BS4 <p> text fragemtns are shorter
             bs4rows = int(len(scentxt))
             bs4_row = 0
             for i in range(0, len(scentxt)):
@@ -141,7 +143,7 @@ class ml_sentiment:
                     blocklet_l = list()
                     #blocklet_l.update({ bs4_row: scentxt[i].text }) # create 1 row dict for dict_processor() (Too Long <p>) text blocklet needs chunking)
                     blocklet_l.append(scentxt[i].text) # create 1 row list[], extracting <p> text (from html.element) for dict_processor() ( needs chunking)
-                    blocklet_d = self.c4_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # send = list[], result = {} of chunked blocklets
+                    blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # send = list[], result = {} of chunked blocklets
                     self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
                     bs4_row += 1
                 else:
@@ -156,66 +158,65 @@ class ml_sentiment:
     
     #####################################
     # Helper function
-    def c4_chunker(self, st_list, tokenizer_mml, ext_type):
+    def unified_chunker(self, st_list, tokenizer_mml, ext_type):
         """
+        Unifided chunker
         Chunks a frame of article text data into smaller blocklets not exceeding LLM tokenizer max length
         WARN: input **must** be a list[]
-        - lists provide O(1) indexed access. Are more 2-3x more memory efficent than a dict{}
+        - lists provide O(1) indexed access. Are 2-3x more memory efficent than a dict{}
         - lists optomize for index/slice lookups, dicts{} optomize for key lookups 
-        - avoid truncation of text and ebale full text sentiment analysis (no loss of words)
-        - honnors word boundaries on chunling logic
-        - leverages list[] slicing, b/c dicts dont provide slices
-        - result is an dict{} of beautifullt chunbked "blocklets"
-        - result could potentially be a muti element {} if input data is a long text string        
+        Avoids truncation of text and ebale full text sentiment analysis (no loss of words)
+        Honnors word boundaries on chunking logic
+        Leverages list[] slicing, b/c dicts dont provide slices
+        Result is an dict{} of beautifullt chunked "blocklets"
+        Result could potentially be a muti element {} if input data is a long text string       
         """        
-        cmi_debug = __name__+"::"+self.c4_chunker.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.unified_chunker.__name__+".#"+str(self.yti)
 
         if not st_list:     # empty
             return {}       # for BS4, this is a row of <p> tag txt
         #total_chars = sum(len(v) for v in st_list.values())     # total of all chars in all rows
-        abs_tchars = sum(len(s) for s in st_list)
-        '''
-        if self.ext_type == 0:   # crawl4ai chunker logic
-            abs_tchars = sum(len(s) for s in st_list)
-        else:
-            print (f"##### DEBUG 182:\n{st_list}")
-            print (f"##### DEBUG 182:\n{st_list[0].text}")
-            list(st_list.values())[0])  
-            abs_tchars = len(st_list[0].text)   # a BS4 emelent list[] only has 1 row
-        '''
-            
+        abs_tchars = sum(len(s) for s in st_list)            
         logging.info( f"%s - Start chunker for chars: {abs_tchars} @ truncation: {tokenizer_mml}" % cmi_debug )
         chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of text > tokenizer_mml"
         chunk_index = 0     # dict key
         start = 0           # text blocklet len counter
         run_total = 0       # cumulative total
+        #print (f"###-DEBUG-192: in-1:{type(st_list)} / in-2:{tokenizer_mml} / in-3{ext_type}")
         while start < abs_tchars:
             end = start + tokenizer_mml     # Calculate end pos for this chunk
+            #print (f"###-DEBUG-194: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
             if end >= abs_tchars:           # test if end would overrun max len of chunk
                 chunk = st_list[start:][:end]
                 if chunk:                   # do we have a non-empy chunk? only add non-empty chunks
                     run_total += len(chunk[0])
+                    #print (f"###-DEBUG-199: run:{run_total} / len:{len(chunk[0])}")
                     logging.info( f"%s - Eng.#1 Blocklet constructed: {chunk_index:03} @ {len(chunk[0]):03} chars [ {run_total:04} ]" % cmi_debug )
                     chunks[chunk_index] = chunk     # add to final output dict
+                    #print (f"###-DEBUG-202: chkidx:{chunk_index} / chunk:\n{chunk}")
                 break
  
             st_string = f"{st_list[0]}"
             last_space = st_string.rfind(' ', start, end) # Find last space within chunk to avoid breaking words
+            #print (f"###-DEBUG-207: lspace:{last_space} / len:{len(st_list[0])}")
             if last_space == -1 or last_space <= start: # If no space (-1), break at chunk_size
                 chunk_end = end
+                #print (f"###-DEBUG-211: at the end!")
             else:
                 chunk_end = last_space
-            blocklet = st_list[0][start:chunk_end]        # Extract the chunk and add to list
+                blocklet = st_list[0][start:chunk_end]        # Extract the chunk and add to list
+                #print (f"###-DEBUG-215: blocklet:{blocklet} / end:{chunk_end} / last:{last_space}")
+                
             if blocklet:   # Only add non-empty chunks
                 chunks[chunk_index] = blocklet         # add to final output dict
                 chunk_index += 1
                 _b = len(blocklet)
                 run_total += _b
                 #run_total += int(len(blocklet[0]))
+                #print (f"###-DEBUG-223: runtot:{run_total} / chunk:{chunk_index}")
                 logging.info( f"%s - Eng.#2 Blocklet constructed: {chunk_index:03} @ {len(blocklet):03} chars [ {run_total:04} ]" % cmi_debug )
                 start = chunk_end + (1 if chunk_end < len(st_list) and st_list[chunk_end] == ' ' else 0)
-        
-        #logging.info( f"%s - Chunker fabricated: {chunk_index+1} Text Blocklets" % cmi_debug )
+
         return chunks   # {} of perfect blockelts < tokenizer_mml
     
     #####################################
@@ -389,6 +390,7 @@ class ml_sentiment:
             gross_sentiment = "neutral"
             posneg_ratio_pos = 1.0
             posneg_ratio_neg = 1.0
+            posneg_ratio = 1.0
             
         # Step 2: Make the ratios bigger by factor of 100
         posneg_pos_big = posneg_ratio_pos * 100 if posneg_ratio_pos > 0 else 0
