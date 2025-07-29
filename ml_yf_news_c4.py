@@ -599,7 +599,7 @@ class yfnews_reader:
             sent_p = self.sent_ai.sentiment_count['positive']
             sent_n = self.sent_ai.sentiment_count['negative']
             
-            print ( f"##### DEBUG 597:\nTotal tokens generated: {total_tokens} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
+            print ( f"##### DEBUG 597:Total tokenz: {total_tokens} / Words: {total_words} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
             
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
             # This is helpful for merging the info with other dataframes later on
@@ -759,7 +759,7 @@ class yfnews_reader:
  
             # 0 = data in crawl4ai extractor format
             total_tokens, total_words, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
-            print ( f"Total tokenz: {total_tokens} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
+            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
 
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
             # This is helpful for merging the info with other dataframes later on

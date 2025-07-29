@@ -38,6 +38,7 @@ class ml_sentiment:
     sen_df3 = None      # A long lasting DF to collect all sentiment data
     sen_data = []       # Data to be added to the DataFrame
     sentiment_count = { 'positive': 0, 'negative': 0, 'neutral': 0 }  # Sentiment counts for this article
+    tsenparas = 0       # total sentences & paragraphs
     ttc = 0             # Total Tokens generated in the scnetcne being analyzed
     twc = 0             # Total Word count in this scentence being analyzed
     yti = 0
@@ -62,6 +63,7 @@ class ml_sentiment:
         self.args = global_args                            # Only set once per INIT. all methods are set globally
         self.yti = yti
         self.cr_package = dict()
+        self.tsenparas = 0
         return
 
 ##################################### 2 ####################################
@@ -92,7 +94,6 @@ class ml_sentiment:
         self.ttc = 0
         self.twc = 0
         self.cr = None
-        self.tsenparas = 0
         self.final_results = dict()
         self.final_results["sent_paras"] = 0
         self.sentiment_count["positive"] = 0
@@ -239,9 +240,9 @@ class ml_sentiment:
             tc += int(len(ngram_tkzed))             # total vectroized tokens genrated by tokenizer 
             if self.vectorz.is_scentence(chunk):
                 chunk_type = "Scent"
-                self.tsenparas += int(1)                         # keep count of scentences
+                self.tsenparas += int(1)                  # keep count of Total scentences
             elif self.vectorz.is_paragraph(chunk):
-                chunk_type = "Parag"                      # keep count of paragraphs
+                chunk_type = "Parag"                      # keep count of Total paragraphs
                 self.tsenparas += int(1)
             else:
                 chunk_type = "Randm"

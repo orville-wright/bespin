@@ -519,8 +519,8 @@ def main():
                         
                     #pprint.pprint(final_results, indent=4, sort_dicts=True)
                     ttkz += ttc
-                    twcz += twc
-                    tscz += final_results['sent_paras']
+                    twcz += twc                         # total cumulative word count read
+                    tscz += final_results['sent_paras'] # totoal cumulatvie sentences read
                     this_urlhash = sent_ai.active_urlhash
                     pd.set_option('display.max_rows', None)
                     pd.set_option('max_colwidth', 30)
@@ -596,6 +596,9 @@ def main():
             # print ( f"{df_final}")
             print (f"\n")
 
+            aggr_sw_factor = 1.55       # aggregate stop words fatcor (TODO: can actually compute this!)
+            h_read_wpm = 175            # how many words avg human can read per/min
+            
             positive_t = df_final.iloc[-1]['psnt']
             negative_t = df_final.iloc[-1]['nsnt']
             neutral_t = df_final.iloc[-1]['zsnt']
@@ -604,8 +607,11 @@ def main():
             neutral_c = df_final.iloc[-1]['neutral']
             arts_read = df_final.iloc[-1]['art']
             row_count = len(df_final)
-            hpt_mins = (twcz / 175) + tscz + (tscz / 2)
-            hpt_hours = ((twcz / 175) + tscz + (tscz / 2)) * 60
+            hpt_mins = ((twcz * aggr_sw_factor) + tscz + (tscz / 2)) / 175
+            hpt_hours =  hpt_mins / 60
+            analyst_time = (hpt_hours * 1.5) * 1.25
+            analyst_rate = 300         # hourly rate for a Wall St. Analyst $/hour
+            analyst_cost = analyst_time * analyst_rate
             
             ai_sent_end_time = time.perf_counter()                          # Mark the end time
             ai_sent_time = ai_sent_end_time - ai_sent_start_time            # compute total time
@@ -615,9 +621,9 @@ def main():
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
             )
             print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
-            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {tscz}  |   Time taken: {(ai_sent_time / 60):.2f} mins" )
-            print (f"Human read time:  {(twcz / 237):.2f} mins ({((twcz / 237)/60):.1f} hours)  | Human alaysis time: {hpt_mins:.2f} mins ({hpt_hours:.1f}) hours" )
-            print (f"AI performance:   {(hpt_mins / (ai_sent_time / 60)):.1f} Faster than a Human  |   ${(hpt_hours * 150):.1f} Analyst work" )
+            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {tscz}  |   AI read: {(ai_sent_time / 60):.2f} mins" )
+            print (f"Human read time:  {(hpt_mins):.2f} mins ({(hpt_hours):.1f} hours)  | Human analyst: {analyst_time:.1f} hours" )
+            print (f"AI performance:   {(hpt_mins / 60) / (ai_sent_time / 60)):.1f} Faster than a Human  |   Analyst cost: ${(analyst_cost * 150):.1f}" )
             print (f" ")
             
             pd.set_option('display.max_rows', None)
