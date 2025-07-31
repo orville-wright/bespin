@@ -504,6 +504,7 @@ class yfnews_reader:
         symbol = data_row['symbol']
         cached_state = data_row['urlhash']
         self.sent_ai = sentiment_ai
+        self.sent_ai.empty_vocab = 0
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
@@ -599,7 +600,9 @@ class yfnews_reader:
             sent_p = self.sent_ai.sentiment_count['positive']
             sent_n = self.sent_ai.sentiment_count['negative']
             
-            print ( f"##### DEBUG 597:Total tokenz: {total_tokens} / Words: {total_words} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
+            if self.sent_ai.empty_vocab > 0:
+                print (f"\n")
+            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
             
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
             # This is helpful for merging the info with other dataframes later on
@@ -653,6 +656,8 @@ class yfnews_reader:
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
         durl = None
+        self.sent_ai = sentiment_ai
+        self.sent_ai.empty_vocab = 0
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
@@ -744,48 +749,61 @@ class yfnews_reader:
         else:
             logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
             c4_dict = self.yfn_c4_result[cached_state]
-            art_all_p = list()                                     # ensure temp list is empty
+            art_all_p = list()                                          # ensure temp list is empty
             for i, element in enumerate(c4_dict['data']):
-                try:
-                    art_all_p.append( element.get('Content'))      # extract craw4al element
-                except Exception as e:
-                    # something bad happened during crawl4ai article extraction
-                    # default NEUTRAL Text blocklet
-                    art_all_p.append("NOMINAL: Further review may be conducted if necessary, but no immediate action is required at this time.")
-                    continue 
-                
-            hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-            logging.info( f'%s - Exec NLP sentiment analyzer: 1 / sending: {type(art_all_p)}' % cmi_debug )
- 
-            # 0 = data in crawl4ai extractor format
-            total_tokens, total_words, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
-            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
+                    art_all_p.append(element.get('Content'))            # extract craw4al element
+                    try:
+                        extr_len = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
+                    except TypeError:   # catch None
+                        extr_len = 7    # force analysis, possible PREMIUM paywall block page
+                    match extr_len:
+                        case 0:
+                            print ( f"======================================== End #0: {item_idx} ===============================================")
+                            return 0, 0, 0
+                        case 7:
+                            yfn_prem_paywall = element.get('Premium_paywall')
+                            if yfn_prem_paywall.upper() == "PREMIUM":
+                                print ("Premium Paywalled article. Skipping...")
+                                print ( f"======================================== End #1: {item_idx} ===============================================")
+                                return 0, 0, 0
+                            else:
+                                print ( f"======================================== End #2: {item_idx} ===============================================")
+                                return 0, 0, 0
+                        case _:
+                            hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
+                            logging.info( f'%s - Exec NLP sentiment analyzer: 1 / sending: {type(art_all_p)}' % cmi_debug )
+                            # 0 = data in crawl4ai extractor format
+                            total_tokens, total_words, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
+                            if self.sent_ai.empty_vocab > 0: 
+                                print (f"\n")      # close out the EOL NL for "Empty Vocab" string
+                            
+                            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
+                                # set up a dataframe to hold the aggregated sentiment for this article in columns.
+                                # This is helpful for merging the info with other dataframes later on
+                            self.sen_data = [[
+                                        item_idx,
+                                        hs,
+                                        sentiment_ai.sentiment_count['positive'],
+                                        sentiment_ai.sentiment_count['neutral'],
+                                        sentiment_ai.sentiment_count['negative']
+                                        ]]
 
-            # set up a dataframe to hold the aggregated sentiment for this article in columns.
-            # This is helpful for merging the info with other dataframes later on
-            self.sen_data = [[
-                        item_idx,
-                        hs,
-                        sentiment_ai.sentiment_count['positive'],
-                        sentiment_ai.sentiment_count['neutral'],
-                        sentiment_ai.sentiment_count['negative']
-                        ]]
+                            sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
+                            self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
 
-            sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
-            self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
+                            final_results.update({
+                                'positive_count': sentiment_ai.sentiment_count['positive'],
+                                'neutral_count': sentiment_ai.sentiment_count['neutral'],
+                                'negative_count': sentiment_ai.sentiment_count['negative']
+                                })
+                            # create emtries in the Neo4j Graph database
+                            # - check if KG has existing node entry for this symbol+news_article
+                            # if not... create one
+                            print ( f"======================================== End #3: {item_idx} ===============================================")
+                            return total_tokens, total_words, final_results
 
-            final_results.update({
-                'positive_count': sentiment_ai.sentiment_count['positive'],
-                'neutral_count': sentiment_ai.sentiment_count['neutral'],
-                'negative_count': sentiment_ai.sentiment_count['negative']
-                })
-            # create emtries in the Neo4j Graph database
-            # - check if KG has existing node entry for this symbol+news_article
-            # if not... create one
-            print ( f"======================================== End: {item_idx} ===============================================")
-
-        return total_tokens, total_words, final_results
-  
+        return 0, 0, 0
+    
     # ################ 7
     async def c4_engine_depth3(self, durl, item_idx):
         """

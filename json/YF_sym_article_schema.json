@@ -6,6 +6,11 @@
       "name": "Content",
       "selector": "div.atoms-wrapper",
       "type": "text"
+    },
+    {
+      "name": "Premium_paywall",
+      "selector": "a.topic-link",
+      "type": "text"
     }
   ]
 }

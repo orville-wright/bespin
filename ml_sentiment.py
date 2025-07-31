@@ -31,6 +31,7 @@ class ml_sentiment:
     cr_package = None   # full reslts dict{} of dict_processor ruin
     cycle = 0           # class thread loop counter
     df0_row_count = 0
+    empty_vocab = 0     # tracker that LLM found empty vocab
     mlnlp_uh = None     # URL Hinter instance
     sen_df0 = None      # sentiment for this artile ONLY (gets overwritten each time per article)
     sen_df1 = None      # uNUSED
@@ -40,7 +41,7 @@ class ml_sentiment:
     sentiment_count = { 'positive': 0, 'negative': 0, 'neutral': 0 }  # Sentiment counts for this article
     tsenparas = 0       # total sentences & paragraphs
     ttc = 0             # Total Tokens generated in the scnetcne being analyzed
-    twc = 0             # Total Word count in this scentence being analyzed
+    twc = 0             # Total cumulative Word count in this artcile being analyzed
     yti = 0
     
     # Techcnial analysys dict defines sentiment score to description mapping
@@ -64,6 +65,7 @@ class ml_sentiment:
         self.yti = yti
         self.cr_package = dict()
         self.tsenparas = 0
+        self.empty_vocab = 0
         return
 
 ##################################### 2 ####################################
@@ -119,12 +121,14 @@ class ml_sentiment:
                     blocklet_l = list()
                     blocklet_l.append(scentxt[i])  # force create a full article text list, since chunker needs this input structure
                     blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # result = {} of blocklets
-                    logging.info( f"##### DEBUG 109 - Status: {truncated} - blocklet_d: {type(blocklet_d)}" )
-                    self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    logging.info( f"####-DEBUG-124 - Status: {truncated} - blocklet_d: {type(blocklet_d)}" )
+                    self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.twc += _c_twc
                 else:
                     truncated = "Clean"
                     logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
-                    self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.twc += _c_twc
 
             return self.ttc, self.twc, final_results
         else:
@@ -145,14 +149,16 @@ class ml_sentiment:
                     #blocklet_l.update({ bs4_row: scentxt[i].text }) # create 1 row dict for dict_processor() (Too Long <p>) text blocklet needs chunking)
                     blocklet_l.append(scentxt[i].text) # create 1 row list[], extracting <p> text (from html.element) for dict_processor() ( needs chunking)
                     blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # send = list[], result = {} of chunked blocklets
-                    self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.ttc, _i_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.twc += _i_twc
                     bs4_row += 1
                 else:
                     truncated = "Clean"
                     logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
                     blocklet_d = dict()
                     blocklet_d.update({ bs4_row: scentxt[i].text }) # create 1 row dict for dict_processor() (ths is a short/clean <p>) text blocklet
-                    self.ttc, self.twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.ttc, _i_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.twc += _i_twc
                     bs4_row += 1
 
             return self.ttc, self.twc, final_results
@@ -230,20 +236,22 @@ class ml_sentiment:
         '''
         tc = 0
         ttc = 0
+        twc= 0
         ngram_count = 0
         tnc = 0
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
         logging.info( f"%s - Global chunking engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
         for i, chunk in _text_dict.items():    # cycle through all scentenses/paragraphs sent to us
-            ngram_count = len(re.findall(r'\w+', chunk))  # could of words
+            ngram_count = len(re.findall(r'\w+', chunk))  # count of words (ngrams)
             ngram_tkzed = word_tokenize(chunk)            # split TEXT chunk into NLP LLM tokens !! output -> list[]
-            tc += int(len(ngram_tkzed))             # total vectroized tokens genrated by tokenizer 
+            twc += ngram_count                            # cumulative total word count
+            tc += int(len(ngram_tkzed))                   # cumulative vectroized tokens genrated by tokenizer 
             if self.vectorz.is_scentence(chunk):
                 chunk_type = "Scent"
-                self.tsenparas += int(1)                  # keep count of Total scentences
+                self.tsenparas += 1                       # keep count of Total scentences
             elif self.vectorz.is_paragraph(chunk):
                 chunk_type = "Parag"                      # keep count of Total paragraphs
-                self.tsenparas += int(1)
+                self.tsenparas += 1
             else:
                 chunk_type = "Randm"
             logging.info( f"============ LLM Classifying Blocklet ============================================")
@@ -253,7 +261,7 @@ class ml_sentiment:
             self.cr_package[_k] = ({
                             'symbol': symbol,
                             'chunk': f"{i:03}",
-                            'n-grams': f"{ngram_count:03}",
+                            'n-grams': f"{twc:03}",
                             'tokenz': f"{len(ngram_tkzed):03}",
                             'alphas': f"{len(chunk):03}",
                             'sent_type': clsfr_result[0]['label'],
@@ -262,12 +270,12 @@ class ml_sentiment:
             # add lone element outside of emebed dict
             self.cr_package.update({ 'sent_paras': int(self.tsenparas) })
             ttc += tc
-            tnc += ngram_count
+            tnc += twc
             if self.args['bool_verbose'] is True:        # Logging level
-                print ( f"Chunk: {i:03} / {chunk_type} / [ n-grams: {ngram_count:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
+                print ( f"Chunk: {i:03} / {chunk_type} / [ Words: {tnc:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
 
             final_results = self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0], self.cr_package)
-        return ttc, ngram_count, final_results
+        return ttc, tnc, final_results
 
  ###################
     # Helper function
@@ -317,7 +325,8 @@ class ml_sentiment:
         except RuntimeError:
             print ( f"Model exception !!")
         except ValueError:
-            print ( f"Empty vocabulary !!")
+            print ( f"Empty vocabulary: {self.empty_vocab} / ", end="" )
+            self.empty_vocab += 1
         except Exception as e:
             print ( f"ERROR sent engine !!: {e}")
     

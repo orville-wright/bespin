@@ -605,11 +605,12 @@ def main():
             positive_c = df_final.iloc[-1]['positive']
             negative_c = df_final.iloc[-1]['negative']
             neutral_c = df_final.iloc[-1]['neutral']
+            
             arts_read = df_final.iloc[-1]['art']
             row_count = len(df_final)
             hpt_mins = ((twcz * aggr_sw_factor) + tscz + (tscz / 2)) / 175
             hpt_hours =  hpt_mins / 60
-            analyst_time = (hpt_hours * 1.5) * 1.25
+            analyst_time = (hpt_hours * 1.3) * 1.15     # extra time to compute sentiment, extra time to buld report
             analyst_rate = 300         # hourly rate for a Wall St. Analyst $/hour
             analyst_cost = analyst_time * analyst_rate
             
@@ -621,9 +622,9 @@ def main():
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
             )
             print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
-            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {tscz}  |   AI read: {(ai_sent_time / 60):.2f} mins" )
-            print (f"Human read time:  {(hpt_mins):.2f} mins ({(hpt_hours):.1f} hours)  | Human analyst: {analyst_time:.1f} hours" )
-            print (f"AI performance:   {(hpt_mins / 60) / (ai_sent_time / 60)):.1f} Faster than a Human  |   Analyst cost: ${(analyst_cost * 150):.1f}" )
+            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {tscz} | AI read time: {(ai_sent_time / 60):.2f} mins" )
+            print (f"Human read time:  {(hpt_mins):.1f} mins ({(hpt_hours):.1f} hours)  | Human analyst: {analyst_time:.1f} hours" )
+            print (f"AI performance:   {round((hpt_mins * 60) / (ai_sent_time / 60))} Faster than a Human  |   Analyst cost: ${round(analyst_cost):,}" )
             print (f" ")
             
             pd.set_option('display.max_rows', None)
