@@ -13,8 +13,6 @@ from urllib.parse import urlparse
 from rich import print
 import pprint
 
-# logging setup
-logging.basicConfig(level=logging.INFO)
 
 # my private classes & methods
 from data_engines_fundamentals.alpaca_md import alpaca_md
@@ -56,13 +54,34 @@ from data_engines_news.investing_news import investing_news
 from data_engines_news.hedgeweek_news import hedgeweek_news
 from data_engines_news.gurufocus_news import gurufocus_news
 
-# Globals
+# Main() Global attributes
+logging.basicConfig(level=logging.INFO)
 work_inst = 0
 global args
 args = {}
 global parser
-parser = argparse.ArgumentParser(description="Entropy apperture engine")
+articles_found = 0              # number of articles found by the AI news reader for 1 synble scan run
+yti = 1
+uh = url_hinter(1, args)        # everyone needs to be able to get hints on a URL from anywhere
+
+
+parser = argparse.ArgumentParser(prog="Aop", description="Entropy apperture engine")
 parser.add_argument('-a','--allnews', help='ML/NLP News sentiment AI for all stocks', action='store_true', dest='bool_news', required=False, default=False)
+parser.add_argument('-d','--deep', help='Deep converged multi data list', action='store_true', dest='bool_deep', required=False, default=False)
+#
+#parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', action='store', dest='newsai_sent', required=False, default=False)
+parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
+#
+parser.add_argument('--news-cycle', help='Full news cycle extarct from eveny data engine', action='store_true', dest='news_cycle', required=False, default=False)
+parser.add_argument('-p','--perf', help='Tech event performance sentiment', action='store_true', dest='bool_te', required=False, default=False)
+parser.add_argument('-q','--quote', help='Get ticker price action quote', action='store', dest='qsymbol', required=False, default=False)
+parser.add_argument('-s','--screen', help='Small cap screener logic', action='store_true', dest='bool_scr', required=False, default=False)
+parser.add_argument('-t','--tops', help='show top ganers/losers', action='store_true', dest='bool_tops', required=False, default=False)
+#
+parser.add_argument('-u','--unusual', help='unusual up & down volume', action='store_true', dest='bool_uvol', required=False, default=False)
+parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
+parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
+#
 parser.add_argument('--alpaca', help='Get Alpaca live quotes for symbol', action='store', dest='alpaca_symbol', required=False, default=False)
 parser.add_argument('--alpaca-bars', help='Get Alpaca OHLCV bars for symbol', action='store', dest='alpaca_bars', required=False, default=False)
 parser.add_argument('--sec', help='Get SEC filings for symbol', action='store', dest='sec_symbol', required=False, default=False)
@@ -83,27 +102,13 @@ parser.add_argument('--twelvedata', help='Get Twelve Data comprehensive data for
 parser.add_argument('--eodhistoricaldata', help='Get EOD Historical Data for symbol', action='store', dest='eodhistoricaldata_symbol', required=False, default=False)
 parser.add_argument('--financialmodelingprep', help='Get FinancialModelingPrep data for symbol', action='store', dest='financialmodelingprep_symbol', required=False, default=False)
 parser.add_argument('--stooq', help='Get Stooq historical data for symbol', action='store', dest='stooq_symbol', required=False, default=False)
-parser.add_argument('--news-cycle', help='Full news cycle extartc from eveny data engine', action='store_true', dest='news_cycle', required=False, default=False)
-parser.add_argument('-d','--deep', help='Deep converged multi data list', action='store_true', dest='bool_deep', required=False, default=False)
-parser.add_argument('-n','--newsai-sent', help='ML/NLP News sentiment AI for 1 stock', action='store', dest='newsai_sent', required=False, default=False)
-parser.add_argument('-p','--perf', help='Tech event performance sentiment', action='store_true', dest='bool_te', required=False, default=False)
-parser.add_argument('-q','--quote', help='Get ticker price action quote', action='store', dest='qsymbol', required=False, default=False)
-parser.add_argument('-s','--screen', help='Small cap screener logic', action='store_true', dest='bool_scr', required=False, default=False)
-parser.add_argument('-t','--tops', help='show top ganers/losers', action='store_true', dest='bool_tops', required=False, default=False)
-parser.add_argument('-u','--unusual', help='unusual up & down volume', action='store_true', dest='bool_uvol', required=False, default=False)
-parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
-parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
 
-# GLobal arrtibutes
-articles_found = 0         # number of articles found by the AI news reader for 1 synble scan run
-yti = 1
-uh = url_hinter(1, args)        # anyone needs to be able to get hints on a URL from anywhere
-
-extract_done = threading.Event()
 #######################################################################
 # Global method for __main__
 # thread function #1
 # DEPRECATED
+
+extract_done = threading.Event()
 
 def do_nice_wait(topg_inst):
     """Threaded wait that does work to build out the 10x10x60 DataFrame"""
@@ -153,7 +158,7 @@ def main():
     global args
     args = vars(parser.parse_args())        # args as a dict []
     print ( " " )
-    print ( "########## Initalizing ##########" )
+    print ( "#################### I n i t a l i z i n g ####################" )
     print ( " " )
     print ( "CMDLine args:", parser.parse_args() )
     if args['bool_verbose'] is True:        # Logging level
@@ -162,12 +167,7 @@ def main():
     else:
         logging.disable(20)                 # Log lvel = INFO
 
-    if args['newsai_sent'] is not False:
-        print ( " " )
-        print ( f"AI is reading news & computing sentiment for symbol: {args['newsai_sent']}" )
-
     print ( " " )
-
     recommended = {}        # dict of recomendations
 
 ########### 1 - TOP GAINERS ################
@@ -202,7 +202,7 @@ def main():
         print ( " " )
 
 ########### 3 Generla News Reader ################
-# Craw4ai General News reader starts here
+# DEV: Adding and testing all the new Market Data enbgines / extractors here
 # Notes for: AI coding assistance @claude
 
     if args['news_cycle'] is True:
@@ -286,7 +286,8 @@ def main():
         #recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(un_vol_activity.up_df0.loc[uminv, ['Pct_change']][0]) )
         recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(upct) )
 
-# generate FINAL combo list ################################################################################
+################################################################################
+# generate FINAL combo list 
 # combine all the findings into 1 place - single source of truth
     """
     DEEP amalysis means - try to understand & inferr plain language reasons as to why these stock are
@@ -420,8 +421,10 @@ def main():
         #print ( f"Current day average $ gain: ${averages.iloc[-1]['Prc_change'].round(2)}" )
         #print ( f"Current day percent gain:   %{averages.iloc[-1]['Pct_change'].round(2)}" )
 
-
-# Get the Bull/Bear Technical performance Sentiment for all stocks in combo DF ######################
+################################################################################
+# WARN: Deprecated
+# Finaince.Yahoo.com moved these indicators int PREMIUM account owners only
+# Get the Bull/Bear Technical performance Sentiment for all stocks in combo DF
     """
     Bullish/Neutral/Bearish Technical indicators for each symbol
     Yahoo.com data is inconsistent and randomly unreliable (for Bull/Bear/Neutral state).
@@ -465,17 +468,18 @@ def main():
     else:
         pass
 
-# ##### M/L AI News Reader  #########################################################
+# ##################################################################################
+# ##### NP NLP News Reader for Sentiment Analysis
 # ##### Currently read all news or ONE stock
 # ###################################################################################
 
     if args['newsai_sent'] is not False:
-            sx = 1
+            news_symbol = (args['newsai_sent'][0]).upper()
+            arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit new scraping system to 20 runs.
             cmi_debug = __name__+"::newsai_sent.#1"
-            news_symbol = str(args['newsai_sent'])        # symbol provided on CMDLine
             final_sent_df = pd.DataFrame()              # reset DataFrame for each article
             print ( " " )
-            print ( f"AI  news reader sentimennt compute for Stock [ {news_symbol} ] =========================" )
+            print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ] =========================" )
             news_ai = ml_nlpreader(1, args)
             sent_ai = ml_sentiment(1, args)
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
@@ -496,24 +500,22 @@ def main():
     # ################################################################
             ai_sent_start_time = time.perf_counter()  # Mark the start time
             load_balancer = 0
+            ai_nlp_cycle = int(0)
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
-                aggmean_sent_df = pd.DataFrame()  # reset DataFrame for each article
-                #
-                thint = news_ai.nlp_summary_report(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for
-                
+                aggmean_sent_df = pd.DataFrame()                    # reset DataFrame for each article
+                thint = news_ai.nlp_summary_report(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for      
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    # scraper loadbalancer, Anti-bot avoidance
-                    # WARN: this will execuet sentiment_ai.compute_sentiment()
-                    # Load balance between craw4ai and BS4 data scrapers and chunkers
-                    if load_balancer == 0:
+                    # scraper loadbalancer, Anti-bot avoidance & performance balancing
+                    # WARN:  executes sentiment_ai.compute_sentiment()
+                    if load_balancer == 0:                          # balance between craw4ai / BS4 scrapers+chunkers
                         ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
                         ttc, twc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine 
-                    rnd_loadbr = random.randint(1, 100)     # randomize load balancer decison
+                    rnd_loadbr = random.randint(1, 100)             # randomize load balancer decison
                     if rnd_loadbr % 2 == 0:
-                        load_balancer = 0
+                        load_balancer = 0                           # choose CRAW4AI scraper/chunker
                     else:
-                        load_balancer = 1
+                        load_balancer = 1                           # choose BS4 scraper/chunker
                     if ttc == 0 and twc == 0 and final_results == 0:
                         continue
                         
@@ -525,7 +527,7 @@ def main():
                     pd.set_option('display.max_rows', None)
                     pd.set_option('max_colwidth', 30)
                     aggregate_mean = sent_ai.sen_df0.loc[sent_ai.sen_df0['urlhash'] == this_urlhash].groupby('snt')['rnk'].mean()    # fill NaN with 0.0
-                   
+                
                     # aggregate_mean DF keys are only set if the sentiment analysis computes a pos/net/neu sentimentfor the article.
                     # If the article has no matching sentiment, thekeys are not set in the DF.
                     # Check if the keys exists, and create a default = 0.0 if not
@@ -561,12 +563,22 @@ def main():
                     aggmean_sent_df = pd.concat([aggmean_sent_df, sent_df_row])
                     merge_row = pd.merge(news_ai.yfn.sen_stats_df, aggmean_sent_df, on=['art', 'urlhash'])
                     final_sent_df = pd.concat([final_sent_df, merge_row], ignore_index=True)
+                    ai_nlp_cycle += 1
+                    if ai_nlp_cycle < arg_cycle:
+                        continue
+                    else:
+                        print (f"Exiting AI NLP cycle @ article: {ai_nlp_cycle}...")
+                        break                    
+                else:
+                    print (f"Skipping: {ai_nlp_cycle} / Article type not valid for AI NLP Sentiment analysis...")
 
             ################################################################
-            # END of AI ML NLP article processing loop
+            # END  AI AI NLP article processing data scraping loop
             ################################################################
-            # DONE  cycling through all articles and computing sentiment for each one.
-            # Display final stats and results
+            # DONE
+            # - cycling through all articles for this stock symbol
+            # - computing sentiment for all articles found
+            # - Display final stats and results next
 
             # DEBUG
             if args['bool_verbose'] is True:        # Logging level
@@ -662,8 +674,15 @@ def main():
                 res = kgraphdb.dump_symbols(1)
                 kgraphdb.close_aopkgdb(1, kgraphdb.driver)
 
+
 #################################################################################
-# 3 differnt methods to get a live quote ########################################
+##############              MARKET DATA EXTRACTORS                     ##########
+#################################################################################
+
+
+#################################################################################
+###############                    QUOTES                            ############
+# 3 differnt methods to get a live quote
 # NOTE: These 3 routines are *examples* of how to get quotes from the 3 live quote classes::
 # TODO: Add a 4th method - via alpaca live API
 
