@@ -342,17 +342,18 @@ class yfnews_reader:
             self.nlp_x += 1
             art_title = article.get('Title', 'ERROR_no_title')      # extract craw4al element
             article_url = article.get('Ext_url', '')                # extract craw4al element
-            art_publisher = article.get('Publisher', 'ERROR_no_publisher • ERROR_no_pub_time')  # extract craw4al element
+            art_publisher = article.get('Publisher', 'No_publisher • No_pub_time')  # extract craw4al element
             art_teaser = article.get('Teaser', 'ERROR_no_teaser')   # extract craw4al element
             try:
-                publisher = publisher.split('•')[0].strip()
-                update_time = publisher.split('•')[1].strip()
-            except Exception as e:
-                logging.info(f'%s - Error @ {cg} extract pub info: {e}...' % cmi_debug)
-                art_publisher = "ERROR_no_publisher"
-                update_time = "ERROR_no_pub_time"
-            
-            print(f"Eval cycle:    Depth 1  ({cg} / {self.articles_found}) ============================================")
+                _ap_sl = art_publisher.split('•')
+                art_publisher =_ap_sl[0]
+                update_time = _ap_sl[1]
+            except:
+                logging.info(f'%s - Error @ {cg} extract publiosher info...' % cmi_debug)
+                art_publisher = "Err_no_publisher"
+                update_time = "Err_no_pub_time"
+
+            print(f"Eval cycle:    Depth 1  ({cg} / {self.articles_found}) =====================================================")
             if article_url:
                 if article_url.startswith('http'):              # quick safety check that we have a real URL
                     self.article_url = article_url
@@ -377,9 +378,10 @@ class yfnews_reader:
                 inf_type = self.yfn_uh.confidence_lvl(thint)
                 ml_atype = uhint
                 
+                
                 print(f"News article:  {symbol} [ {path} ]")
                 print(f"Article type:  {inf_type[0]}")
-                print(f"News agency:   {art_publisher} - {update_time} - {time_now}")
+                print(f"News agency:   {art_publisher} - {update_time}")
                 print(f"origin:        {self.url_netloc} - conf: [ t:{ml_atype} u:{uhint} h:{thint} ]")
                 print(f"Full URL:      {self.article_url}")
                 print(f"Short title:   {art_title}")
@@ -592,9 +594,11 @@ class yfnews_reader:
             # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
             # 0 = Crawl4ai extractor
             # 1 = BS4 extractor
-            #
-            #total_tokens, total_words, total_scent, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0)
             total_tokens, total_words, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
+            
+            extr_len = 0
+            for _i, _v in enumerate(local_stub_news_p):
+                extr_len += sum(len(_s) for _s in _v.text)
             #
             sent_z = self.sent_ai.sentiment_count['neutral']
             sent_p = self.sent_ai.sentiment_count['positive']
@@ -602,7 +606,7 @@ class yfnews_reader:
             
             if self.sent_ai.empty_vocab > 0:
                 print (f"\n")
-            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
+            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
             
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
             # This is helpful for merging the info with other dataframes later on

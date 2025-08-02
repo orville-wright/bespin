@@ -72,6 +72,12 @@ class ml_sentiment:
     def compute_sentiment(self, symbol, item_idx, scentxt, urlhash, ext):
         """
         called by:  extract_article_data -> compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0)
+        INPUTS:
+        1. symbol = ticker symbol
+        2. item_ida = the index num in the ml_index DB
+        3. scentxt = list[] of multiple <p> tags from articel containg individual article text strings
+        4. urlhash = hash of the url
+        5. ext = extractor type (0 = Crawl4ai, 1 = BS4)
         
         Tokenize and compute scentence chunk sentiment
         scentxt = BS4 all <p> zones that look/feel like scentence/paragraph text
@@ -104,7 +110,7 @@ class ml_sentiment:
         self.active_urlhash = urlhash
         if len(scentxt) == 0:
             self.final_results.update({ 'noart_data': 1 })
-            logging.info( f"%s - ERROR Crawl4ai failed to read article (multiple reasons possible)!" % cmi_debug )
+            logging.info( f"%s - ERROR Crawl4ai failed to read article during skimming Depth 0 (multiple reasons possible)!" % cmi_debug )
             return 0, 0, 0
         else:
             pass
@@ -121,7 +127,7 @@ class ml_sentiment:
                     blocklet_l = list()
                     blocklet_l.append(scentxt[i])  # force create a full article text list, since chunker needs this input structure
                     blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # result = {} of blocklets
-                    logging.info( f"####-DEBUG-124 - Status: {truncated} - blocklet_d: {type(blocklet_d)}" )
+                    logging.info( f"###-debug-130 - Status: {truncated} - blocklet_d: {type(blocklet_d)}" )
                     self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _c_twc
                 else:

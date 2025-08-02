@@ -21,7 +21,7 @@
     },
     {
       "name": "Publisher",
-      "selector": "div div.publishing.yf-m1e6lz",
+      "selector": "div div div.publishing.yf-m1e6lz",
       "type": "text"
     }
   ]
