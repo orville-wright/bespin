@@ -134,7 +134,7 @@ class ml_sentiment:
                     truncated = "Clean"
                     logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
                     blocklet_d = dict()
-                    blocklet_d.update({scentxt[i]})    # create 1 row dict for dict_processor() (ths is a NATURAL short/clean text blocklet
+                    blocklet_d.update({i: scentxt[i]})    # create 1 row dict for dict_processor() (ths is a NATURAL short/clean text blocklet
                     self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # send = dict{}, Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _c_twc
 
