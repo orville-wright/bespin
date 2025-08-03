@@ -781,6 +781,7 @@ class yfnews_reader:
                             if self.sent_ai.empty_vocab > 0: 
                                 print (f"\n")      # close out the EOL NL for "Empty Vocab" string
                             
+                            # The status report is fro Craw4ai engine
                             print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
                                 # set up a dataframe to hold the aggregated sentiment for this article in columns.
                                 # This is helpful for merging the info with other dataframes later on

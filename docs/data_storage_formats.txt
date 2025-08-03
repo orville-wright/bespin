@@ -1,0 +1,76 @@
+Research: Data storage, file structures
+
+### Parquet vs. Feather File Formats: Differences, Benefits, and Strengths
+
+#### 1. **File Structure and Philosophy**
+- **Parquet** is a **columnar storage file format** designed for efficient analytics, especially on large datasets. It supports rich data types, heavy compression, and is widely adopted in big data and cloud ecosystems[1][2][3].
+- **Feather** is a **lightweight, binary columnar format** designed for speedy, language-agnostic data frame storage with excellent support for Python (pandas) and R. It leverages the Apache Arrow specification and prioritizes read/write speed over advanced compression[4][5].
+
+#### 2. **Compression and Storage Efficiency**
+- **Parquet** focuses on storage efficiency and space savings via **multi-level compression and encoding** (e.g., dictionary encoding, run-length encoding, page-level compression). This often results in **much smaller file sizes** than Feather[3][6][7].
+    - Typical storage savings of 2–5x compared to uncompressed formats[6].
+    - Supports compression codecs like Snappy, Gzip, LZ4, and Brotli[3][6][7].
+- **Feather** (v2) also supports compression (LZ4, ZSTD), but its compression is simpler and generally leads to **larger files** than Parquet for the same data[4][7].
+    - Feather’s focus is speed, not maximum storage efficiency[8][9].
+
+#### 3. **Read/Write Performance**
+- **Feather** is designed for **maximum I/O and in-memory speed**. Read and write operations are very fast, making it well-suited for fast, ephemeral storage of data frames in data science workflows[10][5][9].
+    - In benchmarks, Feather writes and reads are typically **faster than Parquet**—sometimes by a substantial margin for small or medium datasets[10][7].
+- **Parquet’s** advanced encoding may make writes slower, but it is extremely efficient for **analytics workloads**, especially when reading only specific columns[11][3].
+    - For huge datasets and distributed workloads, Parquet often performs better in large-scale analytics due to its **columnar access patterns** and indexing.
+
+#### 4. **Interoperability and Ecosystem**
+- **Parquet** is a de facto industry standard for **analytics and data lake storage**, supported by big data tools (Apache Spark, Hive, Presto, AWS services, Databricks, Google BigQuery, and many others). It is ideal for **long-term data storage** and cross-platform sharing[1][2][7].
+- **Feather** is intended more for **short-term data sharing and fast access between Python and R**, less for persistent, cross-system storage[12][7].
+
+#### 5. **Flexibility and Use Cases**
+- **Parquet** is best when you need rich analytics, long-term or big data storage, cloud-based warehousing, and multi-tool interoperability[2][3][13].
+- **Feather** is best for speedy local workflows, sharing data frames between R and Python, and scenarios where instant read/write speed is crucial[10][5][9].
+
+#### 6. **Schema and Metadata Support**
+- **Parquet** includes extensive schema/metadata, allowing robust schema evolution and self-describing files[3].
+- **Feather** also stores schema information, but its metadata features are simpler, reflecting its focus on quick interaction[4].
+
+#### **Comparison Table**
+
+| Feature             | Parquet                                   | Feather                                 |
+|---------------------|-------------------------------------------|-----------------------------------------|
+| File Structure      | Columnar, advanced encoding               | Columnar (via Arrow), raw/fast access   |
+| Compression         | Multi-level (Snappy, Gzip, LZ4, Brotli)   | LZ4, ZSTD (v2)                          |
+| Speed               | Slower writes, fast for analytics/queries | Very fast read/write                    |
+| File Size           | Typically smaller for large datasets      | Larger than Parquet                     |
+| Use Case            | Long-term, distributed, analytics         | Fast local/temp, Python-R data science  |
+| Ecosystem           | Big data/cloud platforms, multi-language  | Python, R, data science                 |
+
+### **Summary of Strengths**
+- **Parquet:**
+    - Excellent compression and space savings[3][6].
+    - Ideal for large datasets, analytics, and cloud data lakes[2][13].
+    - Broad ecosystem support; facilitates multi-language, long-term storage[1].
+- **Feather:**
+    - Superior speed for local read/write and in-memory processing[8][10][5].
+    - Simple to use, great for rapid MVP/data science workflows with pandas/R[4][5].
+    - Compression (in v2) enables decent file size reduction with high speed[8].
+
+**In short, use Parquet for scalable, space-efficient, analytics-ready data storage across broad platforms. Use Feather for ultra-fast, local reads/writes in data science, particularly with Python and R.**
+
+[1] https://www.databricks.com/glossary/what-is-parquet
+[2] https://motherduck.com/learn-more/why-choose-parquet-table-file-format/
+[3] https://coralogix.com/blog/parquet-file-format/
+[4] https://arrow.apache.org/docs/python/feather.html
+[5] https://posit.co/blog/feather/
+[6] https://edgedelta.com/company/blog/parquet-data-format
+[7] https://stackoverflow.com/questions/48083405/what-are-the-differences-between-feather-and-parquet
+[8] https://ursalabs.org/blog/2020-feather-v2/
+[9] https://www.reddit.com/r/dataengineering/comments/13j0f2d/parquet_vs_feather/
+[10] https://tomaztsql.wordpress.com/2022/05/08/comparing-performances-of-csv-to-rds-parquet-and-feather-data-types/
+[11] https://towardsdatascience.com/saving-pandas-dataframes-efficiently-and-quickly-parquet-vs-feather-vs-orc-vs-csv-26051cc98f2e/
+[12] https://pnavaro.github.io/big-data/14-FileFormats.html
+[13] https://delta.io/blog/delta-lake-vs-parquet-comparison/
+[14] https://www.upsolver.com/blog/apache-parquet-why-use
+[15] https://help.funnel.io/en/articles/6762788-what-is-parquet-the-parquet-file-format-explained
+[16] https://www.linkedin.com/pulse/comparative-study-among-csv-feather-pickle-parquet-loyola-gonz%C3%A1lez
+[17] https://www.reddit.com/r/dataengineering/comments/1f7prqt/curious_about_parquet_for_data_engineering_whats/
+[18] https://stackoverflow.com/questions/36822224/what-are-the-pros-and-cons-of-the-apache-parquet-format-compared-to-other-format
+[19] https://discourse.julialang.org/t/arrow-feather-and-parquet/28739
+[20] https://www.youtube.com/watch?v=X9FDgIOtMB8

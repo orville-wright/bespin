@@ -126,14 +126,16 @@ class ml_sentiment:
                     truncated = "Trctd!"
                     blocklet_l = list()
                     blocklet_l.append(scentxt[i])  # force create a full article text list, since chunker needs this input structure
-                    blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # result = {} of blocklets
+                    blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # send = list[], result = {} of blocklets
                     logging.info( f"###-debug-130 - Status: {truncated} - blocklet_d: {type(blocklet_d)}" )
                     self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _c_twc
                 else:
                     truncated = "Clean"
                     logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
-                    self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    blocklet_d = dict()
+                    blocklet_d.update({scentxt[i]})    # create 1 row dict for dict_processor() (ths is a NATURAL short/clean text blocklet
+                    self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # send = dict{}, Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _c_twc
 
             return self.ttc, self.twc, final_results
@@ -162,8 +164,8 @@ class ml_sentiment:
                     truncated = "Clean"
                     logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
                     blocklet_d = dict()
-                    blocklet_d.update({ bs4_row: scentxt[i].text }) # create 1 row dict for dict_processor() (ths is a short/clean <p>) text blocklet
-                    self.ttc, _i_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    blocklet_d.update({bs4_row: scentxt[i].text}) # create 1 row dict for dict_processor() (ths is a short/clean <p>) text blocklet
+                    self.ttc, _i_twc, final_results = self.dict_processor(symbol, blocklet_d)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _i_twc
                     bs4_row += 1
 
