@@ -3,7 +3,7 @@
 """
 LMDB Lightning Memory-Mapped Database
 
-Opens an existing LMDB database in: ../datastore/LMDB_kvstore/LMDB_eval_kvstore01
+Opens an existing LMDB database in: ../datastore/LMDB_tests_kvstore01/LMDB_0001
 executes a number of basic functions to excercise the operational functionality
 of the LMDB system
 
@@ -21,8 +21,8 @@ dbpath = None
 key_total = 0
 
 def main():
-    build("../datastore/LMDB_kvstore/LMDB_eval_kvstore01")
-    deser("../datastore/LMDB_kvstore/LMDB_eval_kvstore01")
+    build("../datastore/LMDB_tests_kvstore01/LMDB_0001")
+    deser("../datastore/LMDB_tests_kvstore01/LMDB_0001")
     
 def build(dbname):    
     print (f"\n\n----------------------- Create Database Data Entries -----------------")
@@ -106,7 +106,7 @@ def build(dbname):
         
     except lmdb.Error as e:
         print(f"LMDB Error: {e}")
-        print("'../datastore/LMDB_kvstore/LMDB_eval_kvstore01' directory not found.")
+        print(f"Database: ../datastore/LMDB_tests_kvstore01/LMDB_0001 - not found.")
     except Exception as e:
         print(f"Unexpected error: {e}")
 
@@ -368,7 +368,7 @@ def deser(dbpath):
     cursor = txn0.cursor()
     dbstats = txn0.stat()
     dbcount = dbstats['entries']
-    keys_to_del = random.randint(0, dbcount)
+    keys_to_del = random.randint(1, dbcount)
     print(f"\nPhase #6 - Delete {keys_to_del} random K/V pairs from the database:")
     
     try:
@@ -392,21 +392,11 @@ def deser(dbpath):
         print(f"ERROR Exception triggered:: {x}")
         return                    
 
-    '''
-    with env.begin() as txn:
-                cursor = txn.cursor()
-                count = 0
-                for key, value in cursor:
-                    key_str = key.decode('utf-8')
-                    value_str = value.decode('utf-8')
-                    print(f"KEY: {key_str} -> VALUE: {value_str[:50]}{'...' if len(value_str) > 50 else ''}")
-                    count += 1
-    '''
     ##################################################################
     # Bonus: Example of searching by content
     print("\n" + "=" * 50)
     print("6. Bonus: Searching by value content:")
-    search_results = search_by_value_content("../datastore/LMDB_kvstore/LMDB_eval_kvstore01", "name")
+    search_results = search_by_value_content("../datastore/LMDB_tests_kvstore01/LMDB_0001", "name")
     print(f"Found {len(search_results)} entries containing 'name':")
     for key, value in search_results[:3]:  # Show first 3 matches
         print(f"  {key}: {value}")
