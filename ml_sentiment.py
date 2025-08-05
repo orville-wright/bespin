@@ -169,6 +169,8 @@ class ml_sentiment:
                     self.twc += _i_twc
                     bs4_row += 1
 
+                    self.cr_package.update({ 'sent_paras': int(self.tsenparas) })
+                    
             return self.ttc, self.twc, final_results
     
     #####################################

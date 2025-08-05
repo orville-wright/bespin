@@ -2,6 +2,8 @@
 import argparse
 import asyncio
 from bs4 import BeautifulSoup
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
+from crawl4ai import JsonCssExtractionStrategy
 from datetime import datetime, date
 import hashlib
 import json
@@ -18,8 +20,7 @@ import time
 from typing import List
 from urllib.parse import urlparse
 
-from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
-from crawl4ai import JsonCssExtractionStrategy
+from datastore_eng_LMDB import lmdb_io_eng
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
@@ -43,8 +44,7 @@ class yfnews_reader:
     ext_req = None          # HTMLSession request handle
     extracted_articles = None  # crawl4ai extracted articles
     get_counter = 0         # count of get() requests
-    YF_sym_main_schema = None
-    YF_sym_article_schema = None
+    kvio_eng = None
     li_superclass = None    # all possible News articles
     live_resp0 = None
     ml_brief = []           # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
@@ -59,11 +59,13 @@ class yfnews_reader:
     yfn_uh = None           # global url hinter class
     yfn_all_data = None     # JSON dataset contains ALL data
     yfn_all_result = None   # JSON dataset contains ALL data
-    yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
+    YF_sym_main_schema = None
+    YF_sym_article_schema = None
     yfn_crawl_data = None   # Crawl4ai extracted data
     yfn_c4_data = None      # Crawl4ai extracted data
     yfn_c4_result = {}      # Crawl4ai extracted data
     yfn_jsdb = {}           # database to hold response handles from multiple crawl operations
+    yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
     yti = 0                 # Unique instance identifier
     
     yahoo_headers = {
@@ -255,7 +257,7 @@ class yfnews_reader:
                     logging.info(f'%s - crawl4ai extraction successful' % cmi_debug)
                     self.yfn_crawl_data = json.loads(result.extracted_content)
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
-                    aurl_hash = auh.hexdigest()                     # genertae
+                    aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
                     self.yfn_jsdb[aurl_hash] = {
                         'url': self.yfqnews_url,
                         'data': self.yfn_crawl_data,
@@ -387,7 +389,7 @@ class yfnews_reader:
                 print(f"Short title:   {art_title}")
                 print(f"Long teaser:   {art_teaser}")
                 
-                self.ml_brief.append(art_title)             # WARNING: I dont knonw whjy this is done
+                self.ml_brief.append(art_title)                 # WARNING: I dont knonw why this is done
                 auh = hashlib.sha256(self.article_url.encode()) # Generate URL hash
                 aurl_hash = auh.hexdigest()                     # compute hash
                 if aurl_hash not in dedupe_set:                 # dedupe membership test
@@ -504,8 +506,11 @@ class yfnews_reader:
         logging.info( f'%s - IN / Work on item... [ {item_idx} ]' % cmi_debug )
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
-        cached_state = data_row['urlhash']
+        cached_state = data_row['urlhash']      # eval  DB[] @ item=item_idx, and pull out article urlhash
         self.sent_ai = sentiment_ai
+        lmdb_dbname = "LMDB_0001"
+        self.kvio_eng = lmdb_io_eng(1, lmdb_dbname, self.args)
+        
         self.sent_ai.empty_vocab = 0
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
@@ -518,16 +523,58 @@ class yfnews_reader:
 
         symbol = symbol.upper()
 
-        logging.info( f'%s - urlhash cache lookup: {cached_state}' % cmi_debug )
+        # this code is to seet if its allreayd been read, and all its data now exists in
+        # the LMDB K/V datastore... its now permenantly cached !
+        '''
+        open the lmdb
+        construct the LMDB key from known urlhash:  key = 0123.SYMBOL.URLHASH
+        check the urlhash exists
+        if exists, skip everything b/c have a Final-Results dict in LMDB containing all sentiment metrics !
+        else, continue
+        '''
+        logging.info( f'%s - Opening LMDB READ-ONLY mode...' % cmi_debug )
+        kv_success = self.kvio_eng.open_lmdb_RO(1)
+        if kv_success != 1:
+            pass    # faield to open LMDB. Continue with manuall full get() read of URL
+        else:
+            _url_hash = data_row['urlhash']
+            _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
+            bs4_kvs_key = _key.encode('utf-8')              # byte encode 
+            logging.info( f'%s - CHECKING sentiment data in KVstore: {_key}' % cmi_debug )
+            with self.kvio_eng.env.begin() as txn:
+                ret_code = txn.get(bs4_kvs_key)
+                if ret_code is not None:
+                    logging.info( f'%s - FOUND - sentiment entry in KVstore: validating...' % cmi_debug )
+                    try:
+                        _v_str = ret_code.decode('utf-8') # Deserialiize, Decode bytes to string
+                    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                        print(f"Error deserializing value: {e}")
+                        pass
+                    else:
+                        final_results = json.loads(_v_str)        # parse JSON
+                        kv_url_hash = final_results['urlhash']
+                        print (f"###-debug-555: Live URL hash:    {_url_hash}")
+                        print (f"###-debug-556: KVstore URL hash: {kv_url_hash}")
+                        total_tokens=0
+                        total_words=0
+                        final_results=0
+                        return total_tokens, total_words, final_results
+                else:
+                    logging.info( f'%s - MISSING - no sentiment entry in KVstore' % cmi_debug )
+                    #self.kvio_eng.env.close()
+                    
+        # logging hack fixes f-string error when URLs have a "%" - breaks logging module (NO FIX)
+        logging.info( f'%s - BS4 urlhash get() cache lookup: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
-        logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
+        logging.info( f'%s' % cmi_debug )
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
 
-        logging.info( f'%s - CHECKING cache... {cached_state}' % cmi_debug )
+        # this code below is for reading the URL
+        logging.info( f'%s - CHECKING get() cache... {cached_state}' % cmi_debug )
         try:
             self.yfn_jsdb[cached_state]         # fast key KeyError existance test
             cx_soup = self.yfn_jsdb[cached_state]
-            logging.info( f'%s - Found cahce entry: Render data from cache...' % cmi_debug )
+            logging.info( f'%s - Found get() cahce entry: Render data from cache...' % cmi_debug )
             cx_soup.html.render()            # since we dont cache the raw data, we need to render the page again
             self.yfn_jsdata = cx_soup.text   # store the rendered raw data
             dataset_1 = self.yfn_jsdata
@@ -599,7 +646,24 @@ class yfnews_reader:
             extr_len = 0
             for _i, _v in enumerate(local_stub_news_p):
                 extr_len += sum(len(_s) for _s in _v.text)
-            #
+            
+            self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
+            
+            # create LMDB entry here !!!
+            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
+            kv_success = self.kvio_eng.open_lmdb_RW(2)
+            if kv_success != 1:
+                pass    # faield to open LMDB. Continue with manuall full get() read of URL
+            else:
+                _url_hash = data_row['urlhash']
+                _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
+                bs4_kvs_key = _key.encode('utf-8')              # byte encode 
+                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
+                with self.kvio_eng.env.begin(write=True) as _txn:
+                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
+                    _txn.put(bs4_kvs_key, _data_json.encode('utf-8'))
+                    self.kvio_eng.env.close
+
             sent_z = self.sent_ai.sentiment_count['neutral']
             sent_p = self.sent_ai.sentiment_count['positive']
             sent_n = self.sent_ai.sentiment_count['negative']
@@ -662,6 +726,9 @@ class yfnews_reader:
         durl = None
         self.sent_ai = sentiment_ai
         self.sent_ai.empty_vocab = 0
+        lmdb_dbname = "LMDB_0001"
+        self.kvio_eng = lmdb_io_eng(1, lmdb_dbname, self.args)
+        
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
@@ -785,6 +852,24 @@ class yfnews_reader:
                             print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
                                 # set up a dataframe to hold the aggregated sentiment for this article in columns.
                                 # This is helpful for merging the info with other dataframes later on
+
+                            self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
+                            
+                            # create LMDB entry here !!!
+                            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
+                            kv_success = self.kvio_eng.open_lmdb_RW(3)
+                            if kv_success != 1:
+                                pass    # faield to open LMDB. Continue with manuall full get() read of URL
+                            else:
+                                _url_hash = data_row['urlhash']
+                                _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
+                                bs4_kvs_key = _key.encode('utf-8')              # byte encode 
+                                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
+                                with self.kvio_eng.env.begin(write=True) as _txn:
+                                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
+                                    _txn.put(bs4_kvs_key, _data_json.encode('utf-8'))
+                                    self.kvio_eng.env.close
+
                             self.sen_data = [[
                                         item_idx,
                                         hs,
