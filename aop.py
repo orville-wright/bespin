@@ -526,6 +526,7 @@ def main():
                     this_urlhash = sent_ai.active_urlhash
                     pd.set_option('display.max_rows', None)
                     pd.set_option('max_colwidth', 30)
+                    print (f"###debug-530: dump sen_fd0:\n{sent_ai.sen_df0}")
                     aggregate_mean = sent_ai.sen_df0.loc[sent_ai.sen_df0['urlhash'] == this_urlhash].groupby('snt')['rnk'].mean()    # fill NaN with 0.0
                 
                     # aggregate_mean DF keys are only set if the sentiment analysis computes a pos/net/neu sentimentfor the article.

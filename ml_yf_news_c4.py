@@ -537,6 +537,22 @@ class yfnews_reader:
         if kv_success != 1:
             pass    # faield to open LMDB. Continue with manuall full get() read of URL
         else:
+            # debug
+            '''
+            with self.kvio_eng.env.begin() as txn0:
+                cursor0 = txn0.cursor()
+                count = 0
+                for _key0, _value0 in cursor0:
+                    key_str = _key0.decode('utf-8')
+                    value_str = _value0.decode('utf-8')
+                    print(f"LMDB -  KEY: {key_str} -> VALUE: {value_str[:50]}")
+                    count += 1
+                print(f"\nTotal entries in LMDB database: {count}")    
+                #self.kvio_eng.env.close()
+            '''
+            
+            ################# BS4 cache KV engine
+            #            
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
@@ -545,10 +561,12 @@ class yfnews_reader:
                 ret_code = txn.get(bs4_kvs_key)
                 if ret_code is not None:
                     logging.info( f'%s - FOUND - sentiment entry in KVstore: validating...' % cmi_debug )
+                    print (f"###-debug-562: LMDB cacbe hit for BS4 reader...")
                     try:
                         _v_str = ret_code.decode('utf-8') # Deserialiize, Decode bytes to string
                     except (UnicodeDecodeError, json.JSONDecodeError) as e:
                         print(f"Error deserializing value: {e}")
+                        print (f"###-debug-567: LMDB deserialzier failure...")
                         pass
                     else:
                         final_results = json.loads(_v_str)        # parse JSON
@@ -561,7 +579,9 @@ class yfnews_reader:
                         return total_tokens, total_words, final_results
                 else:
                     logging.info( f'%s - MISSING - no sentiment entry in KVstore' % cmi_debug )
-                    #self.kvio_eng.env.close()
+            
+            #
+            ############# End cache engine
                     
         # logging hack fixes f-string error when URLs have a "%" - breaks logging module (NO FIX)
         logging.info( f'%s - BS4 urlhash get() cache lookup: {cached_state}' % cmi_debug )
@@ -650,19 +670,6 @@ class yfnews_reader:
             self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
             
             # create LMDB entry here !!!
-            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
-            kv_success = self.kvio_eng.open_lmdb_RW(2)
-            if kv_success != 1:
-                pass    # faield to open LMDB. Continue with manuall full get() read of URL
-            else:
-                _url_hash = data_row['urlhash']
-                _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
-                bs4_kvs_key = _key.encode('utf-8')              # byte encode 
-                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
-                with self.kvio_eng.env.begin(write=True) as _txn:
-                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
-                    _txn.put(bs4_kvs_key, _data_json.encode('utf-8'))
-                    self.kvio_eng.env.close
 
             sent_z = self.sent_ai.sentiment_count['neutral']
             sent_p = self.sent_ai.sentiment_count['positive']
@@ -690,9 +697,20 @@ class yfnews_reader:
                 'negative_count': self.sent_ai.sentiment_count['negative']
                 })
             
-            # create emtries in the Neo4j Graph database
-            # - check if KG has existing node entry for this symbol+news_article
-            # if not... create one
+            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
+            kv_success = self.kvio_eng.open_lmdb_RW(2)
+            if kv_success != 1:
+                pass    # faield to open LMDB. Continue with manuall full get() read of URL
+            else:
+                _url_hash = data_row['urlhash']
+                _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
+                bs4_kvs_key = _key.encode('utf-8')              # byte encode 
+                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
+                with self.kvio_eng.env.begin(write=True) as _txn:
+                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
+                    _txn.put(bs4_kvs_key, _data_json.encode('utf-8'))
+                    self.kvio_eng.env.close
+
             print ( f"======================================== End: {item_idx} ===============================================")
             return total_tokens, total_words, final_results
 
@@ -727,7 +745,7 @@ class yfnews_reader:
         self.sent_ai = sentiment_ai
         self.sent_ai.empty_vocab = 0
         lmdb_dbname = "LMDB_0001"
-        self.kvio_eng = lmdb_io_eng(1, lmdb_dbname, self.args)
+        self.kvio_eng = lmdb_io_eng(2, lmdb_dbname, self.args)
         
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
@@ -738,6 +756,58 @@ class yfnews_reader:
             external = False               # this is a local yahoo.com hosted article
             cached_state = data_row['urlhash']
             symbol = symbol.upper()
+            
+        logging.info( f'%s - Opening LMDB READ-ONLY mode...' % cmi_debug )
+        kv_success = self.kvio_eng.open_lmdb_RO(1)
+        if kv_success:
+            ################# BS4 cache KV engine
+            #            
+            _url_hash = data_row['urlhash']
+            _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
+            C4_kvs_key = _key.encode('utf-8')              # byte encode 
+            logging.info( f'%s - CHECKING C4 sentiment data in KVstore: {_key}' % cmi_debug )
+            with self.kvio_eng.env.begin() as txn:
+                ret_code = txn.get(C4_kvs_key)
+                if ret_code is not None:
+                    logging.info( f'%s - FOUND - C4 sentiment entry in KVstore: validating...' % cmi_debug )
+                    print (f"###-debug-562: LMDB cacbe hit for C4 reader...")
+                    try:
+                        _v_str = ret_code.decode('utf-8') # Deserialiize, Decode bytes to string
+                    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                        print(f"Error deserializing value: {e}")
+                        print (f"###-debug-567: LMDB C4 deserialzier failure...")
+                        pass
+                    else:
+                        final_results = json.loads(_v_str)        # parse JSON
+                        kv_url_hash = final_results['urlhash']
+                        print (f"###-debug-555: dump final_results:\n{final_results}")
+                        total_tokens = 0
+                        total_words = 0
+            
+                        self.sen_data = [[
+                            item_idx,
+                            kv_url_hash,
+                            final_results['positive_count'],
+                            final_results['neutral_count'],
+                            final_results['negative_count']
+                            ]]
+
+            sen_package = dict(sym=symbol, urlhash=self.active_urlhash, article=self.item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
+            self.save_sentiment_df(self.item_idx, sen_package)      # page, data
+
+                        sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
+                        self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
+                        print ( f"======================================== End #4: {item_idx} ===============================================")
+                        return total_tokens, total_words, final_results
+                else:
+                    logging.info( f'%s - MISSING - no C4 sentiment entry in KVstore' % cmi_debug )
+            #
+            ############# End cache engine            
+            
+        else:
+            print (f"###-debug-808: Failed to open LMDB C4 instance for READ-ONLY..." )
+            print (f"###-debug-809: Fallback to standadr C4 data extraction..." )
+            
             logging.info( f'%s - urlhash cache lookup: {cached_state}' % cmi_debug )
             cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
@@ -849,27 +919,25 @@ class yfnews_reader:
                                 print (f"\n")      # close out the EOL NL for "Empty Vocab" string
                             
                             # The status report is fro Craw4ai engine
-                            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
+                            sent_z = self.sent_ai.sentiment_count['neutral']
+                            sent_p = self.sent_ai.sentiment_count['positive']
+                            sent_n = self.sent_ai.sentiment_count['negative']
+            
+                            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
+                            #print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
                                 # set up a dataframe to hold the aggregated sentiment for this article in columns.
                                 # This is helpful for merging the info with other dataframes later on
 
                             self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
-                            
-                            # create LMDB entry here !!!
-                            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
-                            kv_success = self.kvio_eng.open_lmdb_RW(3)
-                            if kv_success != 1:
-                                pass    # faield to open LMDB. Continue with manuall full get() read of URL
-                            else:
-                                _url_hash = data_row['urlhash']
-                                _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
-                                bs4_kvs_key = _key.encode('utf-8')              # byte encode 
-                                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
-                                with self.kvio_eng.env.begin(write=True) as _txn:
-                                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
-                                    _txn.put(bs4_kvs_key, _data_json.encode('utf-8'))
-                                    self.kvio_eng.env.close
+                            self.sen_data = [[
+                                item_idx,
+                                hs,
+                                sent_p,
+                                sent_z,
+                                sent_n
+                                ]]                           
 
+                            '''
                             self.sen_data = [[
                                         item_idx,
                                         hs,
@@ -877,6 +945,7 @@ class yfnews_reader:
                                         sentiment_ai.sentiment_count['neutral'],
                                         sentiment_ai.sentiment_count['negative']
                                         ]]
+                            '''
 
                             sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
                             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
@@ -886,9 +955,22 @@ class yfnews_reader:
                                 'neutral_count': sentiment_ai.sentiment_count['neutral'],
                                 'negative_count': sentiment_ai.sentiment_count['negative']
                                 })
-                            # create emtries in the Neo4j Graph database
-                            # - check if KG has existing node entry for this symbol+news_article
-                            # if not... create one
+
+                            # Create LMBD KV cache entry
+                            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
+                            kv_success = self.kvio_eng.open_lmdb_RW(3)
+                            if kv_success != 1:
+                                pass    # faield to open LMDB. Continue with manuall full get() read of URL
+                            else:
+                                _url_hash = data_row['urlhash']
+                                _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
+                                c4_kvs_key = _key.encode('utf-8')              # byte encode 
+                                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
+                                with self.kvio_eng.env.begin(write=True) as _txn:
+                                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
+                                    _txn.put(c4_kvs_key, _data_json.encode('utf-8'))
+                                    self.kvio_eng.env.close
+
                             print ( f"======================================== End #3: {item_idx} ===============================================")
                             return total_tokens, total_words, final_results
 
