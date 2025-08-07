@@ -73,7 +73,7 @@ class ml_nlpreader:
             if self.args.get('bool_xray', False):                   # DEBUG: xray
                 ml_yfn_dataset.dump_ml_ingest()
         else:
-            logging.error(f"%s - No Top lvel artciels were found !!" % cmi_debug)
+            logging.error(f"%s - No Top lvel articles were found !!" % cmi_debug)
         
         return articles_found
 

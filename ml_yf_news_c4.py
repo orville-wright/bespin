@@ -637,7 +637,6 @@ class yfnews_reader:
                 # total_tokens, total_words, total_scent, final_results
                 
         # from here we extracr thet text datq
-        #cmi_debug = __name__+"::extract_article_data.p_tags.#0"
         logging.info( f'%s - BS4 extractor - get Article TEXT for AI Sentiment NLP...' % cmi_debug )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
@@ -761,121 +760,120 @@ class yfnews_reader:
         kv_success = self.kvio_eng.open_lmdb_RO(1)
         if kv_success:
             ################# BS4 cache KV engine
-            #            
+            #
             _url_hash = data_row['urlhash']
-            _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
+            _key = "0001"+"."+symbol+"."+_url_hash         # we are looking at the artile here. So test for this K/V data
             C4_kvs_key = _key.encode('utf-8')              # byte encode 
-            logging.info( f'%s - CHECKING C4 sentiment data in KVstore: {_key}' % cmi_debug )
+            logging.info( f"%s - CHECKING C4 article row in KVstore: {_key:40}{'...' if len(_key) > 40 else ''}" % cmi_debug )
             with self.kvio_eng.env.begin() as txn:
-                ret_code = txn.get(C4_kvs_key)
-                if ret_code is not None:
-                    logging.info( f'%s - FOUND - C4 sentiment entry in KVstore: validating...' % cmi_debug )
-                    print (f"###-debug-562: LMDB cacbe hit for C4 reader...")
+                ret_code = txn.get(C4_kvs_key)              # get _key
+                if ret_code is not None:                    # cache hit, found !
+                    logging.info( f'%s - FOUND C4 article row, validating data...' % cmi_debug )
+                    print (f"###-debug-773: LMDB cache hit for C4 reader...")
                     try:
-                        _v_str = ret_code.decode('utf-8') # Deserialiize, Decode bytes to string
+                        _v_str = ret_code.decode('utf-8')   # Deserialiize, Decode bytes into string
                     except (UnicodeDecodeError, json.JSONDecodeError) as e:
                         print(f"Error deserializing value: {e}")
-                        print (f"###-debug-567: LMDB C4 deserialzier failure...")
+                        print (f"###-debug-778: LMDB C4 deserialzier failure...")
                         pass
                     else:
-                        final_results = json.loads(_v_str)        # parse JSON
-                        kv_url_hash = final_results['urlhash']
-                        print (f"###-debug-555: dump final_results:\n{final_results}")
+                        _final_results = json.loads(_v_str)        # parse JSON
+                        kv_url_hash = _final_results['urlhash']
+                        print (f"###-debug-783: dump final_results:\n{_final_results}")
                         total_tokens = 0
                         total_words = 0
             
                         self.sen_data = [[
                             item_idx,
                             kv_url_hash,
-                            final_results['positive_count'],
-                            final_results['neutral_count'],
-                            final_results['negative_count']
+                            _final_results['positive_count'],
+                            _final_results['neutral_count'],
+                            _final_results['negative_count']
                             ]]
 
-            sen_package = dict(sym=symbol, urlhash=self.active_urlhash, article=self.item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
-            self.save_sentiment_df(self.item_idx, sen_package)      # page, data
+                        sen_package = dict(sym=symbol, urlhash=self.active_urlhash, article=self.item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
+                        self.save_sentiment_df(self.item_idx, sen_package)      # page, data
 
                         sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
                         self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
                         print ( f"======================================== End #4: {item_idx} ===============================================")
-                        return total_tokens, total_words, final_results
+                        return total_tokens, total_words, _final_results
                 else:
-                    logging.info( f'%s - MISSING - no C4 sentiment entry in KVstore' % cmi_debug )
+                    logging.info( f'%s - MISSING, no C4 artcile row in KVstore' % cmi_debug )
+        else:
+            print (f"###-debug-804: Failed to open LMDB DB !!" )
+            print (f"###-debug-805: Fallback to C4 data extraction..." )
             #
             ############# End cache engine            
-            
-        else:
-            print (f"###-debug-808: Failed to open LMDB C4 instance for READ-ONLY..." )
-            print (f"###-debug-809: Fallback to standadr C4 data extraction..." )
-            
-            logging.info( f'%s - urlhash cache lookup: {cached_state}' % cmi_debug )
+
+        logging.info( f'%s - urlhash cache lookup: {cached_state}' % cmi_debug )
+        cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
+        logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
+        cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
+        try:    # cehck for cached_state in yfn_jsdb
+            self.yfn_jsdb[cached_state]         # fast key KeyError test for key: urlhash 
+            cx = self.yfn_jsdb[cached_state]    # pickup the full dict @ key: urlhash
+            logging.info( f'%s - Found cahce entry: Render data from cached resp...' % cmi_debug )
+            self.yfn_cxresult = cx['result']      # store the rendered raw data
+            dataset_1 = self.yfn_c4_data
+            logging.info( f'%s - Cached object    : {cached_state}' % cmi_debug )
+            logging.info( f'%s - Cache cx         : {type(cx)}' % cmi_debug )
+            logging.info( f'%s - Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
+            logging.info( f'%s - Cache URL object : {cx['url']}' % cmi_debug )
+            logging.info( f'%s - Sent URL object  : {durl}' % cmi_debug )
+            logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )   
+            # Do it this way so that...
+            # - we  can spawn multiple async tasks in parallel
+            # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
+            # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3
+            result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
+            # result is:
+            #   { 'url': self.yfqnews_url,
+            #     'data': self.yfn_crawl_data,
+            #     'result': result  }
+            self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction
+        except KeyError:
+            logging.info( f'%s - MISSING from cache...' % cmi_debug )
+            logging.info( f'%s - Eval URL object type: {type(durl)}' % cmi_debug )
             cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
-            try:    # cehck for cached_state in yfn_jsdb
-                self.yfn_jsdb[cached_state]         # fast key KeyError test for key: urlhash 
-                cx = self.yfn_jsdb[cached_state]    # pickup the full dict @ key: urlhash
-                logging.info( f'%s - Found cahce entry: Render data from cached resp...' % cmi_debug )
-                self.yfn_cxresult = cx['result']      # store the rendered raw data
-                dataset_1 = self.yfn_c4_data
-                logging.info( f'%s - Cached object    : {cached_state}' % cmi_debug )
-                logging.info( f'%s - Cache cx         : {type(cx)}' % cmi_debug )
-                logging.info( f'%s - Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
-                logging.info( f'%s - Cache URL object : {cx['url']}' % cmi_debug )
+            # see same note above
+            result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
+            self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction
+            # see same note above for result structure
+            
+            self.yfqnews_url = durl
+            cy = self.yfn_c4_result[cached_state]   # pikup up result dict
+            logging.info( f'%s - Retry cache lookup:    {cached_state}' % cmi_debug ) 
+            if self.yfn_c4_result[cached_state]:
+                logging.info( f'%s - Located entry:     {cached_state}' % cmi_debug )
+                self.yfn_c4_data = cy['result']      # store the rendered raw data
+                dataset_2 = result                  # Basic HTML engine  get()
+                logging.info( f'%s - c4 pure Result   : {type(result)}' % cmi_debug )
+                logging.info( f'%s - Cached result    : {type(self.yfn_c4_data)}' % cmi_debug )
+                logging.info( f'%s - Cache cy data    : {type(cy['data'])}' % cmi_debug )
+                logging.info( f'%s - Cache Dataset    : {type(dataset_2)}' % cmi_debug )
+                logging.info( f'%s - Cache URL object : {cy['url']}' % cmi_debug )
                 logging.info( f'%s - Sent URL object  : {durl}' % cmi_debug )
-                logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )   
+                logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )  
                 # Do it this way so that...
                 # - we  can spawn multiple async tasks in parallel
                 # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
                 # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3
-                result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
+                # result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
                 # result is:
                 #   { 'url': self.yfqnews_url,
                 #     'data': self.yfn_crawl_data,
                 #     'result': result  }
-                self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction
-            except KeyError:
-                logging.info( f'%s - MISSING from cache...' % cmi_debug )
-                logging.info( f'%s - Eval URL object type: {type(durl)}' % cmi_debug )
-                cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
-                logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
-                cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
-                # see same note above
-                result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
-                self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction
-                # see same note above for result structure
+                # self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction                    
+            else:
+                logging.info( f'%s - FAIL to craw article {item_idx}' % cmi_debug )
+                return 0, 0, 0    # I think this is the correct return status
+        except Exception as e:
+            logging.error(f'{cmi_debug} - Artcile [{item_idx} data Crawl failed: {e}')
+            return 0, 0, 0
                 
-                self.yfqnews_url = durl
-                cy = self.yfn_c4_result[cached_state]   # pikup up result dict
-                logging.info( f'%s - Retry cache lookup:    {cached_state}' % cmi_debug ) 
-                if self.yfn_c4_result[cached_state]:
-                    logging.info( f'%s - Located entry:     {cached_state}' % cmi_debug )
-                    self.yfn_c4_data = cy['result']      # store the rendered raw data
-                    dataset_2 = result                  # Basic HTML engine  get()
-                    logging.info( f'%s - c4 pure Result   : {type(result)}' % cmi_debug )
-                    logging.info( f'%s - Cached result    : {type(self.yfn_c4_data)}' % cmi_debug )
-                    logging.info( f'%s - Cache cy data    : {type(cy['data'])}' % cmi_debug )
-                    logging.info( f'%s - Cache Dataset    : {type(dataset_2)}' % cmi_debug )
-                    logging.info( f'%s - Cache URL object : {cy['url']}' % cmi_debug )
-                    logging.info( f'%s - Sent URL object  : {durl}' % cmi_debug )
-                    logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )  
-                    # Do it this way so that...
-                    # - we  can spawn multiple async tasks in parallel
-                    # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
-                    # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3
-                    # result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
-                    # result is:
-                    #   { 'url': self.yfqnews_url,
-                    #     'data': self.yfn_crawl_data,
-                    #     'result': result  }
-                    # self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction                    
-                else:
-                    logging.info( f'%s - FAIL to craw article {item_idx}' % cmi_debug )
-                    return 0, 0, 0    # I think this is the correct return status
-            except Exception as e:
-                logging.error(f'{cmi_debug} - Artcile [{item_idx} data Crawl failed: {e}')
-                return 0, 0, 0
-            
         # we can now extract all the <p> zone TEXT from the article
         # and pass it to the sentiment_ai module for NLP processing
         ####################################################################
@@ -924,7 +922,6 @@ class yfnews_reader:
                             sent_n = self.sent_ai.sentiment_count['negative']
             
                             print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
-                            #print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sentiment_ai.sentiment_count['neutral']} / Postive: {sentiment_ai.sentiment_count['positive']} / Negative: {sentiment_ai.sentiment_count['negative']}")
                                 # set up a dataframe to hold the aggregated sentiment for this article in columns.
                                 # This is helpful for merging the info with other dataframes later on
 
@@ -936,16 +933,6 @@ class yfnews_reader:
                                 sent_z,
                                 sent_n
                                 ]]                           
-
-                            '''
-                            self.sen_data = [[
-                                        item_idx,
-                                        hs,
-                                        sentiment_ai.sentiment_count['positive'],
-                                        sentiment_ai.sentiment_count['neutral'],
-                                        sentiment_ai.sentiment_count['negative']
-                                        ]]
-                            '''
 
                             sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
                             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
