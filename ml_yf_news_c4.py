@@ -558,7 +558,7 @@ class yfnews_reader:
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
             logging.info( f'%s - CHECKING sentiment data in KVstore: {_key}' % cmi_debug )
             with self.kvio_eng.env.begin() as txn:
-                ret_code = txn.get(bs4_kvs_key)
+                ret_code = txn.get(bs4_kvs_key)             # lookup key in KVstore
                 if ret_code is not None:
                     logging.info( f'%s - FOUND - sentiment entry in KVstore: validating...' % cmi_debug )
                     print (f"###-debug-562: LMDB cacbe hit for BS4 reader...")
@@ -571,15 +571,15 @@ class yfnews_reader:
                     else:
                         final_results = json.loads(_v_str)        # parse JSON
                         kv_url_hash = final_results['urlhash']
-                        print (f"###-debug-555: Live URL hash:    {_url_hash}")
-                        print (f"###-debug-556: KVstore URL hash: {kv_url_hash}")
+                        print (f"###-debug-568: Live URL hash:    {_url_hash}")
+                        print (f"###-debug-569: KVstore URL hash: {kv_url_hash}")
                         total_tokens=0
                         total_words=0
                         final_results=0
                         return total_tokens, total_words, final_results
                 else:
                     logging.info( f'%s - MISSING - no sentiment entry in KVstore' % cmi_debug )
-            
+                    print (f"###-debug-570: LMDB cacbe miss for BS4 reader...")
             #
             ############# End cache engine
                     
@@ -699,6 +699,7 @@ class yfnews_reader:
             logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
             kv_success = self.kvio_eng.open_lmdb_RW(2)
             if kv_success != 1:
+                logging.info( f'%s - FAILED to open KVstore / not writing KVcache entry !!!' % cmi_debug )
                 pass    # faield to open LMDB. Continue with manuall full get() read of URL
             else:
                 _url_hash = data_row['urlhash']
@@ -947,6 +948,7 @@ class yfnews_reader:
                             logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
                             kv_success = self.kvio_eng.open_lmdb_RW(3)
                             if kv_success != 1:
+                                logging.info( f'%s - FAILED to open KVstore / not writing KVcache entry !!!' % cmi_debug )
                                 pass    # faield to open LMDB. Continue with manuall full get() read of URL
                             else:
                                 _url_hash = data_row['urlhash']
