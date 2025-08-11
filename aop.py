@@ -526,11 +526,12 @@ def main():
                     this_urlhash = sent_ai.active_urlhash
                     pd.set_option('display.max_rows', None)
                     pd.set_option('max_colwidth', 30)
-                    #print (f"###debug-530: dump sen_fd0:\n{sent_ai.sen_df0}")
+                    
+                    # print (f"###debug-530: dump sen_fd0:\n{sent_ai.sen_df0}")
                     aggregate_mean = sent_ai.sen_df0.loc[sent_ai.sen_df0['urlhash'] == this_urlhash].groupby('snt')['rnk'].mean()    # fill NaN with 0.0
                 
-                    # aggregate_mean DF keys are only set if the sentiment analysis computes a pos/net/neu sentimentfor the article.
-                    # If the article has no matching sentiment, thekeys are not set in the DF.
+                    # aggregate_mean DF keys are only set if the sentiment analysis computes a pos/net/neu sentiment for the article.
+                    # If the article has no matching sentiment, the keys are not set in the DF.
                     # Check if the keys exists, and create a default = 0.0 if not
                     nx, px, zx = 0.0, 0.0, 0.0
                     try:
@@ -565,8 +566,8 @@ def main():
                     merge_row = pd.merge(news_ai.yfn.sen_stats_df, aggmean_sent_df, on=['art', 'urlhash'])
                     final_sent_df = pd.concat([final_sent_df, merge_row], ignore_index=True)
                     ai_nlp_cycle += 1
-                    if ai_nlp_cycle < arg_cycle:
-                        continue
+                    if ai_nlp_cycle < arg_cycle:        # only counting real articles, not junk, fake, adds etc
+                        pass
                     else:
                         print (f"Exiting AI NLP cycle @ article: {ai_nlp_cycle}...")
                         break                    
@@ -605,6 +606,7 @@ def main():
             totals_df.index = ['Totals']
             final_sent_df['art'] = final_sent_df['art'].astype(object)
             totals_df['urlhash'] = ''       # Or np.nan if preferred for a numerical representation
+            
             df_final = pd.concat([final_sent_df, totals_df])
             # print ( f"{df_final}")
             print (f"\n")

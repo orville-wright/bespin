@@ -37,7 +37,7 @@ class lmdb_io_eng:
 ################# init
     def __init__(self, yti, db_name, global_args):
         cmi_debug = __name__+"::"+self.__init__.__name__
-        logging.info( f'%sn- Instantiate.#{yti} LMDB instance: {db_name}' % cmi_debug )
+        logging.info( f'%s - Instantiate.#{yti} LMDB instance: {db_name}' % cmi_debug )
         self.args = global_args                            # Only set once per INIT. all methods are set globally
         self.yti = yti
         self.db_name = db_name
@@ -64,13 +64,13 @@ class lmdb_io_eng:
 ################# 2
     def open_lmdb_RW(self, yti):
         cmi_debug = __name__+"::"+self.open_lmdb_RW.__name__+".#"+str(self.yti)
-        logging.info( f'%s   - open_lmdb_RO.#{self.yti} Instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s    - open_lmdb_RO.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
 
         try:
             self.env = lmdb.open(db_inst, map_size=1024*1024*1024, readonly=False)     # map_size: Maximum size DB = 1GB
-            logging.info( f'%s   - Successfully openend KVstore - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
-            logging.info( f'%s   - KVstore remains globally open.#{self.yti} Instance: {self.db_name}' % cmi_debug )
+            logging.info( f'%s    - Successfully openend KVstore - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
+            logging.info( f'%s    - KVstore remains globally open.#{self.yti} Instance: {self.db_name}' % cmi_debug )
             return self.env
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")

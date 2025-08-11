@@ -158,14 +158,13 @@ class yfnews_reader:
               creates the urlhash entry via: yfn_jsdb[aurl_hash] = get(resp)
         """
         cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)
-        logging.info( f'%s  - get()_CYCLE: {self.get_counter}' % cmi_debug )
 
         js_session = HTMLSession()                  # Create a new session        
         with js_session.get(url) as self.js_resp0:  # must do a get() - NO setting cookeis/headers)
-            logging.info(f'%s  - Simple HTML Request get()...' % cmi_debug )
+            logging.info(f'%s  - Simple HTML Request get() / Cycle.#{self.get_counter:03}' % cmi_debug ) 
 
         # HACK to help logging() f-string bug to handle strings with %
-            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+url
+            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+" - "+url
             logging.info('%s' % cmi_debug )
             #logging.info( f"%s - JS_session.get() sucessful: {url}" % cmi_debug )
             cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)    # reset cmi_debug
@@ -184,7 +183,7 @@ class yfnews_reader:
         self.yfn_htmldata = self.js_resp0.text      # class GLOBAL store page HTML text in memory in this class
         auh = hashlib.sha256(url.encode())          # hash the url
         aurl_hash = auh.hexdigest()
-        logging.info( f'%s  - CREATE cache entry: [ {aurl_hash} ]' % cmi_debug )
+        logging.info( f'%s  - CREATE ml_ingest DB cache entry: [ {aurl_hash} ]' % cmi_debug )
         self.yfn_jsdb[aurl_hash] = self.js_resp0    # create jsdb CACHE entry @ key=aurl_hash, value=js_resp0 (i.e. get()::resp, not  page TEXT data)
 
         # Xray DEBUG
@@ -482,17 +481,12 @@ class yfnews_reader:
     # Trying to refactor to craw4al, but currently uses BS4
     def extract_article_data(self, item_idx, sentiment_ai):
         """
-        Depth : 3
-        TODO: rename this function to ext_artdata_BS4
-        This function is controleed from main()
-        Returns:
-        - total_tokens, total_words, total_scent, final_results
-        - these vars come from: compute_sentiment()
-        
-        Extractor:  BS4
+        Depth: 3
+        Extractor:  BS4 -  (engine decidcated to BS4 only)
         - Build the Text corpus for 1 (one) article only
         - Calls sentiment computation for 1 article
         
+        WARN: 
         Only do this once the article has been evaluated and we know where/what article TEXT is
         -  article must have its get() resp & BS4 objects cached in yfn_jsdb{}
         - Sets the Body Data zone, the <p> TAG zone
@@ -500,6 +494,12 @@ class yfnews_reader:
         - Stores it in a Database
         - Associate it to the metadata info for this article
         Its now available for the LLM to compute sentiment
+
+        TODO: rename this function to ext_artdata_BS4
+        This function is controleed from main()
+        Returns:
+        - total_tokens, total_words, total_scent, final_results
+        - these vars come from: compute_sentiment()
         """
 
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(self.yti)
@@ -510,6 +510,23 @@ class yfnews_reader:
         self.sent_ai = sentiment_ai
         lmdb_dbname = "LMDB_0001"
         self.kvio_eng = lmdb_io_eng(1, lmdb_dbname, self.args)
+
+        # #########################################
+        # private helper function : BS4 extractor
+        def dump_kvcache_bs4():
+            with self.kvio_eng.env.begin() as txn0:
+                print(f"BS4 Dumping LMDB KV cache database...")    
+                cursor0 = txn0.cursor()
+                count = 0
+                for _key0, _value0 in cursor0:
+                    key_str = _key0.decode('utf-8')
+                    value_str = _value0.decode('utf-8')
+                    print(f"LMDB -  KEY: {key_str} -> VALUE: {value_str[:50]}")
+                    count += 1
+                print(f"\nBS4 Total entries in LMDB database: {count}")    
+                #self.kvio_eng.env.close()
+            return
+        # #########################################
         
         self.sent_ai.empty_vocab = 0
         if 'exturl' in data_row.keys():
@@ -523,66 +540,91 @@ class yfnews_reader:
 
         symbol = symbol.upper()
 
-        # this code is to seet if its allreayd been read, and all its data now exists in
-        # the LMDB K/V datastore... its now permenantly cached !
-        '''
-        open the lmdb
-        construct the LMDB key from known urlhash:  key = 0123.SYMBOL.URLHASH
-        check the urlhash exists
-        if exists, skip everything b/c have a Final-Results dict in LMDB containing all sentiment metrics !
-        else, continue
-        '''
-        logging.info( f'%s - Opening LMDB READ-ONLY mode...' % cmi_debug )
+        # Deep Caching engine (LMDB KV store)
+        # check if article has allreayd been read/extracted, and its metadata exists in
+        # the LMDB K/V datastore... its now permenantly Deep-Cached !
+        logging.info( f'%s - BS4 Opening LMDB READ-ONLY mode...' % cmi_debug )
+        #kv_success = None
         kv_success = self.kvio_eng.open_lmdb_RO(1)
-        if kv_success != 1:
-            pass    # faield to open LMDB. Continue with manuall full get() read of URL
-        else:
-            # debug
-            '''
-            with self.kvio_eng.env.begin() as txn0:
-                cursor0 = txn0.cursor()
-                count = 0
-                for _key0, _value0 in cursor0:
-                    key_str = _key0.decode('utf-8')
-                    value_str = _value0.decode('utf-8')
-                    print(f"LMDB -  KEY: {key_str} -> VALUE: {value_str[:50]}")
-                    count += 1
-                print(f"\nTotal entries in LMDB database: {count}")    
-                #self.kvio_eng.env.close()
-            '''
-            
-            ################# BS4 cache KV engine
+        if kv_success is not None:
+            ################# BS4 Deep Cache KV engine
             #            
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
-            logging.info( f'%s - CHECKING sentiment data in KVstore: {_key}' % cmi_debug )
+            logging.info( f'%s - BS4 CHECKING sentiment Deep Cache KVstore: {_key}' % cmi_debug )
             with self.kvio_eng.env.begin() as txn:
                 ret_code = txn.get(bs4_kvs_key)             # lookup key in KVstore
                 if ret_code is not None:
-                    logging.info( f'%s - FOUND - sentiment entry in KVstore: validating...' % cmi_debug )
-                    print (f"###-debug-562: LMDB cacbe hit for BS4 reader...")
+                    logging.info( f'%s - BS4 FOUND ! Deep Cache entry: validating...' % cmi_debug )
+                    _final_results = dict()               # ensure empty
                     try:
                         _v_str = ret_code.decode('utf-8') # Deserialiize, Decode bytes to string
                     except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                        print(f"Error deserializing value: {e}")
-                        print (f"###-debug-567: LMDB deserialzier failure...")
+                        print(f"BS4 Error deserializing value: {e}")
+                        print (f"###-debug-567: BS4 LMDB deserialzier failure !")
                         pass
                     else:
-                        final_results = json.loads(_v_str)        # parse JSON
-                        kv_url_hash = final_results['urlhash']
-                        print (f"###-debug-568: Live URL hash:    {_url_hash}")
-                        print (f"###-debug-569: KVstore URL hash: {kv_url_hash}")
-                        total_tokens=0
-                        total_words=0
-                        final_results=0
-                        return total_tokens, total_words, final_results
+                        _final_results = json.loads(_v_str)        # parse JSON
+                        kv_url_hash = _final_results['urlhash']
+                        print (f"###-debug-572: BS4 Live URL hash:    {_url_hash}")
+                        print (f"###-debug-573: BS4 KVstore URL hash: {kv_url_hash}")
+                        self.total_tokens = 0                        
+                        self.total_words = _final_results['total_words']
+                        self.total_chars = _final_results['chars_count']
+                        
+                        self.sen_data = [[
+                            item_idx,
+                            kv_url_hash,
+                            _final_results['positive_count'],
+                            _final_results['neutral_count'],
+                            _final_results['negative_count']
+                            ]]
+                        
+                        print (f"{self.sen_data}" )
+                        
+                        # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
+                        sentiment_ai.sentiment_count['positive'] = int(0)
+                        sentiment_ai.sentiment_count['negative'] = int(0)
+                        sentiment_ai.sentiment_count['neutral'] = int(0)
+                        logging.info( f'%s - BS4 Rehydrate sent DF metrics from Deep Cache...' % cmi_debug )                        
+                        for _dc_k, _dc_v in _final_results.items():
+                            if isinstance(_dc_v, dict):
+                                self.total_tokens += int(_dc_v['tokenz'])
+                                _chunk_sent = _dc_v['sent_type']
+                                sentiment_ai.sentiment_count[_chunk_sent] += 1  # count sentiment type
+                                sen_package = dict(sym=symbol,
+                                                article=_final_results['article'],
+                                                urlhash=kv_url_hash,
+                                                chunk=_dc_v['chunk'],
+                                                rank=_dc_v['sent_score'],
+                                                sent=_dc_v['sent_type'],
+                                                )
+
+                                sentiment_ai.save_sentiment_df(item_idx, sen_package)
+                            else:
+                                continue      
+
+                        # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
+                        sent_fp = int(_final_results['positive_count'])
+                        sent_fn = int(_final_results['negative_count'])
+                        sent_fz = int(_final_results['neutral_count'])
+                        
+                        sent_p = int(sentiment_ai.sentiment_count['positive'])
+                        sent_n = int(sentiment_ai.sentiment_count['negative'])
+                        sent_z = int(sentiment_ai.sentiment_count['neutral'])
+
+                        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Neutral: {sent_fz}({sent_z}) / Postive: {sent_fp}({sent_p}) / Negative: {sent_fn}({sent_n})")
+                        return self.total_tokens, self.total_words, _final_results
+                        # ##### END of Deep Cache HIT run... prints Metrics all from Deep Cache
                 else:
-                    logging.info( f'%s - MISSING - no sentiment entry in KVstore' % cmi_debug )
-                    print (f"###-debug-570: LMDB cacbe miss for BS4 reader...")
+                    logging.info( f'%s - BS4 MISSING - no Deep Cache entry' % cmi_debug )
+                    print (f"###-debug-580: BS4 LMDB Deep Cacbe miss !")
             #
-            ############# End cache engine
-                    
+            # ############ End Deep cache engine
+        else:
+            print (f"###-debug-628: Failed to open LMDB DB !! - FALLBACK to C4 Net Read extratcion !!" )
+            
         # logging hack fixes f-string error when URLs have a "%" - breaks logging module (NO FIX)
         logging.info( f'%s - BS4 urlhash get() cache lookup: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
@@ -590,24 +632,23 @@ class yfnews_reader:
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
 
         # this code below is for reading the URL
-        logging.info( f'%s - CHECKING get() cache... {cached_state}' % cmi_debug )
+        logging.info( f'%s - BS4 CHECKING Net Cache... {cached_state}' % cmi_debug )
         try:
             self.yfn_jsdb[cached_state]         # fast key KeyError existance test
             cx_soup = self.yfn_jsdb[cached_state]
-            logging.info( f'%s - Found get() cahce entry: Render data from cache...' % cmi_debug )
+            logging.info( f'%s - BS4 Found Net Cahce entry: Render data from cache...' % cmi_debug )
             cx_soup.html.render()            # since we dont cache the raw data, we need to render the page again
             self.yfn_jsdata = cx_soup.text   # store the rendered raw data
             dataset_1 = self.yfn_jsdata
-            logging.info( f'%s - Cached object    : {cached_state}' % cmi_debug )
-            logging.info( f'%s - Cache req/get    : {type(cx_soup)}' % cmi_debug )
-            logging.info( f'%s - Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
-            logging.info( f'%s - Cache URL object : {cx_soup.url}' % cmi_debug )
-            logging.info( f'%s - BS4 read url now...' % cmi_debug )
+            logging.info( f'%s - BS4 Cached object    : {cached_state}' % cmi_debug )
+            logging.info( f'%s - BS4 Cache req/get    : {type(cx_soup)}' % cmi_debug )
+            logging.info( f'%s - BS4 Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
+            logging.info( f'%s - BS4 Cache URL object : {cx_soup.url}' % cmi_debug )
             # This is where we refactor to crawl4ai
             self.nsoup = BeautifulSoup(escape(dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
         except KeyError:
-            logging.info( f'%s - MISSING from cache - must read page' % cmi_debug )
-            logging.info( f'%s - Cache URL object   : {type(durl)}' % cmi_debug )
+            logging.info( f'%s - BS4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
+            logging.info( f'%s - BS4 Cache URL object:  {type(durl)}' % cmi_debug )
             cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
@@ -621,29 +662,28 @@ class yfnews_reader:
             xhash = self.do_simple_get(durl)            # xhash now == cached_state (what we were given, but faield to find in cache))
             cy_soup = self.yfn_jsdb[xhash]              # pikup up get() response from the has generate from do_simple_get()
             
-            logging.info( f'%s - Retry cache lookup:     {cached_state}' % cmi_debug ) 
+            logging.info( f'%s - BS4 cache RETRY lookup: {cached_state}' % cmi_debug ) 
             if self.yfn_jsdb[cached_state]:
-                logging.info( f'%s - Found cache entry: {cached_state}' % cmi_debug )
                 self.yfn_jsdata = cy_soup.text
+                logging.info ( f'%s - BS4 Found entry:   {cached_state}' % cmi_debug )
+                logging.info ( f'%s - BS4 Cached url:    {cy_soup.url}' % cmi_debug )
+                logging.info ( f'%s - BS4 Cache req/get: {type(cy_soup)}' % cmi_debug )
+                logging.info ( f'%s - Bs4 Cache Dataset: {type(self.yfn_jsdata)}' % cmi_debug )     
                 dataset_2 = self.yfn_htmldata           # Basic HTML engine  get()
-                logging.info ( f'%s - Cache url:     {cy_soup.url}' % cmi_debug )
-                logging.info ( f'%s - Cache req/get: {type(cy_soup)}' % cmi_debug )
-                logging.info ( f'%s - Cache Dataset: {type(self.yfn_jsdata)}' % cmi_debug )     
-                # This is where we refactor to crawl4ai
                 self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")        # BS4 read() <- replace with crawl4ai
             else:
-                logging.info( f'%s - FAIL to set BS4 data !' % cmi_debug )
+                logging.info( f'%s - FAILED to set BS4 data !' % cmi_debug )
                 return 0, 0, {'label': 'neutral', 'score': 0.5}
                 # total_tokens, total_words, total_scent, final_results
                 
-        # from here we extracr thet text datq
-        logging.info( f'%s - BS4 extractor - get Article TEXT for AI Sentiment NLP...' % cmi_debug )
+        # Extractthet Article text data via BS4
+        logging.info( f'%s - BS4 extractor / get Article TEXT for AI Sentiment NLP...' % cmi_debug )
         if external is True:    # page is Micro stub Fake news article
-            logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
+            logging.info( f'%s - BS4 Skipping Micro Article stub... [ {item_idx} ]' % cmi_debug )
             return 0, 0, {'label': 'neutral', 'score': 0.5}
             # total_tokens, total_words, total_scent, final_results
         else:
-            logging.info( f'%s - set BS4 data zones for article: [ {item_idx} ]' % cmi_debug )
+            logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
             local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
             local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})        # comes above/before article
             local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})   # full news article - locally hosted
@@ -656,27 +696,26 @@ class yfnews_reader:
             ####################################################################
             #
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-            logging.info( f'%s  - Exec NLP sent classifier pipeline.#0...' % cmi_debug )
+            logging.info( f'%s  - BS4 Exec NLP sent classifier pipeline.#0...' % cmi_debug )
             # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
-            # 0 = Crawl4ai extractor
-            # 1 = BS4 extractor
+            # 0 = Crawl4ai extractor, 1 = BS4 extractor
             total_tokens, total_words, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
             
+            bs4_p_tag_count = len(local_stub_news_p)
+            
+            # compute total chars (BS4 specific, as C4 is diff data structure)
             extr_len = 0
             for _i, _v in enumerate(local_stub_news_p):
                 extr_len += sum(len(_s) for _s in _v.text)
-            
-            self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
-            
-            # create LMDB entry here !!!
 
+            # build cr_package for KV store
+            self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
+            self.sent_ai.cr_package.update({ 'total_words': int(total_words) })
+
+            # these vars are set within compute_sentiment()
             sent_z = self.sent_ai.sentiment_count['neutral']
             sent_p = self.sent_ai.sentiment_count['positive']
             sent_n = self.sent_ai.sentiment_count['negative']
-            
-            if self.sent_ai.empty_vocab > 0:
-                print (f"\n")
-            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
             
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
             # This is helpful for merging the info with other dataframes later on
@@ -690,36 +729,46 @@ class yfnews_reader:
 
             sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
+            
             final_results.update({
-                'positive_count': self.sent_ai.sentiment_count['positive'],
-                'neutral_count': self.sent_ai.sentiment_count['neutral'],
-                'negative_count': self.sent_ai.sentiment_count['negative']
+                'positive_count': sent_p,
+                'neutral_count': sent_z,
+                'negative_count': sent_n
                 })
             
-            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
+            # Deep Cache KVstore write JSon package
+            logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
             kv_success = self.kvio_eng.open_lmdb_RW(2)
-            if kv_success != 1:
-                logging.info( f'%s - FAILED to open KVstore / not writing KVcache entry !!!' % cmi_debug )
-                pass    # faield to open LMDB. Continue with manuall full get() read of URL
-            else:
+            if kv_success is not None:      # explicit reliable singleton None test
                 _url_hash = data_row['urlhash']
                 _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
                 bs4_kvs_key = _key.encode('utf-8')              # byte encode 
-                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
+                logging.info( f'%s - BS4 WRITE sentiment package to Deep Cache KVstore: {_key}' % cmi_debug )
                 with self.kvio_eng.env.begin(write=True) as _txn:
                     _data_json = json.dumps(self.sent_ai.cr_package, default=str)
                     _txn.put(bs4_kvs_key, _data_json.encode('utf-8'))
                     self.kvio_eng.env.close
+                    print (f"###-debug-735 dump BS4 KV package\," )
+                    print (f"{_data_json}" )
+            else:
+                logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
+                pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
 
-            print ( f"======================================== End: {item_idx} ===============================================")
+            # empty vocabulary pretty-printer logic for eof=""
+            if self.sent_ai.empty_vocab > 0:
+                print (f"\n")
+            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n} / BS4 ptags: {bs4_p_tag_count}")
+            
+            print ( f"================================ BS4 AI NLP end article: {item_idx} ================================")
             return total_tokens, total_words, final_results
+
 
     # #####################################################################################
     # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1
     # sync crawl4 implementation of extract_article_data()
     # HEAVY network data extractor
     # Reads each URL, and crawls that page, extracting key elements
-    # This can be refactors to craw4al, but currently uses BS4
+    
     def extr_artdata_depth3(self, item_idx, sentiment_ai):
         """
         Depth : 3
@@ -746,7 +795,24 @@ class yfnews_reader:
         self.sent_ai.empty_vocab = 0
         lmdb_dbname = "LMDB_0001"
         self.kvio_eng = lmdb_io_eng(2, lmdb_dbname, self.args)
-        
+
+        # #########################################
+        # private helper function : Crawl4ai extractor
+        def dump_kvcache_c4():
+            with self.kvio_eng.env.begin() as txn0:
+                print(f"C4 Dumping LMDB KV cache database...")    
+                cursor0 = txn0.cursor()
+                count = 0
+                for _key0, _value0 in cursor0:
+                    key_str = _key0.decode('utf-8')
+                    value_str = _value0.decode('utf-8')
+                    print(f"LMDB -  KEY: {key_str} -> VALUE: {value_str[:50]}")
+                    count += 1
+                print(f"\nC4 Total entries in LMDB database: {count}")    
+                #self.kvio_eng.env.close()
+            return
+        # #########################################
+                
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
@@ -757,53 +823,88 @@ class yfnews_reader:
             cached_state = data_row['urlhash']
             symbol = symbol.upper()
             
-        logging.info( f'%s - Opening LMDB READ-ONLY mode...' % cmi_debug )
-        kv_success = self.kvio_eng.open_lmdb_RO(1)
-        if kv_success:
-            ################# BS4 cache KV engine
+        logging.info( f'%s - C4 Opening LMDB READ-ONLY mode...' % cmi_debug )
+        kv_success = self.kvio_eng.open_lmdb_RO(2)
+        if kv_success is not None:
+            ################# BS4 Deep Cache KV engine
             #
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash         # we are looking at the artile here. So test for this K/V data
             C4_kvs_key = _key.encode('utf-8')              # byte encode 
-            logging.info( f"%s - CHECKING C4 article row in KVstore: {_key:40}{'...' if len(_key) > 40 else ''}" % cmi_debug )
+            logging.info( f"%s - C4 CHECKING sentiment Deep Cache KVstore {_key:40}{'...' if len(_key) > 40 else ''}" % cmi_debug )
             with self.kvio_eng.env.begin() as txn:
                 ret_code = txn.get(C4_kvs_key)              # get _key
                 if ret_code is not None:                    # cache hit, found !
-                    logging.info( f'%s - FOUND C4 article row, validating data...' % cmi_debug )
-                    print (f"###-debug-773: LMDB cache hit for C4 reader...")
+                    logging.info( f'%s - C4 FOUND ! Deep Cache entry: validating...' % cmi_debug )
+                    _final_results = dict()                 # ensure clean & empty
                     try:
                         _v_str = ret_code.decode('utf-8')   # Deserialiize, Decode bytes into string
                     except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                        print(f"Error deserializing value: {e}")
-                        print (f"###-debug-778: LMDB C4 deserialzier failure...")
+                        print(f"C4 Error deserializing value: {e}")
+                        print (f"###-debug-793: C4 LMDB deserialzier failure !")
                         pass
                     else:
                         _final_results = json.loads(_v_str)        # parse JSON
                         kv_url_hash = _final_results['urlhash']
-                        print (f"###-debug-783: dump final_results:\n{_final_results}")
-                        total_tokens = 0
-                        total_words = 0
-            
+                        #print (f"###-debug-798: dump final_results:\n{_final_results}")
+                        print (f"###-debug-799: C4 Live URL hash:    {_url_hash}")
+                        print (f"###-debug-800: C4 KVstore URL hash: {kv_url_hash}")
+                        self.total_tokens = 0
+                        self.total_words = _final_results['total_words']
+                        self.total_chars = _final_results['chars_count']
+                        
+                        # read the Deep cache entry, rehydrate the save_sentiment DF from it
+                        sentiment_ai.sentiment_count['positive'] = int(0)
+                        sentiment_ai.sentiment_count['negative'] = int(0)
+                        sentiment_ai.sentiment_count['neutral'] = int(0)
+                        logging.info( f'%s - C4 Rehydrate sent DF metrics from Deep Cache...' % cmi_debug )                        
+                        for _dc_k, _dc_v in _final_results.items():
+                            if isinstance(_dc_v, dict):
+                                self.total_tokens += int(_dc_v['tokenz'])
+                                _chunk_sent = _dc_v['sent_type']
+                                sentiment_ai.sentiment_count[_chunk_sent] += 1  # count sentiment type
+                                sen_package = dict(sym=symbol,
+                                                article=_final_results['article'],
+                                                urlhash=kv_url_hash,
+                                                chunk=_dc_v['chunk'],
+                                                rank=_dc_v['sent_score'],
+                                                sent=_dc_v['sent_type'],
+                                                )
+
+                                sentiment_ai.save_sentiment_df(item_idx, sen_package)
+                            else:
+                                continue
+
+                        # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
+                        # sent_fp = int(_final_results['positive_count'])
+                        # sent_fn = int(_final_results['negative_count'])
+                        # sent_fz = int(_final_results['neutral_count'])
+                        
+                        sent_p = int(sentiment_ai.sentiment_count['positive'])
+                        sent_n = int(sentiment_ai.sentiment_count['negative'])
+                        sent_z = int(sentiment_ai.sentiment_count['neutral'])
+
                         self.sen_data = [[
                             item_idx,
                             kv_url_hash,
-                            _final_results['positive_count'],
-                            _final_results['neutral_count'],
-                            _final_results['negative_count']
+                            sent_p,
+                            sent_z,
+                            sent_n
                             ]]
 
-                        sen_package = dict(sym=symbol, urlhash=self.active_urlhash, article=self.item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
-                        self.save_sentiment_df(self.item_idx, sen_package)      # page, data
-
+                        print (f"{self.sen_data}" )
+                                                                           
                         sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
                         self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
-                        print ( f"======================================== End #4: {item_idx} ===============================================")
-                        return total_tokens, total_words, _final_results
+
+                        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}" )
+                        print ( f"======================================== C4 End #4: {item_idx} ===============================================")
+                        return self.total_tokens, self.total_words, _final_results   # TODO: not sure _final_results !! esp total_words
                 else:
-                    logging.info( f'%s - MISSING, no C4 artcile row in KVstore' % cmi_debug )
+                    logging.info( f'%s - C4 MISSING - no Deep Cache entry' % cmi_debug )
+                    print (f"###-debug-821: BS4 LMDB Deep Cache miss !")
         else:
-            print (f"###-debug-804: Failed to open LMDB DB !!" )
-            print (f"###-debug-805: Fallback to C4 data extraction..." )
+            print (f"###-debug-822: C4 FAIL to open LMDB DB !! - FALLBACK to Net Read extraction !!" )
             #
             ############# End cache engine            
 
@@ -898,16 +999,17 @@ class yfnews_reader:
                         extr_len = 7    # force analysis, possible PREMIUM paywall block page
                     match extr_len:
                         case 0:
-                            print ( f"======================================== End #0: {item_idx} ===============================================")
+                            print ( f"================================ #0 - C4 AI NLP end article: {item_idx} ================================")
                             return 0, 0, 0
                         case 7:
                             yfn_prem_paywall = element.get('Premium_paywall')
                             if yfn_prem_paywall.upper() == "PREMIUM":
                                 print ("Premium Paywalled article. Skipping...")
-                                print ( f"======================================== End #1: {item_idx} ===============================================")
+                                print ( f"================================ #1 - C4 AI NLP end article: {item_idx} ================================")
                                 return 0, 0, 0
                             else:
-                                print ( f"======================================== End #2: {item_idx} ===============================================")
+                                print ("Unknonw article type. Skipping...")
+                                print ( f"================================ #2 - C4 AI NLP end article: {item_idx} ================================")
                                 return 0, 0, 0
                         case _:
                             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
@@ -916,17 +1018,39 @@ class yfnews_reader:
                             total_tokens, total_words, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
                             if self.sent_ai.empty_vocab > 0: 
                                 print (f"\n")      # close out the EOL NL for "Empty Vocab" string
-                            
-                            # The status report is fro Craw4ai engine
-                            sent_z = self.sent_ai.sentiment_count['neutral']
-                            sent_p = self.sent_ai.sentiment_count['positive']
-                            sent_n = self.sent_ai.sentiment_count['negative']
-            
-                            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
-                                # set up a dataframe to hold the aggregated sentiment for this article in columns.
-                                # This is helpful for merging the info with other dataframes later on
 
                             self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
+                            self.sent_ai.cr_package.update({ 'total_words': int(total_words) })
+
+                            final_results.update({
+                                'positive_count': sentiment_ai.sentiment_count['positive'],
+                                'neutral_count': sentiment_ai.sentiment_count['neutral'],
+                                'negative_count': sentiment_ai.sentiment_count['negative']
+                                })
+
+                            # Create LMBD KV cache entry
+                            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
+                            kv_success = self.kvio_eng.open_lmdb_RW(3)
+                            if kv_success is not None:
+                                _url_hash = data_row['urlhash']
+                                _key = "0001"+"."+symbol+"."+_url_hash     # we are looking at the artile here. So test for this K/V data
+                                c4_kvs_key = _key.encode('utf-8')          # byte encode 
+                                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
+                                with self.kvio_eng.env.begin(write=True) as _txn:
+                                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
+                                    _txn.put(c4_kvs_key, _data_json.encode('utf-8'))
+                                    self.kvio_eng.env.close
+                            else:
+                                logging.info( f'%s - C4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
+                                pass    # faield to open LMDB. Continue with manuall full get() read of URL
+
+                            # The status report is fro Craw4ai engine
+                            sent_p = self.sent_ai.sentiment_count['positive']
+                            sent_z = self.sent_ai.sentiment_count['neutral']
+                            sent_n = self.sent_ai.sentiment_count['negative']
+
+                            # set up a dataframe to hold the aggregated sentiment for this article in columns.
+                            # This is helpful for merging the info with other dataframes later on                            
                             self.sen_data = [[
                                 item_idx,
                                 hs,
@@ -938,29 +1062,9 @@ class yfnews_reader:
                             sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
                             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
 
-                            final_results.update({
-                                'positive_count': sentiment_ai.sentiment_count['positive'],
-                                'neutral_count': sentiment_ai.sentiment_count['neutral'],
-                                'negative_count': sentiment_ai.sentiment_count['negative']
-                                })
-
-                            # Create LMBD KV cache entry
-                            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
-                            kv_success = self.kvio_eng.open_lmdb_RW(3)
-                            if kv_success != 1:
-                                logging.info( f'%s - FAILED to open KVstore / not writing KVcache entry !!!' % cmi_debug )
-                                pass    # faield to open LMDB. Continue with manuall full get() read of URL
-                            else:
-                                _url_hash = data_row['urlhash']
-                                _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
-                                c4_kvs_key = _key.encode('utf-8')              # byte encode 
-                                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
-                                with self.kvio_eng.env.begin(write=True) as _txn:
-                                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
-                                    _txn.put(c4_kvs_key, _data_json.encode('utf-8'))
-                                    self.kvio_eng.env.close
-
-                            print ( f"======================================== End #3: {item_idx} ===============================================")
+            
+                            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
+                            print ( f"================================ C4 AI NLP end article: {item_idx} ================================" )
                             return total_tokens, total_words, final_results
 
         return 0, 0, 0
