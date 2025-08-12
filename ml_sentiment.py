@@ -110,12 +110,12 @@ class ml_sentiment:
         self.active_urlhash = urlhash
         if len(scentxt) == 0:
             self.final_results.update({ 'noart_data': 1 })
-            logging.info( f"%s - ERROR Crawl4ai failed to read article during skimming Depth 0 (multiple reasons possible)!" % cmi_debug )
-            return 0, 0, 0
+            logging.info( f"%s - ERROR Crawl4ai no article skimming data from Depth 0 (multiple reasons possible)!" % cmi_debug )
+            return 0, 0, 0    # this is prob an error waiting to happen (prob needs chunker dict @ var 3)
         else:
             pass
         if self.ext_type == 0:
-            logging.info( f"%s - Crawl4ai engine.#1 GPT Truncation @ {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
+            logging.info( f"%s - Crawl4ai engine.#1 LLM Truncation @ {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
             # input MUST be a crawl4ai prepred list of full article text. 
             # c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
             # therfore chunker has a higher probabliy of needing to do a lot more work for c4
@@ -140,7 +140,7 @@ class ml_sentiment:
 
             return self.ttc, self.twc, final_results
         else:
-            logging.info( f"%s - BS4 engine.#1 - Transformer truncation: {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
+            logging.info( f"%s - BS4 engine.#1 - LLM Truncation @ {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
             # WARN: must be a BS4 prepared list of article text
             # - BS4 only sends a list of each individual <p> tags element
             # - 1 at a time from within the articel body
@@ -168,7 +168,6 @@ class ml_sentiment:
                     self.ttc, _i_twc, final_results = self.dict_processor(symbol, blocklet_d)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _i_twc
                     bs4_row += 1
-
                     self.cr_package.update({ 'sent_paras': int(self.tsenparas) })
                     
             return self.ttc, self.twc, final_results
@@ -277,14 +276,15 @@ class ml_sentiment:
                             'sent_type': clsfr_result[0]['label'],
                             'sent_score': clsfr_result[0]['score'] })
 
-            # add lone element outside of emebed dict
+            # add lone element outside of emebed dict. 
             self.cr_package.update({ 'sent_paras': int(self.tsenparas) })
             ttc += tc
             tnc += twc
             if self.args['bool_verbose'] is True:        # Logging level
                 print ( f"Chunk: {i:03} / {chunk_type} / [ Words: {tnc:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
-
-            final_results = self.nlp_sent_engine(i, symbol, ngram_tkzed, ngram_count, clsfr_result[0], self.cr_package)
+                
+            _tc = f'{i:03}'     # format chunk
+            final_results = self.nlp_sent_engine(_tc, symbol, ngram_tkzed, ngram_count, clsfr_result[0], self.cr_package)
         return ttc, tnc, final_results
 
  ###################
@@ -351,7 +351,6 @@ class ml_sentiment:
         """
         self.yti
         cmi_debug = __name__+"::"+self.save_sentiment_df.__name__+".#"+str(self.yti)
-        logging.info( f'%s - Save sentiment metrics to DF for artcile: {item_idx}' % cmi_debug )
         x = self.df0_row_count      # get last row added to DF
         x += 1
 
@@ -376,7 +375,7 @@ class ml_sentiment:
         self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
         self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
         self.df0_row_count = x
-        logging.info( f"%s Sentiment DF Updated / Article: {item_idx} / {chk:03}" % cmi_debug )
+        logging.info( f"%s - Sent DF Updated / Art: {item_idx} / chunk: {chk:03} / sent: {snt} / score: {rnk}" % cmi_debug )
         return
 
 ##################################### 3 ####################################

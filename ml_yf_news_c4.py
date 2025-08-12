@@ -562,37 +562,23 @@ class yfnews_reader:
                         _v_str = ret_code.decode('utf-8') # Deserialiize, Decode bytes to string
                     except (UnicodeDecodeError, json.JSONDecodeError) as e:
                         print(f"BS4 Error deserializing value: {e}")
-                        print (f"###-debug-567: BS4 LMDB deserialzier failure !")
                         pass
                     else:
                         _final_results = json.loads(_v_str)        # parse JSON
                         kv_url_hash = _final_results['urlhash']
-                        print (f"###-debug-572: BS4 Live URL hash:    {_url_hash}")
-                        print (f"###-debug-573: BS4 KVstore URL hash: {kv_url_hash}")
-                        self.total_tokens = 0                        
-                        self.total_words = _final_results['total_words']
-                        self.total_chars = _final_results['chars_count']
+                        self.total_tokens = 0
                         
-                        self.sen_data = [[
-                            item_idx,
-                            kv_url_hash,
-                            _final_results['positive_count'],
-                            _final_results['neutral_count'],
-                            _final_results['negative_count']
-                            ]]
-                        
-                        print (f"{self.sen_data}" )
-                        
-                        # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
+                        # reset sent_count before we start
+                        sentiment_ai.sentiment_count['neutral'] = int(0)
                         sentiment_ai.sentiment_count['positive'] = int(0)
                         sentiment_ai.sentiment_count['negative'] = int(0)
-                        sentiment_ai.sentiment_count['neutral'] = int(0)
+                        # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
                         logging.info( f'%s - BS4 Rehydrate sent DF metrics from Deep Cache...' % cmi_debug )                        
                         for _dc_k, _dc_v in _final_results.items():
                             if isinstance(_dc_v, dict):
                                 self.total_tokens += int(_dc_v['tokenz'])
                                 _chunk_sent = _dc_v['sent_type']
-                                sentiment_ai.sentiment_count[_chunk_sent] += 1  # count sentiment type
+                                sentiment_ai.sentiment_count[_chunk_sent] += int(1)  # incr  sentiment type counter
                                 sen_package = dict(sym=symbol,
                                                 article=_final_results['article'],
                                                 urlhash=kv_url_hash,
@@ -601,22 +587,33 @@ class yfnews_reader:
                                                 sent=_dc_v['sent_type'],
                                                 )
 
-                                sentiment_ai.save_sentiment_df(item_idx, sen_package)
+                                sentiment_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
                             else:
-                                continue      
-
-                        # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
+                                continue    # not looking at dict{} element in JSON package
+                                 
+                                # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
+                        self.total_words = _final_results['total_words']
+                        self.total_chars = _final_results['chars_count']
+                        sent_z = sentiment_ai.sentiment_count['neutral']
+                        sent_p = sentiment_ai.sentiment_count['positive']
+                        sent_n = sentiment_ai.sentiment_count['negative']
+                        self.sen_data = [[
+                                item_idx,
+                                    kv_url_hash,
+                                    sent_p,
+                                    sent_z,
+                                    sent_n
+                                    ]]
+                        
+                        sent_fz = int(_final_results['neutral_count'])
                         sent_fp = int(_final_results['positive_count'])
                         sent_fn = int(_final_results['negative_count'])
-                        sent_fz = int(_final_results['neutral_count'])
-                        
-                        sent_p = int(sentiment_ai.sentiment_count['positive'])
-                        sent_n = int(sentiment_ai.sentiment_count['negative'])
-                        sent_z = int(sentiment_ai.sentiment_count['neutral'])
 
-                        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Neutral: {sent_fz}({sent_z}) / Postive: {sent_fp}({sent_p}) / Negative: {sent_fn}({sent_n})")
+                        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Postive: {sent_fp}({sent_p}) / Neutral: {sent_fz}({sent_z}) / Negative: {sent_fn}({sent_n})")
+                        print (f"======================================== BS4 End #1: {item_idx} ===============================================" )
                         return self.total_tokens, self.total_words, _final_results
-                        # ##### END of Deep Cache HIT run... prints Metrics all from Deep Cache
+                        #
+                        # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache
                 else:
                     logging.info( f'%s - BS4 MISSING - no Deep Cache entry' % cmi_debug )
                     print (f"###-debug-580: BS4 LMDB Deep Cacbe miss !")
@@ -713,8 +710,8 @@ class yfnews_reader:
             self.sent_ai.cr_package.update({ 'total_words': int(total_words) })
 
             # these vars are set within compute_sentiment()
-            sent_z = self.sent_ai.sentiment_count['neutral']
             sent_p = self.sent_ai.sentiment_count['positive']
+            sent_z = self.sent_ai.sentiment_count['neutral']
             sent_n = self.sent_ai.sentiment_count['negative']
             
             # set up a dataframe to hold the aggregated sentiment for this article in columns.
@@ -748,8 +745,8 @@ class yfnews_reader:
                     _data_json = json.dumps(self.sent_ai.cr_package, default=str)
                     _txn.put(bs4_kvs_key, _data_json.encode('utf-8'))
                     self.kvio_eng.env.close
-                    print (f"###-debug-735 dump BS4 KV package\," )
-                    print (f"{_data_json}" )
+                    #print (f"###-debug-735 dump BS4 KV package," )
+                    #print (f"{_data_json}" )
             else:
                 logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
                 pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
@@ -757,11 +754,9 @@ class yfnews_reader:
             # empty vocabulary pretty-printer logic for eof=""
             if self.sent_ai.empty_vocab > 0:
                 print (f"\n")
-            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n} / BS4 ptags: {bs4_p_tag_count}")
-            
-            print ( f"================================ BS4 AI NLP end article: {item_idx} ================================")
+            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / BS4 ptags: {bs4_p_tag_count}")
+            print (f"======================================== BS4 End #2: {item_idx} ===============================================" )
             return total_tokens, total_words, final_results
-
 
     # #####################################################################################
     # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1
@@ -841,22 +836,18 @@ class yfnews_reader:
                         _v_str = ret_code.decode('utf-8')   # Deserialiize, Decode bytes into string
                     except (UnicodeDecodeError, json.JSONDecodeError) as e:
                         print(f"C4 Error deserializing value: {e}")
-                        print (f"###-debug-793: C4 LMDB deserialzier failure !")
                         pass
                     else:
                         _final_results = json.loads(_v_str)        # parse JSON
                         kv_url_hash = _final_results['urlhash']
-                        #print (f"###-debug-798: dump final_results:\n{_final_results}")
-                        print (f"###-debug-799: C4 Live URL hash:    {_url_hash}")
-                        print (f"###-debug-800: C4 KVstore URL hash: {kv_url_hash}")
                         self.total_tokens = 0
                         self.total_words = _final_results['total_words']
                         self.total_chars = _final_results['chars_count']
                         
                         # read the Deep cache entry, rehydrate the save_sentiment DF from it
                         sentiment_ai.sentiment_count['positive'] = int(0)
-                        sentiment_ai.sentiment_count['negative'] = int(0)
                         sentiment_ai.sentiment_count['neutral'] = int(0)
+                        sentiment_ai.sentiment_count['negative'] = int(0)
                         logging.info( f'%s - C4 Rehydrate sent DF metrics from Deep Cache...' % cmi_debug )                        
                         for _dc_k, _dc_v in _final_results.items():
                             if isinstance(_dc_v, dict):
@@ -871,18 +862,15 @@ class yfnews_reader:
                                                 sent=_dc_v['sent_type'],
                                                 )
 
-                                sentiment_ai.save_sentiment_df(item_idx, sen_package)
+                                # rehydrate sen_df0 from Depp Cache entry
+                                sentiment_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
+                                sentiment_ai.save_sentiment_df(item_idx, sen_package)   # rehydrate
                             else:
                                 continue
-
-                        # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
-                        # sent_fp = int(_final_results['positive_count'])
-                        # sent_fn = int(_final_results['negative_count'])
-                        # sent_fz = int(_final_results['neutral_count'])
                         
                         sent_p = int(sentiment_ai.sentiment_count['positive'])
-                        sent_n = int(sentiment_ai.sentiment_count['negative'])
                         sent_z = int(sentiment_ai.sentiment_count['neutral'])
+                        sent_n = int(sentiment_ai.sentiment_count['negative'])
 
                         self.sen_data = [[
                             item_idx,
@@ -891,20 +879,18 @@ class yfnews_reader:
                             sent_z,
                             sent_n
                             ]]
-
-                        print (f"{self.sen_data}" )
                                                                            
                         sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
                         self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
 
-                        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}" )
+                        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}" )
                         print ( f"======================================== C4 End #4: {item_idx} ===============================================")
                         return self.total_tokens, self.total_words, _final_results   # TODO: not sure _final_results !! esp total_words
                 else:
                     logging.info( f'%s - C4 MISSING - no Deep Cache entry' % cmi_debug )
-                    print (f"###-debug-821: BS4 LMDB Deep Cache miss !")
         else:
-            print (f"###-debug-822: C4 FAIL to open LMDB DB !! - FALLBACK to Net Read extraction !!" )
+            logging.info( f'%s - C4 FAIL - to open KVstore - doing Net get() extraction' % cmi_debug )
+            pass
             #
             ############# End cache engine            
 
@@ -960,15 +946,9 @@ class yfnews_reader:
                 logging.info( f'%s - Sent URL object  : {durl}' % cmi_debug )
                 logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )  
                 # Do it this way so that...
-                # - we  can spawn multiple async tasks in parallel
+                # - we can spawn multiple async tasks in parallel
                 # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
-                # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3
-                # result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
-                # result is:
-                #   { 'url': self.yfqnews_url,
-                #     'data': self.yfn_crawl_data,
-                #     'result': result  }
-                # self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction                    
+                  
             else:
                 logging.info( f'%s - FAIL to craw article {item_idx}' % cmi_debug )
                 return 0, 0, 0    # I think this is the correct return status
@@ -1063,7 +1043,7 @@ class yfnews_reader:
                             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
 
             
-                            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Neutral: {sent_z} / Postive: {sent_p} / Negative: {sent_n}")
+                            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}")
                             print ( f"================================ C4 AI NLP end article: {item_idx} ================================" )
                             return total_tokens, total_words, final_results
 
@@ -1072,7 +1052,7 @@ class yfnews_reader:
     # ################ 7
     async def c4_engine_depth3(self, durl, item_idx):
         """
-        Heler function for extr_artdata_depth3() ONLY - not a public API
+        Helper function for extr_artdata_depth3() ONLY - not a public API
         Just the crawl4ai engine for Depth 3
         Dont do anyting else
         """
