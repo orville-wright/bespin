@@ -138,6 +138,7 @@ class ml_sentiment:
                     self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # send = dict{}, Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _c_twc
 
+                #print (f"##-debug-141: {truncated}:\n{blocklet_d}\n\n {final_results}")
             return self.ttc, self.twc, final_results
         else:
             logging.info( f"%s - BS4 engine.#1 - LLM Truncation @ {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
