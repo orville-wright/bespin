@@ -149,3 +149,6 @@ tasks/
 
 .chrome_cache
 .chrome_cache/
+
+# Bespin specific
+datastore/*
