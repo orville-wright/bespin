@@ -525,11 +525,12 @@ def main():
                     tscz += final_results['sent_paras'] # totoal cumulatvie sentences read
                     this_urlhash = sent_ai.active_urlhash
                     pd.set_option('display.max_rows', None)
-                    pd.set_option('max_colwidth', 30)
+                    pd.set_option('max_colwidth', 40)
                     
-                    # print (f"###debug-530: dump sen_fd0:\n{sent_ai.sen_df0}")
                     aggregate_mean = sent_ai.sen_df0.loc[sent_ai.sen_df0['urlhash'] == this_urlhash].groupby('snt')['rnk'].mean()    # fill NaN with 0.0
-                
+                    #print (f"##-debug-531: dump ai.sen_df0 details:\n{sent_ai.sen_df0}")
+                    #print (f"##-debug-532: aggr mean:\n{aggregate_mean}")
+
                     # aggregate_mean DF keys are only set if the sentiment analysis computes a pos/net/neu sentiment for the article.
                     # If the article has no matching sentiment, the keys are not set in the DF.
                     # Check if the keys exists, and create a default = 0.0 if not
