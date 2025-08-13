@@ -153,5 +153,5 @@ tasks/
 # Bespin specific
 datastore/*
 datastore
-data.mdb
-lock.mdb
+*data.mdb
+*lock.mdb

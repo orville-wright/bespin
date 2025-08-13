@@ -627,7 +627,7 @@ def main():
             hpt_mins = ((twcz * aggr_sw_factor) + tscz + (tscz / 2)) / 175
             hpt_hours =  hpt_mins / 60
             analyst_time = (hpt_hours * 1.3) * 1.15     # extra time to compute sentiment, extra time to buld report
-            analyst_rate = 300         # hourly rate for a Wall St. Analyst $/hour
+            analyst_rate = 450         # hourly rate for a Wall St. Analyst $/hour
             analyst_cost = analyst_time * analyst_rate
             
             ai_sent_end_time = time.perf_counter()                          # Mark the end time

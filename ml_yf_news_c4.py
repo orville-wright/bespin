@@ -627,7 +627,11 @@ class yfnews_reader:
             # ############ End Deep cache engine
         else:
             print (f"###-debug-628: Failed to open LMDB DB !! - FALLBACK to C4 Net Read extratcion !!" )
-            
+        
+        #################################################################
+        # BS4 Net get() data extractor
+        # WARN: expensive network cost
+        # 
         # logging hack fixes f-string error when URLs have a "%" - breaks logging module (NO FIX)
         logging.info( f'%s - BS4 urlhash get() cache lookup: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
@@ -663,22 +667,24 @@ class yfnews_reader:
 
             #xhash = self.do_js_get(item_idx)           # for JS get()
             xhash = self.do_simple_get(durl)            # xhash now == cached_state (what we were given, but faield to find in cache))
-            cy_soup = self.yfn_jsdb[xhash]              # pikup up get() response from the has generate from do_simple_get()
-            
-            logging.info( f'%s - BS4 cache RETRY lookup: {cached_state}' % cmi_debug ) 
-            if self.yfn_jsdb[cached_state]:
-                self.yfn_jsdata = cy_soup.text
-                logging.info ( f'%s - BS4 Found entry:   {cached_state}' % cmi_debug )
-                logging.info ( f'%s - BS4 Cached url:    {cy_soup.url}' % cmi_debug )
-                logging.info ( f'%s - BS4 Cache req/get: {type(cy_soup)}' % cmi_debug )
-                logging.info ( f'%s - Bs4 Cache Dataset: {type(self.yfn_jsdata)}' % cmi_debug )     
-                dataset_2 = self.yfn_htmldata           # Basic HTML engine  get()
-                self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")        # BS4 read() <- replace with crawl4ai
+            if xhash is not None:
+                cy_soup = self.yfn_jsdb[xhash]              # pikup up get() response from the has generate from do_simple_get()
+                logging.info( f'%s - BS4 cache RETRY lookup: {cached_state}' % cmi_debug ) 
+                if self.yfn_jsdb[cached_state]:
+                    self.yfn_jsdata = cy_soup.text
+                    logging.info ( f'%s - BS4 Found entry:   {cached_state}' % cmi_debug )
+                    logging.info ( f'%s - BS4 Cached url:    {cy_soup.url}' % cmi_debug )
+                    logging.info ( f'%s - BS4 Cache req/get: {type(cy_soup)}' % cmi_debug )
+                    logging.info ( f'%s - Bs4 Cache Dataset: {type(self.yfn_jsdata)}' % cmi_debug )     
+                    dataset_2 = self.yfn_htmldata           # Basic HTML engine  get()
+                    self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")        # BS4 read() <- replace with crawl4ai
+                else:
+                    logging.info( f'%s - FAILED to set BS4 data !' % cmi_debug )
+                    return 0, 0, {'label': 'neutral', 'score': 0.5}     # total_tokens, total_words, total_scent, final_results
             else:
-                logging.info( f'%s - FAILED to set BS4 data !' % cmi_debug )
+                logging.info( f'%s - FAILED Net read do_simple_get() !' % cmi_debug )
                 return 0, 0, {'label': 'neutral', 'score': 0.5}
-                # total_tokens, total_words, total_scent, final_results
-                
+            
         # Extractthet Article text data via BS4
         logging.info( f'%s - BS4 extractor / get Article TEXT for AI Sentiment NLP...' % cmi_debug )
         if external is True:    # page is Micro stub Fake news article
