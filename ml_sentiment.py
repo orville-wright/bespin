@@ -249,6 +249,7 @@ class ml_sentiment:
         twc= 0
         ngram_count = 0
         tnc = 0
+        _x_cr_package = dict()      # ensure cr_packge is loca and empty !
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
         logging.info( f"%s - Global chunking engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
         for i, chunk in _text_dict.items():    # cycle through all scentenses/paragraphs sent to us
@@ -268,7 +269,7 @@ class ml_sentiment:
             logging.info( f"%s - Exec NLP classfier.#00 @ DICT_eng.#00..." % cmi_debug )
             clsfr_result = self.classifier(chunk, truncation=True)      # input = chunk {} - 1 element
             _k = f'{i:03}'  # nicly formated dict{} key
-            self.cr_package[_k] = ({
+            _x_cr_package[_k] = ({
                             'symbol': symbol,
                             'chunk': f"{i:03}",
                             'n-grams': f"{twc:03}",
@@ -277,20 +278,20 @@ class ml_sentiment:
                             'sent_type': clsfr_result[0]['label'],
                             'sent_score': clsfr_result[0]['score'] })
 
-            # add lone element outside of emebed dict. 
-            self.cr_package.update({ 'sent_paras': int(self.tsenparas) })
+            # add element outside of chunk element 
+            _x_cr_package.update({ 'sent_paras': int(self.tsenparas) })
             ttc += tc
             tnc += twc
             if self.args['bool_verbose'] is True:        # Logging level
                 print ( f"Chunk: {i:03} / {chunk_type} / [ Words: {tnc:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
                 
             _tc = f'{i:03}'     # format chunk
-            final_results = self.nlp_sent_engine(_tc, symbol, ngram_tkzed, ngram_count, clsfr_result[0], self.cr_package)
+            final_results = self.nlp_sent_engine(_tc, symbol, ngram_tkzed, ngram_count, clsfr_result[0], _x_cr_package)
         return ttc, tnc, final_results
 
  ###################
-    # Helper function
-    def nlp_sent_engine(self, i, symbol, ngram_tkzed, ngram_count, clsfr_result, cr_package):
+    # Helper function for dict_processor()
+    def nlp_sent_engine(self, i, symbol, ngram_tkzed, ngram_count, clsfr_result, _z_cr_package):
         """
         - removes stopwords
         - Calculates High Frequency Words inside the HOT classified LLM Transformer
@@ -329,7 +330,7 @@ class ml_sentiment:
             sen_package = dict(sym=symbol, urlhash=self.active_urlhash, article=self.item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
             self.save_sentiment_df(self.item_idx, sen_package)      # page, data
             self.sentiment_count[sen_result['label']] += 1  # count sentiment type
-            cr_package.update({
+            _z_cr_package.update({
                             'urlhash': self.active_urlhash,
                             'article': self.item_idx,
                             })
@@ -341,7 +342,7 @@ class ml_sentiment:
         except Exception as e:
             print ( f"ERROR sent engine !!: {e}")
     
-        return cr_package      # dict{}
+        return _z_cr_package      # dict{}
         #return self.ttc, self.twc, i
 
 ##################################### 1 ####################################
