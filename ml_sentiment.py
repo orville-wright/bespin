@@ -251,7 +251,7 @@ class ml_sentiment:
         tnc = 0
         _x_cr_package = dict()      # ensure cr_packge is loca and empty !
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
-        logging.info( f"%s - Global chunking engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
+        logging.info( f"%s - Unified chunking engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
         for i, chunk in _text_dict.items():    # cycle through all scentenses/paragraphs sent to us
             ngram_count = len(re.findall(r'\w+', chunk))  # count of words (ngrams)
             ngram_tkzed = word_tokenize(chunk)            # split TEXT chunk into NLP LLM tokens !! output -> list[]

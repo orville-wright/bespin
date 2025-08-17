@@ -599,6 +599,7 @@ class yfnews_reader:
                             pass
                         
                         self.total_tokens = 0
+                        
                         # reset sent_count before we start
                         self.sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
                         # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
@@ -747,7 +748,7 @@ class yfnews_reader:
             local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})   # full news article - locally hosted
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
 
-            ** need to check for NoneType here... due to sneaky html redirect to non-YFN
+            #** need to check for NoneType here... due to sneaky html redirect to non-YFN
             
             ####################################################################
             ##### AI M/L Gen AI NLP starts here !!!                      #######
@@ -767,11 +768,6 @@ class yfnews_reader:
             for _i, _v in enumerate(local_stub_news_p):
                 extr_len += sum(len(_s) for _s in _v.text)
 
-            # build cr_package for KV store
-            print (f"###-debug-716: CRP should be empty: {self.sent_ai.cr_package}")
-            self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
-            self.sent_ai.cr_package.update({ 'total_words': int(total_words) })
-
             # these vars are set within compute_sentiment()
             sent_p = self.sent_ai.sentiment_count['positive']
             sent_z = self.sent_ai.sentiment_count['neutral']
@@ -787,8 +783,7 @@ class yfnews_reader:
                         sent_n
                         ]]
 
-            #print (f"###-debug-734: KV-write extr JSON - {self.sen_data}" )
-            
+            #print (f"###-debug-734: KV-write extr JSON - {self.sen_data}" )            
             sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
             
@@ -798,8 +793,13 @@ class yfnews_reader:
                 'negative_count': sent_n
                 })
             
+            # build cr_package for KV store
+            self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
+            self.sent_ai.cr_package.update({ 'total_words': int(total_words) })
+
             # Deep Cache KVstore write JSon package
             logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
+            print (f"###-debug-716: CRP should be empty: {self.sent_ai.cr_package}")
             kv_success = self.kvio_eng.open_lmdb_RW(2)
             if kv_success is not None:      # explicit reliable singleton None test
                 _url_hash = data_row['urlhash']
@@ -815,6 +815,7 @@ class yfnews_reader:
             else:
                 logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
                 pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
+
 
             # empty vocabulary pretty-printer logic for eof=""
             if self.sent_ai.empty_vocab > 0:
@@ -903,7 +904,7 @@ class yfnews_reader:
                     try:
                         _v_str = ret_code.decode('utf-8')   # Deserialiize, Decode bytes into string
                     except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                        print(f"C4 Error deserializing value: {e}")
+                        logging.info( f'%s - C4 Error deserializing value: {e}"...' % cmi_debug )
                         pass
                     else:
                         _final_results = json.loads(_v_str)        # parse JSON
