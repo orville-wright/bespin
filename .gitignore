@@ -151,8 +151,7 @@ tasks/
 .chrome_cache/
 
 # Bespin specific
-datastore/*
-datastore
-*data.mdb
-*lock.mdb
+datastore/
+data.mdb
+lock.mdb
 *.mdb

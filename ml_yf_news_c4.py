@@ -64,11 +64,22 @@ class yfnews_reader:
     YF_sym_article_schema = None
     yfn_crawl_data = None   # Crawl4ai extracted data
     yfn_c4_data = None      # Crawl4ai extracted data
-    yfn_c4_result = {}      # Crawl4ai extracted data
-    yfn_jsdb = {}           # database to hold response handles from multiple crawl operations
     yfqnews_url = None      # SET by form_endpoint - the URL that is being worked on
     yti = 0                 # Unique instance identifier
-    
+
+    yfn_c4_result = {}      # Crawl4ai extracted data net cache from crawl
+    #                       { aurl_hash: = {
+    #                               url: durl,
+    #                               data: self.yfn_crawl_data,
+    #                               result: result  }
+                    
+    yfn_jsdb = {}           # database to hold response handle from multiple crawl operations    
+    # yfn_jsdb dict structure...
+    #                       { aurl_hash: respons_0,
+    #                       url: self.yfqnews_url,
+    #                       data: self.yfn_crawl_data,
+    #                       result: result  }
+
     yahoo_headers = {
         'authority': 'finance.yahoo.com',
         'path': '/screener/predefined/day_gainers/',
@@ -165,7 +176,7 @@ class yfnews_reader:
             logging.info(f'%s  - Simple HTML Request get() / Cycle.#{self.get_counter:03}' % cmi_debug ) 
 
         # HACK to help logging() f-string bug to handle strings with %
-            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+" - "+url
+            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+"  - "+url
             logging.info('%s' % cmi_debug )
             #logging.info( f"%s - JS_session.get() sucessful: {url}" % cmi_debug )
             cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)    # reset cmi_debug
@@ -173,7 +184,7 @@ class yfnews_reader:
                     logging.error(f'{cmi_debug} - get() failed with error: {self.js_resp0.status_code}')
                     return None
 
-        logging.info(f'{cmi_debug}  - get() success status: {self.js_resp0.status_code}')
+        logging.info(f'{cmi_debug}  - Net get() success status: {self.js_resp0.status_code}')
         self.get_counter += 1
         logging.info( f"%s  - js.render() engine... DISABLED" % cmi_debug )
         logging.info( f'%s  - Store basic HTML dataset' % cmi_debug )
@@ -185,7 +196,14 @@ class yfnews_reader:
         auh = hashlib.sha256(url.encode())          # hash the url
         aurl_hash = auh.hexdigest()
         logging.info( f'%s  - CREATE ml_ingest DB cache entry: [ {aurl_hash} ]' % cmi_debug )
-        self.yfn_jsdb[aurl_hash] = self.js_resp0    # create jsdb CACHE entry @ key=aurl_hash, value=js_resp0 (i.e. get()::resp, not  page TEXT data)
+        
+        #self.yfn_jsdb[aurl_hash] = self.js_resp0    
+        # create jsdb CACHE entry @ key=aurl_hash, value=js_resp0 (i.e. get()::resp, not  page TEXT data)
+        self.yfn_jsdb[aurl_hash] = {
+            'url': url,
+            'data': self.yfn_htmldata,
+            'result': self.js_resp0
+        }
 
         # Xray DEBUG
         if self.args['bool_xray'] is True:
@@ -555,7 +573,7 @@ class yfnews_reader:
             _url_hash = data_row['urlhash']             # current article URL hash from main skimm list
             _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
-            logging.info( f'%s - BS4 CHECKING sentiment Deep Cache KVstore: {_key}' % cmi_debug )
+            logging.info( f'%s - BS4 CHECK Deep Cache KVstore: {_key}' % cmi_debug )
             with self.kvio_eng.env.begin() as txn:
                 ret_code = txn.get(bs4_kvs_key)         # lookup key in KVstore
                 if ret_code is not None:
@@ -645,18 +663,16 @@ class yfnews_reader:
         # Extract article text directly from Yahoo Finance URL
         #
         # logging fixe: f-string errors when URLs have a "%" - breaks logging module (NO KNOWN FIX)
-        logging.info( f'%s - BS4 urlhash get() cache lookup: {cached_state}' % cmi_debug )
+        logging.info( f'%s  - BS4 urlhash Net cache lookup: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
         logging.info( f'%s' % cmi_debug )
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
 
-        logging.info( f'%s - BS4 CHECKING Net get() Cache... {cached_state}' % cmi_debug )
-        #self.yfn_jsdb[cached_state]         # DLETE ME - DUPE - fast key KeyError existance test
         try:
-            cx_soup = self.yfn_jsdb[cached_state]
+            self.yfn_jsdb[cached_state]
+            _built_bs4_entry = 2
         except KeyError:
             logging.info( f'%s - BS4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
-            logging.info( f'%s - BS4 Cache URL object:  {type(durl)}' % cmi_debug )
             cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
@@ -665,38 +681,61 @@ class yfnews_reader:
             ip_headers = ip_urlp.path
             self.ext_req = self.init_live_session(durl)        # uses basic requests modeule. Sould use requests_html at least
             self.update_headers(ip_headers)
-
-            #xhash = self.do_js_get(item_idx)           # for JS get()
             xhash = self.do_simple_get(durl)            # xhash now == cached_state (what we were given, but faield to find in cache))
-            cy_soup = self.yfn_jsdb[xhash]              # pikup up get() response from the has generate from do_simple_get()
+            cy_soup = self.yfn_jsdb[xhash]              # ref the dict{} that do_simple_get() created
             
-            logging.info( f'%s - BS4 Net cache RETRY lookup: {cached_state}' % cmi_debug ) 
+            logging.info( f'%s - BS4 Evaluation 1:  Net cache: {cached_state}' % cmi_debug ) 
             if self.yfn_jsdb[cached_state]:
-                self.yfn_jsdata = cy_soup.text
+                self.yfn_jsdata = self.yfn_jsdb[cached_state]['result']
                 logging.info ( f'%s - BS4 Found entry:   {cached_state}' % cmi_debug )
-                logging.info ( f'%s - BS4 Cached url:    {cy_soup.url}' % cmi_debug )
-                logging.info ( f'%s - BS4 Cache req/get: {type(cy_soup)}' % cmi_debug )
-                logging.info ( f'%s - Bs4 Cache Dataset: {type(self.yfn_jsdata)}' % cmi_debug )     
-                dataset_2 = self.yfn_htmldata           # Basic HTML engine  get()
-                self.nsoup = BeautifulSoup(escape(dataset_2), "html.parser")        # BS4 read() <- replace with crawl4ai
+                logging.info ( f'%s - BS4 working url:   {cy_soup['url']}' % cmi_debug )
+                logging.info ( f'%s - BS4 Cache dict:    {type(cy_soup)}' % cmi_debug )
+                logging.info ( f'%s - Bs4 Cache result:  {type(self.yfn_jsdata)}' % cmi_debug )  
+                logging.info ( f'%s - Bs4 Cache dataset: {type(cy_soup['data'])}' % cmi_debug )
+                _built_bs4_entry = 1
             else:
-                logging.info( f'%s - FAILED to set BS4 data !' % cmi_debug )
+                logging.info( f'%s - BS4 FAILED to set data !' % cmi_debug )
                 return 0, 0, 0
-                # total_tokens, total_words, total_scent, final_results
-
+            
+                '''
+                INFO:
+                self.yfn_jsdb[aurl_hash] = {
+                    'url': url,
+                    'data': self.yfn_htmldata,
+                    'result': self.js_resp0
+                }
+                '''
         ###################################
         # BS4 Extract Article text data NOW
-        logging.info( f'%s - BS4 Found Net Cahce entry: Render data from cache...' % cmi_debug )
-        cx_soup.html.render()            # since we dont cache the raw data, we need to render the page again
-        self.yfn_jsdata = cx_soup.text   # store the rendered raw data
-        dataset_1 = self.yfn_jsdata
-        logging.info( f'%s - BS4 Cached object    : {cached_state}' % cmi_debug )
-        logging.info( f'%s - BS4 Cache req/get    : {type(cx_soup)}' % cmi_debug )
-        logging.info( f'%s - BS4 Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
-        logging.info( f'%s - BS4 Cache URL object : {cx_soup.url}' % cmi_debug )
-        # This is where we refactor to crawl4ai
-        self.nsoup = BeautifulSoup(escape(dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
-        logging.info( f'%s - BS4 extractor / get Article TEXT for AI Sentiment NLP...' % cmi_debug )
+        # prepare dataset for BS4
+        logging.info( f'%s - Evalaution 2:      BS4 data entry...' % cmi_debug )
+        if _built_bs4_entry == 1:
+            logging.info( f'%s - Good BS4 data:     Gracefully pre-built: {cached_state}' % cmi_debug )
+            _dataset_1 = self.yfn_jsdata.text
+            self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
+            self.articles_crawled[item_idx] = self.nsoup
+            result_engine = "yfn_jsdb.#1"
+        elif _built_bs4_entry == 2:
+            logging.info( f'%s - Weird BS4 state: Try cached net data: {cached_state}' % cmi_debug )
+            print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
+            _dataset_1 = self.yfn_jsdata.text
+            self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
+            self.articles_crawled[item_idx] = self.yfn_jsdb[cached_state]['result']  # future feat: parallel crawl4ai extraction
+            result_engine = "yfn_jsdb.#2"
+        else:
+            logging.info( f'%s - Bad BS4 data: Force extract now: {cached_state}' % cmi_debug ) 
+            _dataset_1 = self.yfn_jsdata.text
+            self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
+            self.articles_crawled[item_idx] = self.nsoup     # NOTE USED: future feat: parallel crawl4ai extraction
+            result_engine = "yfn_jsdb.#3"
+
+        logging.info( f'%s - BS4 evaluation 2: Net Cahce entry...' % cmi_debug )
+        logging.info( f'%s - Cached hash:      {cached_state}' % cmi_debug )
+        logging.info( f'%s - Cache engine:     {result_engine}' % cmi_debug )
+        logging.info( f'%s - Cache Dataset:    {type(_dataset_1)}' % cmi_debug )
+        logging.info( f'%s - Cache URL:        {self.yfn_jsdb[cached_state]['url']}' % cmi_debug )
+        logging.info( f'%s - Sent URL in:      {durl}' % cmi_debug )
+        logging.info( f'%s - BS4 extractor / get Article TEXT for AI NLP reader...' % cmi_debug )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - BS4 Skipping Micro Article stub... [ {item_idx} ]' % cmi_debug )
             return 0, 0, 0
@@ -708,13 +747,15 @@ class yfnews_reader:
             local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})   # full news article - locally hosted
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
 
+            ** need to check for NoneType here... due to sneaky html redirect to non-YFN
+            
             ####################################################################
             ##### AI M/L Gen AI NLP starts here !!!                      #######
             ##### Heavy CPU utilization / local LLM Model & no GPU       #######
             ####################################################################
             #
             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-            logging.info( f'%s  - BS4 Exec NLP sent classifier pipeline.#0...' % cmi_debug )
+            logging.info( f'%s - BS4 Exec NLP sent classifier pipeline.#0...' % cmi_debug )
             # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
             # 0 = Crawl4ai extractor, 1 = BS4 extractor
             total_tokens, total_words, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
@@ -853,7 +894,7 @@ class yfnews_reader:
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash         # we are looking at the artile here. So test for this K/V data
             C4_kvs_key = _key.encode('utf-8')              # byte encode 
-            logging.info( f"%s - C4 CHECKING sentiment Deep Cache KVstore {_key:40}{'...' if len(_key) > 40 else ''}" % cmi_debug )
+            logging.info( f"%s - C4 CHECK Deep Cache KVstore # {_key:40}{'...' if len(_key) > 40 else ''}" % cmi_debug )
             with self.kvio_eng.env.begin() as txn:
                 ret_code = txn.get(C4_kvs_key)              # get _key
                 if ret_code is not None:                    # cache hit, found !
@@ -923,7 +964,7 @@ class yfnews_reader:
                         print ( f"================================ C4 End.#4 Deep Cache Hit: {item_idx} =======================================")
                         return self.total_tokens, self.total_words, _final_results   # TODO: not sure _final_results !! esp total_words
                 else:
-                    logging.info( f'%s - C4 MISSING - no Deep Cache entry' % cmi_debug )
+                    logging.info( f'%s - C4 MISS - NO Deep Cache KVstore entry' % cmi_debug )
         else:
             logging.info( f'%s - C4 FAIL - to open KVstore - doing Net get() extraction' % cmi_debug )
             pass
@@ -934,38 +975,45 @@ class yfnews_reader:
         # C4
         # Network ret() read the article text
         #
-        logging.info( f'%s - urlhash cache lookup: {cached_state}' % cmi_debug )
+        logging.info( f'%s - C4 urlhash Net cache lookup: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
         logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
         cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
-        #self.yfn_jsdb[cached_state]            # DELETE ME - dupe - fast key KeyError test for key: urlhash 
+
         try:                                    # cehck for cached_state in yfn_jsdb
-            self.cx = self.yfn_jsdb[cached_state]    # pickup the full dict @ key: urlhash
+            self.yfn_jsdb[cached_state]         # pickup the full dict @ key: urlhash - if this doesnt error/excpe = SUCCESS !
+            _built_c4_entry = 2
         except KeyError:
-            logging.info( f'%s - MISSING from cache...' % cmi_debug )
-            logging.info( f'%s - Eval URL object type: {type(durl)}' % cmi_debug )
-            cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
+            logging.info( f'%s - MISSING from Net cache...' % cmi_debug )
+            cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - Exec C4 engine URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
             # see same note above
-            result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
-            self.articles_crawled[item_idx] = result  # NOTW USED: future feat: parallel crawl4ai extraction
+            
+            result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # exec crawl4ai engine t extraction of 1 article's data
+            self.articles_crawled[item_idx] = result  # NOTE USED: future feat: parallel crawl4ai extraction
             # see same note above for result structure
+            '''
+                    self.yfn_c4_result[aurl_hash] = {
+                        'url': durl,
+                        'data': self.yfn_crawl_data,
+                        'result': result
+                    }
+            '''
             
             self.yfqnews_url = durl
             cy = self.yfn_c4_result[cached_state]    # pikup up result dict
-            logging.info( f'%s - Retry cache lookup:    {cached_state}' % cmi_debug ) 
+            logging.info( f'%s - Evaluation 1: New cache entry: {cached_state}' % cmi_debug ) 
             if self.yfn_c4_result[cached_state]:
-                logging.info( f'%s - Located entry:     {cached_state}' % cmi_debug )
-                self.yfn_c4_data = cy['result']      # store the rendered raw data
-                dataset_2 = result                   # Basic HTML engine  get()
-                logging.info( f'%s - c4 pure Result   : {type(result)}' % cmi_debug )
-                logging.info( f'%s - Cached result    : {type(self.yfn_c4_data)}' % cmi_debug )
-                logging.info( f'%s - Cache cy data    : {type(cy['data'])}' % cmi_debug )
-                logging.info( f'%s - Cache Dataset    : {type(dataset_2)}' % cmi_debug )
-                logging.info( f'%s - Cache URL object : {cy['url']}' % cmi_debug )
-                logging.info( f'%s - Sent URL object  : {durl}' % cmi_debug )
-                logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )  
+                logging.info( f'%s - Located entry:    {cached_state}' % cmi_debug )
+                self.yfn_c4_data = cy['result']        # store the rendered raw data
+                _dataset_2 = result                     # Basic HTML engine  get()
+                logging.info( f'%s - C4 result:        {type(self.yfn_c4_data)}' % cmi_debug )
+                logging.info( f'%s - C4 JSON data:     {type(cy['data'])}' % cmi_debug )
+                logging.info( f'%s - C4 alt2 result:   {type(_dataset_2)}' % cmi_debug )
+                logging.info( f'%s - C4 URL object:    {cy['url']}' % cmi_debug )
+                logging.info( f'%s - Sent in URL:      {durl}' % cmi_debug )
+                _built_c4_entry = 1
                 # Do it this way so that...
                 # - we can spawn multiple async tasks in parallel
                 # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
@@ -984,26 +1032,42 @@ class yfnews_reader:
         ##### Heavy CPU utilization / local LLM Model & no GPU       #######
         ####################################################################
         #
-        logging.info( f'%s - Found Net cahce entry: Render data from cached resp...' % cmi_debug )
-        self.yfn_cxresult = self.cx['result']      # store the rendered raw data
-        dataset_1 = self.yfn_c4_data
-        logging.info( f'%s - Cached object    : {cached_state}' % cmi_debug )
-        logging.info( f'%s - Cache cx         : {type(self.cx)}' % cmi_debug )
-        logging.info( f'%s - Cahce Dataset    : {type(dataset_1)}' % cmi_debug )
-        logging.info( f'%s - Cache URL object : {self.cx['url']}' % cmi_debug )
-        logging.info( f'%s - Sent URL object  : {durl}' % cmi_debug )
-        logging.info( f'%s - C4 crawl artcile url now...' % cmi_debug )   
+        logging.info( f'%s - Evalaution 2: C4 data entry...' % cmi_debug )
+        if _built_c4_entry == 1:
+            logging.info( f'%s - Good C4 data: Gracefully pre-built: {cached_state}' % cmi_debug ) 
+            dataset_1 = self.yfn_c4_result[cached_state]['result']
+            result_engine = "yfn_c4_result"
+            self.articles_crawled[item_idx] = result
+        elif _built_c4_entry == 2:
+            logging.info( f'%s - Weird C4 state: Trying strange data: {cached_state}' % cmi_debug )
+            print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
+            dataset_1 = self.yfn_jsdb[cached_state]['result']
+            result_engine = "yfn_jsdb"
+            self.articles_crawled[item_idx] = self.yfn_jsdb[cached_state]['result']  # future feat: parallel crawl4ai extraction
+            #self.yfn_jsdb[cached_state]['result']
+        else:
+            logging.info( f'%s - Bad C4 data: Force crawl get() now: {cached_state}' % cmi_debug ) 
+            result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
+            self.articles_crawled[item_idx] = result  # NOTE USED: future feat: parallel crawl4ai extraction
+            dataset_1 = self.yfn_c4_result[cached_state]['result']
+            result_engine = "yfn_c4_result"
+
+        logging.info( f'%s - Cached hash   : {cached_state}' % cmi_debug )
+        logging.info( f'%s - Cache engine  : {result_engine}' % cmi_debug )
+        logging.info( f'%s - C4 Dataset    : {type(dataset_1)}' % cmi_debug )
+        logging.info( f'%s - Cache URL     : {self.yfn_c4_result[cached_state]['url']}' % cmi_debug )
+        logging.info( f'%s - Sent URL in   : {durl}' % cmi_debug )
         # Do it this way so that...
         # - we  can spawn multiple async tasks in parallel
         # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
-        # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3
-        result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
+        # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3() and do_simple)_get()
+        #
         # result is:
         #   { 'url': self.yfqnews_url,
         #     'data': self.yfn_crawl_data,
         #     'result': result  }
-        self.articles_crawled[item_idx] = result  # future feat: parallel crawl4ai extraction
-        logging.info( f'%s - Extract Article TEXT for AI Sentiment reader: {durl[:30]}...' % (cmi_debug) )
+        #
+        logging.info( f'%s - Extract Article TEXT for AI NLP reading...' % (cmi_debug) )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
             return 0, 0, 0
@@ -1033,7 +1097,7 @@ class yfnews_reader:
                                 return 0, 0, 0
                         case _:
                             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-                            logging.info( f'%s - Exec NLP sentiment analyzer: 1 / sending: {type(art_all_p)}' % cmi_debug )
+                            logging.info( f'%s - Exec NLP sentiment analyzer: 1 - sending: {type(art_all_p)}' % cmi_debug )
                             # 0 = data in crawl4ai extractor format
                             total_tokens, total_words, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
                             if self.sent_ai.empty_vocab > 0: 
@@ -1128,10 +1192,10 @@ class yfnews_reader:
             logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_article_schema} ]' % cmi_debug)
             return None
 
-        logging.info(f'%s - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
+        logging.info(f'%s  - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
         try:
             async with AsyncWebCrawler() as crawler:
-                result = await crawler.arun(durl, config=config)
+                result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
                 if result.success:
                     logging.info(f'%s  - crawl4ai extraction successful' % cmi_debug)
                     self.yfn_crawl_data = json.loads(result.extracted_content)
@@ -1143,7 +1207,7 @@ class yfnews_reader:
                         'data': self.yfn_crawl_data,
                         'result': result
                     }
-                    logging.info(f'%s  - Created cache entry: [ {aurl_hash} ]' % cmi_debug)
+                    logging.info(f'%s  - Create C4 crawl cache entry: {aurl_hash}' % cmi_debug)
                     return result
                 else:
                     logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
