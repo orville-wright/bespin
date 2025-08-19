@@ -31,6 +31,7 @@ class lmdb_io_eng:
     db_name = None      # LMDB Database instance name
     db_open_state = 0   # 0=closed, 1=open
     env = None          # current opened LMDB database I/O Transaction handle
+    sent_ai = None      # sentiment_ai instance, set by main() before calling kv_cache_engine()
     yti = 0
 
         
@@ -130,3 +131,165 @@ class lmdb_io_eng:
         except Exception as e:
             print(f"Error Exception: {e}")
             return 0
+
+################# 5
+    def close_lmdb(self, yti):
+        cmi_debug = __name__+"::"+self.close_lmdb.__name__+".#"+str(self.yti)
+        logging.info( f'%s   - close_lmdb.#{self.yti} Instance: {self.db_name}' % cmi_debug )
+        try:
+            if self.env is not None:
+                self.env.close()
+                logging.info( f'%s   - Successfully closed LMDB instance.#{self.yti} {self.db_name}' % cmi_debug )
+            else:
+                logging.warning( f'%s   - No open LMDB instance to close.#{self.yti} {self.db_name}' % cmi_debug )
+            return 1
+        except lmdb.Error as e:
+            print(f"LMDB Close Error: {e}")
+            return 0
+        except Exception as e:
+            print(f"Error Exception: {e}")
+            return 0
+        
+################# 6
+    def kv_cache_engine(self, _yti, symbol, data_row, item_idx, _sent_ai):
+        cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
+        logging.info( f'%s   - kv_cache_engine.#{_yti} KVstore instance: {self.db_name}' % cmi_debug )
+
+        # Deep Caching engine (LMDB KV store)
+        # Has article been read/extracted, and its metadata existing in KVstore
+        # Attempt to rehydrate the article metadata from Deep Cache
+        #
+        # RETURNS:
+        #   - ec, 0, 0, 0
+        #   (@1: error code, @2: total_tokens, @3: total_words, #4: sen_data, @5: final_results)
+        #
+        # error_codes:
+        #   0 = SUCCESS, Data rehydrated from Deep Cache
+        #   1 = LMDB I/O FAILURE : cant deserialize JSON data package
+        #   2 = CORRUPT data : No KEY found in JSON data package (URL hash of article)
+        #   3 = DEEP CACHE MISS : NO BS4 Deep Cache entry found. Cache MISS !!
+        #   4 = LMDB I/O FAILURE : Failed to open DB in RO mode
+        #
+        # TODO:
+        # add _sent_ai handle to lmdb_io_eng class
+        #   - _sent_ai.sentiment_count["neutral"]
+        #   - _sent_ai.sentiment_count["positive"]
+        #   - _sent_ai.sentiment_count["negative"]
+        #   - sentiment_ai instance
+        #   - _sent_ai.sentiment_count
+        #   - _sent_ai.active_urlhash
+        #   - _sent_ai.save_sentiment_df(item_idx, sen_package)
+        #
+        # pass in...
+        #   - data_row['urlhash']
+        #   - symbol
+        #   - item_idx
+        #   - self.total_tokens
+        #   - self.total_words
+        #   - self.total_chars
+        #   - self.sen_data
+        
+        _sent_ai.sentiment_count["neutral"] = 0     # reset chunk metrics
+        _sent_ai.sentiment_count["positive"] = 0
+        _sent_ai.sentiment_count["negative"] = 0
+        logging.info( f'%s - BS4 Opening LMDB READ-ONLY mode...' % cmi_debug )
+        #kv_success = None  # debig control switch
+        _kv_success = self.open_lmdb_RO(3)
+        if _kv_success is not None:                      #    LMDB opened sucessfully
+            ################# BS4 Deep Cache KV engine
+            #            
+            _url_hash = data_row['urlhash']             # current article URL hash from main skimm list
+            _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
+            bs4_kvs_key = _key.encode('utf-8')          # byte encode 
+            logging.info( f'%s - BS4 CHECK Deep Cache KVstore: {_key}' % cmi_debug )
+            with _kv_success.begin() as txn:
+                _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
+                if _key_found is not None:
+                    logging.info( f'%s - BS4 Deep Cache entry found: validating...' % cmi_debug )
+                    _final_results = dict()             # ensure _final_results = empty
+                    try:
+                        _v_str = _key_found.decode('utf-8') # lookup KEY & Deserialiize into string
+                    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                        logging.info( f'%s - BS4 Error deserializing value: {e}"...' % cmi_debug )
+                        return 1, 0, 0, 0, 0   #  LMDB I/O FAILURE : cant deserialize data
+                    else:
+                        _final_results = json.loads(_v_str)        # parse JSON                   
+                        try:
+                            kv_url_hash = _final_results['urlhash']
+                        except KeyError as _f:
+                            logging.info( f'%s - BS4 Data corruption : NO URL hash Key found: {_f}"...' % cmi_debug )
+                            print (f"###-debug-574: corrput FR data: {_final_results}" )
+                            print (f"###-debug-574: corrput VS data: {_v_str}" )
+                            print (f"================================ BS4 End.#9 KV Cache Hit ! Data Corrupt(no URL hash) ! {item_idx} ================================" )
+                            breakpoint
+                            return 2, 0, 0, 0, 0   # CORRUPT data : No KEY found (URL hash of article)
+                        else:
+                            print (f"###-debug-599: pre-check FR data: {_final_results}" )
+                            print (f"###-debug-600: pre-check VS data: {_v_str}" )
+                            _total_tokens = 0
+                        
+                            # reset sent_count before we start
+                            _sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
+                            # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
+                            logging.info( f'%s - BS4 Rehydrate : sent DF metrics from Deep Cache...' % cmi_debug )
+                            #print (f"##-debug-578: pre-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
+                            for _dc_k, _dc_v in _final_results.items():
+                                if isinstance(_dc_v, dict):
+                                    _total_tokens += int(_dc_v['tokenz'])
+                                    _chunk=_dc_v['chunk']
+                                    _chunk_sent = _dc_v['sent_type']
+                                    _sent_ai.sentiment_count[_chunk_sent] += 1  # incr sentiment type counter
+                                    sen_package = dict(sym=symbol,
+                                                    article=_final_results['article'],
+                                                    urlhash=kv_url_hash,
+                                                    chunk=_chunk,
+                                                    rank=_dc_v['sent_score'],
+                                                    sent=_dc_v['sent_type'],
+                                                    )
+
+                                    _sen_p = _sent_ai.sentiment_count["positive"]
+                                    _sen_z = _sent_ai.sentiment_count["neutral"]
+                                    _sen_n = _sent_ai.sentiment_count["negative"]
+                                    print (f"##-debug-241: senpkg KEY: {_dc_k} {_chunk}: {_chunk_sent} - {_sen_p} / {_sen_z} / {_sen_n}")
+                                    _sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
+                                    continue    # not looking at dict{} element in JSON package
+                                    #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
+                                else:
+                                    logging.info( f'%s - BS4 Rehydrate : skip NON-CHUNK element. Scanning for dict...' % cmi_debug )
+                                    continue    # ensure for loop continues to next element in JSON package
+
+                            # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
+                            _total_words = _final_results["total_words"]
+                            _total_chars = _final_results["chars_count"]
+                            #print (f"##-debug-578: final-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
+                            _sent_z = _sent_ai.sentiment_count["neutral"]
+                            _sent_p = _sent_ai.sentiment_count["positive"]
+                            _sent_n = _sent_ai.sentiment_count["negative"]
+                            
+                            # must return self.sen_data, and must exec after return...
+                            #   - sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
+                            #   - self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
+                            self.sen_data = [[
+                                    item_idx,
+                                        kv_url_hash,
+                                        _sent_p,
+                                        _sent_z,
+                                        _sent_n
+                                        ]]
+                            
+                            sent_fz = _final_results["neutral_count"]
+                            sent_fp = _final_results["positive_count"]
+                            sent_fn = _final_results["negative_count"]
+
+                            #print (f"JSON: {_final_results}")
+                            print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {sent_fp}({_sent_p}) / Neutral: {sent_fz}({_sent_z}) / Negative: {sent_fn}({_sent_n})")
+                            print (f"================================ BS4 End.#1 KV Cache Hit !read: {item_idx} ================================" )
+                            return 0, _total_tokens, _total_words, self.sen_data, _final_results
+                            #
+                            # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache  
+                else:
+                    logging.info( f'%s - BS4 Deep Cache MISS : No KVstore entry found !.' % cmi_debug )
+                    print (f"================================ BS4 End.#2 KV Cache MISS !read: {item_idx} ================================" )
+                    return 3, 0, 0, 0, 0
+        
+            return 4, 0, 0, 0, 0   # LMDB I/O FAILURE : Failed to open DB in RO mode

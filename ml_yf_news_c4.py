@@ -561,6 +561,34 @@ class yfnews_reader:
 
         symbol = symbol.upper()
 
+        ### >>>> here <<<<
+        _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai)
+        match _ec:
+            case 0:  # BS4 KVstore cache hit
+                logging.info( f'%s - BS4 KVstore cache hit. Rehydrating data from Deep Cache...' % cmi_debug )
+                self.sent_ai.sentiment_count = _sen_data  # rehydrate sentiment count package from Deep Cache
+                _sen_df_row = pd.DataFrame(_sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
+                self.sen_stats_df = pd.concat([self.sen_stats_df, _sen_df_row])
+                logging.info( f'%s - BS4 Rehydrated sentiment DF metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
+                return _ttk, _ttw, _fr                        
+            case 1:  # BS4 KVstore cache miss
+                logging.info( f'%s - BS4 KVstore ERROR. Deserialization failure !force Net read...' % cmi_debug )
+                pass
+            case 2:
+                logging.info( f'%s - BS4 KVstore ERROR. No URL Hash KEY found !force Net read...' % cmi_debug )
+                pass
+            case 3:
+                logging.info( f'%s - BS4 KVstore MISS. No cache entry !force Net read...' % cmi_debug )
+                pass
+            case 4:
+                logging.info( f'%s - BS4 LMDB I/O FAILURE : Failed to open DB in RO mode !' % cmi_debug )
+                pass
+            case _:
+                logging.info( f'%s - BS4 KVstore ERROR. Unknown error code: {_ec} !force Net read...' % cmi_debug )
+                pass
+
+            
+        '''
         # Deep Caching engine (LMDB KV store)
         # Has article been read/extracted, and its metadata existing in KVstore
         self.sent_ai.sentiment_count["neutral"] = 0     # reset chunk metrics
@@ -614,16 +642,27 @@ class yfnews_reader:
                                     _chunk=_dc_v['chunk']
                                     _chunk_sent = _dc_v['sent_type']
                                     self.sent_ai.sentiment_count[_chunk_sent] += 1  # incr sentiment type counter
-                                    sen_package = dict(sym=symbol,
+                                    _sen_package = dict(sym=symbol,
                                                     article=_final_results['article'],
                                                     urlhash=kv_url_hash,
-                                                    chunk=_dc_v['chunk'],
+                                                    chunk=_chunk,
                                                     rank=_dc_v['sent_score'],
                                                     sent=_dc_v['sent_type'],
                                                     )
 
                                     #print (f"##-debug-592: loop-check FR: {_chunk}: {_chunk_sent} - {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
-                                    self.sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
+                                    self.sent_ai.save_sentiment_df(item_idx, _sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
+                                    #
+                                    #    sen_data = [[ \
+                                    #    x, \
+                                    #    sym, \
+                                    #    art, \
+                                    #    urlhash, \
+                                    #    chk, \
+                                    #    rnk, \
+                                    #    snt ]]
+                                    #
+                                    
                                     continue    # not looking at dict{} element in JSON package
                                     #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
                                 else:
@@ -653,7 +692,7 @@ class yfnews_reader:
                             print (f"================================ BS4 End.#1 KV Cache Hit !read: {item_idx} ================================" )
                             return self.total_tokens, self.total_words, _final_results
                             #
-                            # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache
+                            # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache  
                 else:
                     logging.info( f'%s - BS4 Deep cache MISS - no KVstore entry' % cmi_debug )
                     print (f"Deep Cache:    BS4 LMDB KVstore Deep Cache miss ! Fallback !")
@@ -661,7 +700,10 @@ class yfnews_reader:
             # ############ End Deep cache engine
         else:
             print (f"###-debug-628: ERROR : Failed to open LMDB ! - FALLBACK to BS4 Net Read!" )
-          
+        '''
+        
+        # >>>> HERE <<<<
+        
         ######################################################
         # BS4 Network read()
         # Extract article text directly from Yahoo Finance URL
@@ -766,7 +808,7 @@ class yfnews_reader:
             logging.info( f'%s - BS4 Exec NLP sent classifier pipeline.#0...' % cmi_debug )
             # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
             # 0 = Crawl4ai extractor, 1 = BS4 extractor
-            total_tokens, total_words, final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
+            self.total_tokens, self.total_words, self.final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
             
             bs4_p_tag_count = len(local_stub_news_p)
             
@@ -802,7 +844,7 @@ class yfnews_reader:
             
             # build cr_package for KV store
             self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
-            self.sent_ai.cr_package.update({ 'total_words': int(total_words) })
+            self.sent_ai.cr_package.update({ 'total_words': int(self.total_words) })
 
             # Deep Cache KVstore write JSon package
             logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
@@ -828,10 +870,10 @@ class yfnews_reader:
             if self.sent_ai.empty_vocab > 0:
                 print (f"\n")
 
-        print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / BS4 ptags: {bs4_p_tag_count}")
+        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / BS4 ptags: {bs4_p_tag_count}")
         print (f"================================ BS4 End.#2 Net Read / KV Cache miss !create: {item_idx} ================================" )
-        print (f"###-debug-832: post-check FR: {final_results}" )
-        return total_tokens, total_words, final_results
+        print (f"###-debug-832: post-check FR: {self.final_results}" )
+        return self.total_tokens, self.total_words, final_results
 
     # #####################################################################################
     # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1
