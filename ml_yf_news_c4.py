@@ -52,6 +52,7 @@ class yfnews_reader:
     ml_ingest = {}          # ML ingested NLP candidate articles
     ml_sent = None
     nlp_x = 0
+    result_engine = "unknown"  # engine used to extract article data
     sent_ai = None
     sen_stats_df = None     # Aggregated sentiment stats for this 1 article
     symbol = None           # Unique company symbol
@@ -529,6 +530,7 @@ class yfnews_reader:
         self.sent_ai = sentiment_ai
         lmdb_dbname = "LMDB_0001"
         self.kvio_eng = lmdb_io_eng(1, lmdb_dbname, self.args)
+        final_results = dict()  # ensure final_results is empty
 
         # #########################################
         # private helper function : BS4 extractor
@@ -577,7 +579,7 @@ class yfnews_reader:
             with self.kvio_eng.env.begin() as txn:
                 ret_code = txn.get(bs4_kvs_key)         # lookup key in KVstore
                 if ret_code is not None:
-                    logging.info( f'%s - BS4 FOUND ! Deep Cache entry: validating...' % cmi_debug )
+                    logging.info( f'%s - BS4 Deep Cache entry found: validating...' % cmi_debug )
                     _final_results = dict()             # ensure _final_results = empty
                     try:
                         _v_str = ret_code.decode('utf-8') # lookup KEY & Deserialiize into string
@@ -586,78 +588,79 @@ class yfnews_reader:
                         pass
                     else:
                         _final_results = json.loads(_v_str)        # parse JSON
+                        
                         try:
                             kv_url_hash = _final_results['urlhash']
                         except KeyError as _f:
                             logging.info( f'%s - BS4 Error CORRUPT KV DATA: {_f}"...' % cmi_debug )
                             print (f"###-debug-574: corrput FR data: {_final_results}" )
                             print (f"###-debug-574: corrput VS data: {_v_str}" )
-                            print (f"================================ BS4 End.#9 KV Cache Hit ! KVstore Data Corrupt !: {item_idx} ================================" )
+                            print (f"================================ BS4 End.#9 KV Cache Hit ! KVstore Data Corrupt ! {item_idx} ================================" )
                             breakpoint
                             return 0, 0, 0
                         else:
-                            pass
+                            print (f"###-debug-599: pre-check FR data: {_final_results}" )
+                            print (f"###-debug-600: pre-check VS data: {_v_str}" )
+                            self.total_tokens = 0
                         
-                        self.total_tokens = 0
-                        
-                        # reset sent_count before we start
-                        self.sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
-                        # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
-                        logging.info( f'%s - BS4 Rehydrate sent DF metrics from Deep Cache...' % cmi_debug )
-                        #print (f"##-debug-578: pre-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
-                        for _dc_k, _dc_v in _final_results.items():
-                            if isinstance(_dc_v, dict):
-                                self.total_tokens += int(_dc_v['tokenz'])
-                                _chunk=_dc_v['chunk']
-                                _chunk_sent = _dc_v['sent_type']
-                                self.sent_ai.sentiment_count[_chunk_sent] += 1  # incr sentiment type counter
-                                sen_package = dict(sym=symbol,
-                                                article=_final_results['article'],
-                                                urlhash=kv_url_hash,
-                                                chunk=_dc_v['chunk'],
-                                                rank=_dc_v['sent_score'],
-                                                sent=_dc_v['sent_type'],
-                                                )
+                            # reset sent_count before we start
+                            self.sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
+                            # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
+                            logging.info( f'%s - BS4 Rehydrate sent DF metrics from Deep Cache...' % cmi_debug )
+                            #print (f"##-debug-578: pre-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
+                            for _dc_k, _dc_v in _final_results.items():
+                                if isinstance(_dc_v, dict):
+                                    self.total_tokens += int(_dc_v['tokenz'])
+                                    _chunk=_dc_v['chunk']
+                                    _chunk_sent = _dc_v['sent_type']
+                                    self.sent_ai.sentiment_count[_chunk_sent] += 1  # incr sentiment type counter
+                                    sen_package = dict(sym=symbol,
+                                                    article=_final_results['article'],
+                                                    urlhash=kv_url_hash,
+                                                    chunk=_dc_v['chunk'],
+                                                    rank=_dc_v['sent_score'],
+                                                    sent=_dc_v['sent_type'],
+                                                    )
 
-                                #print (f"##-debug-592: loop-check FR: {_chunk}: {_chunk_sent} - {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
-                                self.sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
-                                continue    # not looking at dict{} element in JSON package
-                                #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
-                            else:
-                                pass
+                                    #print (f"##-debug-592: loop-check FR: {_chunk}: {_chunk_sent} - {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
+                                    self.sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
+                                    continue    # not looking at dict{} element in JSON package
+                                    #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
+                                else:
+                                    pass
                                  
-                        # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
-                        self.total_words = _final_results["total_words"]
-                        self.total_chars = _final_results["chars_count"]
-                        #print (f"##-debug-578: final-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
-                        sent_z = self.sent_ai.sentiment_count["neutral"]
-                        sent_p = self.sent_ai.sentiment_count["positive"]
-                        sent_n = self.sent_ai.sentiment_count["negative"]
-                        self.sen_data = [[
-                                item_idx,
-                                    kv_url_hash,
-                                    sent_p,
-                                    sent_z,
-                                    sent_n
-                                    ]]
-                        
-                        sent_fz = _final_results["neutral_count"]
-                        sent_fp = _final_results["positive_count"]
-                        sent_fn = _final_results["negative_count"]
+                            # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
+                            self.total_words = _final_results["total_words"]
+                            self.total_chars = _final_results["chars_count"]
+                            #print (f"##-debug-578: final-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
+                            sent_z = self.sent_ai.sentiment_count["neutral"]
+                            sent_p = self.sent_ai.sentiment_count["positive"]
+                            sent_n = self.sent_ai.sentiment_count["negative"]
+                            self.sen_data = [[
+                                    item_idx,
+                                        kv_url_hash,
+                                        sent_p,
+                                        sent_z,
+                                        sent_n
+                                        ]]
+                            
+                            sent_fz = _final_results["neutral_count"]
+                            sent_fp = _final_results["positive_count"]
+                            sent_fn = _final_results["negative_count"]
 
-                        #print (f"JSON: {_final_results}")
-                        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Postive: {sent_fp}({sent_p}) / Neutral: {sent_fz}({sent_z}) / Negative: {sent_fn}({sent_n})")
-                        print (f"================================ BS4 End.#1 KV Cache Hit !read: {item_idx} ================================" )
-                        return self.total_tokens, self.total_words, _final_results
-                        #
-                        # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache
+                            #print (f"JSON: {_final_results}")
+                            print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Postive: {sent_fp}({sent_p}) / Neutral: {sent_fz}({sent_z}) / Negative: {sent_fn}({sent_n})")
+                            print (f"================================ BS4 End.#1 KV Cache Hit !read: {item_idx} ================================" )
+                            return self.total_tokens, self.total_words, _final_results
+                            #
+                            # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache
                 else:
-                    logging.info( f'%s - BS4 MISSING - no Deep Cache entry' % cmi_debug )
+                    logging.info( f'%s - BS4 Deep cache MISS - no KVstore entry' % cmi_debug )
                     print (f"Deep Cache:    BS4 LMDB KVstore Deep Cache miss ! Fallback !")
             #
             # ############ End Deep cache engine
         else:
-            print (f"###-debug-628: Failed to open LMDB DB !! - FALLBACK to C4 Net Read extratcion !!" )
+            print (f"###-debug-628: ERROR : Failed to open LMDB ! - FALLBACK to BS4 Net Read!" )
           
         ######################################################
         # BS4 Network read()
@@ -669,6 +672,11 @@ class yfnews_reader:
         logging.info( f'%s' % cmi_debug )
         cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
 
+        if external is True:    # page is Micro stub Fake news article
+            logging.info( f'%s - BS4 Skipping : Micro Article stub... [ {item_idx} ]' % cmi_debug )
+            return 0, 0, 0
+            # total_tokens, total_words, total_scent, final_results
+            
         try:
             self.yfn_jsdb[cached_state]
             _built_bs4_entry = 2
@@ -706,42 +714,41 @@ class yfnews_reader:
                     'result': self.js_resp0
                 }
                 '''
-        ###################################
-        # BS4 Extract Article text data NOW
-        # prepare dataset for BS4
-        logging.info( f'%s - Evalaution 2:      BS4 data entry...' % cmi_debug )
-        if _built_bs4_entry == 1:
-            logging.info( f'%s - Good BS4 data:     Gracefully pre-built: {cached_state}' % cmi_debug )
-            _dataset_1 = self.yfn_jsdata.text
-            self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
-            self.articles_crawled[item_idx] = self.nsoup
-            result_engine = "yfn_jsdb.#1"
-        elif _built_bs4_entry == 2:
-            logging.info( f'%s - Weird BS4 state: Try cached net data: {cached_state}' % cmi_debug )
-            print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
-            _dataset_1 = self.yfn_jsdata.text
-            self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
-            self.articles_crawled[item_idx] = self.yfn_jsdb[cached_state]['result']  # future feat: parallel crawl4ai extraction
-            result_engine = "yfn_jsdb.#2"
+                ########################## end #######################
+                
         else:
-            logging.info( f'%s - Bad BS4 data: Force extract now: {cached_state}' % cmi_debug ) 
-            _dataset_1 = self.yfn_jsdata.text
-            self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
-            self.articles_crawled[item_idx] = self.nsoup     # NOTE USED: future feat: parallel crawl4ai extraction
-            result_engine = "yfn_jsdb.#3"
+            ###################################
+            # BS4 Extract Article text data NOW
+            # prepare dataset for BS4
+            logging.info( f'%s - Evalaution 2:      BS4 data entry...' % cmi_debug )
+            if _built_bs4_entry == 1:
+                logging.info( f'%s - Good BS4 data:     Gracefully pre-built: {cached_state}' % cmi_debug )
+                _dataset_1 = self.yfn_jsdata.text
+                self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
+                self.articles_crawled[item_idx] = self.nsoup
+                self.result_engine = "yfn_jsdb.#1"
+            elif _built_bs4_entry == 2:
+                logging.info( f'%s - Weird BS4 state: Try cached net data: {cached_state}' % cmi_debug )
+                print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
+                _dataset_1 = self.yfn_jsdata.text
+                self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
+                self.articles_crawled[item_idx] = self.yfn_jsdb[cached_state]['result']  # future feat: parallel crawl4ai extraction
+                self.result_engine = "yfn_jsdb.#2"
+            else:
+                logging.info( f'%s - Bad BS4 data: Force extract now: {cached_state}' % cmi_debug ) 
+                self._dataset_1 = self.yfn_jsdata.text
+                self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
+                self.articles_crawled[item_idx] = self.nsoup     # NOTE USED: future feat: parallel crawl4ai extraction
+                self.result_engine = "yfn_jsdb.#3"
 
-        logging.info( f'%s - BS4 evaluation 2: Net Cahce entry...' % cmi_debug )
-        logging.info( f'%s - Cached hash:      {cached_state}' % cmi_debug )
-        logging.info( f'%s - Cache engine:     {result_engine}' % cmi_debug )
-        logging.info( f'%s - Cache Dataset:    {type(_dataset_1)}' % cmi_debug )
-        logging.info( f'%s - Cache URL:        {self.yfn_jsdb[cached_state]['url']}' % cmi_debug )
-        logging.info( f'%s - Sent URL in:      {durl}' % cmi_debug )
-        logging.info( f'%s - BS4 extractor / get Article TEXT for AI NLP reader...' % cmi_debug )
-        if external is True:    # page is Micro stub Fake news article
-            logging.info( f'%s - BS4 Skipping Micro Article stub... [ {item_idx} ]' % cmi_debug )
-            return 0, 0, 0
-            # total_tokens, total_words, total_scent, final_results
-        else:
+            logging.info( f'%s - BS4 evaluation 2: Net Cahce entry...' % cmi_debug )
+            logging.info( f'%s - Cached hash:      {cached_state}' % cmi_debug )
+            logging.info( f'%s - Cache engine:     {self.result_engine}' % cmi_debug )
+            logging.info( f'%s - Cache Dataset:    {type(_dataset_1)}' % cmi_debug )
+            logging.info( f'%s - Cache URL:        {self.yfn_jsdb[cached_state]['url']}' % cmi_debug )
+            logging.info( f'%s - Sent URL in:      {durl}' % cmi_debug )
+            logging.info( f'%s - BS4 extractor / get Article TEXT for AI NLP reader...' % cmi_debug )
+        
             logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
             local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
             local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})        # comes above/before article
@@ -820,9 +827,11 @@ class yfnews_reader:
             # empty vocabulary pretty-printer logic for eof=""
             if self.sent_ai.empty_vocab > 0:
                 print (f"\n")
-            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / BS4 ptags: {bs4_p_tag_count}")
-            print (f"================================ BS4 End.#2 Net Read / KV Cache miss !write: {item_idx} ================================" )
-            return total_tokens, total_words, final_results
+
+        print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / BS4 ptags: {bs4_p_tag_count}")
+        print (f"================================ BS4 End.#2 Net Read / KV Cache miss !create: {item_idx} ================================" )
+        print (f"###-debug-832: post-check FR: {final_results}" )
+        return total_tokens, total_words, final_results
 
     # #####################################################################################
     # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1
@@ -914,7 +923,7 @@ class yfnews_reader:
                             logging.info( f'%s - C4 Error CORRUPT KV DATA: {_f}"...' % cmi_debug )
                             print (f"###-debug-871: corrput FR data: {_final_results}" )
                             print (f"###-debug-872: corrput VS data: {_v_str}" )
-                            print (f"================================ C4 End.#9 KV Cache Hit ! KVstore Data Corrupt !: {item_idx} ================================" )
+                            print (f"================================ C4 End.#9 KV Cache Hit ! KVstore Data Corrupt ! {item_idx} ================================" )
                             breakpoint
                             return 0, 0, 0
                         else:
