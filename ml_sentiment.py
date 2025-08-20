@@ -158,20 +158,22 @@ class ml_sentiment:
                     #blocklet_l.update({ bs4_row: scentxt[i].text }) # create 1 row dict for dict_processor() (Too Long <p>) text blocklet needs chunking)
                     blocklet_l.append(scentxt[i].text) # create 1 row list[], extracting <p> text (from html.element) for dict_processor() ( needs chunking)
                     blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # send = list[], result = {} of chunked blocklets
-                    self.ttc, _i_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.ttc, _i_twc, _tr_final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _i_twc
                     bs4_row += 1
+                    print (f"##-debug-164 tr_fr: {_tr_final_results}")
+                    return self.ttc, self.twc, _tr_final_results
                 else:
                     truncated = "Clean"
                     logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
                     blocklet_d = dict()
                     blocklet_d.update({bs4_row: scentxt[i].text}) # create 1 row dict for dict_processor() (ths is a short/clean <p>) text blocklet
-                    self.ttc, _i_twc, final_results = self.dict_processor(symbol, blocklet_d)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
+                    self.ttc, _i_twc, _cl_final_results = self.dict_processor(symbol, blocklet_d)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _i_twc
                     bs4_row += 1
                     self.cr_package.update({'sent_paras': int(self.tsenparas)})
-                    
-            return self.ttc, self.twc, final_results
+                    print (f"##-debug-175 cl_fr: {_cl_final_results}")
+                    return self.ttc, self.twc, _cl_final_results
     
     #####################################
     # Helper function
@@ -265,7 +267,7 @@ class ml_sentiment:
                 self.tsenparas += 1
             else:
                 chunk_type = "Randm"
-            logging.info( f"============ LLM Classifying Blocklet ============================================")
+            logging.info( f"%s - ============ LLM Classifying Blocklet ============" % cmi_debug)
             logging.info( f"%s - Exec NLP classfier.#00 @ DICT_eng.#00..." % cmi_debug )
             clsfr_result = self.classifier(chunk, truncation=True)      # input = chunk {} - 1 element
             _k = f'{i:03}'  # nicly formated dict{} key
@@ -279,25 +281,33 @@ class ml_sentiment:
                             'sent_score': clsfr_result[0]['score'] })
 
             # add element outside of chunk element 
-            _x_cr_package.update({'sent_paras': int(self.tsenparas)})
+            _x_cr_package.update({'sent_paras': int(self.tsenparas)})       # yes keep updting thie each time
+            _x_cr_package.update({'chunk_count': int(i)})                   # yes keep updting thie each time
+            # only set these in the JSON data package once per article
+            if _x_cr_package.get('urlhash') is None:
+                _x_cr_package['urlhash'] = self.active_urlhash
+            if _x_cr_package.get('article') is None:
+                _x_cr_package['article'] = self.item_idx
+
             ttc += tc
             tnc += twc
             if self.args['bool_verbose'] is True:        # Logging level
                 print ( f"Chunk: {i:03} / {chunk_type} / [ Words: {tnc:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ]", end="" )
-                
+
             _tc = f'{i:03}'     # format chunk
-            final_results = self.nlp_sent_engine(_tc, symbol, ngram_tkzed, ngram_count, clsfr_result[0], _x_cr_package)
-        return ttc, tnc, final_results
+            _nlp_sent_package = self.nlp_sent_engine(_tc, symbol, ngram_tkzed, ngram_count, clsfr_result[0], _x_cr_package)
+            print (f"##-debug-290: tjp: {_x_cr_package}")
+        return ttc, tnc, _x_cr_package
 
  ###################
     # Helper function for dict_processor()
-    def nlp_sent_engine(self, i, symbol, ngram_tkzed, ngram_count, clsfr_result, _z_cr_package):
+    def nlp_sent_engine(self, i, symbol, ngram_tkzed, ngram_count, _clsfr_result, _z_cr_package):
         """
         - removes stopwords
         - Calculates High Frequency Words inside the HOT classified LLM Transformer
         - Computes sentimnent scores
         - prepares Global DF update results package
-        - calls save_sentiment_df() to updaet sentiment metrics
+        - calls save_sentiment_df() to update sentiment metrics
         - tracks global sentiment count metrics for (Pos, Neg, Neutral)
         - completes results_package
         - reports LLM Transform model classifiation excpetions
@@ -319,21 +329,28 @@ class ml_sentiment:
             ngram_final= ""
             ngram_count = 0     # words in scnentence/paragraph
             ngram_tkzed = 0     # vectorized tokens genertaed per scentence/paragraph
-            sen_result = clsfr_result
+            sen_result = _clsfr_result
             raw_score = sen_result['score']
             rounded_score = np.floor(raw_score * (10 ** 7) ) / (10 ** 7)
             
             if self.args['bool_verbose'] is True:        # Logging level
                 print ( f" / HFN: {hfw} / Sent: {sen_result['label']} {(rounded_score * 100):.5f}%")
 
-            logging.info( f'%s - Save chunklist to DF for article [ {self.item_idx} ]...' % cmi_debug )
-            sen_package = dict(sym=symbol, urlhash=self.active_urlhash, article=self.item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
+            logging.info( f'%s - Save blocklet metrics to DF for article [ {self.item_idx} ]...' % cmi_debug )
+            sen_package = dict(sym=symbol,
+                               urlhash=self.active_urlhash,
+                               article=self.item_idx,
+                               chunk=i,
+                               sent=sen_result['label'],
+                               rank=raw_score )
+            
             self.save_sentiment_df(self.item_idx, sen_package)      # page, data
             self.sentiment_count[sen_result['label']] += 1  # count sentiment type
-            _z_cr_package.update({
-                            'urlhash': self.active_urlhash,
-                            'article': self.item_idx,
-                            })
+            # I dont think this needs to happen here...!?
+            #_z_cr_package.update({
+            #                'urlhash': self.active_urlhash,
+            #                'article': self.item_idx,
+            #                })
         except RuntimeError:
             print ( f"Model exception !!")
         except ValueError:
@@ -342,7 +359,7 @@ class ml_sentiment:
         except Exception as e:
             print ( f"ERROR sent engine !!: {e}")
     
-        return _z_cr_package      # dict{}
+        return sen_package      # dict{}
         #return self.ttc, self.twc, i
 
 ##################################### 1 ####################################
@@ -377,7 +394,7 @@ class ml_sentiment:
         self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
         self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
         self.df0_row_count = x
-        logging.info( f"%s - Sent DF Updated / Art: {item_idx} / chunk: {chk:03} / sent: {snt} / score: {rnk}" % cmi_debug )
+        logging.info( f"%s - Sent Metrics DF updated for Article: {item_idx} / chunk: {chk:03} / sent: {snt} / score: {rnk}" % cmi_debug )
         return
 
 ##################################### 3 ####################################
