@@ -103,7 +103,7 @@ class ml_sentiment:
         self.twc = 0
         self.cr = None
         self.final_results = dict()
-        self.final_results["sent_paras"] = 0
+        self.final_results['sent_paras'] = 0
         self.sentiment_count["positive"] = 0
         self.sentiment_count["negative"] = 0
         self.sentiment_count["neutral"] = 0
@@ -169,7 +169,7 @@ class ml_sentiment:
                     self.ttc, _i_twc, final_results = self.dict_processor(symbol, blocklet_d)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _i_twc
                     bs4_row += 1
-                    self.cr_package.update({ 'sent_paras': int(self.tsenparas) })
+                    self.cr_package.update({'sent_paras': int(self.tsenparas)})
                     
             return self.ttc, self.twc, final_results
     
@@ -279,7 +279,7 @@ class ml_sentiment:
                             'sent_score': clsfr_result[0]['score'] })
 
             # add element outside of chunk element 
-            _x_cr_package.update({ 'sent_paras': int(self.tsenparas) })
+            _x_cr_package.update({'sent_paras': int(self.tsenparas)})
             ttc += tc
             tnc += twc
             if self.args['bool_verbose'] is True:        # Logging level

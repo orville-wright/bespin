@@ -151,7 +151,8 @@ tasks/
 .chrome_cache/
 
 # Bespin specific
-datastore/
+datastore/*
+datastore/LMDB_tests_kvstore01/LMDB_0001
 data.mdb
 lock.mdb
 *.mdb
