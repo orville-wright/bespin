@@ -33,7 +33,9 @@ class lmdb_io_eng:
     env = None          # current opened LMDB database I/O Transaction handle
     sent_ai = None      # sentiment_ai instance, set by main() before calling kv_cache_engine()
     yti = 0
-
+    _n = 0             # negative sentiment count
+    _p = 0             # positive sentiment count
+    _z = 0             # neutral sentiment count
         
 ################# init
     def __init__(self, yti, db_name, global_args):
@@ -42,6 +44,9 @@ class lmdb_io_eng:
         self.args = global_args                            # Only set once per INIT. all methods are set globally
         self.yti = yti
         self.db_name = db_name
+        self._n = 0
+        self._p = 0
+        self._z = 0
         return
 
 ################# 1
@@ -194,6 +199,7 @@ class lmdb_io_eng:
         _sent_ai.sentiment_count["neutral"] = 0     # reset chunk metrics
         _sent_ai.sentiment_count["positive"] = 0
         _sent_ai.sentiment_count["negative"] = 0
+        
         logging.info( f'%s - BS4 Opening LMDB READ-ONLY mode...' % cmi_debug )
         #kv_success = None  # debig control switch
         _kv_success = self.open_lmdb_RO(3)
@@ -245,10 +251,7 @@ class lmdb_io_eng:
                                                     sent=_dc_v['sent_type'],
                                                     )
 
-                                    _sen_p = _sent_ai.sentiment_count["positive"]
-                                    _sen_z = _sent_ai.sentiment_count["neutral"]
-                                    _sen_n = _sent_ai.sentiment_count["negative"]
-                                    print (f"##-debug-241: kveng - senpkg / KEY: {_dc_k} {_chunk}: {_chunk_sent} - {_sen_p} / {_sen_z} / {_sen_n}")
+                                    #print (f"##-debug-241: kveng - senpkg / KEY: {_dc_k} {_chunk}: {_chunk_sent} - {_sen_p} / {_sen_z} / {_sen_n}")
                                     _sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
                                     continue    # not looking at dict{} element in JSON package
                                     #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")

@@ -571,12 +571,15 @@ class yfnews_reader:
         match _ec:
             case 0:  # BS4 KVstore cache hit
                 logging.info( f'%s - BS4 KVstore cache hit. Rehydrating data from Deep Cache...' % cmi_debug )
-                self.sent_ai.sentiment_count = _sen_data  # rehydrate sentiment count package from Deep Cache
-                _sen_df_row = pd.DataFrame(_sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
+                # rehydrate GLOBAL sentiment count dict from returned sen_data LIST[] from Deep Cache
+                print (f"##-debug-577: _sen_data:\n{type(_sen_data)} / {_sen_data}" )
+                self.sent_ai.sentiment_count["positive"] = _sen_data[0][2]
+                self.sent_ai.sentiment_count["neutral"] = _sen_data[0][3]
+                self.sent_ai.sentiment_count["negative"] = _sen_data[0][4]
+                _sen_df_row = pd.DataFrame(_sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )                
                 self.sen_stats_df = pd.concat([self.sen_stats_df, _sen_df_row])
+                print (f"##-debug-584: sen_stats_df:\n{self.sen_stats_df}" )
                 logging.info( f'%s - BS4 Rehydrated sentiment DF metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
-                # debug
-                #dump_kvcache_bs4(self, symbol, data_row['urlhash'])  # dump LMDB cache for this article
                 return _ttk, _ttw, _fr                        
             case 1:  # BS4 KVstore cache miss
                 logging.info( f'%s - BS4 KVstore ERROR. Deserialization failure !force Net read...' % cmi_debug )

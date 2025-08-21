@@ -43,7 +43,7 @@ class ml_sentiment:
     tsenparas = 0       # total sentences & paragraphs
     ttc = 0             # Total Tokens generated in the scnetcne being analyzed
     twc = 0             # Total cumulative Word count in this artcile being analyzed
-    json_subdict = 0    # ID of the subdict that is being processed and was last worked on
+    json_udid = 0    # ID of the subdict that is being processed and was last worked on
     yti = 0
     
     # Techcnial analysys dict defines sentiment score to description mapping
@@ -69,7 +69,7 @@ class ml_sentiment:
         self.tsenparas = 0
         self.empty_vocab = 0
         self.kv_json_dataset = dict()  # inti the JSON dataset
-        self.json_subdict = int(0)    # reset the subdict counter
+        self.json_udid = int(0)    # reset the subdict counter
         self.sentiment_count = { 'positive': 0, 'negative': 0, 'neutral': 0 }
         return
 
@@ -168,11 +168,12 @@ class ml_sentiment:
                         self.twc += _i_twc
                         #bs4_row += 1
                         print (f"##-debug-168 comsent_trunctd - tr_fr: {_tr_final_results}\n")
-                        if bs4_row == bs4rows - 1:  # last row, update the cr_package with the final results
-                            self.cr_package.update(_tr_final_results)  # merge the final results into the cr_package
-                            self.cr_package.update({'sent_paras': int(self.tsenparas)})
-                            self.json_subdict = 0    # reset the subdict counter
-                            return self.ttc, self.twc, self.cr_package
+                        #if bs4_row == bs4rows - 1:  # last row, update the cr_package with the final results
+                        self.cr_package.update(_tr_final_results)  # merge the final results into the cr_package
+                        self.cr_package.update({'sent_paras': int(self.tsenparas)})
+                        continue
+                        #self.json_udid = 0    # reset the subdict counter
+                        #return self.ttc, self.twc, self.cr_package
                     else:
                         truncated = "Clean"
                         logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
@@ -181,14 +182,15 @@ class ml_sentiment:
                         self.ttc, _i_twc, _cl_final_results = self.dict_processor(symbol, blocklet_d)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
                         self.twc += _i_twc
                         #bs4_row += 1
-                        if bs4_row == bs4rows - 1:  # last row, update the cr_package with the final results
-                            self.cr_package.update(_cl_final_results)  # merge the final results into the cr_package
-                            self.cr_package.update({'sent_paras': int(self.tsenparas)})
-                            self.json_subdict = 0    # reset the subdict counter
-                            return self.ttc, self.twc, self.cr_package
-                        
+                        #if bs4_row == bs4rows - 1:  # last row, update the cr_package with the final results
+                        self.cr_package.update(_cl_final_results)  # merge the final results into the cr_package
+                        self.cr_package.update({'sent_paras': int(self.tsenparas)})
+                        continue
+                        #self.json_udid = 0    # reset the subdict counter
+                        #return self.ttc, self.twc, self.cr_package
+                    
             print (f"##-debug-193 comsent-all:  {self.cr_package}\n")
-            self.json_subdict = 0    # reset the subdict counter
+            self.json_udid = 0    # reset the subdict counter
             return self.ttc, self.twc, self.cr_package
     
     #####################################
@@ -284,12 +286,23 @@ class ml_sentiment:
                 self.tsenparas += 1
             else:
                 chunk_type = "Randm"
-            logging.info( f"%s - ============ LLM Classifying Blocklet {i:03} ============" % cmi_debug)
-            logging.info( f"%s - Exec LLM NLP classfier/vectorizor..." % cmi_debug )
+            logging.info( f"%s - ======== LLM NLP Classifying Blocklet {i:03} ========" % cmi_debug)
+            logging.info( f"%s - ======== Exec LLM NLP classfier/vectorizor..." % cmi_debug )
             clsfr_result = self.classifier(chunk, truncation=True)      # input = chunk {} - 1 element
-            #_k = f'{i:03}'  # nicly formated dict{} key
-            _k = f'{self.json_subdict:03}'  # formated JSPON dict{} package with global subdict counter ID NUM
+            _k = f'{self.json_udid:03}'  # formated JSPON dict{} package with global subdict counter ID NUM
             
+            # add Base JSON elements chunk metrics
+            _x_cr_package.update({'sent_paras': int(self.tsenparas)})      # yes keep updting thie each time
+            #
+            if _x_cr_package.get('urlhash') is None:
+                _x_cr_package['urlhash'] = self.active_urlhash
+            if _x_cr_package.get('article') is None:
+                _x_cr_package['article'] = self.item_idx
+            if _x_cr_package.get("chunk_count") is None:
+                _x_cr_package.update({'chunk_count': self.json_udid})  # add chunk count to the JSON dataset
+            else:
+                _x_cr_package['chunk_count'] = self.json_udid          # update it
+
             _x_cr_package[_k] = ({
                             'symbol': symbol,
                             'chunk': f"{i:03}",
@@ -298,18 +311,6 @@ class ml_sentiment:
                             'alphas': f"{len(chunk):03}",
                             'sent_type': clsfr_result[0]['label'],
                             'sent_score': clsfr_result[0]['score'] })
-
-            # add element outside of chunk element 
-            _x_cr_package.update({'sent_paras': int(self.tsenparas)})      # yes keep updting thie each time
-            #
-            if _x_cr_package.get('urlhash') is None:
-                _x_cr_package['urlhash'] = self.active_urlhash
-            if _x_cr_package.get('article') is None:
-                _x_cr_package['article'] = self.item_idx
-            if _x_cr_package.get("chunk_count") is None:
-                _x_cr_package.update({'chunk_count': self.json_subdict})  # add chunk count to the JSON dataset
-            else:
-                _x_cr_package['chunk_count'] = self.json_subdict          # update it
 
             ttc += tc
             tnc += twc
@@ -322,7 +323,7 @@ class ml_sentiment:
             # merge this single row dict dataset with global JSON dataset
             # the global json dataset will keep growing as each chunk row is processed
             self.kv_json_dataset.update(_x_cr_package)  # merge/extend KV cache JSON dataset
-            self.json_subdict += 1    # ensure we're adding a new subdict to the JSON dataset
+            self.json_udid += 1    # ensure we're adding a new subdict to the JSON dataset
             
         return ttc, tnc, self.kv_json_dataset
 
