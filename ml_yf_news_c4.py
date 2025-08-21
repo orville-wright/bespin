@@ -542,10 +542,11 @@ class yfnews_reader:
                 for _key0, _value0 in cursor0:
                     _find_me = "0001."+symbol+"."+_urlhash
                     match _key0.decode('utf-8'):
-                        case _find_me.decode('utf-8'):
+                        case str(_find_me):
                             key_str = _key0.decode('utf-8')
                             value_str = _value0.decode('utf-8')
-                            print(f"LMDB -  KEY: {key_str} -> VALUE: {value_str}")
+                            print(f"LMDB -  SEARCH: {_find_me}" )
+                            print(f"LMDB -  KEY:    {key_str} -> VALUE: {value_str}\n")
                         case _:
                             print(f"LMDB -  didnt find any LMBD data for: {symbol} / {_urlhash}")
                     count += 1
@@ -575,7 +576,7 @@ class yfnews_reader:
                 self.sen_stats_df = pd.concat([self.sen_stats_df, _sen_df_row])
                 logging.info( f'%s - BS4 Rehydrated sentiment DF metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
                 # debug
-                dump_kvcache_bs4(self, symbol, data_row['urlhash'])  # dump LMDB cache for this article
+                #dump_kvcache_bs4(self, symbol, data_row['urlhash'])  # dump LMDB cache for this article
                 return _ttk, _ttw, _fr                        
             case 1:  # BS4 KVstore cache miss
                 logging.info( f'%s - BS4 KVstore ERROR. Deserialization failure !force Net read...' % cmi_debug )
@@ -740,9 +741,8 @@ class yfnews_reader:
                 _crp = json.dumps(_data_json, default=str)  # serialize to JSON
                 _txn.put(bs4_kvs_key, _crp.encode('utf-8'))   # write data to LMDB                
                 self.kvio_eng.env.close
-                print (f"##-debug-744: crp1: {_crp} ")
                 final_results.update(json.loads(_crp))
-                print (f"##-debug-744: crp2: {_crp} ")
+                print (f"##-debug-744: lmdb_write: {_crp} ")
         else:
             logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read

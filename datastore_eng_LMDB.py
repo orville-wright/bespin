@@ -189,6 +189,8 @@ class lmdb_io_eng:
         #   - self.total_chars
         #   - self.sen_data
         
+        print (f"##-debug-192 kveng : {type(_sent_ai.sentiment_count)} / {_sent_ai.sentiment_count}" )
+
         _sent_ai.sentiment_count["neutral"] = 0     # reset chunk metrics
         _sent_ai.sentiment_count["positive"] = 0
         _sent_ai.sentiment_count["negative"] = 0
@@ -246,7 +248,7 @@ class lmdb_io_eng:
                                     _sen_p = _sent_ai.sentiment_count["positive"]
                                     _sen_z = _sent_ai.sentiment_count["neutral"]
                                     _sen_n = _sent_ai.sentiment_count["negative"]
-                                    print (f"##-debug-241: senpkg KEY: {_dc_k} {_chunk}: {_chunk_sent} - {_sen_p} / {_sen_z} / {_sen_n}")
+                                    print (f"##-debug-241: kveng - senpkg / KEY: {_dc_k} {_chunk}: {_chunk_sent} - {_sen_p} / {_sen_z} / {_sen_n}")
                                     _sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
                                     continue    # not looking at dict{} element in JSON package
                                     #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
@@ -273,12 +275,12 @@ class lmdb_io_eng:
                                         _sent_n
                                         ]]
                             
-                            sent_fz = _final_results["neutral_count"]
-                            sent_fp = _final_results["positive_count"]
-                            sent_fn = _final_results["negative_count"]
+                            #sent_fz = _final_results["neutral_count"]
+                            #sent_fp = _final_results["positive_count"]
+                            #sent_fn = _final_results["negative_count"]
 
                             #print (f"JSON: {_final_results}")
-                            print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {sent_fp}({_sent_p}) / Neutral: {sent_fz}({_sent_z}) / Negative: {sent_fn}({_sent_n})")
+                            print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
                             print (f"BS4 KV Cache:  [ HIT.#0 / Deep cache Read success ! Rehydrate from KV... ] {item_idx}" )
                             return 0, _total_tokens, _total_words, self.sen_data, _final_results
                             #
