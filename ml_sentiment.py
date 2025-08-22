@@ -124,23 +124,26 @@ class ml_sentiment:
             # input MUST be a crawl4ai prepred list of full article text. 
             # c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
             # therfore chunker has a higher probabliy of needing to do a lot more work for c4
+            self.json_udid = 0    # reset the subdict counter
             for i in range(0, len(scentxt)):
                 logging.info( f"%s - Eval bulk TEXT length: {len(scentxt[i])} chars" % cmi_debug )
                 truncated = "Undef"
                 if len(scentxt[i]) >= self.tokenizer_mml: # self.tokenizer_mml:    # only chunk into blocklets on truncation altert
                     truncated = "Trctd!"
+                    _dpro_eng = 3   # C4 + Truncated
                     blocklet_l = list()
                     blocklet_l.append(scentxt[i])  # force create a full article text list, since chunker needs this input structure
-                    blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # send = list[], result = {} of blocklets
-                    logging.info( f"###-debug-130 - Status: {truncated} - blocklet_d: {type(blocklet_d)}" )
-                    self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
+                    blocklet_d, self.json_udid = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type, self.json_udid)   # send = list[], result = {} of blocklets
+                    logging.info( f"###-debug-130 - Status: {truncated} - blocklet_d: {type(blocklet_d)} / chunks: {self.json_udid}" )
+                    self.ttc, _c_twc, final_results, self.json_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.json_udid)    # Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _c_twc
                 else:
                     truncated = "Clean"
+                    _dpro_eng = 4   # C4 + Clean (not truncated)
                     logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
                     blocklet_d = dict()
                     blocklet_d.update({i: scentxt[i]})    # create 1 row dict for dict_processor() (ths is a NATURAL short/clean text blocklet
-                    self.ttc, _c_twc, final_results = self.dict_processor(symbol, blocklet_d)    # send = dict{}, Exec AI NLP classifier inside dict_processor() !!
+                    self.ttc, _c_twc, final_results, self.json_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.json_udid)    # send = dict{}, Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _c_twc
 
                 #print (f"##-debug-141: {truncated}:\n{blocklet_d}\n\n {final_results}")
@@ -152,6 +155,8 @@ class ml_sentiment:
             # - 1 at a time from within the articel body
             # The chunker has good probablity of not doing as much work as C4 b/c BS4 <p> text fragemtns are shorter
             bs4rows = int(len(scentxt))
+            self.json_udid = 0    # reset the subdict counter
+            _dpro_eng = 0
             for bs4_row in range(0, bs4rows):
                 #bs4_row = 0
                 for i in range(0, len(scentxt)):
@@ -159,43 +164,36 @@ class ml_sentiment:
                     truncated = "Undef"
                     if len(scentxt[i].text) > self.tokenizer_mml:      # only chunk into blocklets on truncation altert
                         truncated = "Trctd!"
+                        _dpro_eng = 1   # BS4 + Truncated
                         logging.info( f"%s - Send BS4 TEXT LIST to chunker.#01..." % cmi_debug )
                         blocklet_l = list()
-                        #blocklet_l.update({ bs4_row: scentxt[i].text }) # create 1 row dict for dict_processor() (Too Long <p>) text blocklet needs chunking)
                         blocklet_l.append(scentxt[i].text) # create 1 row list[], extracting <p> text (from html.element) for dict_processor() ( needs chunking)
-                        blocklet_d = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type)   # send = list[], result = {} of chunked blocklets
-                        self.ttc, _i_twc, _tr_final_results = self.dict_processor(symbol, blocklet_d)    # Exec AI NLP classifier inside dict_processor() !!
-                        self.twc += _i_twc
-                        #bs4_row += 1
-                        print (f"##-debug-168 comsent_trunctd - tr_fr: {_tr_final_results}\n")
-                        #if bs4_row == bs4rows - 1:  # last row, update the cr_package with the final results
+                        blocklet_d, self.json_udid = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type, self.json_udid)   # send = list[], result = {} of chunked blocklets
+                        self.ttc, _i_twc, _tr_final_results, self.json_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.json_udid)    # Exec AI NLP classifier inside dict_processor() !!
+                        self.twc += _i_twc 
                         self.cr_package.update(_tr_final_results)  # merge the final results into the cr_package
                         self.cr_package.update({'sent_paras': int(self.tsenparas)})
-                        continue
+                        #continue
                         #self.json_udid = 0    # reset the subdict counter
                         #return self.ttc, self.twc, self.cr_package
                     else:
                         truncated = "Clean"
+                        _dpro_eng = 2   # BS4 + Clean (not truncated)
                         logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
                         blocklet_d = dict()
                         blocklet_d.update({bs4_row: scentxt[i].text}) # create 1 row dict for dict_processor() (ths is a short/clean <p>) text blocklet
-                        self.ttc, _i_twc, _cl_final_results = self.dict_processor(symbol, blocklet_d)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
+                        self.ttc, _i_twc, _cl_final_results, self.json_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.json_udid)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
                         self.twc += _i_twc
-                        #bs4_row += 1
-                        #if bs4_row == bs4rows - 1:  # last row, update the cr_package with the final results
                         self.cr_package.update(_cl_final_results)  # merge the final results into the cr_package
                         self.cr_package.update({'sent_paras': int(self.tsenparas)})
-                        continue
-                        #self.json_udid = 0    # reset the subdict counter
-                        #return self.ttc, self.twc, self.cr_package
-                    
-            print (f"##-debug-193 comsent-all:  {self.cr_package}\n")
+                        #continue
+
             self.json_udid = 0    # reset the subdict counter
             return self.ttc, self.twc, self.cr_package
     
     #####################################
     # Helper function
-    def unified_chunker(self, st_list, tokenizer_mml, ext_type):
+    def unified_chunker(self, st_list, tokenizer_mml, ext_type, _json_udid):
         """
         Unifided chunker
         Chunks a frame of article text data into smaller blocklets not exceeding LLM tokenizer max length
@@ -217,7 +215,7 @@ class ml_sentiment:
         abs_tchars = sum(len(s) for s in st_list)            
         logging.info( f"%s - Start chunker for chars: {abs_tchars} @ truncation: {tokenizer_mml}" % cmi_debug )
         chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of text > tokenizer_mml"
-        chunk_index = 0     # dict key
+        chunk_index = _json_udid     # dict key
         start = 0           # text blocklet len counter
         run_total = 0       # cumulative total
         #print (f"###-DEBUG-192: in-1:{type(st_list)} / in-2:{tokenizer_mml} / in-3{ext_type}")
@@ -231,6 +229,8 @@ class ml_sentiment:
                     #print (f"###-DEBUG-199: run:{run_total} / len:{len(chunk[0])}")
                     logging.info( f"%s - Eng.#1 Blocklet constructed: {chunk_index:03} @ {len(chunk[0]):03} chars [ {run_total:04} ]" % cmi_debug )
                     chunks[chunk_index] = chunk     # add to final output dict
+                    print ( f"udid:{chunk_index} ", end="")  # debug
+                    chunk_index += 1
                     #print (f"###-DEBUG-202: chkidx:{chunk_index} / chunk:\n{chunk}")
                 break
  
@@ -247,6 +247,7 @@ class ml_sentiment:
                 
             if blocklet:   # Only add non-empty chunks
                 chunks[chunk_index] = blocklet         # add to final output dict
+                print ( f"udud:{chunk_index} ", end="")  # debug
                 chunk_index += 1
                 _b = len(blocklet)
                 run_total += _b
@@ -255,11 +256,11 @@ class ml_sentiment:
                 logging.info( f"%s - Eng.#2 Blocklet constructed: {chunk_index:03} @ {len(blocklet):03} chars [ {run_total:04} ]" % cmi_debug )
                 start = chunk_end + (1 if chunk_end < len(st_list) and st_list[chunk_end] == ' ' else 0)
 
-        return chunks   # {} of perfect blockelts < tokenizer_mml
+        return chunks, chunk_index   # {} of perfect blockelts < tokenizer_mml
     
     #####################################
     # Helper function
-    def dict_processor(self, symbol, _text_dict):
+    def dict_processor(self, symbol, _text_dict, _dpro_eng, _json_udid):
         '''
         WARN: LLM Classifier can only intake a dict{}
         This function EXECUTES the LLM NLP Classified pipeline
@@ -270,6 +271,15 @@ class ml_sentiment:
         twc= 0
         ngram_count = 0
         tnc = 0
+        _json_udid = self.json_udid    # subdict counter
+        dpro_eng_decode = {
+            1: "BS4_Trctd",
+            2: "BS4_Clean",
+            3: "C4_Trctd",
+            4: "C4_Clean"
+        }
+        logging.info( f"%s - DPro_Eng.#0 : {dpro_eng_decode.get(_dpro_eng, 'Unknown')}" % __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti) )
+        
         _x_cr_package = dict()      # ensure cr_packge is loca and empty !
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
         logging.info( f"%s - Starting DICT processor engine..." % cmi_debug )
@@ -302,15 +312,18 @@ class ml_sentiment:
                 _x_cr_package.update({'chunk_count': self.json_udid})  # add chunk count to the JSON dataset
             else:
                 _x_cr_package['chunk_count'] = self.json_udid          # update it
-
+            _truncate_state = dpro_eng_decode.get(_dpro_eng, 'Unknown')  # decode the _dpro_eng var
+            
+            _udid = self.json_udid
             _x_cr_package[_k] = ({
                             'symbol': symbol,
-                            'chunk': f"{i:03}",
+                            'chunk': f"{_udid:03}",
                             'n-grams': f"{twc:03}",
                             'tokenz': f"{len(ngram_tkzed):03}",
                             'alphas': f"{len(chunk):03}",
                             'sent_type': clsfr_result[0]['label'],
-                            'sent_score': clsfr_result[0]['score'] })
+                            'sent_score': clsfr_result[0]['score'],
+                            'trct_state': _truncate_state })
 
             ttc += tc
             tnc += twc
@@ -325,7 +338,7 @@ class ml_sentiment:
             self.kv_json_dataset.update(_x_cr_package)  # merge/extend KV cache JSON dataset
             self.json_udid += 1    # ensure we're adding a new subdict to the JSON dataset
             
-        return ttc, tnc, self.kv_json_dataset
+        return ttc, tnc, self.kv_json_dataset, self.json_udid
 
  ###################
     # Helper function for dict_processor()

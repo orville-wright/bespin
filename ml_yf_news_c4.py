@@ -690,6 +690,7 @@ class yfnews_reader:
         logging.info( f'%s - BS4 Exec NLP sent classifier pipeline.#0...' % cmi_debug )
         # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
         # 0 = Crawl4ai extractor, 1 = BS4 extractor
+        self.sent_ai.json_udid = 0
         self.total_tokens, self.total_words, self.final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
         
         bs4_p_tag_count = len(local_stub_news_p)

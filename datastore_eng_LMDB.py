@@ -194,7 +194,7 @@ class lmdb_io_eng:
         #   - self.total_chars
         #   - self.sen_data
         
-        print (f"##-debug-192 kveng : {type(_sent_ai.sentiment_count)} / {_sent_ai.sentiment_count}" )
+        print (f"##-debug-192 kveng : {_sent_ai.sentiment_count}" )
 
         _sent_ai.sentiment_count["neutral"] = 0     # reset chunk metrics
         _sent_ai.sentiment_count["positive"] = 0
