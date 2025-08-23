@@ -524,6 +524,7 @@ def main():
                     #pprint.pprint(final_results, indent=4, sort_dicts=True)
                     ttkz += ttc
                     twcz += twc                         # total cumulative word count read
+                    print (f"##-debug-527: SENT_PARAS_XRAY:\n{final_results}" )
                     tscz += final_results['sent_paras'] # totoal cumulatvie sentences read
                     this_urlhash = sent_ai.active_urlhash
                     pd.set_option('display.max_rows', None)

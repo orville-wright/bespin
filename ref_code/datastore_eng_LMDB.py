@@ -27,7 +27,7 @@ class lmdb_io_eng:
     cr_package = None   # full reslts dict{} of dict_processor ruin
     cursor = None       # current LMDB Transaction Cursor - not sure if this is safe to store as global attribute
     cycle = 0           # class thread loop counter
-    db_path = "/home/dbrace/code/bespin/datastore/LMDB_tests_kvstore01/"       # filesystem path to locale of LMDB K/V Database
+    db_path = "/home/dbrace/code/bespin/datastore/"       # filesystem path to locale of LMDB K/V Database
     db_name = None      # LMDB Database instance name
     db_open_state = 0   # 0=closed, 1=open
     env = None          # current opened LMDB database I/O Transaction handle

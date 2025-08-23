@@ -27,7 +27,7 @@ class lmdb_io_eng:
     cr_package = None   # full reslts dict{} of dict_processor ruin
     cursor = None       # current LMDB Transaction Cursor - not sure if this is safe to store as global attribute
     cycle = 0           # class thread loop counter
-    db_path = "datastore/LMDB_tests_kvstore01/"       # filesystem path to locale of LMDB K/V Database
+    db_path = "datastore/"       # filesystem path to locale of LMDB K/V Database
     db_name = None      # LMDB Database instance name
     db_open_state = 0   # 0=closed, 1=open
     env = None          # current opened LMDB database I/O Transaction handle
@@ -83,7 +83,7 @@ class lmdb_io_eng:
             print(f"Database: {db_inst} - not found.")
             return 0
         except Exception as e:
-            print(f"Error Exception: {e}")
+            print(f"Open RW mode - Error Exception: {e}")
             return 0
             
 ################# 3
@@ -110,7 +110,7 @@ class lmdb_io_eng:
             print(f"Database: {db_inst} - not found.")
             return 0
         except Exception as e:
-            print(f"Error Exception: {e}")
+            print(f"Dump RO mode - Error Exception: {e}")
             return 0
 
 ################# 4
@@ -134,7 +134,7 @@ class lmdb_io_eng:
             print(f"Database: {db_inst} - not found.")
             return 0
         except Exception as e:
-            print(f"Error Exception: {e}")
+            print(f"Drop RW mode - Error Exception: {e}")
             return 0
 
 ################# 5
@@ -152,7 +152,7 @@ class lmdb_io_eng:
             print(f"LMDB Close Error: {e}")
             return 0
         except Exception as e:
-            print(f"Error Exception: {e}")
+            print(f"Close instance - Error Exception: {e}")
             return 0
         
 ################# 6
@@ -296,3 +296,25 @@ class lmdb_io_eng:
             logging.info( f"%s - BS4 Deep Cache ERROR : ! LMDB I/O cant open RO mode" % cmi_debug )
             print (f"================================ BS4 End.#3 KV Cache MISS ! LMDB RO open failure ! Net read... {item_idx} ================================" )
             return 4, 0, 0, 0, 0   # LMDB I/O FAILURE : Failed to open DB in RO mode
+
+        # #########################################
+        # private helper function : BS4 extractor
+        def dump_kvcache_bs4(self, symbol, _urlhash):
+            with self.kvio_eng.env.begin() as txn0:
+                print(f"BS4 Dumping LMDB KV cache database...")    
+                cursor0 = txn0.cursor()
+                count = 0
+                for _key0, _value0 in cursor0:
+                    _find_me = "0001."+symbol+"."+_urlhash
+                    match _key0.decode('utf-8'):
+                        case str(_find_me):
+                            key_str = _key0.decode('utf-8')
+                            value_str = _value0.decode('utf-8')
+                            print(f"LMDB -  SEARCH: {_find_me}" )
+                            print(f"LMDB -  KEY:    {key_str} -> VALUE: {value_str}\n")
+                        case _:
+                            print(f"LMDB -  didnt find any LMBD data for: {symbol} / {_urlhash}")
+                    count += 1
+                print(f"\nBS4 Total entries in LMDB database: {count}")    
+                #self.kvio_eng.env.close()
+            return

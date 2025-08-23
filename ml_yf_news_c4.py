@@ -53,7 +53,7 @@ class yfnews_reader:
     ml_sent = None
     nlp_x = 0
     result_engine = "unknown"  # engine used to extract article data
-    sent_ai = None
+    sent_ai = None          # GLOBALLY shared handle = prob a very bad idea to do it this way
     sen_stats_df = None     # Aggregated sentiment stats for this 1 article
     symbol = None           # Unique company symbol
     this_article_url = "https://www.default_interpret_page_url.com"
@@ -533,27 +533,6 @@ class yfnews_reader:
         final_results = dict()  # ensure final_results is empty
 
         # #########################################
-        # private helper function : BS4 extractor
-        def dump_kvcache_bs4(self, symbol, _urlhash):
-            with self.kvio_eng.env.begin() as txn0:
-                print(f"BS4 Dumping LMDB KV cache database...")    
-                cursor0 = txn0.cursor()
-                count = 0
-                for _key0, _value0 in cursor0:
-                    _find_me = "0001."+symbol+"."+_urlhash
-                    match _key0.decode('utf-8'):
-                        case str(_find_me):
-                            key_str = _key0.decode('utf-8')
-                            value_str = _value0.decode('utf-8')
-                            print(f"LMDB -  SEARCH: {_find_me}" )
-                            print(f"LMDB -  KEY:    {key_str} -> VALUE: {value_str}\n")
-                        case _:
-                            print(f"LMDB -  didnt find any LMBD data for: {symbol} / {_urlhash}")
-                    count += 1
-                print(f"\nBS4 Total entries in LMDB database: {count}")    
-                #self.kvio_eng.env.close()
-            return
-        # #########################################
         
         self.sent_ai.empty_vocab = 0
         if 'exturl' in data_row.keys():
@@ -568,17 +547,19 @@ class yfnews_reader:
         symbol = symbol.upper()
 
         _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai)
+        
         match _ec:
             case 0:  # BS4 KVstore cache hit
-                logging.info( f'%s - BS4 KVstore cache hit. Rehydrating data from Deep Cache...' % cmi_debug )
+                logging.info( f'%s - BS4 Deep cache hit / Rehydrate data from KVstore...' % cmi_debug )
                 # rehydrate GLOBAL sentiment count dict from returned sen_data LIST[] from Deep Cache
-                print (f"##-debug-577: _sen_data:\n{type(_sen_data)} / {_sen_data}" )
+                print (f"##-debug-555: _sen_data:\n{_sen_data}" )
                 self.sent_ai.sentiment_count["positive"] = _sen_data[0][2]
                 self.sent_ai.sentiment_count["neutral"] = _sen_data[0][3]
                 self.sent_ai.sentiment_count["negative"] = _sen_data[0][4]
                 _sen_df_row = pd.DataFrame(_sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )                
                 self.sen_stats_df = pd.concat([self.sen_stats_df, _sen_df_row])
-                print (f"##-debug-584: sen_stats_df:\n{self.sen_stats_df}" )
+                print (f"##-debug-561: sen_stats_df:\n{self.sen_stats_df}" )
+                print (f"##-debug-562: _fr:\n{_fr}" )
                 logging.info( f'%s - BS4 Rehydrated sentiment DF metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
                 return _ttk, _ttw, _fr                        
             case 1:  # BS4 KVstore cache miss
@@ -691,7 +672,7 @@ class yfnews_reader:
         # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
         # 0 = Crawl4ai extractor, 1 = BS4 extractor
         self.sent_ai.json_udid = 0
-        self.total_tokens, self.total_words, self.final_results = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
+        self.total_tokens, self.total_words, _cr_package = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
         
         bs4_p_tag_count = len(local_stub_news_p)
         
@@ -719,7 +700,7 @@ class yfnews_reader:
         sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
         self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
         
-        final_results.update({
+        _cr_package.update({
             'positive_count': sent_p,
             'neutral_count': sent_z,
             'negative_count': sent_n
@@ -734,15 +715,16 @@ class yfnews_reader:
         kv_success = self.kvio_eng.open_lmdb_RW(2)
         if kv_success is not None:      # explicit reliable singleton None test
             _data_json = dict()  # ensure _data_json is empty
+            _crp = ""
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
-            logging.info( f'%s - BS4 WRITE sentiment package to Deep Cache KVstore: {_key}' % cmi_debug )
+            logging.info( f'%s - BS4 WRITE sent package to Deep Cache KVstore: {_key}' % cmi_debug )
             with self.kvio_eng.env.begin(write=True) as _txn:
                 _data_json.update({'chars_count': int(extr_len)})
                 _data_json.update({'total_words': int(self.total_words)})
-                _data_json.update(self.sent_ai.cr_package)
-                _crp = json.dumps(_data_json, default=str)  # serialize to JSON
+                #_data_json.update(_cr_package)
+                _crp = json.dumps(_data_json, default=str)    # serialize to JSON
                 _txn.put(bs4_kvs_key, _crp.encode('utf-8'))   # write data to LMDB                
                 self.kvio_eng.env.close
                 final_results.update(json.loads(_crp))
@@ -1034,14 +1016,14 @@ class yfnews_reader:
                             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
                             logging.info( f'%s - Exec NLP sentiment analyzer: 1 - sending: {type(art_all_p)}' % cmi_debug )
                             # 0 = data in crawl4ai extractor format
-                            total_tokens, total_words, final_results = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
+                            total_tokens, total_words, _cr_package = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
                             if self.sent_ai.empty_vocab > 0: 
                                 print (f"\n")      # close out the EOL NL for "Empty Vocab" string
 
                             self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
                             self.sent_ai.cr_package.update({ 'total_words': int(total_words) })
 
-                            final_results.update({
+                            _cr_package.update({
                                 'positive_count': sentiment_ai.sentiment_count['positive'],
                                 'neutral_count': sentiment_ai.sentiment_count['neutral'],
                                 'negative_count': sentiment_ai.sentiment_count['negative']
@@ -1056,7 +1038,8 @@ class yfnews_reader:
                                 c4_kvs_key = _key.encode('utf-8')          # byte encode 
                                 logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
                                 with self.kvio_eng.env.begin(write=True) as _txn:
-                                    _data_json = json.dumps(self.sent_ai.cr_package, default=str)
+                                    _data_json = json.dumps(_cr_package, default=str)
+                                    #_data_json = json.dumps(self.sent_ai.cr_package, default=str)
                                     _txn.put(c4_kvs_key, _data_json.encode('utf-8'))
                                     self.kvio_eng.env.close
                             else:
@@ -1084,7 +1067,7 @@ class yfnews_reader:
             
                             print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}")
                             print ( f"========================= C4 End.#3 Net read + Deep Cache !create: {item_idx} =========================" )
-                            return total_tokens, total_words, final_results
+                            return total_tokens, total_words, _cr_package
 
         print (f"##-debug-1058: Unknown retrun state!" )
         return 0, 0, 0
