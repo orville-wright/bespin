@@ -156,9 +156,9 @@ class lmdb_io_eng:
             return 0
         
 ################# 6
-    def kv_cache_engine(self, _yti, symbol, data_row, item_idx, _sent_ai):
+    def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai):
         cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
-        logging.info( f'%s   - kv_cache_engine.#{_yti} KVstore instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s  - kv_cache_engine.#{_yti} KVstore instance: {self.db_name}' % cmi_debug )
 
         # Deep Caching engine (LMDB KV store)
         # Has article been read/extracted, and its metadata existing in KVstore
@@ -177,11 +177,11 @@ class lmdb_io_eng:
         #
         # TODO:
         # add _sent_ai handle to lmdb_io_eng class
-        #   - _sent_ai.sentiment_count["neutral"]
-        #   - _sent_ai.sentiment_count["positive"]
-        #   - _sent_ai.sentiment_count["negative"]
+        #   - _sentiment_count["neutral"]
+        #   - _sentiment_count["positive"]
+        #   - _sentiment_count["negative"]
         #   - sentiment_ai instance
-        #   - _sent_ai.sentiment_count
+        #   - _sentiment_count
         #   - _sent_ai.active_urlhash
         #   - _sent_ai.save_sentiment_df(item_idx, sen_package)
         #
@@ -193,12 +193,10 @@ class lmdb_io_eng:
         #   - self.total_words
         #   - self.total_chars
         #   - self.sen_data
-        
-        print (f"##-debug-192 kveng : {_sent_ai.sentiment_count}" )
-
-        _sent_ai.sentiment_count["neutral"] = 0     # reset chunk metrics
-        _sent_ai.sentiment_count["positive"] = 0
-        _sent_ai.sentiment_count["negative"] = 0
+        _sentiment_count = dict()
+        _sentiment_count["neutral"] = 0     # reset chunk metrics. Make sur eelemts exist
+        _sentiment_count["positive"] = 0
+        _sentiment_count["negative"] = 0
         
         logging.info( f'%s - BS4 Opening LMDB READ-ONLY mode...' % cmi_debug )
         #kv_success = None  # debig control switch
@@ -233,7 +231,7 @@ class lmdb_io_eng:
                             _total_tokens = 0
                         
                             # reset sent_count before we start
-                            _sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
+                            global_sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
                             # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
                             logging.info( f'%s - BS4 Rehydrate : Sentiment DF metrics from Deep Cache...' % cmi_debug )
                             #print (f"##-debug-578: pre-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
@@ -242,7 +240,7 @@ class lmdb_io_eng:
                                     _total_tokens += int(_dc_v['tokenz'])
                                     _chunk=_dc_v['chunk']
                                     _chunk_sent = _dc_v['sent_type']
-                                    _sent_ai.sentiment_count[_chunk_sent] += 1  # incr sentiment type counter
+                                    _sentiment_count[_chunk_sent] += 1  # incr sentiment type counter
                                     sen_package = dict(sym=symbol,
                                                     article=_final_results['article'],
                                                     urlhash=kv_url_hash,
@@ -252,7 +250,7 @@ class lmdb_io_eng:
                                                     )
 
                                     #print (f"##-debug-241: kveng - senpkg / KEY: {_dc_k} {_chunk}: {_chunk_sent} - {_sen_p} / {_sen_z} / {_sen_n}")
-                                    _sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
+                                    global_sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
                                     continue    # not looking at dict{} element in JSON package
                                     #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
                                 else:
@@ -263,9 +261,9 @@ class lmdb_io_eng:
                             _total_words = _final_results["total_words"]
                             _total_chars = _final_results["chars_count"]
                             #print (f"##-debug-578: final-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
-                            _sent_z = _sent_ai.sentiment_count["neutral"]
-                            _sent_p = _sent_ai.sentiment_count["positive"]
-                            _sent_n = _sent_ai.sentiment_count["negative"]
+                            _sent_z = _sentiment_count["neutral"]
+                            _sent_p = _sentiment_count["positive"]
+                            _sent_n = _sentiment_count["negative"]
                             
                             # must return self.sen_data, and must exec after return...
                             #   - sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )

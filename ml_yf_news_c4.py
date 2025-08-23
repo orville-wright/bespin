@@ -608,7 +608,7 @@ class yfnews_reader:
             self.update_headers(ip_headers)
             xhash = self.do_simple_get(durl)            # xhash now == cached_state (what we were given, but faield to find in cache))
             cy_soup = self.yfn_jsdb[xhash]              # ref the dict{} that do_simple_get() created
-            logging.info( f'%s - BS4 EVAL.#1 : re-read Net-cache 1... {cached_state}' % cmi_debug ) 
+            logging.info( f'%s - BS4 EVAL.#1 : re-read Net-cache #1 for: {cached_state}' % cmi_debug ) 
             if self.yfn_jsdb[cached_state]:
                 self.yfn_jsdata = self.yfn_jsdb[cached_state]['result']
                 logging.info ( f'%s - BS4 Found entry:   {cached_state}' % cmi_debug )
@@ -646,13 +646,13 @@ class yfnews_reader:
                 self.articles_crawled[item_idx] = self.nsoup     # NOTE USED: future feat: parallel crawl4ai extraction
                 self.result_engine = "yfn_jsdb.#3"
 
-        logging.info( f'%s - BS4 EVAL.#4:       Net Cahce entry...' % cmi_debug )
-        logging.info( f'%s - Cached hash:      {cached_state}' % cmi_debug )
-        logging.info( f'%s - Cache engine:     {self.result_engine}' % cmi_debug )
-        logging.info( f'%s - Cache Dataset:    {type(_dataset_1)}' % cmi_debug )
-        logging.info( f'%s - Cache URL:        {self.yfn_jsdb[cached_state]['url']}' % cmi_debug )
-        logging.info( f'%s - Sent URL in:      {durl}' % cmi_debug )
-        logging.info( f'%s - BS4 extractor / get Article TEXT for AI NLP reader...' % cmi_debug )
+        logging.info( f'%s - BS4 EVAL.#4:       Read Net Cahce entry...' % cmi_debug )
+        logging.info( f'%s - Cached hash:       {cached_state}' % cmi_debug )
+        logging.info( f'%s - Cache engine:      {self.result_engine}' % cmi_debug )
+        logging.info( f'%s - Cache Dataset:     {type(_dataset_1)}' % cmi_debug )
+        logging.info( f'%s - In Cache URL:      {self.yfn_jsdb[cached_state]['url']}' % cmi_debug )
+        logging.info( f'%s - Sent in URL:       {durl}' % cmi_debug )
+        logging.info( f'%s - Ready to exec BS4 extractor - get Article TEXT for AI NLP reader...' % cmi_debug )
     
         logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
         local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
