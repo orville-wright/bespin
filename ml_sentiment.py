@@ -113,7 +113,6 @@ class ml_sentiment:
         self.twc = 0
         self.cr = None
         self.final_results = dict()     
-        self.final_results['sent_paras'] = 0
         self.sentiment_count["positive"] = 0
         self.sentiment_count["negative"] = 0
         self.sentiment_count["neutral"] = 0
@@ -142,6 +141,7 @@ class ml_sentiment:
                     logging.info( f"###-debug-130 - Status: {truncated} - blocklet_d: {type(blocklet_d)} / chunks: {self.json_udid}" )
                     self.ttc, _c_twc, _c4_final_results, self.json_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.json_udid)    # Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _c_twc
+                    continue
                 else:
                     truncated = "Clean"
                     _dpro_eng = 4   # C4 + Clean (not truncated)
@@ -165,21 +165,19 @@ class ml_sentiment:
             self.blocket_udid = 0
             self.cr_package = dict()  # reset the cr_package for each <p> tag processed
             for bs4_row in range(0, bs4rows):
-                #bs4_row = 0
                 for i in range(0, len(scentxt)):
-                    logging.info( f"%s - BS4 Eval pre-chunker TEXT char length: {len(scentxt[i].text)}" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
+                    logging.info( f"%s - BS4 Eval pre-chunker @row: {bs4_row:03} / TEXT length: {len(scentxt[i].text)}" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
                     truncated = "Undef"
                     if len(scentxt[i].text) > self.tokenizer_mml:      # only chunk into blocklets on truncation altert
                         truncated = "Trctd!"
                         _dpro_eng = 1   # BS4 + Truncated
-                        logging.info( f"%s - BS4 senf full TEXT LIST to unfied_chunker.#1..." % cmi_debug )
+                        logging.info( f"%s - BS4 sent full TEXT LIST to unfied_chunker.#1..." % cmi_debug )
                         blocklet_l = list()
                         blocklet_l.append(scentxt[i].text) # create 1 row list[], extracting <p> text (from html.element) for dict_processor() ( needs chunking)
                         blocklet_d, self.chunk_udid = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type, self.chunk_udid)   # send = list[], result = {} of chunked blocklets
                         self.ttc, _i_twc, _tr_final_results, self.blocket_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.blocket_udid)    # Exec AI NLP classifier inside dict_processor() !!
                         self.twc += _i_twc 
                         self.cr_package.update(_tr_final_results)  # merge the final results into the cr_package
-                        self.cr_package.update({'sent_paras': int(self.tsenparas)})
                         continue
                         #self.json_udid = 0    # reset the subdict counter
                         #return self.ttc, self.twc, self.cr_package
@@ -193,10 +191,9 @@ class ml_sentiment:
                         self.ttc, _i_twc, _cl_final_results, self.blocket_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.blocket_udid)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
                         self.twc += _i_twc
                         self.cr_package.update(_cl_final_results)  # merge the final results into the cr_package
-                        self.cr_package.update({'sent_paras': int(self.tsenparas)})
-                        #continue
-
-            return self.ttc, self.twc, self.cr_package
+    
+        self.blocket_udid = 0   # after this entire article is processed, reset the blocklet counter
+        return self.ttc, self.twc, self.cr_package
     
     #####################################
     # Helper function
@@ -279,6 +276,7 @@ class ml_sentiment:
         - Heavy CPU utilization will be triggered
         '''
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
+        logging.info( f"%s - Initialize CLEAN DICT processor engine..." % cmi_debug )
 
         tc = 0
         ttc = 0
@@ -294,23 +292,41 @@ class ml_sentiment:
             4: "C4_Clean"
         }
         
+        self._chunk_profile = dict()
+        self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
+        self._cs_count = 0
+        self._cp_count = 0
+        self._cr_count = 0
         _x_cr_package = dict()      # ensure cr_packge is loca and empty !
+        
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
         logging.info( f"%s - Starting DICT processor engine:  {dpro_eng_decode.get(_dpro_eng, 'Unknown')}" % cmi_debug )
-        for _chunk_udid, chunk in _text_dict.items():    # cycle through all scentenses/paragraphs sent to us
+        
+        # main control loop
+        for _chunk_udid, chunk in _text_dict.items():     # cycle through all scentenses/paragraphs sent to us
+            print ( f"{self._cs_count} {self._cp_count} {self._cr_count} ", end="" )
             ngram_count = len(re.findall(r'\w+', chunk))  # count of words (ngrams)
             ngram_tkzed = word_tokenize(chunk)            # split TEXT chunk into NLP LLM tokens !! output -> list[]
             twc += ngram_count                            # cumulative total word count
             tc += int(len(ngram_tkzed))                   # cumulative vectroized tokens genrated by tokenizer 
+            # whole doccument metrics
             if self.vectorz.is_scentence(chunk):
-                chunk_type = "Scent"
-                self.tsenparas += 1                       # keep count of Total scentences
+                self._cs_count += 1
+                self._chunk_profile.update(scentence=self._cs_count)
+                print (f"1-DP-chunk: {_chunk_udid:03} {self._chunk_profile} / ", end="" )
+                self._chunk_type = "scent"                  # keep count of Total scentences
             elif self.vectorz.is_paragraph(chunk):
-                chunk_type = "Parag"                      # keep count of Total paragraphs
-                self.tsenparas += 1
+                self._cp_count += 1
+                self._chunk_profile.update(paragraph=self._cp_count)
+                print (f"2-DP-chunk: {_chunk_udid:03} {self._chunk_profile} / ", end="" )
+                self._chunk_type = "parag"
             else:
-                chunk_type = "Randm"
-            logging.info( f"%s - ======== LLM NLP Classifying Chunk {_chunk_udid:03} ========" % cmi_debug)
+                self._cr_count += 1
+                self._chunk_profile.update(random=self._cr_count)
+                print (f"3-DP-chunk: {_chunk_udid:03} {self._chunk_profile} / ", end="" )
+                self._chunk_type = "randm"
+
+            logging.info( f"%s - ======== LLM NLP Classifying Chunk {_chunk_udid:03} {dpro_eng_decode.get(_dpro_eng, 'Unknown')} ========" % cmi_debug)
             logging.info( f"%s - ======== Exec classifier/vectorizor  ==================" % cmi_debug )
             
             ####################### LLM NLP #######################
@@ -318,20 +334,25 @@ class ml_sentiment:
             #######################################################
             #
             clsfr_result = self.classifier(chunk, truncation=True)      # input = chunk {} - 1 element
-            print ( f"##-@320: CHUNK: {chunk}" )
+            print (f"4-DP-chunk: {_chunk_udid:03} {self._chunk_profile} / ", end="" )
+            #print (f"DP-chunk: {_chunk_udid:03} ({clsfr_result[0]['score']}) ", end="" )
+            #print ( f"##-@320: CHUNK: {_chunk_udid:03}  {dpro_eng_decode.get(_dpro_eng, 'Unknown')}\n{chunk}" )
             
             # add Base JSON elements chunk metrics
-            _x_cr_package.update({'sent_paras': int(self.tsenparas)})      # yes keep updting thie each time
+            _x_cr_package.update(self._chunk_profile)      # add final whole doc metrics to package
             #
             if _x_cr_package.get('urlhash') is None:
                 _x_cr_package['urlhash'] = self.active_urlhash
             if _x_cr_package.get('article') is None:
                 _x_cr_package['article'] = self.item_idx
             if _x_cr_package.get("chunk_count") is None:
-                _x_cr_package.update({'chunk_count': (self.chunk_udid - 1)})  # add to package - current GLOBAL class var
+                _x_cr_package.update({'chunk_count': (_chunk_udid)})  # add to package - current GLOBAL class var
             else:
-                _x_cr_package['chunk_count'] = (self.chunk_udid - 1)          # update it
+                _x_cr_package['chunk_count'] = self.chunk_udid
+                
             _truncate_state = dpro_eng_decode.get(_dpro_eng, 'Unknown')  # decode the _dpro_eng var
+            
+            print (f"##-@352: pre-check package: {_x_cr_package}" )
             
             _k = f'{self.element_udid:03}'  # formated JSON dict{} package with global subdict counter ID NUM
             _x_cr_package[_k] = ({
@@ -347,7 +368,7 @@ class ml_sentiment:
             ttc += tc
             tnc += twc
             if self.args['bool_verbose'] is True:        # Logging level
-                print ( f"Chunk: {_chunk_udid:03} / Type: {chunk_type} / Words: {tnc:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ", end="" )
+                print ( f"Chunk: {_chunk_udid:03} / Type: {self._chunk_type} / Words: {tnc:03} / tokenz: {len(ngram_tkzed):03} / alphas: {len(chunk):03} ", end="" )
 
             _this_chunk = f'{_chunk_udid:03}'     # format chunk
             _nlp_sent_package = self.nlp_sent_engine(_this_chunk, symbol, ngram_tkzed, ngram_count, clsfr_result[0], _x_cr_package)
@@ -356,7 +377,8 @@ class ml_sentiment:
             # the global json dataset will keep growing as each chunk row is processed
             self.kv_json_dataset.update(_x_cr_package)  # merge/extend KV cache JSON dataset
             self.element_udid += 1    # ensure we're adding a new subdict to the JSON dataset
-            
+            print ( f">>> ", end="" )
+
         return ttc, tnc, _x_cr_package, self.element_udid
 
  ###################
