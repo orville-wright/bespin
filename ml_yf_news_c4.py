@@ -552,7 +552,6 @@ class yfnews_reader:
             case 0:  # BS4 KVstore cache hit
                 logging.info( f'%s - BS4 Deep cache hit / Rehydrate data from KVstore...' % cmi_debug )
                 # rehydrate GLOBAL sentiment count dict from returned sen_data LIST[] from Deep Cache
-                print (f"##-debug-555: _sen_data:\n{_sen_data}" )
                 self.sent_ai.sentiment_count["positive"] = _sen_data[0][2]
                 self.sent_ai.sentiment_count["neutral"] = _sen_data[0][3]
                 self.sent_ai.sentiment_count["negative"] = _sen_data[0][4]
@@ -706,10 +705,9 @@ class yfnews_reader:
             'neutral_count': sent_z,
             'negative_count': sent_n,
             'chars_count': int(_total_chars),
-            'total_words': int(self.total_words)
+            'total_words': int(self.total_words),
+            'total_tokens': int(self.total_tokens),
             })
-        
-        print ( f"##-@712: cr_pkg-2: {_final_data_dict}")
         
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
         kv_success = self.kvio_eng.open_lmdb_RW(2)
@@ -722,7 +720,6 @@ class yfnews_reader:
                 _kvs_json_dataset = json.dumps(_final_data_dict, default=str)    # serialize to JSON
                 _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
                 self.kvio_eng.env.close
-                print (f"\n##-debug-744: lmdb_write: {_kvs_json_dataset} ")
         else:
             logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read

@@ -253,39 +253,39 @@ class ml_sentiment:
         self.chunk_index = _curr_chunk_udid     # dict key
         start = 0           # text blocklet len counter
         run_total = 0       # cumulative total
-        print (f"##-@234: in-1:{type(st_list)} / in-2:{tokenizer_mml} / in-3:{_ext_type}")
+
         while start < abs_tchars:
             end = start + tokenizer_mml         # Calc end pos for this chunk (e.g. + 512 chars)
-            print (f"###-@237: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
+            #print (f"###-@237: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
             if end >= abs_tchars:               # test if end would overrun max len of chunk
                 chunk = st_list[start:][:end]   # list index slice > to end of list
                 if chunk:                       # non-empy chunk? only add non-empty chunks
                     run_total += len(chunk[0])  # get len of this chunk (allwats at slive loc list[0])
-                    print (f"##-@242: run:{run_total} / len:{len(chunk[0])}")
+                    #print (f"##-@242: run:{run_total} / len:{len(chunk[0])}")
                     logging.info( f"%s - Eng.#1 Blocklet constructed: {self.chunk_index:03} @ {len(chunk[0]):03} chars [ {run_total:04} ]" % cmi_debug )
                     chunks[self.chunk_index] = chunk     # add to final output dict
-                    print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
+                    #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
                     self.chunk_index += 1
                 break
  
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
             last_space = st_string.rfind(' ', start, end)   # Find last space in chunk avoid breaking words
-            print (f"##-@251: lspace:{last_space} / len:{len(st_list[0])}")
+            #print (f"##-@251: lspace:{last_space} / len:{len(st_list[0])}")
             if last_space == -1 or last_space <= start:     # If no space (-1), break at chunk_size
                 chunk_end = end
-                print (f"##-@254: at the end!")
+                #print (f"##-@254: at the end!")
             else:
                 chunk_end = last_space
                 blocklet = st_list[0][start:chunk_end]      # Extract the chunk and add to list
-                print (f"##-@258: blocklet:{blocklet} / end:{chunk_end} / last:{last_space}")
+                #print (f"##-@258: blocklet:{blocklet} / end:{chunk_end} / last:{last_space}")
                 
             if blocklet:                                    # only add non-empty chunks
                 chunks[self.chunk_index] = blocklet         # add to final output dict
-                print ( f"2_udid:{self.chunk_index:03} ", end="")  # debug
+                #print ( f"2_udid:{self.chunk_index:03} ", end="")  # debug
                 _b = len(blocklet)
                 run_total += _b
                 #run_total += int(len(blocklet[0]))
-                print (f"##-@267: runtot:{run_total} / chunk:{self.chunk_index}")
+                #print (f"##-@267: runtot:{run_total} / chunk:{self.chunk_index}")
                 logging.info( f"%s - Eng.#2 Blocklet constructed: {self.chunk_index:03} @ {len(blocklet):03} chars [ {run_total:04} ]" % cmi_debug )
                 start = chunk_end + (1 if chunk_end < len(st_list) and st_list[chunk_end] == ' ' else 0)
                 self.chunk_index += 1
@@ -346,7 +346,7 @@ class ml_sentiment:
                 self._chunk_type = "randm"
 
             _truncate_state = dpro_eng_decode.get(_dpro_eng, 'Unknown')  # decode the _dpro_eng var
-            print (f"1-DP-chunk: {_chunk_udid:03} {self._chunk_profile}" )
+
             logging.info( f"%s - ======== LLM Classifying Chunk {_chunk_udid:03} {_truncate_state} ========" % cmi_debug)
             logging.info( f"%s - ======== Exec classifier/vectorizor  ==================" % cmi_debug )
             
@@ -395,7 +395,6 @@ class ml_sentiment:
                 # json dataset keeps growing as each chunk row is processed...
                 self.kv_json_dataset.update(_x_cr_package)  # merge/extend KV cache JSON dataset
                 self.element_udid += 1    # ensure we're adding a new subdict to the JSON dataset
-                print ( f"\n>>> ", end="" )
                 continue
             else:
                 print ( f"ERROR {_truncate_state} processing article blocket:{_chunk_udid:03} / Error: {_ec}" )

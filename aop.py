@@ -536,24 +536,17 @@ def main():
                         'negative_count': sent_n,
                         'bs4_rows': bs4_p_tag_count
                     '''
-                    print (f"##-@540: SENT_PARAS_XRAY:\n{final_results}" )
-                    
-                    print (f"final_results: {final_results}" )
-                    ttkz = final_results['total_tokens']
-                    twcz = final_results['total_words']
 
-                    
-                    tparas = final_results['paragraphs']
-                    tsents = final_results['scentences']
-                    trands = final_results['randoms']
-                    
+                    ttkz = final_results['total_tokens']
+                    twcz = final_results['total_words']    
+                    tparas = final_results['paragraph']
+                    tsents = final_results['scentence']
+                    trands = final_results['random']
                     this_urlhash = sent_ai.active_urlhash
+                    
                     pd.set_option('display.max_rows', None)
                     pd.set_option('max_colwidth', 40)
-                    
-                    aggregate_mean = sent_ai.sen_df0.loc[sent_ai.sen_df0['urlhash'] == this_urlhash].groupby('snt')['rnk'].mean()    # fill NaN with 0.0
-                    #print (f"##-debug-531: dump ai.sen_df0 details:\n{sent_ai.sen_df0}")
-                    #print (f"##-debug-532: aggr mean:\n{aggregate_mean}")
+                    aggregate_mean = sent_ai.sen_df0.loc[sent_ai.sen_df0['urlhash'] == this_urlhash].groupby('snt')['rnk'].mean()
 
                     # aggregate_mean DF keys are only set if the sentiment analysis computes a pos/net/neu sentiment for the article.
                     # If the article has no matching sentiment, the keys are not set in the DF.
@@ -669,7 +662,6 @@ def main():
             
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
-            #print (f"{sent_ai.sen_df3}")
             
             #################################################################
             # Neo4j DATBASE FUNCTIONS
