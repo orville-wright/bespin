@@ -520,12 +520,33 @@ def main():
                         load_balancer = 1                           # choose BS4 scraper/chunker
                     if ttc == 0 and twc == 0 and final_results == 0:
                         continue
-                        
-                    #pprint.pprint(final_results, indent=4, sort_dicts=True)
-                    ttkz += ttc
-                    twcz += twc                         # total cumulative word count read
-                    print (f"##-debug-527: SENT_PARAS_XRAY:\n{final_results}" )
-                    tscz += final_results['sent_paras'] # totoal cumulatvie sentences read
+
+                    '''
+                    FINAL RESULTS DICT KEYS:
+                        'article': item_idx,
+                        'urlhash': hs,
+                        'total_tokens': self.total_tokens,
+                        'total_chars': int(_total_chars),
+                        'total_words': self.total_words,
+                        'scentences': _final_data_dict.get('scentence'),
+                        'paragraphs': _final_data_dict.get('paragraph'),
+                        'randoms': _final_data_dict.get('random'),
+                        'positive_count': sent_p,
+                        'neutral_count': sent_z,
+                        'negative_count': sent_n,
+                        'bs4_rows': bs4_p_tag_count
+                    '''
+                    print (f"##-@540: SENT_PARAS_XRAY:\n{final_results}" )
+                    
+                    print (f"final_results: {final_results}" )
+                    ttkz = final_results['total_tokens']
+                    twcz = final_results['total_words']
+
+                    
+                    tparas = final_results['paragraphs']
+                    tsents = final_results['scentences']
+                    trands = final_results['randoms']
+                    
                     this_urlhash = sent_ai.active_urlhash
                     pd.set_option('display.max_rows', None)
                     pd.set_option('max_colwidth', 40)
@@ -627,7 +648,7 @@ def main():
             
             arts_read = df_final.iloc[-1]['art']
             row_count = len(df_final)
-            hpt_mins = ((twcz * aggr_sw_factor) + tscz + (tscz / 2)) / 175
+            hpt_mins = ((twcz * aggr_sw_factor) + (tparas + tsents + trands)) / 175
             hpt_hours =  hpt_mins / 60
             analyst_time = (hpt_hours * 1.3) * 1.15     # extra time to compute sentiment, extra time to buld report
             analyst_rate = 300         # hourly rate for a Wall St. Analyst $/hour
@@ -641,7 +662,7 @@ def main():
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
             )
             print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
-            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {tscz} | AI read time: {(ai_sent_time / 60):.2f} mins" )
+            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {(tparas + tsents + trands)} | AI read time: {(ai_sent_time / 60):.2f} mins" )
             print (f"Human read time:  {(hpt_mins):.1f} mins ({(hpt_hours):.1f} hours)  | Human analyst: {analyst_time:.1f} hours" )
             print (f"AI performance:   {round((hpt_mins * 60) / (ai_sent_time / 60))} Faster than a Human  |   Analyst cost: ${round(analyst_cost):,}" )
             print (f" ")

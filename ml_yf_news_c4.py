@@ -530,7 +530,7 @@ class yfnews_reader:
         self.sent_ai = sentiment_ai
         lmdb_dbname = "LMDB_0001"
         self.kvio_eng = lmdb_io_eng(1, lmdb_dbname, self.args)
-        final_results = dict()  # ensure final_results is empty
+        bs4_final_results = dict()  # ensure final_results is empty
 
         # #########################################
         
@@ -591,7 +591,6 @@ class yfnews_reader:
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - BS4 Skipping : Micro Article stub... [ {item_idx} ]' % cmi_debug )
             return 0, 0, 0
-            # total_tokens, total_words, total_scent, final_results
             
         try:
             self.yfn_jsdb[cached_state]
@@ -672,16 +671,18 @@ class yfnews_reader:
         # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
         # 0 = Crawl4ai extractor, 1 = BS4 extractor
         self.sent_ai.json_udid = 0
-        self.total_tokens, self.total_words, _cr_package = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
-        
-        bs4_p_tag_count = len(local_stub_news_p)
+        self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
+         
+        # computre some keey Data Metrics for this article        
+        bs4_p_tag_count = len(local_stub_news_p)    # rows of <p> tags found in article
         
         # compute total chars (BS4 specific, as C4 is diff data structure)
-        extr_len = 0
+        _total_chars = 0
         for _i, _v in enumerate(local_stub_news_p):
-            extr_len += sum(len(_s) for _s in _v.text)
+            _total_chars += sum(len(_s) for _s in _v.text)
 
-        # these vars are set within compute_sentiment()
+        # these are set @ compute_sentiment::nlp_sent_engine()
+        # totals of all blockets
         sent_p = self.sent_ai.sentiment_count['positive']
         sent_z = self.sent_ai.sentiment_count['neutral']
         sent_n = self.sent_ai.sentiment_count['negative']
@@ -700,35 +701,28 @@ class yfnews_reader:
         sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
         self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
         
-        _cr_package.update({
+        _final_data_dict.update({
             'positive_count': sent_p,
             'neutral_count': sent_z,
-            'negative_count': sent_n
+            'negative_count': sent_n,
+            'chars_count': int(_total_chars),
+            'total_words': int(self.total_words)
             })
         
-        # Deep Cache KVstore write JSon package
-        # build cr_package for KV store
-        #self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
-        #self.sent_ai.cr_package.update({ 'total_words': int(self.total_words) })
+        print ( f"##-@712: cr_pkg-2: {_final_data_dict}")
         
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
         kv_success = self.kvio_eng.open_lmdb_RW(2)
         if kv_success is not None:      # explicit reliable singleton None test
-            _data_json = dict()  # ensure _data_json is empty
-            _crp = ""
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
-            logging.info( f'%s - BS4 WRITE sent package to Deep Cache KVstore: {_key}' % cmi_debug )
+            logging.info( f'%s - BS4 WRITE sent package to KVstore: {_key}' % cmi_debug )
             with self.kvio_eng.env.begin(write=True) as _txn:
-                _data_json.update({'chars_count': int(extr_len)})
-                _data_json.update({'total_words': int(self.total_words)})
-                #_data_json.update(_cr_package)
-                _crp = json.dumps(_data_json, default=str)    # serialize to JSON
-                _txn.put(bs4_kvs_key, _crp.encode('utf-8'))   # write data to LMDB                
+                _kvs_json_dataset = json.dumps(_final_data_dict, default=str)    # serialize to JSON
+                _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
                 self.kvio_eng.env.close
-                final_results.update(json.loads(_crp))
-                print (f"##-debug-744: lmdb_write: {_crp} ")
+                print (f"\n##-debug-744: lmdb_write: {_kvs_json_dataset} ")
         else:
             logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
@@ -736,9 +730,30 @@ class yfnews_reader:
         if self.sent_ai.empty_vocab > 0:
             print (f"\n")
 
-        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / BS4 ptags: {bs4_p_tag_count}")
+        bs4_final_results.update({
+            'article': item_idx,
+            'urlhash': hs,
+            'total_tokens': self.total_tokens,
+            'total_chars': int(_total_chars),
+            'total_words': self.total_words,
+            'scentences': _final_data_dict.get('scentence'),
+            'paragraphs': _final_data_dict.get('paragraph'),
+            'randoms': _final_data_dict.get('random'),
+            'positive_count': sent_p,
+            'neutral_count': sent_z,
+            'negative_count': sent_n,
+            'bs4_rows': bs4_p_tag_count
+        })
+
+        footer = (f"Total tokenz: {self.total_tokens} / "
+                  f"Words: {self.total_words} / "
+                  f"Chars: {_total_chars} / "
+                  f"Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / "
+                  f"BS4 ptags: {bs4_p_tag_count}"
+                )
+        print (f"{footer}")
         print (f"================================ BS4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
-        return self.total_tokens, self.total_words, final_results
+        return self.total_tokens, self.total_words, bs4_final_results
 
 # #####################################################################################
     # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1
