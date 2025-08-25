@@ -563,19 +563,19 @@ class yfnews_reader:
                 print (f"================================ BS4 End.#0 Deep Cache HIT ! / Rehydrated AI Metrics: {item_idx} ================================" )
                 return _ttk, _ttw, _fr                        
             case 1:  # BS4 KVstore cache miss
-                logging.info( f'%s - BS4 KVstore ERROR. Deserialization failure !force Net read...' % cmi_debug )
+                logging.info( f'%s - BS4 KVstore ERROR.#1 Deserialization failure !force Net read...' % cmi_debug )
                 pass
             case 2:
-                logging.info( f'%s - BS4 KVstore ERROR. No URL Hash KEY found !force Net read...' % cmi_debug )
+                logging.info( f'%s - BS4 KVstore ERROR.#2 No URL Hash KEY found !force Net read...' % cmi_debug )
                 pass
             case 3:
-                logging.info( f'%s - BS4 KVstore MISS. No cache entry !force Net read...' % cmi_debug )
+                logging.info( f'%s - BS4 KVstore MISS.#3 No cache entry !force Net read...' % cmi_debug )
                 pass
             case 4:
-                logging.info( f'%s - BS4 LMDB I/O FAILURE : Failed to open DB in RO mode !' % cmi_debug )
+                logging.info( f'%s - BS4 LMDB I/O FAILURE.#4 : Failed to open DB in RO mode !' % cmi_debug )
                 pass
             case _:
-                logging.info( f'%s - BS4 KVstore ERROR. Unknown error code: {_ec} !force Net read...' % cmi_debug )
+                logging.info( f'%s - BS4 KVstore ERROR.#def Unknown error code: {_ec} !force Net read...' % cmi_debug )
                 pass
 
         ######################################################
@@ -657,9 +657,14 @@ class yfnews_reader:
         local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
         local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})        # comes above/before article
         local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})   # full news article - locally hosted
-        local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
-
-        #** need to check for NoneType here... due to sneaky html redirect to non-YFN
+        try:
+            local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
+        except AttributeError as _ae:
+            logging.info( f'%s - BS4 Error FAILED to find_all TEXT <p_tags>: {_ae}"...' % cmi_debug )
+            print (f"================================ BS4 End.#9 Net Read / KV Cache miss ! BS4 FAILURE ! {item_idx} ================================" )
+            return 0, 0, None   # This is likely a YF Advertising redirect to non-Yahoo webpage
+        else:
+            pass
         
         ####################################################################
         ##### AI M/L Gen AI NLP starts here !!!                      #######

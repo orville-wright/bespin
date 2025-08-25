@@ -526,7 +526,7 @@ def main():
                         load_balancer = 0                           # choose CRAW4AI scraper/chunker
                     else:
                         load_balancer = 1                           # choose BS4 scraper/chunker
-                    if _atc == 0 and _awc == 0 and final_results == 0:
+                    if _atc == 0 and _awc == 0 and final_results is None:  # error state (extract FAILURE)
                         continue
 
                     '''
