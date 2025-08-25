@@ -86,11 +86,12 @@ class ml_sentiment:
 ##################################### 2 ####################################
     def compute_sentiment(self, symbol, item_idx, scentxt, urlhash, ext):
         """
-        called by:  extract_article_data -> compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0)
+        called by:  BS4_artdata_depth3 -> compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
+                    C4_artdata_depth3  -> compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0)
         INPUTS:
         1. symbol = ticker symbol
         2. item_ida = the index num in the ml_index DB
-        3. scentxt = list[] of multiple <p> tags from articel containg individual article text strings
+        3. local_stub_news_p = list[] of text tags or C4 TEXT from article
         4. urlhash = hash of the url
         5. ext = extractor type (0 = Crawl4ai, 1 = BS4)
         
@@ -390,16 +391,25 @@ class ml_sentiment:
 
             _this_chunk = f'{_chunk_udid:03}'     # format chunk
             _ec = self.nlp_sent_engine(_this_chunk, symbol, ngram_tkzed, ngram_count, clsfr_result[0], _x_cr_package)
-            if _ec == 0:
-                # merge this single row dict dataset with JSON dataset for this article
-                # json dataset keeps growing as each chunk row is processed...
-                self.kv_json_dataset.update(_x_cr_package)  # merge/extend KV cache JSON dataset
-                self.element_udid += 1    # ensure we're adding a new subdict to the JSON dataset
-                continue
-            else:
-                print ( f"ERROR {_truncate_state} processing article blocket:{_chunk_udid:03} / Error: {_ec}" )
-                continue
-        
+            match _ec:
+                case 0:
+                    # merge this single row dict dataset with JSON dataset for this article
+                    # json dataset keeps growing as each chunk row is processed...
+                    self.kv_json_dataset.update(_x_cr_package)  # merge/extend KV cache JSON dataset
+                    self.element_udid += 1    # ensure we're adding a new subdict to the JSON dataset
+                    continue
+                case 1:
+                    print (f"LLM exception")
+                    continue
+                case 2:
+                    print ( f"chunk:{_chunk_udid:03} ", end="" )
+                    self.empty_vocab += 1
+                    continue
+                case 3:
+                    print ("Vectorizor error!")
+                    continue
+                case _:
+                    print ("Unknown LLM/Vect error!")
         return ttc, tnc, _x_cr_package, self.element_udid
 
  ###################

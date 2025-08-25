@@ -499,7 +499,7 @@ class yfnews_reader:
     #       Does full get() request for every viable news article found
     # Reads each URL, and crawls that page, extracting key elements e.g. <p>.text
     # Trying to refactor to craw4al, but currently uses BS4
-    def extract_article_data(self, item_idx, sentiment_ai):
+    def BS4_artdata_depth3(self, item_idx, sentiment_ai):
         """
         Depth: 3
         Extractor:  BS4 -  (engine decidcated to BS4 only)
@@ -522,7 +522,7 @@ class yfnews_reader:
         - these vars come from: compute_sentiment()
         """
 
-        cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(self.yti)
         logging.info( f'%s - IN / Work on item... [ {item_idx} ]' % cmi_debug )
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
@@ -584,9 +584,9 @@ class yfnews_reader:
         #
         # logging fixe: f-string errors when URLs have a "%" - breaks logging module (NO KNOWN FIX)
         logging.info( f'%s  - BS4 urlhash Net cache lookup: {cached_state}' % cmi_debug )
-        cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
+        cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
         logging.info( f'%s' % cmi_debug )
-        cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
+        cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(item_idx)
 
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - BS4 Skipping : Micro Article stub... [ {item_idx} ]' % cmi_debug )
@@ -597,9 +597,9 @@ class yfnews_reader:
             _built_bs4_entry = 2
         except KeyError:
             logging.info( f'%s - BS4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
-            cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)+" - URL: "+durl
+            cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
-            cmi_debug = __name__+"::"+self.extract_article_data.__name__+".#"+str(item_idx)
+            cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(item_idx)
             self.yfqnews_url = durl
             ip_urlp = urlparse(durl)
             ip_headers = ip_urlp.path
@@ -759,8 +759,8 @@ class yfnews_reader:
         return self.total_tokens, self.total_words, bs4_final_results
 
 # #####################################################################################
-    # WARNING: does not work - wtill broken. doesn ceall all <p? tags in 1 article. Just crawls 1
-    # sync crawl4 implementation of extract_article_data()
+    # WARNING:
+    # sync crawl4 implementation of BS4_artdata_depth3()
     # HEAVY network data extractor
     # Reads each URL, and crawls that page, extracting key elements
     

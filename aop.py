@@ -501,11 +501,6 @@ def main():
             _tpcz = 0    # Cumulative : Total paragraphs read
             _trcz = 0    # Cumulative : Total rands read
             
-
-    # ################################################################
-    # MAIN control loop for AI M/L NLP reading & Sentimnent analysis
-    # NLP Sentiment compute  secuted from here  @ extract_article_data()
-    # ################################################################
             ai_sent_start_time = time.perf_counter()  # Mark the start time
             load_balancer = 0
             ai_nlp_cycle = int(0)
@@ -520,7 +515,7 @@ def main():
                     if load_balancer == 0:                          # balance between craw4ai / BS4 scrapers+chunkers
                         _atc, _awc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
-                        _atc, _awc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine 
+                        _atc, _awc, final_results = news_ai.yfn.BS4_artdata_depth3(sn_idx, sent_ai)   # BS4 engine 
                     rnd_loadbr = random.randint(1, 100)             # randomize load balancer decison
                     if rnd_loadbr % 2 == 0:
                         load_balancer = 0                           # choose CRAW4AI scraper/chunker
