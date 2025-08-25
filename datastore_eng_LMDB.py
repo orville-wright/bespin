@@ -165,7 +165,7 @@ class lmdb_io_eng:
         # Attempt to rehydrate the article metadata from Deep Cache
         #
         # RETURNS:
-        #   - ec, 0, 0, 0
+        #   - ec, 0, 0, {}, {}
         #   (@1: error code, @2: total_tokens, @3: total_words, #4: sen_data, @5: final_results)
         #
         # error_codes:
@@ -174,25 +174,7 @@ class lmdb_io_eng:
         #   2 = CORRUPT data : No KEY found in JSON data package (URL hash of article)
         #   3 = DEEP CACHE MISS : NO BS4 Deep Cache entry found. Cache MISS !!
         #   4 = LMDB I/O FAILURE : Failed to open DB in RO mode
-        #
-        # TODO:
-        # add _sent_ai handle to lmdb_io_eng class
-        #   - _sentiment_count["neutral"]
-        #   - _sentiment_count["positive"]
-        #   - _sentiment_count["negative"]
-        #   - sentiment_ai instance
-        #   - _sentiment_count
-        #   - _sent_ai.active_urlhash
-        #   - _sent_ai.save_sentiment_df(item_idx, sen_package)
-        #
-        # pass in...
-        #   - data_row['urlhash']
-        #   - symbol
-        #   - item_idx
-        #   - self.total_tokens
-        #   - self.total_words
-        #   - self.total_chars
-        #   - self.sen_data
+
         _sentiment_count = dict()
         _sentiment_count["neutral"] = 0     # reset chunk metrics. Make sur eelemts exist
         _sentiment_count["positive"] = 0
@@ -203,7 +185,8 @@ class lmdb_io_eng:
         _kv_success = self.open_lmdb_RO(3)
         if _kv_success is not None:                      #    LMDB opened sucessfully
             ################# BS4 Deep Cache KV engine
-            #            
+            #
+            # REHYDRATOR           
             _url_hash = data_row['urlhash']             # current article URL hash from main skimm list
             _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
@@ -216,21 +199,22 @@ class lmdb_io_eng:
                     try:
                         _v_str = _key_found.decode('utf-8') # lookup KEY & Deserialiize into string
                     except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                        logging.info( f'%s - BS4 Error deserializing value: {e}"...' % cmi_debug )
+                        logging.info( f'%s - BS4 Error.#1 deserializing value: {e}"...' % cmi_debug )
                         print (f"================================ BS4 End.#1 KV Cache Hit + Data Corrupt (deserializing) ! Net read... {item_idx} ================================" )
-                        return 1, 0, 0, 0, 0   #  LMDB I/O FAILURE : cant deserialize data
+                        return 1, 0, 0, None, None   #  LMDB I/O FAILURE : cant deserialize data
                     else:
                         _final_results = json.loads(_v_str)        # parse JSON                   
                         try:
                             kv_url_hash = _final_results['urlhash']
                         except KeyError as _f:
-                            logging.info( f'%s - BS4 Data corrupt : NO URL hash Key found: {_f}"...' % cmi_debug )
-                            #print (f"================================ BS4 End.#2 KV Cache Hit + Data Corrupt (no URL hash) ! Net read... {item_idx} ================================" )
-                            return 2, 0, 0, 0, 0   # CORRUPT data : No KEY found (URL hash of article)
+                            logging.info( f'%s - BS4 Data corrupt.#2 : NO URL hash Key found: {_f}"...' % cmi_debug )
+                            print (f"================================ BS4 End.#2 KV Cache Hit + Data Corrupt (no URL hash) ! Net read... {item_idx} ================================" )
+                            return 2, 0, 0, None, None   # CORRUPT data : No KEY found (URL hash of article)
                         else:
                             _total_tokens = 0
                         
                             # reset sent_count before we start
+                            _no_header = False
                             global_sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
                             # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
                             logging.info( f'%s - BS4 Rehydrate : Sentiment DF metrics from Deep Cache...' % cmi_debug )
@@ -250,13 +234,16 @@ class lmdb_io_eng:
                                                     )
 
                                     #print (f"##-debug-241: kveng - senpkg / KEY: {_dc_k} {_chunk}: {_chunk_sent} - {_sen_p} / {_sen_z} / {_sen_n}")
+                                    if _no_header is False:
+                                        logging.info( f'%s - BS4 Rehydrate : Found JSON dict element ! Processing metrics...' % cmi_debug )
+                                        _no_header = True
                                     global_sent_ai.save_sentiment_df(item_idx, sen_package)   # safe global sent DF @ sentiment_ai.sen_df0
                                     continue    # not looking at dict{} element in JSON package
                                     #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
                                 else:
-                                    logging.info( f'%s - BS4 Rehydrate : skip NON-CHUNK element ! Scanning for dict...' % cmi_debug )
+                                    logging.info( f'%s - BS4 Rehydrate : Skip root element {_dc_k} / Scanning for dict...' % cmi_debug )
                                     continue    # ensure for loop continues to next element in JSON package
-
+                            _no_header = False
                             # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
                             _total_words = _final_results["total_words"]
                             _total_chars = _final_results["chars_count"]
@@ -282,18 +269,19 @@ class lmdb_io_eng:
 
                             #print (f"JSON: {_final_results}")
                             print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
-                            print (f"BS4 KV Cache:  [ HIT.#0 / Deep cache Read success ! Rehydrate from KV... ] {item_idx}" )
+                            print (f"BS4 KV Cache:  [ HIT.#0 / Deep cache Read success ! Rehydrated from KVstore... ] {item_idx}" )
                             return 0, _total_tokens, _total_words, self.sen_data, _final_results
                             #
+                            # SUCCESS !!!
                             # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache  
                 else:
                     logging.info( f'%s - BS4 Deep Cache MISS : No KVstore entry found !' % cmi_debug )
-                    print (f"BS4 KV Cache:  [ MISS.#3 / No Hash entry ! Force Net read... ] {item_idx}" )
-                    return 3, 0, 0, 0, 0
+                    print (f"BS4 KV Cache.#3:  [ MISS.#3 / No Hash entry ! Force Net read... ] {item_idx}" )
+                    return 3, 0, 0, None, None
 
-            logging.info( f"%s - BS4 Deep Cache ERROR : ! LMDB I/O cant open RO mode" % cmi_debug )
+            logging.info( f"%s - BS4 Deep Cache ERROR.#4 : ! LMDB I/O cant open RO mode" % cmi_debug )
             print (f"================================ BS4 End.#3 KV Cache MISS ! LMDB RO open failure ! Net read... {item_idx} ================================" )
-            return 4, 0, 0, 0, 0   # LMDB I/O FAILURE : Failed to open DB in RO mode
+            return 4, 0, 0, None, None   # LMDB I/O FAILURE : Failed to open DB in RO mode
 
         # #########################################
         # private helper function : BS4 extractor

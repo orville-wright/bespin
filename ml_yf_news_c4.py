@@ -550,16 +550,17 @@ class yfnews_reader:
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
-                logging.info( f'%s - BS4 Deep cache hit / Rehydrate data from KVstore...' % cmi_debug )
-                # rehydrate GLOBAL sentiment count dict from returned sen_data LIST[] from Deep Cache
-                self.sent_ai.sentiment_count["positive"] = _sen_data[0][2]
-                self.sent_ai.sentiment_count["neutral"] = _sen_data[0][3]
-                self.sent_ai.sentiment_count["negative"] = _sen_data[0][4]
+                logging.info( f'%s - BS4 Deep cache hit / Rehydrated data from KVstore...' % cmi_debug )
+                # rehydrate class sentiment count dict from Deep Cache dataset
+                self.sent_ai.sentiment_count['positive'] = _fr["positive_count"]
+                self.sent_ai.sentiment_count['neutral'] = _fr["neutral_count"]
+                self.sent_ai.sentiment_count['negative'] = _fr["negative_count"]
                 _sen_df_row = pd.DataFrame(_sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )                
                 self.sen_stats_df = pd.concat([self.sen_stats_df, _sen_df_row])
-                print (f"##-debug-561: sen_stats_df:\n{self.sen_stats_df}" )
-                print (f"##-debug-562: _fr:\n{_fr}" )
-                logging.info( f'%s - BS4 Rehydrated sentiment DF metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
+                #print (f"##-debug-561: sen_stats_df:\n{self.sen_stats_df}" )
+                #print (f"##-debug-562: _fr:\n{_fr}" )
+                logging.info( f'%s - BS4 Rehydrated sentiment metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
+                print (f"================================ BS4 End.#0 Deep Cache HIT ! / Rehydrated AI Metrics: {item_idx} ================================" )
                 return _ttk, _ttw, _fr                        
             case 1:  # BS4 KVstore cache miss
                 logging.info( f'%s - BS4 KVstore ERROR. Deserialization failure !force Net read...' % cmi_debug )
@@ -731,11 +732,11 @@ class yfnews_reader:
             'article': item_idx,
             'urlhash': hs,
             'total_tokens': self.total_tokens,
-            'total_chars': int(_total_chars),
+            'chars_count': int(_total_chars),
             'total_words': self.total_words,
-            'scentences': _final_data_dict.get('scentence'),
-            'paragraphs': _final_data_dict.get('paragraph'),
-            'randoms': _final_data_dict.get('random'),
+            'scentence': _final_data_dict.get('scentence'),
+            'paragraph': _final_data_dict.get('paragraph'),
+            'random': _final_data_dict.get('random'),
             'positive_count': sent_p,
             'neutral_count': sent_z,
             'negative_count': sent_n,

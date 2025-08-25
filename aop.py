@@ -487,12 +487,20 @@ def main():
             kgraphdb = db_graph(1, args)                # inst a class 
             kgraphdb.con_aopkgdb(1)                     # connect to neo4j db
 
-            ttc = 0     # article specific stats : total tokens
-            twc = 0     # article specific stats : total words
-            tsc = 0     # article specific stats : total scentences / paragraphs
-            ttkz = 0    # Cumulative : Total Tokens genertaed
-            twcz = 0    # Cumulative : Total words read 
-            tscz = 0    # Cumulative : Total scentences / Paragraphs read
+            _atc = 0     # article specific stats : tokenz count
+            _acc = 0     # article specific stats : chars count
+            _awc = 0     # article specific stats :  words count
+            _asc = 0     # article scentences
+            _apc = 0     # article paragraphs
+            _arc = 0     # article random non-scents/parags
+ 
+            _ttcz = 0    # Cumulative : Total Tokens genertaed
+            _tccz = 0    # Cumulative : Total chars read
+            _twcz = 0    # Cumulative : Total words read 
+            _tscz = 0    # Cumulative : Total scentences read
+            _tpcz = 0    # Cumulative : Total paragraphs read
+            _trcz = 0    # Cumulative : Total rands read
+            
 
     # ################################################################
     # MAIN control loop for AI M/L NLP reading & Sentimnent analysis
@@ -510,39 +518,49 @@ def main():
                     load_balancer = 1
 
                     if load_balancer == 0:                          # balance between craw4ai / BS4 scrapers+chunkers
-                        ttc, twc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)    # craw4ai engine
+                        _atc, _awc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
-                        ttc, twc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine 
+                        _atc, _awc, final_results = news_ai.yfn.extract_article_data(sn_idx, sent_ai)   # BS4 engine 
                     rnd_loadbr = random.randint(1, 100)             # randomize load balancer decison
                     if rnd_loadbr % 2 == 0:
                         load_balancer = 0                           # choose CRAW4AI scraper/chunker
                     else:
                         load_balancer = 1                           # choose BS4 scraper/chunker
-                    if ttc == 0 and twc == 0 and final_results == 0:
+                    if _atc == 0 and _awc == 0 and final_results == 0:
                         continue
 
                     '''
                     FINAL RESULTS DICT KEYS:
                         'article': item_idx,
                         'urlhash': hs,
-                        'total_tokens': self.total_tokens,
-                        'total_chars': int(_total_chars),
-                        'total_words': self.total_words,
-                        'scentences': _final_data_dict.get('scentence'),
-                        'paragraphs': _final_data_dict.get('paragraph'),
-                        'randoms': _final_data_dict.get('random'),
+                        'total_tokens': _final_data_dict.get('total_tokens'),
+                        'total_chars': _final_data_dict.get('chars_count'),
+                        'total_words': _final_data_dict.get('total_words'),
+                        'scentence': _final_data_dict.get('scentence'),
+                        'paragraph': _final_data_dict.get('paragraph'),
+                        'random': _final_data_dict.get('random'),
                         'positive_count': sent_p,
                         'neutral_count': sent_z,
                         'negative_count': sent_n,
                         'bs4_rows': bs4_p_tag_count
                     '''
 
-                    ttkz = final_results['total_tokens']
-                    twcz = final_results['total_words']    
-                    tparas = final_results['paragraph']
-                    tsents = final_results['scentence']
-                    trands = final_results['random']
+                    #print (f"##-@540: fr: {final_results}" )
+                    _atc = final_results['total_tokens']
+                    _acc = final_results['chars_count']
+                    _awc = final_results['total_words'] 
+                    _asc = final_results['scentence']
+                    _apc = final_results['paragraph']
+                    _arc = final_results['random']
                     this_urlhash = sent_ai.active_urlhash
+                    
+                    # compute cumulative metrics across ALL ARTICLES
+                    _ttcz += _atc
+                    _tccz += _acc
+                    _twcz += _awc
+                    _tscz += _asc
+                    _tpcz += _apc
+                    _trcz += _arc
                     
                     pd.set_option('display.max_rows', None)
                     pd.set_option('max_colwidth', 40)
@@ -641,10 +659,10 @@ def main():
             
             arts_read = df_final.iloc[-1]['art']
             row_count = len(df_final)
-            hpt_mins = ((twcz * aggr_sw_factor) + (tparas + tsents + trands)) / 175
+            hpt_mins = ((_twcz * aggr_sw_factor) + (_tscz + _tpcz + _trcz)) / h_read_wpm
             hpt_hours =  hpt_mins / 60
             analyst_time = (hpt_hours * 1.3) * 1.15     # extra time to compute sentiment, extra time to buld report
-            analyst_rate = 300         # hourly rate for a Wall St. Analyst $/hour
+            analyst_rate = 500                          # hourly rate for a Wall St. Data Scientist + Fin Analyst ($/hour)
             analyst_cost = analyst_time * analyst_rate
             
             ai_sent_end_time = time.perf_counter()                          # Mark the end time
@@ -654,10 +672,11 @@ def main():
             precise_results = sent_ai.sentiment_metrics(
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
             )
+            
             print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
-            print (f"Tokens generated: {ttkz} - Words read: {twcz} / scent/paras read {(tparas + tsents + trands)} | AI read time: {(ai_sent_time / 60):.2f} mins" )
-            print (f"Human read time:  {(hpt_mins):.1f} mins ({(hpt_hours):.1f} hours)  | Human analyst: {analyst_time:.1f} hours" )
-            print (f"AI performance:   {round((hpt_mins * 60) / (ai_sent_time / 60))} Faster than a Human  |   Analyst cost: ${round(analyst_cost):,}" )
+            print (f"LLM Vec Tokenz:  {_ttcz} - Chars: {_tccz} / Words: {_twcz} / scent/paras: {(_tscz + _tpcz + _trcz)} | AI read time: {(ai_sent_time / 60):.2f} mins" )
+            print (f"Human read time: {(hpt_mins):.1f} mins ({(hpt_hours):.1f} hours)  | Human analyst time: {analyst_time:.1f} hours" )
+            print (f"AI performance:  {round((hpt_mins * 60) / (ai_sent_time / 60))} Faster than a Human  |   Analyst cost: ${round(analyst_cost):,}" )
             print (f" ")
             
             pd.set_option('display.max_rows', None)

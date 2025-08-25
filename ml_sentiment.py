@@ -193,9 +193,9 @@ class ml_sentiment:
                 logging.info( f"%s - BS4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i].text)}" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
                 truncated = "Undef"
                 if len(scentxt[i].text) > self.tokenizer_mml:      # only chunk into blocklets on truncation altert
-                    truncated = "Trctd!"
+                    truncated = "Truncation!"
                     _dpro_eng = 1   # BS4 + Truncated
-                    logging.info( f"%s - BS4 sent full TEXT LIST to unfied_chunker.#1..." % cmi_debug )
+                    logging.info( f"%s - {truncated} Long text blocklet / send LIST to unfied_chunker.#1..." % cmi_debug )
                     blocklet_l = list()
                     blocklet_l.append(scentxt[i].text) # create 1 row list[], extracting <p> text (from html.element) for dict_processor() ( needs chunking)
                     blocklet_d, self.chunk_udid = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type, self.chunk_udid)   # send = list[], result = {} of chunked blocklets
@@ -208,7 +208,7 @@ class ml_sentiment:
                 else:
                     truncated = "Clean"
                     _dpro_eng = 2   # BS4 + Clean (not truncated)
-                    logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
+                    logging.info( f"%s - {truncated} Short text blocklet / No truncation" % cmi_debug )
                     blocklet_d = dict()
                     blocklet_d.update({self.chunk_udid: scentxt[i].text}) # create 1 row dict for dict_processor() (ths is a short/clean <p>) text blocklet
                     self.chunk_udid += 1
@@ -435,10 +435,10 @@ class ml_sentiment:
             self.twc += ngram_count    # save and count up Total Word Count
             ngram_sw_remv = ""
             ngram_final= ""
-            ngram_count = 0     # words in scnentence/paragraph
-            ngram_tkzed = 0     # vectorized tokens genertaed per scentence/paragraph
-            sen_result = _clsfr_result
-            raw_score = sen_result['score']
+            ngram_count = 0                 # words in scnentence/paragraph
+            ngram_tkzed = 0                 # vectorized tokens genertaed per scentence/paragraph
+            sen_result = _clsfr_result      # positive/negative/neutral from LLM classifier
+            raw_score = sen_result['score'] # score from LLM classifier
             rounded_score = np.floor(raw_score * (10 ** 7) ) / (10 ** 7)
             
             if self.args['bool_verbose'] is True:        # Logging level
@@ -455,6 +455,7 @@ class ml_sentiment:
             self.save_sentiment_df(self.item_idx, sen_package)      # page, data
             self.sentiment_count[sen_result['label']] += 1  # count sentiment type
             # INFO: sentiment_count{ 'positive': 0, 'negative': 0, 'neutral': 0 }
+            # WARN: sentiment_count doesnt get computed during KV Deep Cahce REHYRATE mode b/c the LLM is not executed
             return 0
         except RuntimeError:
             print ( f"Model exception !!")
@@ -499,7 +500,7 @@ class ml_sentiment:
         self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
         self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
         self.df0_row_count = x
-        logging.info( f"%s - Sent Metrics DF updated for Article: {item_idx} / chunk: {chk:03} / sent: {snt} / score: {rnk}" % cmi_debug )
+        logging.info( f"%s     - Update sent metrics DF @ article: {item_idx} / chunk: {chk:03} / sent: {snt} / score: {rnk}" % cmi_debug )
         return
 
 ##################################### 3 ####################################
