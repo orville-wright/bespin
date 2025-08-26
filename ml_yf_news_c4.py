@@ -1040,9 +1040,23 @@ class yfnews_reader:
                         case 7:
                             yfn_prem_paywall = element.get('Premium_paywall')
                             if yfn_prem_paywall.upper() == "PREMIUM":
+                                _final_data_dict = dict()
+                                _final_data_dict.update({
+                                'article': item_idx,
+                                'urlhash': "0123456789-0000000000-9876543210",
+                                'total_tokens': 0,
+                                'chars_count': 0,
+                                'total_words': 0,
+                                'scentence': 0,
+                                'paragraph': 0,
+                                'random': 0,
+                                'positive_count': 0,
+                                'neutral_count': 0,
+                                'negative_count': 0
+                            })
                                 print ("Premium Paywalled article. Skipping...")
                                 print ( f"================================ C4 End.#1 YF Premium paywall: {item_idx} ================================")
-                                return 0, 0, 0
+                                return 0, 0, _final_data_dict
                             else:
                                 print ("Unknown article type. Skipping...")
                                 print ( f"================================ C4 End.#2 Unknown type: {item_idx} ================================")

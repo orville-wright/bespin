@@ -276,7 +276,7 @@ class lmdb_io_eng:
                             # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache  
                 else:
                     logging.info( f'%s - Deep Cache MISS : No KVstore entry found !' % cmi_debug )
-                    print (f"KV Cache.#3:  [ MISS.#3 / No KV cache entry ! Force Net read... ] {item_idx}" )
+                    print (f"KV Cache.#3:   [ MISS.#3 / No KV cache entry ! Force Net read... ] {item_idx}" )
                     return 3, 0, 0, None, None
 
             logging.info( f"%s - Deep Cache ERROR.#4 : ! LMDB I/O cant open RO mode" % cmi_debug )
