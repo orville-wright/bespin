@@ -531,10 +531,10 @@ class yfnews_reader:
         lmdb_dbname = "LMDB_0001"
         self.kvio_eng = lmdb_io_eng(1, lmdb_dbname, self.args)
         bs4_final_results = dict()  # ensure final_results is empty
+        self.sent_ai.empty_vocab = 0
 
         # #########################################
         
-        self.sent_ai.empty_vocab = 0
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
@@ -675,7 +675,6 @@ class yfnews_reader:
         logging.info( f'%s - BS4 Exec NLP sent classifier pipeline.#0...' % cmi_debug )
         # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
         # 0 = Crawl4ai extractor, 1 = BS4 extractor
-        self.sent_ai.json_udid = 0
         self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
          
         # computre some keey Data Metrics for this article        
@@ -782,30 +781,15 @@ class yfnews_reader:
         """
 
         cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(self.yti)
-        logging.info( f'%s - IN / Scanning article... [ {item_idx} ]' % cmi_debug )
+        logging.info( f'%s - IN / Work on item... [ {item_idx} ]' % cmi_debug )
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
-        durl = None
         self.sent_ai = sentiment_ai
-        self.sent_ai.empty_vocab = 0
         lmdb_dbname = "LMDB_0001"
         self.kvio_eng = lmdb_io_eng(2, lmdb_dbname, self.args)
-
-        # #########################################
-        # private helper function : Crawl4ai extractor
-        def dump_kvcache_c4():
-            with self.kvio_eng.env.begin() as txn0:
-                print(f"C4 Dumping LMDB KV cache database...")    
-                cursor0 = txn0.cursor()
-                count = 0
-                for _key0, _value0 in cursor0:
-                    key_str = _key0.decode('utf-8')
-                    value_str = _value0.decode('utf-8')
-                    print(f"LMDB -  KEY: {key_str} -> VALUE: {value_str[:50]}")
-                    count += 1
-                print(f"\nC4 Total entries in LMDB database: {count}")    
-                #self.kvio_eng.env.close()
-            return
+        self.sent_ai.empty_vocab = 0
+        c4_final_results = dict()  # ensure final_results is empty
+        
         # #########################################
                 
         if 'exturl' in data_row.keys():
@@ -815,12 +799,43 @@ class yfnews_reader:
         else:
             durl = data_row['url']
             external = False               # this is a local yahoo.com hosted article
+            logging.info( f'%s - No exturl in ml_ingest DB' % cmi_debug )
             cached_state = data_row['urlhash']
-            symbol = symbol.upper()
+        
+        symbol = symbol.upper()
+        _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai)
 
-        self.sent_ai.sentiment_count["neutral"] = 0     # reset chunk metrics = 0
-        self.sent_ai.sentiment_count["positive"] = 0
-        self.sent_ai.sentiment_count["negative"] = 0
+        match _ec:
+            case 0:  # BS4 KVstore cache hit
+                logging.info( f'%s - C4 Deep cache hit / Rehydrated data from KVstore...' % cmi_debug )
+                # rehydrate class sentiment count dict from Deep Cache dataset
+                self.sent_ai.sentiment_count['positive'] = _fr["positive_count"]
+                self.sent_ai.sentiment_count['neutral'] = _fr["neutral_count"]
+                self.sent_ai.sentiment_count['negative'] = _fr["negative_count"]
+                _sen_df_row = pd.DataFrame(_sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )                
+                self.sen_stats_df = pd.concat([self.sen_stats_df, _sen_df_row])
+                #print (f"##-@817: sen_stats_df:\n{self.sen_stats_df}" )
+                #print (f"##-@818: _fr:\n{_fr}" )
+                logging.info( f'%s - C4 Rehydrated sentiment metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
+                print (f"================================ C4 End.#0 Deep Cache HIT ! / Rehydrated AI Metrics: {item_idx} ================================" )
+                return _ttk, _ttw, _fr                        
+            case 1:  # C4 KVstore cache miss
+                logging.info( f'%s - C4 KVstore ERROR.#1 Deserialization failure !force Net read...' % cmi_debug )
+                pass
+            case 2:
+                logging.info( f'%s - C4 KVstore ERROR.#2 No URL Hash KEY found !force Net read...' % cmi_debug )
+                pass
+            case 3:
+                logging.info( f'%s - C4 KVstore MISS.#3 No cache entry !force Net read...' % cmi_debug )
+                pass
+            case 4:
+                logging.info( f'%s - C4 LMDB I/O FAILURE.#4 : Failed to open DB in RO mode !' % cmi_debug )
+                pass
+            case _:
+                logging.info( f'%s - C4 KVstore ERROR.#def Unknown error code: {_ec} ! force Net read...' % cmi_debug )
+                pass
+
+        '''
         logging.info( f'%s - C4 Opening LMDB READ-ONLY mode...' % cmi_debug )
         kv_success = self.kvio_eng.open_lmdb_RO(2)
         if kv_success is not None:
@@ -905,6 +920,7 @@ class yfnews_reader:
             pass
             #
             ############# End cache engine            
+        '''
 
         #####################################################
         # C4
@@ -919,11 +935,10 @@ class yfnews_reader:
             self.yfn_jsdb[cached_state]         # pickup the full dict @ key: urlhash - if this doesnt error/excpe = SUCCESS !
             _built_c4_entry = 2
         except KeyError:
-            logging.info( f'%s - MISSING from Net cache...' % cmi_debug )
-            cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - Exec C4 engine URL: "+durl
+            logging.info( f'%s - C4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
+            cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
-            # see same note above
             
             result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # exec crawl4ai engine t extraction of 1 article's data
             self.articles_crawled[item_idx] = result  # NOTE USED: future feat: parallel crawl4ai extraction
@@ -937,61 +952,63 @@ class yfnews_reader:
             '''
             
             self.yfqnews_url = durl
-            cy = self.yfn_c4_result[cached_state]    # pikup up result dict
-            logging.info( f'%s - Evaluation 1: New cache entry: {cached_state}' % cmi_debug ) 
+            cy = self.yfn_c4_result[cached_state]    # pickup up result dict
+            logging.info( f'%s - C4 EVAL.#1: re-read:  {cached_state}' % cmi_debug ) 
             if self.yfn_c4_result[cached_state]:
-                logging.info( f'%s - Located entry:    {cached_state}' % cmi_debug )
+                logging.info( f'%s - C4 Found entry:   {cached_state}' % cmi_debug )
                 self.yfn_c4_data = cy['result']        # store the rendered raw data
-                _dataset_2 = result                     # Basic HTML engine  get()
+                _dataset_2 = result                    # Basic HTML engine  get()
                 logging.info( f'%s - C4 result:        {type(self.yfn_c4_data)}' % cmi_debug )
                 logging.info( f'%s - C4 JSON data:     {type(cy['data'])}' % cmi_debug )
                 logging.info( f'%s - C4 alt2 result:   {type(_dataset_2)}' % cmi_debug )
                 logging.info( f'%s - C4 URL object:    {cy['url']}' % cmi_debug )
-                logging.info( f'%s - Sent in URL:      {durl}' % cmi_debug )
+                logging.info( f'%s - C4 Sent in URL:   {durl}' % cmi_debug )
                 _built_c4_entry = 1
                 # Do it this way so that...
                 # - we can spawn multiple async tasks in parallel
-                # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
-                  
+                # - self.yfn_jsdb() is non-blocking and can handle multiple threads writing to it
             else:
-                logging.info( f'%s - FAIL to crawl article {item_idx}' % cmi_debug )
+                logging.info( f'%s - C4 FAILED to crawl article {item_idx}' % cmi_debug )
                 return 0, 0, 0    # I think this is the correct return status
-        except Exception as e:
-            logging.error(f'{cmi_debug} - Artcile [{item_idx} data Crawl failed: {e}')
+        except Exception as _c4e:
+            logging.error(f'{cmi_debug} - Artcile [{item_idx} data Crawl failed: {_c4e}')
             return 0, 0, 0
+
                 
-        # we can now extract all the <p> zone TEXT from the article
-        # and pass it to the sentiment_ai module for NLP processing
+        # extract all <p> zone TEXT from the article
         ####################################################################
         ##### AI M/L Gen AI NLP starts here !!!                      #######
         ##### Heavy CPU utilization / local LLM Model & no GPU       #######
         ####################################################################
         #
-        logging.info( f'%s - Evalaution 2: C4 data entry...' % cmi_debug )
         if _built_c4_entry == 1:
-            logging.info( f'%s - Good C4 data: Gracefully pre-built: {cached_state}' % cmi_debug ) 
+            logging.info( f'%s - EVAL.#2 : C4 data entry...' % cmi_debug )
+            logging.info( f'%s - Good C4 data:     Gracefully pre-built: {cached_state}' % cmi_debug ) 
             dataset_1 = self.yfn_c4_result[cached_state]['result']
             result_engine = "yfn_c4_result"
-            self.articles_crawled[item_idx] = result
+            self.articles_crawled[item_idx] = result    # crawl4ai result
         elif _built_c4_entry == 2:
-            logging.info( f'%s - Weird C4 state: Trying strange data: {cached_state}' % cmi_debug )
-            print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
+            logging.info( f'%s - EVAL.#3 : C4 data entry...' % cmi_debug )
+            logging.info( f'%s - Weird C4 state:   Try cached Net data: {cached_state}' % cmi_debug )
+            #print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
             dataset_1 = self.yfn_jsdb[cached_state]['result']
             result_engine = "yfn_jsdb"
             self.articles_crawled[item_idx] = self.yfn_jsdb[cached_state]['result']  # future feat: parallel crawl4ai extraction
             #self.yfn_jsdb[cached_state]['result']
         else:
-            logging.info( f'%s - Bad C4 data: Force crawl get() now: {cached_state}' % cmi_debug ) 
+            logging.info( f'%s - EVAL.#4 : C4 data entry...' % cmi_debug )
+            logging.info( f'%s - Bad C4 data:      Force crawl now: {cached_state}' % cmi_debug ) 
             result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
             self.articles_crawled[item_idx] = result  # NOTE USED: future feat: parallel crawl4ai extraction
             dataset_1 = self.yfn_c4_result[cached_state]['result']
             result_engine = "yfn_c4_result"
 
-        logging.info( f'%s - Cached hash   : {cached_state}' % cmi_debug )
-        logging.info( f'%s - Cache engine  : {result_engine}' % cmi_debug )
-        logging.info( f'%s - C4 Dataset    : {type(dataset_1)}' % cmi_debug )
-        logging.info( f'%s - Cache URL     : {self.yfn_c4_result[cached_state]['url']}' % cmi_debug )
-        logging.info( f'%s - Sent URL in   : {durl}' % cmi_debug )
+        logging.info( f'%s - Cached hash    {cached_state}' % cmi_debug )
+        logging.info( f'%s - Cache engine   {result_engine}' % cmi_debug )
+        logging.info( f'%s - C4 Dataset     {type(dataset_1)}' % cmi_debug )
+        logging.info( f'%s - In Cache URL   {self.yfn_c4_result[cached_state]['url']}' % cmi_debug )
+        logging.info( f'%s - Sent URL in    {durl}' % cmi_debug )
+        logging.info( f'%s - Ready to exec C4 extractor - get Article TEXT for AI NLP reader...' % cmi_debug )
         # Do it this way so that...
         # - we  can spawn multiple async tasks in parallel
         # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
@@ -1013,10 +1030,10 @@ class yfnews_reader:
             for i, element in enumerate(c4_dict['data']):
                     art_all_p.append(element.get('Content'))            # extract craw4al element
                     try:
-                        extr_len = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
+                        _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
                     except TypeError:   # catch None
-                        extr_len = 7    # force analysis, possible PREMIUM paywall block page
-                    match extr_len:
+                        _total_chars = 7    # force analysis, possible PREMIUM paywall block page
+                    match _total_chars:
                         case 0:
                             print ( f"================================ C4 End.#0 No data: {item_idx} ================================")
                             return 0, 0, 0
@@ -1031,64 +1048,98 @@ class yfnews_reader:
                                 print ( f"================================ C4 End.#2 Unknown type: {item_idx} ================================")
                                 return 0, 0, 0
                         case _:
+                            ####################################################################
+                            ##### AI M/L Gen AI NLP starts here !!!                      #######
+                            ##### Heavy CPU utilization / local LLM Model & no GPU       #######
+                            ####################################################################
+                            #
                             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-                            logging.info( f'%s - Exec NLP sentiment analyzer: 1 - sending: {type(art_all_p)}' % cmi_debug )
-                            # 0 = data in crawl4ai extractor format
-                            total_tokens, total_words, _cr_package = sentiment_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
-                            if self.sent_ai.empty_vocab > 0: 
-                                print (f"\n")      # close out the EOL NL for "Empty Vocab" string
+                            logging.info( f"%s - C4 Exec NLP sent classifier pipeline.#0..." % cmi_debug )
+                            # 0 = Crawl4ai extractor, 1 = BS4 extractor
+                            self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
+                            #self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
 
-                            self.sent_ai.cr_package.update({ 'chars_count': int(extr_len) })
-                            self.sent_ai.cr_package.update({ 'total_words': int(total_words) })
+                            self.sent_ai.cr_package.update({ 'chars_count': int(_total_chars) })
+                            self.sent_ai.cr_package.update({ 'total_words': int(self.total_words) })
 
-                            _cr_package.update({
-                                'positive_count': sentiment_ai.sentiment_count['positive'],
-                                'neutral_count': sentiment_ai.sentiment_count['neutral'],
-                                'negative_count': sentiment_ai.sentiment_count['negative']
-                                })
-
-                            # Create LMBD KV cache entry
-                            logging.info( f'%s - Opening LMDB READ-WRITE mode...' % cmi_debug )
-                            kv_success = self.kvio_eng.open_lmdb_RW(3)
-                            if kv_success is not None:
-                                _url_hash = data_row['urlhash']
-                                _key = "0001"+"."+symbol+"."+_url_hash     # we are looking at the artile here. So test for this K/V data
-                                c4_kvs_key = _key.encode('utf-8')          # byte encode 
-                                logging.info( f'%s - WRITE sentiment data to KVstore: {_key}' % cmi_debug )
-                                with self.kvio_eng.env.begin(write=True) as _txn:
-                                    _data_json = json.dumps(_cr_package, default=str)
-                                    #_data_json = json.dumps(self.sent_ai.cr_package, default=str)
-                                    _txn.put(c4_kvs_key, _data_json.encode('utf-8'))
-                                    self.kvio_eng.env.close
-                            else:
-                                logging.info( f'%s - C4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
-                                pass    # faield to open LMDB. Continue with manuall full get() read of URL
-
-                            # The status report is fro Craw4ai engine
+                            # these are set @ compute_sentiment::nlp_sent_engine()
+                            # totals of all blockets
                             sent_p = self.sent_ai.sentiment_count['positive']
                             sent_z = self.sent_ai.sentiment_count['neutral']
                             sent_n = self.sent_ai.sentiment_count['negative']
+                            
+                            _final_data_dict.update({
+                                'positive_count': sent_p,
+                                'neutral_count': sent_z,
+                                'negative_count': sent_n
+                                })
 
-                            # set up a dataframe to hold the aggregated sentiment for this article in columns.
-                            # This is helpful for merging the info with other dataframes later on                            
                             self.sen_data = [[
                                 item_idx,
                                 hs,
                                 sent_p,
                                 sent_z,
                                 sent_n
-                                ]]                           
+                                ]]  
 
+                            #print (f"##-@1088: KV-write extr JSON - {self.sen_data}" ) 
                             sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
                             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
 
-            
-                            print ( f"Total tokenz: {total_tokens} / Words: {total_words} / Chars: {extr_len} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}")
-                            print ( f"========================= C4 End.#3 Net read + Deep Cache !create: {item_idx} =========================" )
-                            return total_tokens, total_words, _cr_package
+                            _final_data_dict.update({
+                                'positive_count': sent_p,
+                                'neutral_count': sent_z,
+                                'negative_count': sent_n,
+                                'chars_count': int(_total_chars),
+                                'total_words': int(self.total_words),
+                                'total_tokens': int(self.total_tokens),
+                                })
 
-        print (f"##-debug-1058: Unknown retrun state!" )
-        return 0, 0, 0
+                            # Create LMBD KV cache entry
+                            logging.info( f'%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
+                            kv_success = self.kvio_eng.open_lmdb_RW(3)
+                            if kv_success is not None:
+                                _url_hash = data_row['urlhash']
+                                _key = "0001"+"."+symbol+"."+_url_hash     # we are looking at the artile here. So test for this K/V data
+                                c4_kvs_key = _key.encode('utf-8')          # byte encode 
+                                logging.info( f'%s - C4 WRITE sent package to KVstore: {_key}' % cmi_debug )
+                                with self.kvio_eng.env.begin(write=True) as _txn:
+                                    _kvs_json_dataset = json.dumps(_final_data_dict, default=str)
+                                    _txn.put(c4_kvs_key, _kvs_json_dataset.encode('utf-8'))     # write data to LMDB
+                                    self.kvio_eng.env.close
+                            else:
+                                logging.info( f'%s - C4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
+                                pass        # Not Fatal - faield to open LMDB. Continue with manual Network Read
+                            # empty vocabulary pretty-printer logic for eof=""
+                            if self.sent_ai.empty_vocab > 0:
+                                print (f"\n")
+
+                            c4_final_results.update({
+                                'article': item_idx,
+                                'urlhash': hs,
+                                'total_tokens': self.total_tokens,
+                                'chars_count': int(_total_chars),
+                                'total_words': self.total_words,
+                                'scentence': _final_data_dict.get('scentence'),
+                                'paragraph': _final_data_dict.get('paragraph'),
+                                'random': _final_data_dict.get('random'),
+                                'positive_count': sent_p,
+                                'neutral_count': sent_z,
+                                'negative_count': sent_n
+                            })
+
+
+                            footer = (f"Total tokenz: {self.total_tokens} / "
+                                    f"Words: {self.total_words} / "
+                                    f"Chars: {_total_chars} / "
+                                    f"Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / "
+                                    )
+                            print (f"{footer}")
+                            print (f"================================ C4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
+                            return self.total_tokens, self.total_words, c4_final_results
+
+        print (f"##-@1141: Unknown state!" )
+        return 0, 0, None
     
     # ################ 7
     async def c4_engine_depth3(self, durl, item_idx):

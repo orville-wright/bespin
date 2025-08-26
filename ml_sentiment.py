@@ -27,13 +27,15 @@ class ml_sentiment:
     active_urlhash = None  # Current URL hash being processed
     args = []           # class dict to hold global args being passed in from main() methods
     art_buffer = []     # Buffer to hold article text for processing
+    blocket_udid = 0    # working blocklet UID
+    chunk_udid = 0      # working chunk UID
     classifier = None   # NLP classidier pipeline
     cr_package = None   # full reslts dict{} of dict_processor run
+    cycle = 0           # class thread loop counter
     _cs_count = 0       # scentence count
     _cp_count = 0       # paragraph count
     _cr_count = 0       # random text block count
     kv_json_dataset = None  # JSON dataset to be used for kvstore
-    cycle = 0           # class thread loop counter
     df0_row_count = 0
     empty_vocab = 0     # tracker that LLM found empty vocab
     mlnlp_uh = None     # URL Hinter instance
@@ -46,9 +48,6 @@ class ml_sentiment:
     tsenparas = 0       # total sentences & paragraphs
     ttc = 0             # Total Tokens generated in the scnetcne being analyzed
     twc = 0             # Total cumulative Word count in this artcile being analyzed
-    json_udid = 0    # ID of the subdict that is being processed and was last worked on
-    chunk_udid = 0      # working chunk UID
-    blocket_udid = 0    # working blocklet UID
     yti = 0
     
     # Techcnial analysys dict defines sentiment score to description mapping
@@ -74,7 +73,6 @@ class ml_sentiment:
         self.tsenparas = 0
         self.empty_vocab = 0
         self.kv_json_dataset = dict()  # inti the JSON dataset
-        self.json_udid = int(0)    # reset chunk, blocket UDID counters
         self.chunk_udid = int(0)
         self.blocket_udid = int(0)
         self.sentiment_count = { 'positive': 0, 'negative': 0, 'neutral': 0 }
@@ -141,36 +139,51 @@ class ml_sentiment:
         #
         
         # Crawl4ai extractor
-        if self.ext_type == 0:
-            logging.info( f"%s - Crawl4ai engine.#1 LLM Truncation @ {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
+        if self.ext_type == 0:      # Craw4ai
+            logging.info( f"%s - Crawl4ai Data Builder engine.#1 - LLM Trnctn {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
             # input MUST be a crawl4ai prepred list of full article text. 
             # c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
             # therfore chunker has a higher probabliy of needing to do a lot more work for c4
-            self.json_udid = 0    # reset the subdict counter
+            _i_twc = 0              # reset counters (class global attributes)
+            self.ttc = 0            # " "
+            self.twc = 0            # " "
+            self._cs_count = 0      # " "
+            self._cp_count = 0      # " "
+            self._cr_count = 0      # " "
+            self.chunk_udid = 0     # reset main chunk subdict key udid
+            self.blocket_udid = 0   # reset internal subdict key udid
+            self.cr_package = dict()            # reset the cr_package for each <p> tag processed
+            self._chunk_profile = dict()        # what type of chunk thisd is (sent/para/randm)
+            self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
+            self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
             for i in range(0, len(scentxt)):
-                logging.info( f"%s - Eval bulk TEXT length: {len(scentxt[i])} chars" % cmi_debug )
+                logging.info( f"%s - C4 Eval pre-chunke bulk TEXT length: {len(scentxt[i])} chars" % cmi_debug )
                 truncated = "Undef"
-                if len(scentxt[i]) >= self.tokenizer_mml: # self.tokenizer_mml:    # only chunk into blocklets on truncation altert
-                    truncated = "Trctd!"
+                if len(scentxt[i]) >= self.tokenizer_mml:   # self.tokenizer_mml:    # only chunk into blocklets on truncation altert
+                    truncated = "Truncation!"
                     _dpro_eng = 3   # C4 + Truncated
+                    logging.info( f"%s - {truncated} Long text blocklet / send LIST to unfied_chunker.#1..." % cmi_debug )
                     blocklet_l = list()
-                    blocklet_l.append(scentxt[i])  # force create a full article text list, since chunker needs this input structure
-                    blocklet_d, self.json_udid = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type, self.json_udid)   # send = list[], result = {} of blocklets
-                    logging.info( f"###-debug-130 - Status: {truncated} - blocklet_d: {type(blocklet_d)} / chunks: {self.json_udid}" )
-                    self.ttc, _c_twc, _c4_final_results, self.json_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.json_udid)    # Exec AI NLP classifier inside dict_processor() !!
-                    self.twc += _c_twc
+                    blocklet_l.append(scentxt[i])  # stack full article text -> list[]. uified_chunker takes link[] input only
+                    blocklet_d, self.chunk_udid = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type, self.chunk_udid)   # send list[], result = {} of blocklets
+                    self.ttc, _i_twc, _tr_final_results, self.blocket_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.blocket_udid)    # Exec AI NLP classifier inside dict_processor() !!
+                    self.twc += _i_twc
+                    self.cr_package.update(_tr_final_results)  # merge the final results into the cr_package
                     continue
                 else:
                     truncated = "Clean"
                     _dpro_eng = 4   # C4 + Clean (not truncated)
-                    logging.info( f"%s - No truncation: {truncated} Short text blocklet" % cmi_debug )
+                    logging.info( f"%s - {truncated} Short text blocklet / No truncation" % cmi_debug )
                     blocklet_d = dict()
-                    blocklet_d.update({i: scentxt[i]})    # create 1 row dict for dict_processor() (ths is a NATURAL short/clean text blocklet
-                    self.ttc, _c_twc, _c4_final_results, self.json_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.json_udid)    # send = dict{}, Exec AI NLP classifier inside dict_processor() !!
-                    self.twc += _c_twc
+                    blocklet_d.update({self.chunk_udid: scentxt[i]})    # create 1 row dict for dict_processor() for NATURAL short/clean text blocklet
+                    self.chunk_udid += 1
+                    self.ttc, _i_twc, _cl_final_results, self.blocket_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.blocket_udid)    # send dict{}, Exec AI NLP classifier inside dict_processor() !!
+                    self.twc += _i_twc
+                    self.cr_package.update(_cl_final_results)  # merge the final results into the cr_package
+                    continue
 
-                #print (f"##-debug-141: {truncated}:\n{blocklet_d}\n\n {final_results}")
-            return self.ttc, self.twc, _c4_final_results
+            self.blocket_udid = 0   # after this entire article is processed, reset the blocklet counter
+            return self.ttc, self.twc, self.cr_package
         
         # BS4 extractor
         else:
@@ -180,16 +193,18 @@ class ml_sentiment:
             # - 1 at a time from within the articel body
             # The chunker has good probablity of not doing as much work as C4 b/c BS4 <p> text fragemtns are shorter
             self.ext_type = 1   # BS4
-            bs4rows = int(len(scentxt))
-            self.chunk_udid = 0    # reset the subdict counter
-            self.blocket_udid = 0
+            _i_twc = 0              # reset counters (class global attributes)
+            self.ttc = 0            # " "
+            self.twc = 0            # " "
+            self._cs_count = 0      # " "
+            self._cp_count = 0      # " "
+            self._cr_count = 0      # " "
+            self.chunk_udid = 0     # reset main chunk subdict key udid
+            self.blocket_udid = 0   # reset internal subdict key udid
             self.cr_package = dict()            # reset the cr_package for each <p> tag processed
+            self._chunk_profile = dict()        # what type of chunk thisd is (sent/para/randm)
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
-            self._chunk_profile = dict()
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
-            self._cs_count = 0
-            self._cp_count = 0
-            self._cr_count = 0
             for i in range(0, len(scentxt)):    # this = rows of <p> tag text
                 logging.info( f"%s - BS4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i].text)}" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
                 truncated = "Undef"
@@ -204,8 +219,6 @@ class ml_sentiment:
                     self.twc += _i_twc 
                     self.cr_package.update(_tr_final_results)  # merge the final results into the cr_package
                     continue
-                    #self.json_udid = 0    # reset the subdict counter
-                    #return self.ttc, self.twc, self.cr_package
                 else:
                     truncated = "Clean"
                     _dpro_eng = 2   # BS4 + Clean (not truncated)
@@ -510,7 +523,7 @@ class ml_sentiment:
         self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
         self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
         self.df0_row_count = x
-        logging.info( f"%s     - Update sent metrics DF @ article: {item_idx} / chunk: {chk:03} / sent: {snt} / score: {rnk}" % cmi_debug )
+        logging.info( f"%s     - Rehydrate metrics DF @ article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
         return
 
 ##################################### 3 ####################################

@@ -510,8 +510,7 @@ def main():
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
                     # scraper loadbalancer, Anti-bot avoidance & performance balancing
                     # WARN:  executes sentiment_ai.compute_sentiment()
-                    load_balancer = 1
-
+ 
                     if load_balancer == 0:                          # balance between craw4ai / BS4 scrapers+chunkers
                         _atc, _awc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
@@ -603,7 +602,8 @@ def main():
                         print (f"Exiting AI NLP cycle @ article: {ai_nlp_cycle}...")
                         break                    
                 else:
-                    print (f"Skipping: {ai_nlp_cycle} / Article type not valid for AI NLP Sentiment analysis...")
+                    print (f"Skipping:      [ UNREADABLE / Article not valid for AI NLP Sentiment analysis] {ai_nlp_cycle}")
+                    print (f"================================ End.0 Skipping / No action taken ! {ai_nlp_cycle} ================================" )
 
             ################################################################
             # END  AI AI NLP article processing data scraping loop
