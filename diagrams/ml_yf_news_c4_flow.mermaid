@@ -1,0 +1,71 @@
+graph TD
+    subgraph Initialization & Setup
+        A["Start: Instantiate yfnews_reader(symbol)"] --> B["Set paths for JSON schemas"];
+        B --> C["Initialize empty DataFrames"];
+    end
+
+    subgraph "Depth 0: Top-Level News List Crawl"
+        D["Call yahoofin_news_depth0(symbol)"] --> E["Form Endpoint URL (e.g., /quote/IBM/news)"];
+        E --> F["Load JSON schema for main news list"];
+        F --> G["Configure AsyncWebCrawler with schema & JS commands"];
+        G --> H["crawler.arun(url)"];
+        H -- Success --> I["Store extracted JSON data in yfn_jsdb{url_hash}"];
+        H -- Failure --> J["Log Error"];
+        I --> K["Return URL Hash"];
+    end
+
+    subgraph "Depth 1: Candidate Evaluation"
+        L["Call list_news_candidates_depth0(hash)"] --> M["Retrieve cached data from yfn_jsdb"];
+        M --> N["Set self.extracted_articles"];
+        N --> O["Print list of found article titles"];
+        O --> P["Call eval_news_feed_stories()"];
+        P --> Q{"Loop through each article in self.extracted_articles"};
+        Q -- For each article --> R["Extract Title, URL, Publisher"];
+        R --> S["Use url_hinter to determine article type (uhint, thint)"];
+        S --> T["Generate URL Hash for deduplication"];
+        T --> U{"Is hash unique?"};
+        U -- Yes --> V["Create article dictionary (nd)"];
+        V --> W["Add to ml_ingest{id: nd}"];
+        U -- No --> X["Log Duplicate and Skip"];
+        Q -- End Loop --> Y["End Depth 1"];
+    end
+
+    subgraph "Depth 2: Page Interpretation"
+        Z["Call interpret_page_depth2(item_idx, data_row)"] --> AA["Retrieve article data from ml_ingest"];
+        AA --> BB{"Determine viability based on uhint (article type)"};
+        BB -- Viable (e.g., Local Article) --> CC["Update ml_ingest with viable: 1"];
+        BB -- Not Viable (e.g., Video, Ad) --> DD["Update ml_ingest with viable: 0"];
+        CC --> EE["Return hints & URL"];
+        DD --> EE;
+    end
+
+    subgraph "Depth 3: Article Content Extraction"
+        FF["Call extract_article_data(item_idx, sentiment_ai)"] --> GG["Get article URL from ml_ingest"];
+        GG --> HH{"Check for cached page response in yfn_jsdb"};
+        HH -- Found --> II["Use cached response"];
+        HH -- Not Found --> JJ["Perform new HTTP GET (do_simple_get)"];
+        JJ --> KK["Cache new response in yfn_jsdb"];
+        KK --> II;
+        II --> LL["Parse HTML with BeautifulSoup"];
+        LL --> MM["Find all '<p>' tags (article body)"];
+        MM --> NN["Call sentiment_ai.compute_sentiment(text)"];
+        NN --> OO["Update sentiment stats DataFrame"];
+    end
+    
+    subgraph "Alternative Depth 3 (Crawl4ai)"
+        A1["Call extr_artdata_depth3(item_idx, sentiment_ai)"] --> B1["Get article URL"];
+        B1 --> C1["Call async c4_engine_depth3(url)"];
+        C1 --> D1["Load article-specific JSON schema"];
+        D1 --> E1["Configure and run AsyncWebCrawler"];
+        E1 -- Success --> F1["Store result in yfn_c4_result{url_hash}"];
+        F1 --> G1["Extract text content from crawled data"];
+        G1 --> H1["Call sentiment_ai.compute_sentiment(text)"];
+        E1 -- Failure --> I1["Log Error"];
+    end
+
+    %% Flow Connections
+    A --> D;
+    K --> L;
+    Y --> Z;
+    EE --> FF;
+    EE --> A1;

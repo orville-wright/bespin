@@ -1,0 +1,72 @@
+Free Stock Data APIs and Websites
+
+
+Finnhub (finnhub.io) – Real-time stock/forex/crypto API with company fundamentals, news, and alternative data. Provides live (U.S. stocks) or delayed quotes, 30+ years of historical data, financials, transcripts, and sentiment. A free account (API key) allows 60 calls/minute (sandbox 300/min). Ideal for low-latency quote data and fundamentals; free plan covers U.S. equities (common/ETF) plus global markets.
+
+
+IEX Cloud (iexcloud.io) – Stock API from the Investors Exchange. Offers real-time quotes for IEX-traded U.S. stocks and 15-min-delayed quotes for other U.S. markets, plus historical prices and fundamentals. The free tier (requires signup) allows 50,000 core data points/month. Provides up to 5 years of historical data and is low-latency for U.S. equities. Well-documented; many developers recommend IEX for minimal delay, though non-IEX data may be slightly delayed.
+
+
+Marketstack (marketstack.com) – REST API by apilayer delivering global stock market data. It offers real-time intraday (minute-level) U.S. quotes and end-of-day (historical) data for 30,000+ tickers worldwide. Free tier (API key required) allows 100 requests/month. Types: latest quotes (1-min bars), daily historical, company info. Easy JSON interface; good global coverage. Note: free tier is very limited (100/month).
+
+
+FinancialModelingPrep (financialmodelingprep.com) – API with U.S. stock and ETF data, including real-time quotes (via IEX), historical prices, and company financial statements. The free developer plan (API key) permits 250 calls/day. Data: current quotes, intraday (minutes), end-of-day history, fundamentals (income, balance sheet) and more. Well-suited for fundamentals-heavy apps; documentation is straightforward. Markets: all U.S. exchanges; delay ~IEX (real-time or few secs).
+
+
+Twelve Data (twelvedata.com) – Unified API for stocks, ETFs, forex, and crypto. Supports real-time and historical intraday (1–60 min) and daily data; most exchanges are real-time, others delayed (up to 15–20 min). It provides 20+ years of daily history. Free plan (signup/API key) allows 8 requests/min and 800/day. Data types include quotes, OHLC bars, and technical indicators. Good documentation; covers US and many international symbols.
+
+
+EOD Historical Data (eodhistoricaldata.com) – API with delayed real-time and historical data for global equities and ETFs. Provides end-of-day history (20+ years), intraday bars, splits/dividends, and fundamentals. U.S. stock data is updated live with a 15-minute delay. Free plan (API key) limits to 20 calls/day. Covers ~60 exchanges worldwide. Suitable for historical/backtest data; limited free quota but generous data depth.
+
+
+Google Finance (google.com/finance or Google Sheets) – Google’s finance site and the GOOGLEFINANCE() function give delayed market data. It covers stocks, ETFs, and currency with real-time quotes (20-min delay) and historical prices. Via Sheets, users can fetch current or historical attributes like price, volume, P/E, etc.. No official API; data is accessed by spreadsheet formulas or scraping. Free with a Google account; limits per Sheets formula are generous for casual use.
+
+
+Nasdaq Data Link (data.nasdaq.com, formerly Quandl) – Offers both free and premium datasets. Free data includes U.S. end-of-day stock prices, indexes, and fundamentals (company financials). It provides a REST API (with registration) that’s free for non-premium datasets. Data is generally EOD or delayed; some Wiki-style or alternative data (e.g. put-call ratios, SEC feeds). Useful for historical and specialized datasets beyond just quotes.
+
+
+StockData.org – A free U.S. stock market API. Provides current quotes (with extended-hours), intraday bars (1–60 min, up to 6+ years back), end-of-day history, and company profiles/news. The free tier (API key signup) allows 100 requests/day. Data covers 70+ global exchanges. Good coverage of U.S. equities and ETFs, with streaming-like responses. Documentation is decent and quick to integrate.
+
+
+Stooq (stooq.com) – Free historical data site. Provides daily, hourly, and 5-minute bars for U.S. and global stocks and ETFs. The “Historical Data” section allows downloading CSVs of EOD prices. Data is updated each trading morning (no intraday feed). No account needed, unlimited downloads. Not an API per se, but easily scraped or downloaded (they offer zipped ASCII). Great for offline backtesting; no real-time streaming.
+
+
+World Trading Data (worldtradingdata.com) – REST API for stock and currency quotes. Claims free real-time and historical prices for global stocks, ETFs, and crypto. According to user sites, free tier allows up to 60 requests/min. Provides JSON responses with price, open/close, etc. (Note: service availability may vary). Offers historical EOD and intraday (via IEX for U.S. tickers). Good multi-asset coverage.
+
+
+
+Tradier API (tradier.com) – Brokerage and market data API. Offers real-time, delayed, and historical U.S. equity, option, and market index data through REST and streaming. Free to use with a (free) Tradier account (demo and live). Endpoints provide quotes, trades, chart data, and streaming updates. Limits are high (trading-focused), making it usable for quote retrieval. Good for U.S. stocks; requires OAuth login.
+
+
+Intrinio (intrinio.com) – Financial data API with U.S. stock prices, fundamentals, and SEC filings. Offers a free trial (no permanent free tier). Data includes real-time/ delayed quotes, historical prices, and standardized financial statements. Focused on quality and normalization. Requires registration; pricing for continued use. Useful when combining price and fundamental data.
+
+
+Morningstar API (developer.morningstar.com) – Access Morningstar’s stock and fund data. Offers free tiers for trial/dev access. Provides global equity quotes, fundamentals, and report data. Strong on fundamental metrics and international coverage. Real-time/delayed pricing depends on feed. Requires signup and (eventually) subscription for full data. Known for thorough financial data.
+
+
+MSN Money (msn.com/money) – Microsoft’s finance site. Offers stock quotes and charts, accessible via an undocumented web service. Data is delayed (~15 min) and free. Can be accessed programmatically through its Excel web service endpoints (as documented in user communities). No official API, but many free Excel plugins and scripts use MSN Money data.
+
+
+Investing.com (investing.com) – Finance website providing free real-time (streaming) quotes, charts, and news for global stocks, ETFs, forex, and crypto. No official API, but data can be scraped (current prices, technical data). Includes US and international equities, indices, commodities. Mobile-friendly with extensive coverage. Data is often delayed a few seconds; ideal for free frontend use.
+
+
+
+FreeRealTime.com – Niche site offering real-time (no-delay) quotes for U.S. stocks. Free streaming quotes and charts directly on the website. Covers all NYSE/Nasdaq symbols with tick-by-tick updates. Limited to U.S. equities. No account needed. Good for live quoting on a webpage, but no API (would require scraping real-time content).
+
+
+IEX Cloud (iexcloud.io) – Stock API from the Investors Exchange. Offers real-time quotes for IEX-traded U.S. stocks and 15-min-delayed quotes for other U.S. markets, plus historical prices and fundamentals. The free tier (requires signup) allows 50,000 core data points/month. Provides up to 5 years of historical data and is low-latency for U.S. equities. Well-documented; many developers recommend IEX for minimal delay, though non-IEX data may be slightly delayed.
+
+
+Marketstack (marketstack.com) – REST API by apilayer delivering global stock market data. It offers real-time intraday (minute-level) U.S. quotes and end-of-day (historical) data for 30,000+ tickers worldwide. Free tier (API key required) allows 100 requests/month. Types: latest quotes (1-min bars), daily historical, company info. Easy JSON interface; good global coverage. Note: free tier is very limited (100/month).
+
+CNBC (cnbc.com) – Business news site with free delayed stock quotes and market data. Offers nearly every U.S. stock and major indices, plus forex/futures tickers. Data can be scraped from quotes pages. Also provides financial news and videos. Quotes are delayed (~15 min for U.S. markets). Useful as a web source (via their Quotes pages) for broad market coverage.
+
+
+
+FinancialContent.com – Free data aggregator (by Nasdaq) that offers stock quotes and charts. Covers U.S. stocks, Bitcoin, and indices; provides current and historical data. Data can be accessed via simple URLs (e.g. markets.financialcontent.com). No signup; unlimited access. (However, content styling may change over time.)
+
+
+Yahoo CSV/JSON endpoints – (Related to Yahoo) Yahoo’s hidden API endpoints such as query1.finance.yahoo.com/v7/finance/download allow programmatic downloads of historical CSV price data. This is essentially a free “download API” for Yahoo Finance historical data (daily prices, dividends). Used by many tools for bulk price retrieval.
+
+
+TradingView – Charting platform (tradingview.com) offering free charts and screeners. Provides chart data for U.S. stocks/ETFs (delayed ~15–30 min). While it’s a closed service, users often employ its PNG/Widget API or unofficial endpoints. Good for visual data; not a traditional public API.

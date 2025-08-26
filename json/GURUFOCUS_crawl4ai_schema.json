@@ -1,0 +1,27 @@
+{
+  "name": "GuruFocusNewsSelector",
+  "baseSelector": "div.news-item",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "h4 a",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "h4 a",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Author",
+      "selector": "div.news-author",
+      "type": "text"
+    },
+    {
+      "name": "Time",
+      "selector": "div.news-date",
+      "type": "text"
+    }
+  ]
+}

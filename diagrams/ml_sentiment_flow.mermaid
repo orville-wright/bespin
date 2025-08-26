@@ -1,0 +1,56 @@
+graph TD
+    subgraph Initialization
+        A["Start: Instantiate ml_sentiment(yti, global_args)"] --> B["Store global_args"];
+    end
+
+    subgraph "Article Processing Pipeline"
+        C["Call compute_sentiment(symbol, item_idx, scentxt, urlhash, ext)"] --> D["Initialize ml_cvbow Vectorizer"];
+        D --> E["Initialize Hugging Face Classifier ('distilroberta-finetuned-financial-news-sentiment-analysis')"];
+        E --> F{"Loop through each text chunk in 'scentxt'"};
+        F -- For each chunk --> G{"Is chunk > tokenizer_max_length?"};
+        
+        G -- Yes --> H["Call c4_chunker(chunk)"];
+        H --> I["Returns smaller text 'blocklets'"];
+        I --> J["Call dict_processor(blocklets)"];
+        
+        G -- No --> K["Call dict_processor(chunk)"];
+        
+        J --> L["Return total tokens, words, and last result"];
+        K --> L;
+        F -- End Loop --> L;
+    end
+
+    subgraph "Core NLP Engine (dict_processor)"
+        M["dict_processor(text_dict)"] --> N{"Loop through each text item in dict"};
+        N -- For each item --> O["Tokenize & Count n-grams"];
+        O --> P["Call Hugging Face Classifier on item"];
+        P --> Q["Call nlp_sent_engine(classifier_result)"];
+        N -- End Loop --> R["Return metrics"];
+    end
+
+    subgraph "Sentiment Saving (nlp_sent_engine)"
+        S["nlp_sent_engine(result)"] --> T["Remove Stopwords"];
+        T --> U["Use ml_cvbow to get High-Frequency Words"];
+        U --> V["Create 'sen_package' dict with sentiment data"];
+        V --> W["Call save_sentiment(sen_package)"];
+    end
+
+    subgraph "DataFrame Update (save_sentiment)"
+        X["save_sentiment(data_set)"] --> Y["Construct new DataFrame row"];
+        Y --> Z["Concatenate row to sen_df0 (per-chunk sentiment)"];
+    end
+
+    subgraph "Final Summary"
+        AA["Call compute_precise_sentiment(...)"] --> BB["Calculate Gross Sentiment & Ratios"];
+        BB --> CC["Calculate Precise Sentiment Scores (Positive/Negative)"];
+        CC --> DD["Find Closest Category Description (e.g., 'Bullishly positive')"];
+        DD --> EE["Print Summary Report"];
+        EE --> FF["Construct new DataFrame row for final results"];
+        FF --> GG["Concatenate row to sen_df3 (final summary data)"];
+        GG --> HH["Return results dictionary"];
+    end
+
+    %% Connections
+    C --> M;
+    M --> S;
+    S --> X;

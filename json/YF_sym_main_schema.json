@@ -1,0 +1,28 @@
+{
+  "name": "YahooFinanceNewsSelector",
+  "baseSelector": "section.container.yf-1ce4p3e div div div div ul.stream-items.yf-1drgw5l li section",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "div a",
+      "type": "attribute",
+      "attribute": "title"
+    },
+    {
+      "name": "Teaser",
+      "selector": "div a p",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "div a",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Publisher",
+      "selector": "div div div.publishing.yf-m1e6lz",
+      "type": "text"
+    }
+  ]
+}

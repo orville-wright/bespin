@@ -1,0 +1,22 @@
+{
+  "name": "FXStreetNewsSelector",
+  "baseSelector": "main.fxs_clearfix div div div div article div.fxs_floatingMedia_textBody",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "h4 a",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "h4 a",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Author",
+      "selector": "address a",
+      "type": "text"
+    }
+  ]
+}

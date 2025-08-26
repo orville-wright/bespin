@@ -1,0 +1,22 @@
+{
+  "name": "ForbesNewsSelector",
+  "baseSelector": "section.lA6JG.csf-row.et-rows.row_5daf730cdc048 div div div div div div div div",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "h3 a",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "h3 a",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Author",
+      "selector": "div p a",
+      "type": "text"
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+graph TD
+    A["Start"] --> B{"Instantiate ml_nlpreader"};
+    B --> C["Call nlp_read_one(news_symbol, global_args)"];
+
+    C --> D["Instantiate yfnews_reader"];
+    D --> E["Form news URL endpoint"];
+    E --> F["Instantiate url_hinter"];
+    F --> G["Perform yahoofin_news_depth0 (scrape headlines)"];
+
+    G -- "hash_state is True" --> H{"Depth 0: List news candidates"};
+    H --> I{"Depth 1: Evaluate news feed stories"};
+    I --> J["Set ml_yfn_dataset globally"];
+    J --> K["Log success and articles found"];
+    K -- "bool_xray True" --> L["Dump ml_ingest"];
+    G -- "hash_state is False" --> M["Log error: No top-level articles"];
+
+    L --> N["Return articles_found"];
+    M --> N;
+
+    subgraph "nlp_summary_report(yti, ml_idx)"
+        O{"Check if ml_yfn_dataset exists or ml_idx is valid"};
+        O -- "No data" --> P["Log error and return 9.9"];
+        O -- "Data exists" --> Q["Retrieve sn_row from ml_ingest"];
+
+        Q --> R{"Article Type?"};
+        R -- "Type 0: Real News" --> S["Process Real News"];
+        S --> T["Parse URL"];
+        T --> U["Get URL hints (uhinter 0)"];
+        U --> V["Perform interpret_page_depth2 (deep analysis)"];
+        V --> W["Parse inferred URL"];
+        W --> X["Get confidence level"];
+        X --> Y["Print article details (Origin/Target URLs, locality)"];
+        Y --> Z["Return thint"];
+
+        R -- "Type 1: Fake News/Micro-ad" --> S1["Process Fake News"];
+        S1 --> T1["Parse URL"];
+        T1 --> U1["Get URL hints (uhinter 11)"];
+        U1 --> V1["Perform interpret_page_depth2"];
+        V1 --> W1{"Check inferred URL length"};
+        W1 -- "Valid URL" --> X1["Parse inferred URL"];
+        X1 --> Y1["Get confidence level"];
+        Y1 --> Z1["Print article details (Origin/Target URLs, hints, locality)"];
+        Z1 --> A2["Return thint"];
+        W1 -- "Invalid URL" --> B2["Log BAD article URL"];
+        B2 --> A2;
+
+        R -- "Type 2: Video Story" --> S2["Process Video Story"];
+        S2 --> T2["Parse URL"];
+        T2 --> U2["Get confidence level"];
+        U2 --> V2["Get URL hints (uhinter 12)"];
+        V2 --> W2["Print article details (Video stream cannot be processed)"];
+        W2 --> X2["Return thint"];
+
+        R -- "Type 3: External Publication" --> S3["Process External Publication"];
+        S3 --> T3["Parse URL"];
+        T3 --> U3["Get confidence level"];
+        U3 --> V3["Get URL hints (uhinter 13)"];
+        V3 --> W3["Print article details (Unreliable external data)"];
+        W3 --> X3["Return thint"];
+
+        R -- "Type 5: Yahoo Premium Ad" --> S4["Process Yahoo Premium Ad"];
+        S4 --> T4["Parse URL"];
+        T4 --> U4["Get confidence level"];
+        U4 --> V4["Get URL hints (uhinter 13)"];
+        V4 --> W4["Print article details (NOT an NLP candidate)"];
+        W4 --> X4["Return thint"];
+
+        R -- "Type 9: Undefined Placeholder" --> S5["Process Undefined Placeholder"];
+        S5 --> T5["Print article details (NOT yet defined)"];
+        T5 --> U5["Return thint"];
+
+        R -- "Else: Bad Data" --> S6["Process Bad Data"];
+        S6 --> T6["Print ERROR BAD Data"];
+        T6 --> U6["Return thint"];
+    end

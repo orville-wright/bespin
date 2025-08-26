@@ -1,0 +1,16 @@
+{
+  "name": "YF_symbol_art_Selector",
+  "baseSelector": "div.body.yf-1ir6o1g",
+  "fields": [
+    {
+      "name": "Content",
+      "selector": "div.atoms-wrapper",
+      "type": "text"
+    },
+    {
+      "name": "Premium_paywall",
+      "selector": "a.topic-link",
+      "type": "text"
+    }
+  ]
+}

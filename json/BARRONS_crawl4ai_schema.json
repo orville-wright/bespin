@@ -1,0 +1,27 @@
+{
+  "name": "BarronsNewSelector",
+  "baseSelector": "h3.BarronsTheme--lg--38o2HKJy",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "a",
+      "type": "text"
+    },
+    {
+      "name": "Teaser",
+      "selector": "a",
+      "type": "href"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "a",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Publisher",
+      "selector": "a",
+      "type": "text"
+    }
+  ]
+}

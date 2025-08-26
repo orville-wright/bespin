@@ -1,0 +1,33 @@
+
+Read, reference and research the Crawl4ai github repo here: https://github.com/unclecode/crawl4ai/tree/main
+
+Read tthe 2 working “News Data collector engine” reference code examples here:
+@benzinga_news.py @barrons_news.py @BARRONS_craw4ai_schema.json @BENZINGA_craw4ai_schema.json.
+
+These python scripts are excellent complete working examples of how to use Craw4ai to scrape News article data from a free new website. I consider these scripts ready to be deployed into production for my news Stock Trading apps… called: Bespin
+- The objective of these 2 reference “Data Collector engine” python scripts is to strongly leverage the Crawl4ai functionality of the JsonCssExtractionStrategy() and JsonXPathExtractionStrategy() API’s.; although I have not yet built a reference script that utilizes the JsonXPathExtractionStrategy() API. 
+The key goal is to construct the ExtractionStrategy “schema” programmatically via code after carefully analyzing the raw HTML and CSS/XPath data of the target News webpage to know exactly how to setup JsonCssExtractionStrategy and JsonXPathExtractionStrategy to crawl the webpage and extra the exact data fields I am looking for.
+
+I explicitly do not want the new proposed code solution to leverage the Crawl4ai LLM-based extraction strategy API LLMExtractionStrategy() because this needs to use an external LLM service and LLM API keys to build the extraction strategy JSON. I prefer non-LLM based extraction because it is…
+Faster & Cheaper. Zero cost. No API calls or GPU overhead.
+Cheaper from a financial cost perspective
+Lower Carbon Footprint: LLM inference can be energy-intensive. Pattern-based extraction is practically carbon-free.
+Precise & Repeatable: CSS/XPath selectors and regex patterns do exactly what you specify. whereas LLM outputs can vary or hallucinate.
+Scales Readily: For thousands of pages, pattern-based extraction runs quickly and in parallel
+
+Search any other github repos using the github MCP tools as well as any relevant documentation using the Context7 MCP. to provide extra reference material and expertise.
+
+Use the supabase MCP to access the database called PheroMIndMemory and review the table named bespin_pionews (“this holds Point of Interest NewsWebsites”).
+- If the column labeled  “state” holds a value = 2, this indicates a row of data that you must work on. Do not work on any rows that do not have a state = 2.
+- The column labeled “url” contains a candidate News Website url entry. You must use this url as that data source target. REad and evaluate that url webpage HTML and CSS
+- generate a crawl4ai JsonCssExtractionStrategy() JSON extraction strategy schema for this webpage… in the similar pattern to the reference code examples mentioned.
+
+Write a python Data extract eng script for each webpage (the scrip must be titled in the same pattern as the reference script and the JSON schema file show also follow that pattern).
+
+When you are completed building the new New Data Extractors, update the @aop.py main script and add new code to it… to call the News Data Extractor engines. There is ref-point @claude in the @aop.py file to show you where this section exists.
+
+For each new “News Data Extractor" engine, use the github MCP to create a github ISSUE “Epic” to describe your proposed plan. Update the github issue when each Data extractor is completed and commit the changes after each data extractor is finished. Also do this for the @aop.py changes.
+- The github user id to use is: orville-wright
+- The github user.email is: orville.wright@yahoo.com
+- The github reposity that this code is in is: https://github.com/orville-wright/bespin
+- The github Personal Access Token to use for access to this report is: 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

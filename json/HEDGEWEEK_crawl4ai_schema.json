@@ -1,0 +1,22 @@
+{
+  "name": "HedgeweekNewsSelector",
+  "baseSelector": "div.elementor-widget-wrap.elementor-element-populated",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "div div h3 a",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "div div h3 a",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+  "name": "Teaser",
+  "selector": "section div div div div div div.dce-excerpt",
+  "type": "text"
+    }
+  ]
+}

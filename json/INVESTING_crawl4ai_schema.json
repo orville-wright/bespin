@@ -1,0 +1,17 @@
+{
+  "name": "InvestingNewsSelector",
+  "baseSelector": "div.block.w-full",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "a",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "a",
+      "type": "attribute",
+      "attribute": "href"
+    }
+  ]
+}

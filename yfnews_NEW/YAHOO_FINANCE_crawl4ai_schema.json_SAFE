@@ -1,0 +1,53 @@
+{
+  "name": "YahooFinanceNewsSelector",
+  "baseSelector": "section.yf-1ce4p3e li",
+  "fields": [
+    {
+      "name": "Title",
+      "selector": "h3",
+      "type": "text"
+    },
+    {
+      "name": "Teaser",
+      "selector": "h3",
+      "type": "text"
+    },
+    {
+      "name": "Ext_url",
+      "selector": "h3 a",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "Publisher",
+      "selector": ".publishing.yf-1weyqlp",
+      "type": "text"
+    },
+    {
+      "name": "Author",
+      "selector": ".byline-attr-author.yf-1k5w6kz",
+      "type": "text"
+    },
+    {
+      "name": "PublishDate",
+      "selector": ".byline-attr-time-style time",
+      "type": "text"
+    },
+    {
+      "name": "FullArticleBody",
+      "selector": ".body.yf-1ir6o1g p",
+      "type": "text"
+    },
+    {
+      "name": "ArticleTitle",
+      "selector": ".cover-title.yf-1rjrr1",
+      "type": "text"
+    },
+    {
+      "name": "MetaDescription",
+      "selector": "meta[name='description']",
+      "type": "attribute",
+      "attribute": "content"
+    }
+  ]
+}
