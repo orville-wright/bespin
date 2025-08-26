@@ -30,4 +30,4 @@ For each new “News Data Extractor" engine, use the github MCP to create a gith
 - The github user id to use is: orville-wright
 - The github user.email is: orville.wright@yahoo.com
 - The github reposity that this code is in is: https://github.com/orville-wright/bespin
-- The github Personal Access Token to use for access to this report is: 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
+- The github Personal Access Token to use for access to this report is: 
