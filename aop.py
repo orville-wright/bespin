@@ -512,9 +512,9 @@ def main():
                     # WARN:  executes sentiment_ai.compute_sentiment()
  
                     if load_balancer == 0:                          # balance between craw4ai / BS4 scrapers+chunkers
-                        _atc, _awc, final_results = news_ai.yfn.extr_artdata_depth3(sn_idx, sent_ai)    # craw4ai engine
+                        _atc, _awc, final_results = news_ai.yfn.artdata_C4_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
-                        _atc, _awc, final_results = news_ai.yfn.BS4_artdata_depth3(sn_idx, sent_ai)   # BS4 engine 
+                        _atc, _awc, final_results = news_ai.yfn.artdata_BS4_depth3(sn_idx, sent_ai)   # BS4 engine 
                     rnd_loadbr = random.randint(1, 100)             # randomize load balancer decison
                     if rnd_loadbr % 2 == 0:
                         load_balancer = 0                           # choose CRAW4AI scraper/chunker

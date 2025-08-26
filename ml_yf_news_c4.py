@@ -499,7 +499,7 @@ class yfnews_reader:
     #       Does full get() request for every viable news article found
     # Reads each URL, and crawls that page, extracting key elements e.g. <p>.text
     # Trying to refactor to craw4al, but currently uses BS4
-    def BS4_artdata_depth3(self, item_idx, sentiment_ai):
+    def artdata_BS4_depth3(self, item_idx, sentiment_ai):
         """
         Depth: 3
         Extractor:  BS4 -  (engine decidcated to BS4 only)
@@ -522,7 +522,7 @@ class yfnews_reader:
         - these vars come from: compute_sentiment()
         """
 
-        cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(self.yti)
         logging.info( f'%s - IN / Work on item... [ {item_idx} ]' % cmi_debug )
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
@@ -584,9 +584,9 @@ class yfnews_reader:
         #
         # logging fixe: f-string errors when URLs have a "%" - breaks logging module (NO KNOWN FIX)
         logging.info( f'%s  - BS4 urlhash Net cache lookup: {cached_state}' % cmi_debug )
-        cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
+        cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
         logging.info( f'%s' % cmi_debug )
-        cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(item_idx)
+        cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(item_idx)
 
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - BS4 Skipping : Micro Article stub... [ {item_idx} ]' % cmi_debug )
@@ -597,9 +597,9 @@ class yfnews_reader:
             _built_bs4_entry = 2
         except KeyError:
             logging.info( f'%s - BS4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
-            cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
+            cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
-            cmi_debug = __name__+"::"+self.BS4_artdata_depth3.__name__+".#"+str(item_idx)
+            cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(item_idx)
             self.yfqnews_url = durl
             ip_urlp = urlparse(durl)
             ip_headers = ip_urlp.path
@@ -759,12 +759,16 @@ class yfnews_reader:
 
 # #####################################################################################
     # WARNING:
-    # sync crawl4 implementation of BS4_artdata_depth3()
+    # sync crawl4 implementation of artdata_BS4_depth3()
     # HEAVY network data extractor
     # Reads each URL, and crawls that page, extracting key elements
     
-    def extr_artdata_depth3(self, item_idx, sentiment_ai):
+    def artdata_C4_depth3(self, item_idx, sentiment_ai):
         """
+        Extractor:  CRAWL4AI -  (engine decidcated to BS4 only)
+        - Build the Text corpus for 1 (one) article only
+        - Calls sentiment computation for 1 article
+        
         Depth : 3
         TODO: rename this function to ext_artdata_C4
         This function is controlled from main()
@@ -780,7 +784,7 @@ class yfnews_reader:
         Its now available for the LLM to read and process
         """
 
-        cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(self.yti)
         logging.info( f'%s - IN / Work on item... [ {item_idx} ]' % cmi_debug )
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
@@ -835,122 +839,27 @@ class yfnews_reader:
                 logging.info( f'%s - C4 KVstore ERROR.#def Unknown error code: {_ec} ! force Net read...' % cmi_debug )
                 pass
 
-        '''
-        logging.info( f'%s - C4 Opening LMDB READ-ONLY mode...' % cmi_debug )
-        kv_success = self.kvio_eng.open_lmdb_RO(2)
-        if kv_success is not None:
-            ################# BS4 Deep Cache KV engine
-            #
-            _url_hash = data_row['urlhash']
-            _key = "0001"+"."+symbol+"."+_url_hash         # we are looking at the artile here. So test for this K/V data
-            C4_kvs_key = _key.encode('utf-8')              # byte encode 
-            logging.info( f"%s - C4 CHECK Deep Cache KVstore # {_key:40}{'...' if len(_key) > 40 else ''}" % cmi_debug )
-            with self.kvio_eng.env.begin() as txn:
-                ret_code = txn.get(C4_kvs_key)              # get _key
-                if ret_code is not None:                    # cache hit, found !
-                    logging.info( f'%s - C4 FOUND ! Deep Cache entry: validating...' % cmi_debug )
-                    _final_results = dict()                 # ensure clean & empty
-                    try:
-                        _v_str = ret_code.decode('utf-8')   # Deserialiize, Decode bytes into string
-                    except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                        logging.info( f'%s - C4 Error deserializing value: {e}"...' % cmi_debug )
-                        pass
-                    else:
-                        _final_results = json.loads(_v_str)        # parse JSON
-                        try:
-                            kv_url_hash = _final_results['urlhash']
-                        except KeyError as _f:
-                            logging.info( f'%s - C4 Error CORRUPT KV DATA: {_f}"...' % cmi_debug )
-                            print (f"###-debug-871: corrput FR data: {_final_results}" )
-                            print (f"###-debug-872: corrput VS data: {_v_str}" )
-                            print (f"================================ C4 End.#9 KV Cache Hit ! KVstore Data Corrupt ! {item_idx} ================================" )
-                            breakpoint
-                            return 0, 0, 0
-                        else:
-                            pass
-                        
-                        self.total_tokens = 0
-                        
-                        # read the Deep cache entry, rehydrate the save_sentiment DF from it
-                        self.sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
-                        logging.info( f'%s - C4 Rehydrate sent DF metrics from Deep Cache...' % cmi_debug )                        
-                        for _dc_k, _dc_v in _final_results.items():
-                            if isinstance(_dc_v, dict):
-                                self.total_tokens += int(_dc_v['tokenz'])
-                                _chunk_sent = _dc_v['sent_type']
-                                self.sent_ai.sentiment_count[_chunk_sent] += 1  # count sentiment type
-                                sen_package = dict(sym=symbol,
-                                                article=_final_results['article'],
-                                                urlhash=kv_url_hash,
-                                                chunk=_dc_v['chunk'],
-                                                rank=_dc_v['sent_score'],
-                                                sent=_dc_v['sent_type'],
-                                                )
-
-                                # rehydrate sen_df0 from Depp Cache entry
-                                self.sent_ai.save_sentiment_df(item_idx, sen_package)   # rehydrate
-                                continue
-                            else:
-                                continue
-                        
-                        self.total_words = _final_results["total_words"]
-                        self.total_chars = _final_results["chars_count"]
-                        sent_p = self.sent_ai.sentiment_count["positive"]
-                        sent_z = self.sent_ai.sentiment_count["neutral"]
-                        sent_n = self.sent_ai.sentiment_count["negative"]
-
-                        self.sen_data = [[
-                            item_idx,
-                            kv_url_hash,
-                            sent_p,
-                            sent_z,
-                            sent_n
-                            ]]
-
-                        sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
-                        self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
-
-                        print ( f"Total tokenz: {self.total_tokens} / Words: {self.total_words} / Chars: {self.total_chars} / Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}" )
-                        print ( f"================================ C4 End.#4 Deep Cache Hit: {item_idx} =======================================")
-                        return self.total_tokens, self.total_words, _final_results   # TODO: not sure _final_results !! esp total_words
-                else:
-                    logging.info( f'%s - C4 MISS - NO Deep Cache KVstore entry' % cmi_debug )
-        else:
-            logging.info( f'%s - C4 FAIL - to open KVstore - doing Net get() extraction' % cmi_debug )
-            pass
-            #
-            ############# End cache engine            
-        '''
-
         #####################################################
         # C4
         # Network ret() read the article text
         #
         logging.info( f'%s - C4 urlhash Net cache lookup: {cached_state}' % cmi_debug )
-        cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
+        cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
         logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
-        cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
+        cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)
 
         try:                                    # cehck for cached_state in yfn_jsdb
             self.yfn_jsdb[cached_state]         # pickup the full dict @ key: urlhash - if this doesnt error/excpe = SUCCESS !
             _built_c4_entry = 2
         except KeyError:
             logging.info( f'%s - C4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
-            cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
+            cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
-            cmi_debug = __name__+"::"+self.extr_artdata_depth3.__name__+".#"+str(item_idx)
+            cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)
             
             result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # exec crawl4ai engine t extraction of 1 article's data
             self.articles_crawled[item_idx] = result  # NOTE USED: future feat: parallel crawl4ai extraction
-            # see same note above for result structure
-            '''
-                    self.yfn_c4_result[aurl_hash] = {
-                        'url': durl,
-                        'data': self.yfn_crawl_data,
-                        'result': result
-                    }
-            '''
-            
+
             self.yfqnews_url = durl
             cy = self.yfn_c4_result[cached_state]    # pickup up result dict
             logging.info( f'%s - C4 EVAL.#1: re-read:  {cached_state}' % cmi_debug ) 
@@ -1056,7 +965,8 @@ class yfnews_reader:
                             })
                                 print ("Premium Paywalled article. Skipping...")
                                 print ( f"================================ C4 End.#1 YF Premium paywall: {item_idx} ================================")
-                                return 0, 0, _final_data_dict
+                                #return 0, 0, _final_data_dict
+                                return 0, 0, None
                             else:
                                 print ("Unknown article type. Skipping...")
                                 print ( f"================================ C4 End.#2 Unknown type: {item_idx} ================================")
@@ -1158,7 +1068,7 @@ class yfnews_reader:
     # ################ 7
     async def c4_engine_depth3(self, durl, item_idx):
         """
-        Helper function for extr_artdata_depth3() ONLY - not a public API
+        Helper function for artdata_C4_depth3() ONLY - not a public API
         Just the crawl4ai engine for Depth 3
         Dont do anyting else
         """
