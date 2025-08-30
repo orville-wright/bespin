@@ -40,7 +40,7 @@ class ml_nlpreader:
     async def nlp_read_one(self, news_symbol, global_args):
         """
         DEPTH -> 0 and -> 1
-        Main controler for depth 0 and 0 data extraction
+        Main controler for depth 0 and 1 data extraction
 
         Async version of nlp_read_one that uses crawl4ai
         The machine will now read!

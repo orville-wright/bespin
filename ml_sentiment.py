@@ -52,7 +52,7 @@ class ml_sentiment:
     
     # Techcnial analysys dict defines sentiment score to description mapping
     s_categories = {
-            200: (['Bullishly positive', 200]),
+            225: (['Bullishly positive', 225]),
             100: (['Trending bullish', 100]),
             50: (['Positive', 50]),
             25: (['Trending positive', 25]),
@@ -60,7 +60,7 @@ class ml_sentiment:
             -25: (['Trending negative', -25]),
             -50: (['Negative', -50]),
             -100: (['Somewhat Bearish', -100]),
-            -200: (['Bearishly negative', -200])
+            -225: (['Bearishly negative', -225])
             }
         
     ######################## init ##########################################
@@ -415,7 +415,7 @@ class ml_sentiment:
                     print (f"LLM exception")
                     continue
                 case 2:
-                    print ( f"chunk:{_chunk_udid:03} ", end="" )
+                    print ( f"Empty vocab: {self.empty_vocab} / chunk:{_chunk_udid:03} ", end="" )
                     self.empty_vocab += 1
                     continue
                 case 3:
@@ -484,8 +484,8 @@ class ml_sentiment:
             print ( f"Model exception !!")
             return 1
         except ValueError:
-            print ( f"Empty vocabulary: {self.empty_vocab} / ", end="" )
-            self.empty_vocab += 1
+            #print ( f"Empty vocabulary: {self.empty_vocab} / ", end="" )
+            #self.empty_vocab += 1
             return 2
         except Exception as e:
             print ( f"ERROR sent engine !!: {e}")

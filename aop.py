@@ -103,53 +103,6 @@ parser.add_argument('--eodhistoricaldata', help='Get EOD Historical Data for sym
 parser.add_argument('--financialmodelingprep', help='Get FinancialModelingPrep data for symbol', action='store', dest='financialmodelingprep_symbol', required=False, default=False)
 parser.add_argument('--stooq', help='Get Stooq historical data for symbol', action='store', dest='stooq_symbol', required=False, default=False)
 
-#######################################################################
-# Global method for __main__
-# thread function #1
-# DEPRECATED
-
-extract_done = threading.Event()
-
-def do_nice_wait(topg_inst):
-    """Threaded wait that does work to build out the 10x10x60 DataFrame"""
-    logging.info('y_topgainers:: IN Thread - do_nice_wait()' )
-    logging.info('y_topgainers::do_nice_wait() -> inst: %s' % topg_inst.yti )
-    for r in range(6):
-        logging.info('do_nice_wait() cycle: %s' % topg_inst.cycle )
-        time.sleep(5)    # wait immediatley to let remote update
-        topg_inst.get_topg_data()       # extract data from finance.Yahoo.com
-        topg_inst.build_tg_df0()
-        topg_inst.build_top10()
-        topg_inst.build_tenten60(r)     # pass along current cycle
-        print ( ".", end="", flush=True )
-        topg_inst.cycle += 1            # adv loop cycle
-
-        if topg_inst.cycle == 6:
-            logging.info('do_nice_wait() - EMIT exit trigger' )
-            extract_done.set()
-
-    logging.info('do_nice_wait() - Cycle: %s' % topg_inst.cycle )
-    logging.info('do_nice_wait() - EXIT thread inst: %s' % topg_inst.yti )
-
-    return      # dont know if this this requireed or good semantics?
-
-def bkgrnd_worker():
-    """Threaded wait that does work to build out the 10x10x60 DataFrame"""
-    global work_inst
-    logging.info('main::bkgrnd_worker() IN Thread - bkgrnd_worker()' )
-    logging.info('main::bkgrnd_worker() Ref -> inst #: %s' % work_inst.yti )
-    for r in range(4):
-        logging.info('main::bkgrnd_worker():: Loop: %s' % r )
-        time.sleep(30)    # wait immediatley to let remote update
-        work_inst.build_tg_df0()
-        work_inst.build_top10()
-        work_inst.build_tenten60(r)
-
-    logging.info('main::bkgrnd_worker() EMIT exit trigger' )
-    extract_done.set()
-    logging.info('main::bkgrnd_worker() EXIT thread inst #: %s' % work_inst.yti )
-    return      # dont know if this this requireed or good semantics?
-
 
 ############################# main() ##################################
 
@@ -511,7 +464,7 @@ def main():
                     # scraper loadbalancer, Anti-bot avoidance & performance balancing
                     # WARN:  executes sentiment_ai.compute_sentiment()
  
-                    if load_balancer == 0:                          # balance between craw4ai / BS4 scrapers+chunkers
+                    if load_balancer == 0:                          # randomize  craw4ai / BS4 scrapers
                         _atc, _awc, final_results = news_ai.yfn.artdata_C4_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
                         _atc, _awc, final_results = news_ai.yfn.artdata_BS4_depth3(sn_idx, sent_ai)   # BS4 engine 

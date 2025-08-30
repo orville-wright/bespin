@@ -44,7 +44,6 @@ class yfnews_reader:
     dummy_resp0 = None
     ext_req = None          # HTMLSession request handle
     extracted_articles = None  # crawl4ai extracted articles
-    get_counter = 0         # count of get() requests
     kvio_eng = None
     li_superclass = None    # all possible News articles
     live_resp0 = None
@@ -164,7 +163,7 @@ class yfnews_reader:
         return
 
     # ################ 5
-    def do_simple_get(self, url):
+    def do_simple_get(self, _url):
         """
         Simple basic HTML data get()  (data not processed by JAVAScript engine)
         NOTE: get URL is assumed to have allready been set (self.yfqnews_url)
@@ -173,35 +172,37 @@ class yfnews_reader:
         cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)
 
         js_session = HTMLSession()                  # Create a new session        
-        with js_session.get(url) as self.js_resp0:  # must do a get() - NO setting cookeis/headers)
-            logging.info(f'%s  - Simple HTML Request get() / Cycle.#{self.get_counter:03}' % cmi_debug ) 
+        with js_session.get(_url) as self.js_resp0:  # must do a get() - NO setting cookeis/headers)
+            logging.info(f'%s  - Simple Net get()' % cmi_debug ) 
 
-        # HACK to help logging() f-string bug to handle strings with %
-            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+"  - "+url
+            # lOGGING HACK - helpS logging() f-string bug to handle strings with %
+            cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)+"  - "+_url
             logging.info('%s' % cmi_debug )
-            #logging.info( f"%s - JS_session.get() sucessful: {url}" % cmi_debug )
             cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)    # reset cmi_debug
+            #########################################################
             if self.js_resp0.status_code != 200:
-                    logging.error(f'{cmi_debug} - get() failed with error: {self.js_resp0.status_code}')
-                    return None
+                    logging.error(f'{cmi_debug} - Net get() failed with error: {self.js_resp0.status_code}')
+                    return 1, self.js_resp0.status_code
+                    ################ FAILURE ###############################
 
         logging.info(f'{cmi_debug}  - Net get() success status: {self.js_resp0.status_code}')
-        self.get_counter += 1
         logging.info( f"%s  - js.render() engine... DISABLED" % cmi_debug )
-        logging.info( f'%s  - Store basic HTML dataset' % cmi_debug )
+        logging.info( f'%s  - Store get() resp HTML dataset' % cmi_debug )
         self.js_resp2 = self.js_resp0               # Set js_resp2 to the same response as js_resp0 for now
+ 
         hot_cookies = requests.utils.dict_from_cookiejar(self.js_resp0.cookies)
         logging.info( f"%s  - Swap {len(hot_cookies)} cookies into LOCAL yahoo_headers" % cmi_debug )
 
         self.yfn_htmldata = self.js_resp0.text      # class GLOBAL store page HTML text in memory in this class
-        auh = hashlib.sha256(url.encode())          # hash the url
-        aurl_hash = auh.hexdigest()
-        logging.info( f'%s  - CREATE ml_ingest DB cache entry: [ {aurl_hash} ]' % cmi_debug )
+
+        _uh = hashlib.sha256(_url.encode())          # hash the url
+        _url_hash = _uh.hexdigest()
+        logging.info( f'%s  - CREATE ml_ingest DB cache entry: [ {_url_hash} ]' % cmi_debug )
         
         #self.yfn_jsdb[aurl_hash] = self.js_resp0    
         # create jsdb CACHE entry @ key=aurl_hash, value=js_resp0 (i.e. get()::resp, not  page TEXT data)
-        self.yfn_jsdb[aurl_hash] = {
-            'url': url,
+        self.yfn_jsdb[_url_hash] = {
+            'url': _url,
             'data': self.yfn_htmldata,
             'result': self.js_resp0
         }
@@ -210,10 +211,10 @@ class yfnews_reader:
         if self.args['bool_xray'] is True:
             print ( f"========================== {self.yti} / HTML get() session cookies ================================" )
             logging.info( f'%s  - resp0 type: {type(self.js_resp0)}' % cmi_debug )
-            for i in self.js_resp0.cookies.items():
-                print ( f"{i}" )
+            for _i in self.js_resp0.cookies.items():
+                print ( f"{_i}" )
 
-        return aurl_hash
+        return 0, _url_hash
 
     # ################ 6
     def share_hinter(self, hinst):
@@ -605,7 +606,22 @@ class yfnews_reader:
             ip_headers = ip_urlp.path
             self.ext_req = self.init_live_session(durl)        # uses basic requests modeule. Sould use requests_html at least
             self.update_headers(ip_headers)
-            xhash = self.do_simple_get(durl)            # xhash now == cached_state (what we were given, but faield to find in cache))
+            
+            _ec, xhash = self.do_simple_get(durl)            # xhash now == cached_state (what we were given, but faield to find in cache))
+            match _ec:
+                        case 1:  # BS4 KVstore cache hit
+                            logging.info( f'%s - FAILED to read article / ERROR code: {xhash}' % cmi_debug )
+                            logging.info( f'%s - BS4 prep simple Net get() due to KV cache miss : {self.sent_ai.sentiment_count}' % cmi_debug )
+                            print (f"================================ BS4 Net req() FAILURE / Cannot read article URL: {item_idx} ================================" )
+                            return 0, 0,None                  
+                        case 0:  # BS4 KVstore cache miss
+                            logging.info( f'%s - BS4 prep simple Net get() success ! continue forcing Net read...' % cmi_debug )
+                            pass
+                        case _:
+                            logging.info( f'%s - BS4 prep simple Net get() unknown error: {_ec} ! Abandon Net URL read' % cmi_debug )
+                            return 0, 0,None
+                            ##########################################################################
+            
             cy_soup = self.yfn_jsdb[xhash]              # ref the dict{} that do_simple_get() created
             logging.info( f'%s - BS4 EVAL.#1 : re-read Net-cache #1 for: {cached_state}' % cmi_debug ) 
             if self.yfn_jsdb[cached_state]:
