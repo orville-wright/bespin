@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 import re
 import logging
-import argparse
 import time
 from rich import print
 
@@ -14,7 +13,9 @@ logging.basicConfig(level=logging.INFO)
 
 #####################################################
 class y_daylosers:
-    """Class to extract Top Losers data set from finance.yahoo.com"""
+    """
+    Class to extract Top Losers data set from finance.yahoo.com
+    """
     # global accessors
     tl_df0 = ""          # DataFrame - Full list of top loserers
     tl_df1 = ""          # DataFrame - Ephemerial list of top 10 loserers. Allways overwritten

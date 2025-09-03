@@ -42,7 +42,6 @@ from data_engines_fundamentals.stockdata_md import stockdata_md
 from data_engines_fundamentals.stooq_md import stooq_md
 from data_engines_fundamentals.tiingo_md import tiingo_md
 from data_engines_fundamentals.twelvedata_md import twelvedata_md
-#from y_generalnews import y_generalnews
 
 # Data Extractor engines
 from data_engines_fundamentals.polygon_md import polygon_md
@@ -125,7 +124,7 @@ def main():
 
 ########### 1 - TOP GAINERS ################
     if args['bool_tops'] is True:
-        print ( "========== Large Cap / Top Gainers ===============================" )
+        print ( "========== Large Cap / Top Mover by % change ===============================" )
         ## new JS data extractor
         topgainer_reader = y_cookiemonster(1)         # instantiate class of cookiemonster
         mlx_top_dataset = y_topgainers(1)             # instantiate class
@@ -140,7 +139,7 @@ def main():
         print ( " " )
 
 ########### 2 - TOP LOSERS ################
-        print ( "========== Large Cap / Top Loosers ================================" )
+        print ( "========== Large Cap / Top Looser by -% change  ================================" )
         ## new JS data extractor
         toploser_reader = y_cookiemonster(2)         # instantiate class of cookiemonster
         mlx_loser_dataset = y_daylosers(1)           # instantiate class
@@ -178,15 +177,6 @@ def main():
         #gurufocus_news_reader = gurufocus_news(1)
         #asyncio.run(gurufocus_news_reader.craw4ai_str_schema_extr())
         
-        ############## hacking on general news
-        # this work is trying to use craw4ai to scrap finaince.yahoo.com under severe anti-bot guardrails
-        #genews_reader = y_cookiemonster(3)
-        #genews_dataset = y_generalnews(3)
-        #genews_dataset.init_dummy_session()
-        #genews_dataset.ext_req = genews_dataset.do_simple_get('https://finance.yahoo.com')
-        #genews_dataset.ext_req = genews_reader.get_js_data('barrons.com/real-time/2')
-        #genews_dataset.ext_get_data(3)
-        #gx = genews_dataset.build_df0()
         print (f"Total News articles extracted: {ext_count}" )
         print ( " " )
 

@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 
 class yfnews_reader:
     """
-    Read Yahoo Finance news reader, Word Vectorizer, Positive/Negative sentiment analyzer
+    Read Yahoo Finance news reader
     """
 
     # global accessors

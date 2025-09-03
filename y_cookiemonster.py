@@ -1,17 +1,15 @@
 #! python3
 
+from bs4 import BeautifulSoup
+import logging
+import pandas as pd
 from requests_html import HTMLSession
 import requests
-from bs4 import BeautifulSoup
-import pandas as pd
 #import modin.pandas as pd
-import logging
-import argparse
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
 
-from requests_html import HTMLSession
 
 #####################################################
 
@@ -89,10 +87,12 @@ class y_cookiemonster:
 ###########################################################################################
 # method #2
     def get_js_data(self, js_url):
-        """Connect to finance.yahoo.com and open a Javascript Webpage"""
-        """Process with Javascript engine and return JS webpage handle"""
-        """Optionally the Javascript engine can render the webspage as Javascript and"""
-        """and then hand back the processed JS webpage. - This is currently didabled"""
+        """
+        Connect to finance.yahoo.com and open a Javascript Webpage
+        Process with Javascript engine and return JS webpage handle
+        Optionally the Javascript engine can render the webspage as Javascript and
+        and then hand back the processed JS webpage. - This is currently didabled
+        """
 
         cmi_debug = __name__+"::"+self.get_js_data.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
@@ -107,17 +107,15 @@ class y_cookiemonster:
         logging.info( f"%s - Init JS_session HTMLsession() setup" % cmi_debug )
 
         js_session = HTMLSession()
-        with js_session.get( js_url ) as self.js_resp0:
-            logging.info( f"%s - JS_session.get() sucessful: {js_url}" % cmi_debug )
-        
-        logging.info( f"%s - js.render()... diasbled" % cmi_debug )
-        self.js_resp0.html.render()
-        # this needs to be a setting that can be controlled from the caller.
-        # it correnlty times-out with pypuppeteer timeout failure
-        # note: self.js_resp0.text
-
-        hot_cookies = requests.utils.dict_from_cookiejar(self.js_resp0.cookies)
-        logging.info( f"%s - Swap {len(self.js_resp0.cookies)} JS cookies into yahoo_headers" % cmi_debug )
-        js_session.cookies.update(self.yahoo_headers)
+        try:
+            with js_session.get( js_url ) as self.js_resp0:
+                logging.info( f"%s - JS_session.get() sucessful: {js_url}" % cmi_debug )
+                logging.info( f"%s - js.render() page now..." % cmi_debug )
+                self.js_resp0.html.render()
+                hot_cookies = requests.utils.dict_from_cookiejar(self.js_resp0.cookies)
+                logging.info( f"%s - Swap {len(self.js_resp0.cookies)} JS cookies into yahoo_headers" % cmi_debug )
+                js_session.cookies.update(self.yahoo_headers)
+        finally:
+            js_session.close()
 
         return self.js_resp0
