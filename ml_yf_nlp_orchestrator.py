@@ -18,7 +18,8 @@ logging.basicConfig(level=logging.INFO)
 class ml_nlpreader:
     """
     Class to identify, rank, classify stocks NEWS articles
-    Updated to work with crawl4ai version of Yahoo Finance scraper
+    Updated to work as async and crawl4ai + BS4
+    
     """
 
     # global accessors
@@ -63,10 +64,10 @@ class ml_nlpreader:
 
         # 3 Main steps execuete here - Depth -> 0 + Depth -> 1
         # print a report of the Depth 0 Top Level skim run
-        hash_state = await ml_yfn_dataset.yahoofin_news_depth0(0)   # scrape NOW @ Depth 0 yahoofin_news_depth0()
+        _url_hash0 = await ml_yfn_dataset.yahoofin_news_depth0(0)   # scrape NOW @ Depth 0 yahoofin_news_depth0()
 
-        if hash_state:												# Depth: 0
-            articles_found = ml_yfn_dataset.list_news_candidates_depth0(news_symbol, 0, 1, hash_state)
+        if _url_hash0:												# Depth: 0
+            articles_found = ml_yfn_dataset.list_news_candidates_depth0(news_symbol, 0, 1, _url_hash0)
             ml_yfn_dataset.eval_news_feed_stories(news_symbol)		# Depth: 1            
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(f" ")
@@ -74,7 +75,7 @@ class ml_nlpreader:
             if self.args.get('bool_xray', False):                   # DEBUG: xray
                 ml_yfn_dataset.dump_ml_ingest()
         else:
-            logging.error(f"%s - No Top lvel articles were found !!" % cmi_debug)
+            logging.error(f"%s - No Top level articles found !!" % cmi_debug)
         
         return articles_found
 
@@ -85,7 +86,6 @@ class ml_nlpreader:
         NOTE: Reads 1 (ONE) article ONLY from the ml_ingest{} DB and processes it...
               Executes Dept 2 analysis via ml_yfn_dataset::interpret_page_depth2()   - no get() or BS4
         
-        Needs updating to crawl4ai data extraction (currenlt BS4)
         """
         self.yti = yti
         cmi_debug = __name__+"::" + self.nlp_summary_report.__name__+".#"+str(self.yti)

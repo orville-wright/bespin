@@ -74,11 +74,11 @@ class yfnews_reader:
     #                               result: result  }
                     
     yfn_jsdb = {}           # database to hold response handle from multiple crawl operations    
-    # yfn_jsdb dict structure...
-    #                       { aurl_hash: respons_0,
-    #                       url: self.yfqnews_url,
-    #                       data: self.yfn_crawl_data,
-    #                       result: result  }
+    # dict structure...
+    #       { aurl_hash: respons_0,
+    #       url: self.yfqnews_url,
+    #       data: self.yfn_crawl_data,
+    #       result: result  }
 
     yahoo_headers = {
         'authority': 'finance.yahoo.com',
@@ -198,8 +198,7 @@ class yfnews_reader:
         _uh = hashlib.sha256(_url.encode())          # hash the url
         _url_hash = _uh.hexdigest()
         logging.info( f'%s  - CREATE ml_ingest DB cache entry: [ {_url_hash} ]' % cmi_debug )
-        
-        #self.yfn_jsdb[aurl_hash] = self.js_resp0    
+         
         # create jsdb CACHE entry @ key=aurl_hash, value=js_resp0 (i.e. get()::resp, not  page TEXT data)
         self.yfn_jsdb[_url_hash] = {
             'url': _url,
@@ -227,9 +226,12 @@ class yfnews_reader:
     async def yahoofin_news_depth0(self, idx_x):
         """
         Depth -> 0
-        Top-level level News Artcile skimmer (using crawl4ai for better JS page control)
-        - Use js_cmds for next_page() to capture all 200+ artciles to end of page stream
+        Top-level level News Artcile skimmer 
+        - use crawl4ai at top level for better JS page control
+        - use crawl4ai js_cmds for next_page() to capture all 200+ articles to end of page stream
+          BS4 can do this as well (as simply) as Crawl4ai
         Store full craw4ai result in GLOBAL class accessor: self.yfn_jsdb
+        
         INFO:
         Surface scan of Top-level news articles list in the news section for 1 stock symbol
         Hash_state: Unique hash of the URL that is being scanned
@@ -238,15 +240,15 @@ class yfnews_reader:
         Scan_type: 0 = html | 1 = crawl4ai extraction (deprecated)
         Share class accessors of where the New Articles live
         """
-        cmi_debug = __name__+"::" + self.yahoofin_news_depth0.__name__+".#"+str(self.yti)+"."+str(idx_x)
+        cmi_debug = __name__+"::" + self.yahoofin_news_depth0.__name__+".#"+str(self.yti)+"."+str(idx_x)+"_ASYNC"
         if not self.yfqnews_url or not isinstance(self.yfqnews_url, str):       # set  @async_nlp_read_one by form_endpoint()
             logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
             return None
 
 # hack this to test crawl4 ai <li.p.text>
 
-        logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} - %s', self.yfqnews_url)
-        logging.info(f'%s - Load C4 json schema file: [ {self.YF_sym_main_schema} ]' % cmi_debug)
+        logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x}+"_ASYNC" - %s', self.yfqnews_url)
+        logging.info(f'%s - Load C4 Depth0 Skimmer schema: [ {self.YF_sym_main_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.YF_sym_main_schema}"        
         if os.path.exists(listall_schema_file_path):
             with open(listall_schema_file_path, "r") as f:
@@ -255,7 +257,7 @@ class yfnews_reader:
             logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_main_schema} ]' % cmi_debug)
             return None
 
-        logging.info(f'%s - INIT crawl4ai extraction strategy...' % cmi_debug)
+        logging.info(f'%s - INIT crawl4ai Depth0 Skimmer strategy...' % cmi_debug)
         extraction_strategy = JsonCssExtractionStrategy(schema)
         js_cmds = [
             "window.scrollTo(0, document.body.scrollHeight);",
@@ -266,7 +268,9 @@ class yfnews_reader:
             extraction_strategy=extraction_strategy,
             scan_full_page=True,
             js_code=js_cmds,
-            cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
+            verbose=True,
+            stream=True,
+            cache_mode=CacheMode.ENABLED  # force Bypass cache. ALlways read fresh data
         )
 
         try:
@@ -284,13 +288,13 @@ class yfnews_reader:
                         'result': result
                     }
                     
-                    logging.info(f'%s - Create cache entry: [ {aurl_hash} ]' % cmi_debug)
+                    logging.info(f'%s - Create Depth0 Net DB entry: [ {aurl_hash} ]' % cmi_debug)
                     return aurl_hash
                 else:
-                    logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
+                    logging.error(f'%s - crawl4ai Depth0 extract failure: {result.error}' % cmi_debug)
                     return None                    
         except Exception as e:
-            logging.error(f'{cmi_debug} - Error during crawl4ai extraction: {e}')
+            logging.error(f'{cmi_debug} - ERROR @ Depth0 crawl4ai extract: {e}')
             return None
 
     # ################
@@ -306,16 +310,16 @@ class yfnews_reader:
         Does a  nice REPORT of the Depth 0 surface scan
         This does NOT get() or extartc and data, or create ml_ingest dataset
         """
-        cmi_debug = __name__+"::" + self.list_news_candidates_depth0.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::" + self.list_news_candidates_depth0.__name__+".#"+str(self.yti)+"_SYNC_BLK"
         logging.info('%s - IN' % cmi_debug)
         symbol = symbol.upper()
         depth = int(depth) 
         
         if scan_type == 1:  # crawl4ai extraction
-            logging.info(f'%s - Check Depth 0 cache state: {hash_state}' % cmi_debug)
+            logging.info(f'%s - Check Depth 0 URL cache: {hash_state}' % cmi_debug)
             try:
-                cached_data = self.yfn_jsdb[hash_state]     # get resp - set by craw4al @ yahoofin_news_depth0()
-                logging.info(f'%s - URL exists in cache...' % cmi_debug)
+                cached_data = self.yfn_jsdb[hash_state]     # set at depth0
+                logging.info(f'%s - URL exists in Net cache...' % cmi_debug)
                 
                 # CRITICIAL:  gloablly sets the extratced >>dataset<< to work on for tis article
                 self.extracted_articles = cached_data['data']                    
@@ -333,7 +337,7 @@ class yfnews_reader:
                     logging.warning(f'%s - No articles found in extraction' % cmi_debug)
                     
             except KeyError:
-                logging.error(f'%s - ERROR URL hash not in cache: {hash_state}' % cmi_debug)
+                logging.error(f'%s - ERROR URL hash not in Net cache: {hash_state}' % cmi_debug)
                 return None
         self.articles_found = article_count
         return self.articles_found
@@ -342,7 +346,10 @@ class yfnews_reader:
     def eval_news_feed_stories(self, symbol):
         """
         Depth : 1
-        Scanning news feed stories and some metadata (@ depth 1)
+        Scanning list of news feed stories skimmed from Depth 0
+        - and collect some metadata (@ depth 1)
+        - data is from Crawl4ai
+        
         Extract key data elements from each article via crawl4ai dataset indexing @ self.extracted_articles
         Build a ML ingest DB dataset of articles fro fast post processing
         Dedupe hash's of articles
@@ -354,7 +361,7 @@ class yfnews_reader:
         symbol = symbol.upper()
         if not self.extracted_articles:         # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
             logging.error(f'%s - No extracted articles available' % cmi_debug)
-            return
+            return 1
         
         cg = 1
         hcycle = 1
@@ -371,12 +378,13 @@ class yfnews_reader:
                 art_publisher =_ap_sl[0]
                 update_time = _ap_sl[1]
             except:
-                logging.info(f'%s - Error @ {cg} extract publiosher info...' % cmi_debug)
+                logging.info(f'%s - Error @ {cg} extract publisher info...' % cmi_debug)
                 art_publisher = "Err_no_publisher"
                 update_time = "Err_no_pub_time"
 
             print(f"Eval cycle:    Depth 1  ({cg} / {self.articles_found}) =====================================================")
             if article_url:
+                # TEST #1 : is this a healtly URL ?
                 if article_url.startswith('http'):              # quick safety check that we have a real URL
                     self.article_url = article_url
                     self.a_urlp = urlparse(self.article_url)    # break doin the URL into components
@@ -385,8 +393,9 @@ class yfnews_reader:
                     path = self.a_urlp.path                     # /path/to/article
                 else:
                     logging.info(f'%s - Mangled source url: {article_url}' % cmi_debug)
-                    return 1
-                    
+                    return 2
+                
+                # TEST #2 : learn what thsi URL actually is
                 uhint, uhdescr = self.yfn_uh.uhinter(hcycle, self.article_url)
                 logging.info(f'%s - Source url [{self.a_urlp.netloc}] / u:{uhint} / {uhdescr}' % cmi_debug)
                 if uhint == 0: thint = 0.0      # real news / local page
@@ -397,7 +406,7 @@ class yfnews_reader:
                 elif uhint == 5: thint = 6.0    # bulk yahoo premium service
                 else: thint = 9.9               # unknown
                 
-                inf_type = self.yfn_uh.confidence_lvl(thint)
+                inf_type = self.yfn_uh.confidence_lvl(thint)    # list[] from global URLhonter instance
                 ml_atype = uhint
                 
                 
@@ -409,10 +418,11 @@ class yfnews_reader:
                 print(f"Short title:   {art_title}")
                 print(f"Long teaser:   {art_teaser}")
                 
-                self.ml_brief.append(art_title)                 # WARNING: I dont knonw why this is done
+                # TEST #3 : deupe (check for URL dupes)
+                self.ml_brief.append(art_title)                 # WARNING: not used by anything (yet)
                 auh = hashlib.sha256(self.article_url.encode()) # Generate URL hash
                 aurl_hash = auh.hexdigest()                     # compute hash
-                if aurl_hash not in dedupe_set:                 # dedupe membership test
+                if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() )
                     dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
                     logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
                     print(f" ")
@@ -437,7 +447,7 @@ class yfnews_reader:
                     continue  # Skip to next article if duplicate URL hash found
             else:
                 logging.warning(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
-        return
+        return 0
 
     # ################
     def interpret_page_depth2(self, item_idx, data_row):
@@ -595,7 +605,7 @@ class yfnews_reader:
             return 0, 0, 0
             
         try:
-            self.yfn_jsdb[cached_state]
+            self.yfn_jsdb[cached_state]     # fast logic test for None (bad scan result)
             _built_bs4_entry = 2
         except KeyError:
             logging.info( f'%s - BS4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
@@ -940,7 +950,7 @@ class yfnews_reader:
         # Do it this way so that...
         # - we  can spawn multiple async tasks in parallel
         # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
-        # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3() and do_simple)_get()
+        # self.yfn_jsdb[aurl_hash] is set by c4_engine_depth3() and do_simple_get()
         #
         # result is:
         #   { 'url': self.yfqnews_url,

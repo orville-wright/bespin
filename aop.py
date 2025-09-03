@@ -42,7 +42,7 @@ from data_engines_fundamentals.stockdata_md import stockdata_md
 from data_engines_fundamentals.stooq_md import stooq_md
 from data_engines_fundamentals.tiingo_md import tiingo_md
 from data_engines_fundamentals.twelvedata_md import twelvedata_md
-from y_generalnews import y_generalnews
+#from y_generalnews import y_generalnews
 
 # Data Extractor engines
 from data_engines_fundamentals.polygon_md import polygon_md
@@ -187,7 +187,7 @@ def main():
         #genews_dataset.ext_req = genews_reader.get_js_data('barrons.com/real-time/2')
         #genews_dataset.ext_get_data(3)
         #gx = genews_dataset.build_df0()
-        print (f"Total News artciels extarcted: {ext_count}" )
+        print (f"Total News articles extracted: {ext_count}" )
         print ( " " )
 
 ########### Small Cap gainers & loosers ################
@@ -455,7 +455,7 @@ def main():
             _trcz = 0    # Cumulative : Total rands read
             
             ai_sent_start_time = time.perf_counter()  # Mark the start time
-            load_balancer = 0
+            antibot_load_balancer = 0
             ai_nlp_cycle = int(0)
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()                    # reset DataFrame for each article
@@ -464,15 +464,15 @@ def main():
                     # scraper loadbalancer, Anti-bot avoidance & performance balancing
                     # WARN:  executes sentiment_ai.compute_sentiment()
  
-                    if load_balancer == 0:                          # randomize  craw4ai / BS4 scrapers
+                    if antibot_load_balancer == 0:                          # randomize  craw4ai / BS4 scrapers
                         _atc, _awc, final_results = news_ai.yfn.artdata_C4_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
                         _atc, _awc, final_results = news_ai.yfn.artdata_BS4_depth3(sn_idx, sent_ai)   # BS4 engine 
-                    rnd_loadbr = random.randint(1, 100)             # randomize load balancer decison
-                    if rnd_loadbr % 2 == 0:
-                        load_balancer = 0                           # choose CRAW4AI scraper/chunker
+                    _rnd_loadb = random.randint(1, 100)             # randomize load balancer decison
+                    if _rnd_loadb % 2 == 0:
+                        antibot_load_balancer = 0                           # choose CRAW4AI scraper (+ unified BS4/C4 chunker)
                     else:
-                        load_balancer = 1                           # choose BS4 scraper/chunker
+                        antibot_load_balancer = 1                           # choose BS4 scraper (+ unified BS4/C4 chunker)
                     if _atc == 0 and _awc == 0 and final_results is None:  # error state (extract FAILURE)
                         continue
 

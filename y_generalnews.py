@@ -32,7 +32,11 @@ logging.basicConfig(level=logging.INFO)
 
 #####################################################
 class y_generalnews:
-    """Class to extract Genral Macro news from finance.yahoo.com"""
+    """
+    ABANDONED + DEPRECDATED
+    DELETE ME
+    Class to extract Genral Macro news from finance.yahoo.com
+    """
     # global accessors
     tg_df0 = None        # DataFrame - Full list of top gainers
     tg_df1 = None        # DataFrame - Ephemerial list of top 10 gainers. Allways overwritten
