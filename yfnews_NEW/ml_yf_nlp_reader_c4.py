@@ -4,7 +4,7 @@ import argparse
 import asyncio
 from datetime import datetime, date
 import logging
-from ml_yf_news_c4 import yfnews_reader
+from ml_yf_nlp_news_engine import yfnews_reader
 from ml_urlhinter import url_hinter
 from ml_sentiment import ml_sentiment
 from urllib.parse import urlparse

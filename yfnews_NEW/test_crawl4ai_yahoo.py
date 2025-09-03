@@ -12,7 +12,7 @@ from pathlib import Path
 # Add current directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from ml_yf_nlp_reader_c4 import ml_nlpreader
+from ml_yf_nlp_orchestrator import ml_nlpreader
 from ml_sentiment import ml_sentiment
 
 # Configure logging
@@ -70,7 +70,7 @@ async def async_test():
     """
     Async test function for direct crawl4ai testing
     """
-    from ml_yf_news_c4 import yfnews_reader
+    from ml_yf_nlp_news_engine import yfnews_reader
     from ml_urlhinter import url_hinter
     
     print("\n" + "="*60)

@@ -17,7 +17,7 @@ import pprint
 # my private classes & methods
 from data_engines_fundamentals.alpaca_md import alpaca_md
 from bigcharts_md import bc_quote
-from ml_yf_nlp_reader_c4 import ml_nlpreader
+from ml_yf_nlp_orchestrator import ml_nlpreader
 from ml_sentiment import ml_sentiment
 from ml_urlhinter import url_hinter
 from nasdaq_uvoljs import un_volumes
@@ -633,33 +633,57 @@ def main():
             #################################################################
             # Neo4j DATBASE FUNCTIONS
             # KGdb stats
-            try:
-                found_sym = kgraphdb.check_node_exists(1, news_symbol)
-                if found_sym['present'] is True:    # True = symbol already exists
-                    # FIX: add unknown elments later (need to gather them from elsewhere first)
-                    # Article must be created first, then related to their parent symbol node
+            # this code is buggy. Needs to be updated and optomozied.
+            skip_kg_build = True    # disable code for now!
+            
+            if skip_kg_build is True:
+                pass
+            else:
+                try:
+                    found_sym = kgraphdb.check_node_exists(1, news_symbol)
+                except TypeError:
+                    # Type:class 'NoneType' is discovered here...
+                    kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
+                    print ( f"Error: Symbol node does NOT exist - creating ! fst:{type(kg_node_id)} / fs:{kg_node_id}" )
+                    #kg_node_id = kgraphdb.create_sym_node(news_symbol)
+                    # create a neo4j nodes Relationships, Properties and Types for each article thats associated with this symbol
                     kgraphdb.create_article_nodes(df_final, news_symbol)
-                    kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                    created = False
-                    pass    # do nothing is Ticker Symbol exists
-            except TypeError:
-                # Type:class 'NoneType' is discovered here...
-                kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
-                #kg_node_id = kgraphdb.create_sym_node(news_symbol)
-                # create a neo4j nodes Relationships, Properties and Types for each article thats associated with this symbol
-                kgraphdb.create_article_nodes(df_final, news_symbol)
-                kgraphdb.create_sym_art_rels(news_symbol, df_final,agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                kgraphdb.news_agency()
-                created = True
-                
-            if args['bool_verbose'] is True:
-                print (f" ")
-                if created is True:    # True = symbol already exists
-                    print ( f"Created new KG node_id: {kg_node_id}" )
+                    kgraphdb.create_sym_art_rels(news_symbol, df_final,agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                    kgraphdb.news_agency()
+                    print ( f"Error: Created Article nodes, Relationships, New Agency also !" )
+                    created = True
                 else:
-                    print ( f"Symbol allready exist - New node NOT created !" )
-                res = kgraphdb.dump_symbols(1)
-                kgraphdb.close_aopkgdb(1, kgraphdb.driver)
+                    match found_sym:
+                        # FIX: add unknown elments later (need to gather them from elsewhere first)
+                        # Article must be created first, then related to their parent symbol node
+                        case None:
+                            kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
+                            print ( f"Error: Symbol node does NOT exist - creating ! fst:{type(kg_node_id)} / fs:{kg_node_id}" )
+                            _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
+                            kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                            created = True
+                            #if args['bool_verbose'] is True:
+                            print (f" ")
+                            print ( f"None: Symbol does NOT exists / status check: fst:{type(found_sym)} / fs:{found_sym}" )
+                            print ( f"Created new KG nodes: {_kgec}" )
+                        case True:
+                            #if args['bool_verbose'] is True:
+                            print (f" ")
+                            print ( f"True: Symbol node  exist - Graph Node NOT created ! fst:{type(found_sym)} / fs:{found_sym}" )
+                            created = False
+                        case False:
+                            _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
+                            kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                            created = True
+                            #if args['bool_verbose'] is True:
+                            print (f" ")
+                            print ( f"Flase: Symbol node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )
+                            print ( f"Created new KG node_id: {_kgec}" )
+                        case _:
+                            print (f"Weird return code during GraphDB node exist check!" )  
+                            print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
+                            res = kgraphdb.dump_symbols(1)
+                            kgraphdb.close_aopkgdb(1, kgraphdb.driver)
 
 
 #################################################################################

@@ -52,12 +52,12 @@ class lmdb_io_eng:
 ################# 1
     def open_lmdb_RO(self, yti):
         cmi_debug = __name__+"::"+self.open_lmdb_RO.__name__+".#"+str(self.yti)
-        logging.info( f'%s   - open_lmdb_RO.#{self.yti} DB Instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s     - Open LMBD Read Only mode {self.yti} DB Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path + self.db_name
         try:
             self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
-            logging.info( f'%s   - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
-            logging.info( f'%s   - Instance remains globally open: {self.db_name}' % cmi_debug )
+            logging.info( f'%s     - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
+            logging.info( f'%s     - Instance remains globally open !' % cmi_debug )
             return self.env
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
@@ -156,7 +156,7 @@ class lmdb_io_eng:
             return 0
         
 ################# 6
-    def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai):
+    def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng):
         cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
         logging.info( f'%s  - kv_cache_engine.#{_yti} KVstore instance: {self.db_name}' % cmi_debug )
 
@@ -180,7 +180,7 @@ class lmdb_io_eng:
         _sentiment_count["positive"] = 0
         _sentiment_count["negative"] = 0
         
-        logging.info( f'%s - Open LMDB READ-ONLY mode...' % cmi_debug )
+        logging.info( f'%s  - Open LMDB READ-ONLY mode...' % cmi_debug )
         #kv_success = None  # debig control switch
         _kv_success = self.open_lmdb_RO(3)
         if _kv_success is not None:                      #    LMDB opened sucessfully
@@ -241,7 +241,7 @@ class lmdb_io_eng:
                                     continue    # not looking at dict{} element in JSON package
                                     #print (f"##-debug-578: post-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
                                 else:
-                                    logging.info( f'%s - Rehydrate : Skip root element {_dc_k} / Scanning for dict...' % cmi_debug )
+                                    logging.info( f'%s - {_extr_eng} Rehydrate : Skip root element {_dc_k} / Scanning for dict...' % cmi_debug )
                                     continue    # ensure for loop continues to next element in JSON package
                             _no_header = False
                             # rehydrate pos/nwg/neut sentiment count DF from Depp Cache entry
@@ -269,7 +269,7 @@ class lmdb_io_eng:
 
                             #print (f"JSON: {_final_results}")
                             print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
-                            print (f"BS4 KV Cache:  [ HIT.#0 / Deep cache Read success ! Rehydrated from KVstore... ] {item_idx}" )
+                            print (f"Deep KV Cache: [ HIT.#0 / Deep cache Read success ! Rehydrated from KVstore... ] {item_idx}" )
                             return 0, _total_tokens, _total_words, self.sen_data, _final_results
                             #
                             # SUCCESS !!!

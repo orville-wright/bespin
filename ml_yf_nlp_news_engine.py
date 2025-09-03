@@ -227,8 +227,8 @@ class yfnews_reader:
     async def yahoofin_news_depth0(self, idx_x):
         """
         Depth -> 0
-        crawl4ai extractor of Top-level crawler
-        Use js_cmds to for next_page() to capture all 200+ artciles to end of page stream
+        Top-level level News Artcile skimmer (using crawl4ai for better JS page control)
+        - Use js_cmds for next_page() to capture all 200+ artciles to end of page stream
         Store full craw4ai result in GLOBAL class accessor: self.yfn_jsdb
         INFO:
         Surface scan of Top-level news articles list in the news section for 1 stock symbol
@@ -259,7 +259,7 @@ class yfnews_reader:
         extraction_strategy = JsonCssExtractionStrategy(schema)
         js_cmds = [
             "window.scrollTo(0, document.body.scrollHeight);",
-            "await new Promise(resolve => setTimeout(resolve, 2000));"
+            "await new Promise(resolve => setTimeout(resolve, 1000));"
         ]
         
         config = CrawlerRunConfig(
@@ -546,8 +546,9 @@ class yfnews_reader:
             logging.info( f'%s - No exturl in ml_ingest DB' % cmi_debug )
 
         symbol = symbol.upper()
+        _extr_eng="BS4"
 
-        _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai)
+        _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
@@ -823,7 +824,9 @@ class yfnews_reader:
             cached_state = data_row['urlhash']
         
         symbol = symbol.upper()
-        _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai)
+        _extr_eng="C4"
+        
+        _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
 
         match _ec:
             case 0:  # BS4 KVstore cache hit

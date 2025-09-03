@@ -523,7 +523,7 @@ class ml_sentiment:
         self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
         self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
         self.df0_row_count = x
-        logging.info( f"%s     - Rehydrate metrics DF @ article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
+        logging.info( f"%s - Rehydrate metrics DF @ article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
         return
 
 ##################################### 3 ####################################

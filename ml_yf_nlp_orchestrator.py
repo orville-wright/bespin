@@ -4,11 +4,12 @@ import argparse
 import asyncio
 from datetime import datetime, date
 import logging
-from ml_yf_news_c4 import yfnews_reader
-from ml_urlhinter import url_hinter
-from ml_sentiment import ml_sentiment
 from urllib.parse import urlparse
 from rich import print
+
+from ml_sentiment import ml_sentiment
+from ml_urlhinter import url_hinter
+from ml_yf_nlp_news_engine import yfnews_reader
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +32,7 @@ class ml_nlpreader:
     def __init__(self, yti, global_args):
         cmi_debug = __name__+"::" + self.__init__.__name__
         logging.info(f'%s   - Instantiate.#{yti}' % cmi_debug)
-        self.yfn = yfnews_reader(1, "DUMMY0", global_args )        # instantiate a class of fyn frpm @ ml_yahoofinews_craw4ai
+        self.yfn = yfnews_reader(1, "DUMMY0", global_args )        # instantiate our own class of YFN
         self.args = global_args
         self.yti = yti
         return
