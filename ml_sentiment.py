@@ -420,7 +420,7 @@ class ml_sentiment:
                     print (f"LLM exception")
                     continue
                 case 2:
-                    print ( f"Empty vocab: {self.empty_vocab} / chunk:{_chunk_udid:03} ", end="" )
+                    print ( f"chunk: {self.empty_vocab} / empty vocab @:{_chunk_udid:03} ", end="" )
                     self.empty_vocab += 1
                     continue
                 case 3:
