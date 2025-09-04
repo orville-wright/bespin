@@ -602,7 +602,7 @@ class yfnews_reader:
 
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - BS4 Skipping : Micro Article stub... [ {item_idx} ]' % cmi_debug )
-            return 0, 0, 0
+            return 0, 0, None
             
         try:
             self.yfn_jsdb[cached_state]     # fast logic test for None (bad scan result)
@@ -624,13 +624,13 @@ class yfnews_reader:
                             logging.info( f'%s - FAILED to read article / ERROR code: {xhash}' % cmi_debug )
                             logging.info( f'%s - BS4 prep simple Net get() due to KV cache miss : {self.sent_ai.sentiment_count}' % cmi_debug )
                             print (f"================================ BS4 Net req() FAILURE / Cannot read article URL: {item_idx} ================================" )
-                            return 0, 0,None                  
+                            return 0, 0, None                  
                         case 0:  # BS4 KVstore cache miss
                             logging.info( f'%s - BS4 prep simple Net get() success ! continue forcing Net read...' % cmi_debug )
                             pass
                         case _:
                             logging.info( f'%s - BS4 prep simple Net get() unknown error: {_ec} ! Abandon Net URL read' % cmi_debug )
-                            return 0, 0,None
+                            return 0, 0, None
                             ##########################################################################
             
             cy_soup = self.yfn_jsdb[xhash]              # ref the dict{} that do_simple_get() created
@@ -651,7 +651,7 @@ class yfnews_reader:
                 _built_bs4_entry = 1
             else:
                 logging.info( f'%s - BS4 FAILED to set data !' % cmi_debug )
-                return 0, 0, 0
+                return 0, 0, None
         else:       # try, expect, ends here !
             ###################################
             # BS4 Extract Article text data NOW
@@ -703,8 +703,10 @@ class yfnews_reader:
         # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
         # 0 = Crawl4ai extractor, 1 = BS4 extractor
         self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
-         
-        # computre some keey Data Metrics for this article        
+        if _final_data_dict is None:
+            return 0, 0, None
+        
+        # compute core Data Metrics for this article
         bs4_p_tag_count = len(local_stub_news_p)    # rows of <p> tags found in article
         
         # compute total chars (BS4 specific, as C4 is diff data structure)

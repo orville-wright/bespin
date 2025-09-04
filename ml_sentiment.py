@@ -126,10 +126,15 @@ class ml_sentiment:
         self.sentiment_count["negative"] = 0
         self.sentiment_count["neutral"] = 0
 
+        _ext_decoder = {
+            0: "C4ai",
+            1: "BS4"
+        }
+        
         if len(scentxt) == 0:
             self.final_results.update({ 'noart_data': 1 })
-            logging.info( f"%s - ERROR Crawl4ai no article skimming data from Depth 0 (multiple reasons possible)!" % cmi_debug )
-            return 0, 0, 0    # this is prob an error waiting to happen (prob needs chunker dict @ var 3)
+            logging.info( f"%s - ERROR [{_ext_decoder.get(ext, 'Extractor?')}] Article has 0-len text from Depth 3 (multiple reasons!)" % cmi_debug )
+            return 0, 0, None    # this is prob an error waiting to happen (prob needs chunker dict @ var 3)
         else:
             pass
         
