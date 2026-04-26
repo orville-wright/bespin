@@ -29,10 +29,11 @@ class ml_nlpreader:
     yfn = None              # class of @ml_yahoofinews_crawl4ai.py/yfnews_reader
     yfn_uh = None           # URL Hinter instance for the YFN reader
     yti = 0
+    caller = None
 
-    def __init__(self, yti, global_args):
+    def __init__(self, yti, global_args, caller):
         cmi_debug = __name__+"::" + self.__init__.__name__
-        logging.info(f'%s   - Instantiate.#{yti}' % cmi_debug)
+        logging.info(f'%s   Instantiate.#{yti} via {caller}' % cmi_debug)
         self.yfn = yfnews_reader(1, "DUMMY0", global_args )        # instantiate our own class of YFN
         self.args = global_args
         self.yti = yti
@@ -50,7 +51,7 @@ class ml_nlpreader:
         Reads ALL news articles for only ONE stock symbol (why this method is title "read_one").
         """
         print(" ")
-        print(f"ML (NLP) / News Sentiment for 1 symbol [ {news_symbol} ]")
+        print(f"ML (NLP) AI / News Sentiment for 1 symbol [ {news_symbol} ]")
         self.args = global_args
         cmi_debug = __name__+"::" + self.nlp_read_one.__name__
         logging.info(f'%s   - IN.#{self.yti}' % cmi_debug)

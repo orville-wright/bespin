@@ -66,7 +66,7 @@ class ml_sentiment:
     ######################## init ##########################################
     def __init__(self, yti, global_args):
         cmi_debug = __name__+"::"+self.__init__.__name__
-        logging.info( f'%s   - Instantiate.#{yti}' % cmi_debug )
+        logging.info( f'%s   Instantiate.#{yti}' % cmi_debug )
         self.args = global_args                            # Only set once per INIT. all methods are set globally
         self.yti = yti
         self.cr_package = dict()

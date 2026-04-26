@@ -96,7 +96,7 @@ class yfnews_reader:
     def __init__(self, yti, symbol, global_args):
         self.yti = yti
         cmi_debug = __name__+"::" + self.__init__.__name__
-        logging.info(f'%s - Instantiate.#{yti}' % cmi_debug)
+        logging.info(f'%s Instantiate.#{yti}' % cmi_debug)
         # init empty DataFrame with preset column names
         self.args = global_args
         self.symbol = symbol
@@ -278,8 +278,8 @@ class yfnews_reader:
                 logging.info(f'%s - Exec async webcrawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
                 if result.success:
-                    logging.info(f'%s - crawl4ai extraction successful' % cmi_debug)
-                    self.yfn_crawl_data = json.loads(result.extracted_content)
+                    logging.info(f'%s - crawl4ai running...' % cmi_debug)
+                    self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
                     aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
                     self.yfn_jsdb[aurl_hash] = {
@@ -288,10 +288,9 @@ class yfnews_reader:
                         'result': result
                     }
                     
-                    print ( f"DEBUG: CD dump: {self.yfn_crawl_data}" )
-                    
-                    logging.info(f'%s - Depth0 Net DB url HASH: [ {aurl_hash} ]' % cmi_debug)
-                    return aurl_hash
+                    print ( f"DEBUG: C4_Data dump: {self.yfn_crawl_data}" )
+                    logging.info(f'%s - Depth0 Net DB url HASH: \n[ {aurl_hash} ]' % cmi_debug)
+                    return aurl_hash    # success
                 else:
                     logging.error(f'%s - crawl4ai Depth0 extract failure: {result.error}' % cmi_debug)
                     return None                    
