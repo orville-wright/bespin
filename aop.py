@@ -425,6 +425,8 @@ def main():
             print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ]" )
             news_ai = ml_nlpreader(1, args, caller="news_ai")
             sent_ai = ml_sentiment(1, args)
+            
+            logging.info(f'%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
             
             # kgraphdb = db_graph(1, args)                # inst a class 

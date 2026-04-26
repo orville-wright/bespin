@@ -226,7 +226,7 @@ class yfnews_reader:
     async def yahoofin_news_depth0(self, idx_x):
         """
         Depth -> 0
-        Top-level level News Artcile skimmer 
+        Top-level level News Article skimmer 
         - use crawl4ai at top level for better JS page control
         - use crawl4ai js_cmds for next_page() to capture all 200+ articles to end of page stream
           BS4 can do this as well (as simply) as Crawl4ai
@@ -248,7 +248,7 @@ class yfnews_reader:
 # hack this to test crawl4 ai <li.p.text>
 
         logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x}+"_ASYNC" - %s', self.yfqnews_url)
-        logging.info(f'%s - Load C4 Depth0 Skimmer schema: [ {self.YF_sym_main_schema} ]' % cmi_debug)
+        logging.info(f'%s - Load C4 Depth0 Skimmer schema: \n\t[ {self.YF_sym_main_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.YF_sym_main_schema}"        
         if os.path.exists(listall_schema_file_path):
             with open(listall_schema_file_path, "r") as f:
@@ -261,17 +261,18 @@ class yfnews_reader:
         extraction_strategy = JsonCssExtractionStrategy(schema)
         js_cmds = [
             "window.scrollTo(0, document.body.scrollHeight);",
-            "await new Promise(resolve => setTimeout(resolve, 1000));"
+            "await new Promise(resolve => setTimeout(resolve, 2000));"
         ]
         
         config = CrawlerRunConfig(
             extraction_strategy=extraction_strategy,
             scan_full_page=True,
             js_code=js_cmds,
-            verbose=True,
-            stream=True,
-            cache_mode=CacheMode.ENABLED  # force Bypass cache. ALlways read fresh data
+            cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
         )
+        # removed
+            #verbose=True,
+            #stream=True,
 
         try:
             async with AsyncWebCrawler() as crawler:
@@ -289,7 +290,7 @@ class yfnews_reader:
                     }
                     
                     print ( f"DEBUG: C4_Data dump: {self.yfn_crawl_data}" )
-                    logging.info(f'%s - Depth0 Net DB url HASH: \n[ {aurl_hash} ]' % cmi_debug)
+                    logging.info(f'%s - Depth0 Net DB url HASH: \n\t[ {aurl_hash} ]' % cmi_debug)
                     return aurl_hash    # success
                 else:
                     logging.error(f'%s - crawl4ai Depth0 extract failure: {result.error}' % cmi_debug)
@@ -317,7 +318,7 @@ class yfnews_reader:
         depth = int(depth) 
         
         if scan_type == 1:  # crawl4ai extraction
-            logging.info(f'%s - Check Depth0 URL cache: {hash_state}' % cmi_debug)
+            logging.info(f'%s - Check Depth0 URL cache: \n\t[ {hash_state} ]' % cmi_debug)
             try:
                 cached_data = self.yfn_jsdb[hash_state]     # set at depth0
                 logging.info(f'%s - URL exists in Net cache...' % cmi_debug)

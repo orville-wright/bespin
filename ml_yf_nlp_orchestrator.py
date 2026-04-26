@@ -10,6 +10,7 @@ from rich import print
 from ml_sentiment import ml_sentiment
 from ml_urlhinter import url_hinter
 from ml_yf_nlp_news_engine import yfnews_reader
+# previously: yfnews_reader() sourced from ml_yf_news_c4::yfnews_reader
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
@@ -34,7 +35,7 @@ class ml_nlpreader:
     def __init__(self, yti, global_args, caller):
         cmi_debug = __name__+"::" + self.__init__.__name__
         logging.info(f'%s   Instantiate.#{yti} via {caller}' % cmi_debug)
-        self.yfn = yfnews_reader(1, "DUMMY0", global_args )        # instantiate our own class of YFN
+        #self.yfn = yfnews_reader(1, "DUMMY0", global_args )        # instantiate our own class of YFN
         self.args = global_args
         self.yti = yti
         return
@@ -57,9 +58,11 @@ class ml_nlpreader:
         logging.info(f'%s   - IN.#{self.yti}' % cmi_debug)
         news_symbol = str(news_symbol).upper()
         
-        ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args)       # Instantiate
+        self.yfn = yfnews_reader(1, news_symbol, global_args )          # instantiate our own class of YFN (frm ml_yf_nlp_news_engine)
+        #ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args)      # Instantiate
+        ml_yfn_dataset = self.yfn     
         ml_yfn_dataset.form_endpoint(news_symbol)                       # extablish the exct news url endpoint
-        logging.info(f"%s - globalize url_hinter @ #1" % cmi_debug)
+        logging.info(f"%s - Form NEWS endpoint for {news_symbol} + globalize url_hinter @ #1" % cmi_debug)
         self.yfn_uh = url_hinter(1, self.args)                          # instantiate URL hinter 
         ml_yfn_dataset.yfn_uh = self.yfn_uh
 
