@@ -427,8 +427,8 @@ def main():
             sent_ai = ml_sentiment(1, args)
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
             
-            kgraphdb = db_graph(1, args)                # inst a class 
-            kgraphdb.con_aopkgdb(1)                     # connect to neo4j db
+            # kgraphdb = db_graph(1, args)                # inst a class 
+            # kgraphdb.con_aopkgdb(1)                     # connect to neo4j db
 
             _atc = 0     # article specific stats : tokenz count
             _acc = 0     # article specific stats : chars count
