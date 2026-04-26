@@ -282,7 +282,7 @@ class yfnews_reader:
                 result = await crawler.arun(self.yfqnews_url, config=config)                
                 if result.success:
                     logging.info(f'%s - crawl4ai running...' % cmi_debug)
-                    self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
+                    self.yfn_crawl_data = json.loads(escape(result.extracted_content))  # schema is failing. FIX ME !!
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
                     aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
                     self.yfn_jsdb[aurl_hash] = {
