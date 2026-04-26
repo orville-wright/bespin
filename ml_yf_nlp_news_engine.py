@@ -288,7 +288,9 @@ class yfnews_reader:
                         'result': result
                     }
                     
-                    logging.info(f'%s - Create Depth0 Net DB entry: [ {aurl_hash} ]' % cmi_debug)
+                    print ( f"DEBUG: CD dump: {self.yfn_crawl_data}" )
+                    
+                    logging.info(f'%s - Depth0 Net DB url HASH: [ {aurl_hash} ]' % cmi_debug)
                     return aurl_hash
                 else:
                     logging.error(f'%s - crawl4ai Depth0 extract failure: {result.error}' % cmi_debug)
@@ -316,7 +318,7 @@ class yfnews_reader:
         depth = int(depth) 
         
         if scan_type == 1:  # crawl4ai extraction
-            logging.info(f'%s - Check Depth 0 URL cache: {hash_state}' % cmi_debug)
+            logging.info(f'%s - Check Depth0 URL cache: {hash_state}' % cmi_debug)
             try:
                 cached_data = self.yfn_jsdb[hash_state]     # set at depth0
                 logging.info(f'%s - URL exists in Net cache...' % cmi_debug)
@@ -325,7 +327,7 @@ class yfnews_reader:
                 self.extracted_articles = cached_data['data']                    
                 if isinstance(self.extracted_articles, list):       # test for list
                     article_count = len(self.extracted_articles)    # Count articles found
-                    logging.info(f'%s - Depth: 0 Surface skim / Found News Articles: {article_count}' % cmi_debug)
+                    logging.info(f'%s - Depth0 Surface skim / Found News Articles: {article_count}' % cmi_debug)
                     print(f"============================== Articles found: {article_count} ===================================")
                     for i, article in enumerate(self.extracted_articles):       # cycle trough articles >>dataset<<
                         if article.get('Title'):
