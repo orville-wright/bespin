@@ -168,8 +168,8 @@ class yfnews_reader:
     def do_simple_get(self, _url):
         """
         Simple basic HTML data get()  (data not processed by JAVAScript engine)
-        NOTE: get URL is assumed to have allready been set (self.yfqnews_url)
-              creates the urlhash entry via: yfn_jsdb[aurl_hash] = get(resp)
+        Needed when each indiviaual article TEXT is READ/scanned at Depth 3
+        NOTE: creates the urlhash entry via: yfn_jsdb[aurl_hash] = get(resp)
         """
         cmi_debug = __name__+"::"+self.do_simple_get.__name__+".#"+str(self.yti)
 
@@ -291,7 +291,8 @@ class yfnews_reader:
                         'result': result
                     }
                     
-                    print ( f"DEBUG: C4_Data dump: {self.yfn_crawl_data}" )
+                    print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb}" )
+                    print ( f"DEBUG: C4_Data dump 2: {self.yfn_crawl_data}" )
                     logging.info(f'%s - Depth0 Net DB url HASH: \n\t[ {aurl_hash} ]' % cmi_debug)
                     return aurl_hash    # success
                 else:
@@ -326,7 +327,7 @@ class yfnews_reader:
                 logging.info(f'%s - URL exists in Net cache...' % cmi_debug)
                 
                 # CRITICIAL:  gloablly sets the extratced >>dataset<< to work on for tis article
-                self.extracted_articles = cached_data['data']                    
+                self.extracted_articles = cached_data['data']       # pre-populated self.yfn_jsdb[hash_state]
                 if isinstance(self.extracted_articles, list):       # test for list
                     article_count = len(self.extracted_articles)    # Count articles found
                     logging.info(f'%s - Depth0 Surface skim / Found News Articles: {article_count}' % cmi_debug)
