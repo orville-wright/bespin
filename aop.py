@@ -423,7 +423,7 @@ def main():
             final_sent_df = pd.DataFrame()              # reset DataFrame for each article
             print ( " " )
             print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ]" )
-            news_ai = ml_nlpreader(1, args, caller=news_ai)
+            news_ai = ml_nlpreader(1, args, caller="news_ai")
             sent_ai = ml_sentiment(1, args)
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
             
