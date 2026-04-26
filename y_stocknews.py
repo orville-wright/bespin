@@ -21,9 +21,10 @@ logging.basicConfig(level=logging.INFO)
 
 #####################################################
 
-class yfnews_reader:
+class yfnews_reader_old:
     """
     Read Yahoo Finance news reader
+    Deprecated : Delete me (maybe)
     """
 
     # global accessors
