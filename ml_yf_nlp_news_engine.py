@@ -300,6 +300,7 @@ class yfnews_reader:
                     return None                    
         except Exception as e:
             logging.error(f'{cmi_debug} - ERROR @ Depth0 crawl4ai extract: {e}')
+            print ( f"DEBUG: C4_Data dump 3: {self.yfn_jsdb}" )
             return None
 
     # ################
