@@ -2,6 +2,8 @@
 import argparse
 import asyncio
 from bs4 import BeautifulSoup
+from crawl4ai import LLMConfig
+from crawl4ai import BrowserConfig
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
 from crawl4ai import JsonCssExtractionStrategy
 from datetime import datetime, date
