@@ -57,7 +57,8 @@ class url_hinter:
                     'about': ('Premium subscription add', 5),
                     'udef': ('Not yet defined', 9),
                     'err': ('Error mangled url', 10),
-                    'bad': ('ERROR_unknown_state', 99)
+                    'bad': ('ERROR_unknown_state', 99),
+                    'markets': ('Unknown markets page', 99),
                     }
 
         logging.info ( f"%s  - IN Recvd article url: {type(input_url)}" % cmi_debug )
