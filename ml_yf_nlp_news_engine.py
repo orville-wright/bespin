@@ -304,7 +304,12 @@ class yfnews_reader:
             #print ( f"DEBUG: C4_Data dump 3: {escape(result.extracted_content)}" )
             e_string = str(e)
             e_pos_error = e_string.split(' ')
-            print ( f"DEBUG:Except @: {e_pos_error[5]}" )
+            print ( f"DEBUG:Except @ pos: {e_pos_error[5]}" )
+            e_html = result.html
+            e_start = int(e_pos_error[5]) - 200
+            e_end = int(e_pos_error[5]) + 200 
+            print ( f"==================================== Craw4ai ERROR ====================================")
+            print ( repr(e_html[e_start:e_end]) )
             print ( f"==================================== Craw4ai ERROR ====================================")
             logging.error(f'{cmi_debug} - ERROR @ Depth0: {e}')
             return None
