@@ -312,6 +312,15 @@ class yfnews_reader:
             print ( repr(e_html[e_start:e_end]) )
             print ( f"==================================== Craw4ai ERROR ====================================")
             logging.error(f'{cmi_debug} - ERROR @ Depth0: {e.args}')
+            self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
+            auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
+            aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
+            self.yfn_jsdb[aurl_hash] = dict(
+                url = self.yfqnews_url,
+                data = self.yfn_crawl_data,
+                result = result
+            )
+            print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb}" )
             return None
 
     # ################
