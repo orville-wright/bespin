@@ -261,6 +261,7 @@ class yfnews_reader:
 
         logging.info(f'%s - INIT crawl4ai Depth0 Skimmer strategy...' % cmi_debug)
         extraction_strategy = JsonCssExtractionStrategy(schema)
+        
         js_cmds = [
             "window.scrollTo(0, document.body.scrollHeight);",
             "await new Promise(resolve => setTimeout(resolve, 2000));"
@@ -270,11 +271,12 @@ class yfnews_reader:
             extraction_strategy=extraction_strategy,
             scan_full_page=True,
             excluded_tags=["script", "style", "noscript", "template"],
+            verbose=True,
+            stream=True,
             js_code=js_cmds,
             cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
         )
-        #    verbose=True,
-        #    stream=True,
+
 
         try:
             async with AsyncWebCrawler() as crawler:
@@ -283,14 +285,14 @@ class yfnews_reader:
                 if result.success:
                     logging.info(f'%s - crawl4ai running...' % cmi_debug)
                     #print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
-                    self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
+                    self.yfn_crawl_data = json.loads(escape(result.extracted_content))  # schema is failing. FIX ME !!
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
                     aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
-                    self.yfn_jsdb[aurl_hash] = {
-                        'url': self.yfqnews_url,
-                        'data': self.yfn_crawl_data,
-                        'result': result
-                    }
+                    self.yfn_jsdb[aurl_hash] = dict(
+                        url = self.yfqnews_url,
+                        data = self.yfn_crawl_data,
+                        result = result
+                    )
                     
                     print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb}" )
                     #print ( f"DEBUG: C4_Data dump 2: {self.yfn_crawl_data}" )
@@ -317,7 +319,7 @@ class yfnews_reader:
         - calc and set helper GLOBAL attribute: articles_found counter 
         
         Does a  nice REPORT of the Depth 0 surface scan
-        This does NOT get() or extartc and data, or create ml_ingest dataset
+        This does NOT get() or extract and data, or create ml_ingest dataset
         """
         cmi_debug = __name__+"::" + self.list_news_candidates_depth0.__name__+".#"+str(self.yti)+"_SYNC_BLK"
         logging.info('%s - IN' % cmi_debug)
@@ -327,7 +329,7 @@ class yfnews_reader:
         if scan_type == 1:  # crawl4ai extraction
             logging.info(f'%s - Check Depth0 URL cache: \n\t[ {hash_state} ]' % cmi_debug)
             try:
-                cached_data = self.yfn_jsdb[hash_state]     # set at depth0
+                cached_data = self.yfn_jsdb[hash_state]     # test if url hash exists in cache
                 logging.info(f'%s - URL exists in Net cache...' % cmi_debug)
                 
                 # CRITICIAL:  gloablly sets the extratced >>dataset<< to work on for tis article
