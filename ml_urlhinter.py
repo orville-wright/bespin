@@ -59,6 +59,7 @@ class url_hinter:
                     'err': ('Error mangled url', 10),
                     'bad': ('ERROR_unknown_state', 99),
                     'markets': ('Unknown markets page', 99),
+                    'sectors': ('Unknown sectors page', 99)
                     }
 
         logging.info ( f"%s  - IN Recvd article url: {type(input_url)}" % cmi_debug )
