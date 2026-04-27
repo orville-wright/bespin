@@ -10,8 +10,9 @@
     },
     {
       "name": "Teaser",
-      "selector": "li div div img.alt",
-      "type": "text"
+      "selector": "li div div img",
+      "type": "attribute",
+      "attribute": "alt"
     },
     {
       "name": "Ext_url",
