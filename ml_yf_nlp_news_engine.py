@@ -311,7 +311,7 @@ class yfnews_reader:
             print ( f"==================================== Craw4ai ERROR ====================================")
             print ( repr(e_html[e_start:e_end]) )
             print ( f"==================================== Craw4ai ERROR ====================================")
-            logging.error(f'{cmi_debug} - ERROR @ Depth0: {e}')
+            logging.error(f'{cmi_debug} - ERROR @ Depth0: {e.args}')
             return None
 
     # ################
