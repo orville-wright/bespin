@@ -48,7 +48,9 @@ class url_hinter:
 
         # INFO: U code only - This metainfo does NOT define locality. You cant inferr locality truth from it.
         uhint_code = {
-                    'news': ('Local News', 0),
+                    'news': ('General Local News', 0),
+                    'markets': ('Categorized local News', 0),
+                    'sectors': ('Categorized Local News', 0),
                     'm': ('Fake local micro news', 1),
                     'live': ('Fake local micro news', 1),
                     'video': ('Video story', 2),
@@ -57,9 +59,7 @@ class url_hinter:
                     'about': ('Premium subscription add', 5),
                     'udef': ('Not yet defined', 9),
                     'err': ('Error mangled url', 10),
-                    'bad': ('ERROR_unknown_state', 99),
-                    'markets': ('Unknown markets page', 99),
-                    'sectors': ('Unknown sectors page', 99)
+                    'bad': ('ERROR_unknown_state', 99)
                     }
 
         logging.info ( f"%s  - IN Recvd article url: {type(input_url)}" % cmi_debug )
