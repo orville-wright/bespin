@@ -293,7 +293,7 @@ class yfnews_reader:
                         result = result
                     )
                     
-                    print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb[aurl_hash]}" )
+                    # print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb[aurl_hash]}" )
                     #print ( f"DEBUG: C4_Data dump 2: {self.yfn_crawl_data}" )
                     logging.info(f'%s - Depth 0 Net DB url HASH: \n\t[ Hash: {aurl_hash} ]' % cmi_debug)
                     return aurl_hash    # success
