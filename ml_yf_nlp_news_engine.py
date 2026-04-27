@@ -1,6 +1,7 @@
 #! python3
 import argparse
 import asyncio
+from glob import escape
 from bs4 import BeautifulSoup
 from crawl4ai import LLMConfig
 from crawl4ai import BrowserConfig
@@ -16,8 +17,8 @@ import pandas as pd
 from pathlib import Path
 import requests
 from requests_html import HTMLSession
-from rich import print
-from rich.markup import escape
+#from rich import print
+#from rich.markup import escape
 import time
 from typing import List
 from urllib.parse import urlparse
@@ -312,7 +313,7 @@ class yfnews_reader:
             print ( repr(e_html[e_start:e_end]) )
             print ( f"==================================== Craw4ai ERROR ====================================")
             logging.error(f'{cmi_debug} - ERROR @ Depth0: {e.args}')
-            self.yfn_crawl_data = json.loads(escape(result.extracted_content))  # schema is failing. FIX ME !!
+            self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
             auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
             aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
             self.yfn_jsdb[aurl_hash] = dict(
@@ -671,7 +672,8 @@ class yfnews_reader:
                 #
                 logging.info( f'%s - Good BS4 data:     Gracefully pre-built: {cached_state}' % cmi_debug )
                 _dataset_1 = self.yfn_jsdata.text
-                self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
+                #self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
+                self.nsoup = BeautifulSoup(_dataset_1, "html.parser")
                 self.articles_crawled[item_idx] = self.nsoup
                 self.result_engine = "yfn_jsdb.#1"
                 _built_bs4_entry = 1
@@ -687,14 +689,16 @@ class yfnews_reader:
                 logging.info( f'%s - Weird Net cache state: Try cached net data: {cached_state}' % cmi_debug )
                 print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
                 _dataset_1 = self.yfn_jsdata.text
-                self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
+                #self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
+                self.nsoup = BeautifulSoup(_dataset_1, "html.parser")
                 self.articles_crawled[item_idx] = self.yfn_jsdb[cached_state]['result']  # future feat: parallel crawl4ai extraction
                 self.result_engine = "yfn_jsdb.#2"
             else:
                 logging.info( f'%s - EVAL.#3 :      BS4 data entry...' % cmi_debug )
                 logging.info( f'%s - Bad BS4 data: Force extract now: {cached_state}' % cmi_debug ) 
-                self._dataset_1 = self.yfn_jsdata.text
-                self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
+                _dataset_1 = self.yfn_jsdata.text
+                #self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
+                self.nsoup = BeautifulSoup(_dataset_1, "html.parser")        # BS4 read() <- replace with crawl4ai
                 self.articles_crawled[item_idx] = self.nsoup     # NOTE USED: future feat: parallel crawl4ai extraction
                 self.result_engine = "yfn_jsdb.#3"
 
