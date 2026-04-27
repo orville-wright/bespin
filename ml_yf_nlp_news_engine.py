@@ -271,11 +271,10 @@ class yfnews_reader:
             scan_full_page=True,
             excluded_tags=["script", "style", "noscript", "template"],
             js_code=js_cmds,
-            verbose=True,
-            stream=True,
             cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
         )
-
+        #    verbose=True,
+        #    stream=True,
 
         try:
             async with AsyncWebCrawler() as crawler:
