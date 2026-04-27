@@ -269,6 +269,7 @@ class yfnews_reader:
         config = CrawlerRunConfig(
             extraction_strategy=extraction_strategy,
             scan_full_page=True,
+            excluded_tags=["script", "style", "noscript", "template"],
             js_code=js_cmds,
             verbose=True,
             stream=True,
