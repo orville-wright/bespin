@@ -282,7 +282,7 @@ class yfnews_reader:
                 result = await crawler.arun(self.yfqnews_url, config=config)                
                 if result.success:
                     logging.info(f'%s - crawl4ai running...' % cmi_debug)
-                    print (f"DEBUG: C4_Data dump 0: {result.html}" )
+                    print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
                     self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
                     aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
@@ -301,7 +301,7 @@ class yfnews_reader:
                     return None                    
         except Exception as e:
             logging.error(f'{cmi_debug} - ERROR @ Depth0 crawl4ai extract: {e}')
-            print ( f"DEBUG: C4_Data dump 3: {escape(result.html)}" )
+            print ( f"DEBUG: C4_Data dump 3: {escape(result.extracted_content)}" )
             return None
 
     # ################
