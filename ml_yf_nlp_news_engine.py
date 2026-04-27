@@ -293,9 +293,9 @@ class yfnews_reader:
                         result = result
                     )
                     
-                    #print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb}" )
+                    print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb}" )
                     #print ( f"DEBUG: C4_Data dump 2: {self.yfn_crawl_data}" )
-                    logging.info(f'%s - Depth0 Net DB url HASH: \n\t[ {aurl_hash} ]' % cmi_debug)
+                    logging.info(f'%s - Depth 0 Net DB url HASH: \n\t[ Hash: {aurl_hash} ]' % cmi_debug)
                     return aurl_hash    # success
                 else:
                     logging.error(f'%s - crawl4ai Depth0 extract failure: {result.error}' % cmi_debug)
@@ -334,17 +334,17 @@ class yfnews_reader:
         depth = int(depth) 
         
         if scan_type == 1:  # crawl4ai extraction
-            logging.info(f'%s - Check Depth0 URL cache: \n\t[ {hash_state} ]' % cmi_debug)
+            logging.info(f'%s - Check Depth 0 URL cache...\n\t[ Hash: {hash_state} ]' % cmi_debug)
             try:
                 cached_data = self.yfn_jsdb[hash_state]     # test if url hash exists in cache
-                logging.info(f'%s - URL exists in Net cache...' % cmi_debug)
+                logging.info(f'%s - URL exists in Net DB cache...' % cmi_debug)
                 
                 # CRITICIAL:  gloablly sets the extratced >>dataset<< to work on for tis article
-                self.extracted_articles = cached_data['data']       # pre-populated self.yfn_jsdb[hash_state]
-                if isinstance(self.extracted_articles, list):       # test for list
-                    article_count = len(self.extracted_articles)    # Count articles found
-                    logging.info(f'%s - Depth0 Surface skim / Found News Articles: {article_count}' % cmi_debug)
-                    print(f"============================== Articles found: {article_count} ===================================")
+                self.extracted_articles = cached_data['data']       # key:'data' => crawl4ai extracted dataset for hashed URL
+                if isinstance(self.extracted_articles, list):       # test for list => (crawl4ai default object type)
+                    article_count = len(self.extracted_articles)    # Count articles found (is actually a list of dicts)
+                    logging.info(f'%s - Depth 0 Surface skim / Found News Articles: {article_count}' % cmi_debug)
+                    print(f"\n=================================== Articles found: {article_count} ========================================")
                     for i, article in enumerate(self.extracted_articles):       # cycle trough articles >>dataset<<
                         if article.get('Title'):
                             safe_i = i + 1
@@ -358,6 +358,7 @@ class yfnews_reader:
                 logging.error(f'%s - ERROR URL hash not in Net cache: {hash_state}' % cmi_debug)
                 return None
         self.articles_found = article_count
+        print(f"=================================== Articles found: {article_count} ========================================\n")
         return self.articles_found
 
     # ################
@@ -400,7 +401,7 @@ class yfnews_reader:
                 art_publisher = "Err_no_publisher"
                 update_time = "Err_no_pub_time"
 
-            print(f"Eval cycle:    Depth 1  ({cg} / {self.articles_found}) =====================================================")
+            print(f"Eval cycle:    Depth 1 - Evaluating: {cg} of {self.articles_found}) articles identiifed during news feed skim...")
             if article_url:
                 # TEST #1 : is this a healtly URL ?
                 if article_url.startswith('http'):              # quick safety check that we have a real URL
@@ -413,7 +414,7 @@ class yfnews_reader:
                     logging.info(f'%s - Mangled source url: {article_url}' % cmi_debug)
                     return 2
                 
-                # TEST #2 : learn what thsi URL actually is
+                # TEST #2 : learn what this URL actually is
                 uhint, uhdescr = self.yfn_uh.uhinter(hcycle, self.article_url)
                 logging.info(f'%s - Source url [{self.a_urlp.netloc}] / u:{uhint} / {uhdescr}' % cmi_debug)
                 if uhint == 0: thint = 0.0      # real news / local page
