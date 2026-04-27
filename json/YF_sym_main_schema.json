@@ -1,28 +1,28 @@
 {
   "name": "YahooFinanceNewsSelector",
-  "baseSelector": "section.container.yf-1m8w4l1 ul.stream-items.yf-ydpc1",
+  "baseSelector": "section.container.yf-1m8w4l1 ul.stream-items.yf-ydpc1 li",
   "fields": [
     {
       "name": "Title",
-      "selector": "li div a",
+      "selector": "div a",
       "type": "attribute",
       "attribute": "title"
     },
     {
       "name": "Teaser",
-      "selector": "li div div img",
+      "selector": "div div img",
       "type": "attribute",
       "attribute": "alt"
     },
     {
       "name": "Ext_url",
-      "selector": "li div a",
+      "selector": "div a",
       "type": "attribute",
       "attribute": "href"
     },
     {
       "name": "Publisher",
-      "selector": "li div div div div",
+      "selector": "div div div div",
       "type": "text"
     }
   ]
