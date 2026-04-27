@@ -1,6 +1,6 @@
 {
   "name": "YahooFinanceNewsSelector",
-  "baseSelector": "section.container yf-1m8w4l1 div div div div",
+  "baseSelector": "section.container yf-1m8w4l1 ul.stream-items.yf-ydpc1",
   "fields": [
     {
       "name": "Title",
@@ -10,8 +10,8 @@
     },
     {
       "name": "Teaser",
-      "selector": "li div div img",
-      "type": "alt"
+      "selector": "li div a",
+      "type": "title"
     },
     {
       "name": "Ext_url",
