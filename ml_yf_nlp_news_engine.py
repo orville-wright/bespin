@@ -279,12 +279,11 @@ class yfnews_reader:
 
         try:
             async with AsyncWebCrawler() as crawler:
-                logging.info(f'%s - Exec async webcrawl NOW...' % cmi_debug)
+                logging.info(f'%s - Run C4 async crawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
                 if result.success:
-                    logging.info(f'%s - crawl4ai running...' % cmi_debug)
                     #print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
-                    self.yfn_crawl_data = json.loads(escape(result.extracted_content))  # schema is failing. FIX ME !!
+                    self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
                     aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
                     self.yfn_jsdb[aurl_hash] = dict(
@@ -302,7 +301,9 @@ class yfnews_reader:
                     return None                    
         except Exception as e:
             logging.error(f'{cmi_debug} - ERROR @ Depth0 crawl4ai extract: {e}')
-            print ( f"DEBUG: C4_Data dump 3: {escape(result.extracted_content)}" )
+            #print ( f"DEBUG: C4_Data dump 3: {escape(result.extracted_content)}" )
+            e_string = str(e).split(" ",5)
+            print ( f"DEBUG:Except @: {e_string}" )
             print ( f"==================================== Craw4ai ERROR ====================================")
             logging.error(f'{cmi_debug} - ERROR @ Depth0: {e}')
             return None
