@@ -472,7 +472,7 @@ class yfnews_reader:
                     continue  # Skip to next article if duplicate URL hash found
             else:
                 logging.info(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
-        return 0
+        return 0, bad_url_count
 
     # ################
     def interpret_page_depth2(self, item_idx, data_row):

@@ -67,15 +67,15 @@ class ml_nlpreader:
         ml_yfn_dataset.yfn_uh = self.yfn_uh
 
         # 3 Main steps execuete here - Depth -> 0 + Depth -> 1
-        # print a report of the Depth 0 Top Level skim run
+        # print a report of the Depth 0 Top Level news skim run
         _url_hash0 = await ml_yfn_dataset.yahoofin_news_depth0(0)   # scrape NOW @ Depth 0 yahoofin_news_depth0()
 
         if _url_hash0:												# Depth: 0
             articles_found = ml_yfn_dataset.list_news_candidates_depth0(news_symbol, 0, 1, _url_hash0)
-            ml_yfn_dataset.eval_news_feed_stories(news_symbol)		# Depth: 1            
+            eval_state, bad_url_count = ml_yfn_dataset.eval_news_feed_stories(news_symbol)		# Depth: 1 - updates ml_ingest
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(f" ")
-            print(f"Successfully skimmed: {articles_found} / Evaled: {len(ml_yfn_dataset.ml_ingest)} articles @ Depth: 0")
+            print(f"Skimmed: {articles_found} / Evaled: {len(ml_yfn_dataset.ml_ingest)} articles @ Depth: 0 - (bad urls: {bad_url_count})")
             if self.args.get('bool_xray', False):                   # DEBUG: xray
                 ml_yfn_dataset.dump_ml_ingest()
         else:
