@@ -929,6 +929,12 @@ class yfnews_reader:
             self.articles_crawled[item_idx] = result                     # NOTE UNUSED: future feat: parallel crawl4ai extraction
 
             self.yfqnews_url = durl
+            
+            self.yfn_c4_result[aurl_hash] = dict(   # C4 local cache - for crawl4ai results, for post-processing
+                        url = durl,
+                        data = self.yfn_crawl_data,
+                        result = result
+            
             cy = self.yfn_c4_result[cached_state]    # pickup up result dict
             logging.info( f'%s - C4 EVAL.#1: re-read:  {cached_state}' % cmi_debug ) 
             if self.yfn_c4_result[cached_state]:
@@ -1199,6 +1205,7 @@ class yfnews_reader:
                         result = result
                     )
                     logging.info(f'%s  - Created C4 result cache entry: {aurl_hash}' % cmi_debug)
+                    print (f"###-debug: yfn_c4_result type: {type(self.yfn_c4_result)} / keys: {self.yfn_c4_result.keys()}" )
                     return result
                 else:
                     logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
