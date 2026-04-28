@@ -1177,7 +1177,7 @@ class yfnews_reader:
                 # js_code = js_cmds
                 config = CrawlerRunConfig(
                     extraction_strategy=extraction_strategy,
-                    js_cmds=js_cmds,
+                    js_code=js_cmds,
                     cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
                     )
         else:
