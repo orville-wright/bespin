@@ -287,7 +287,7 @@ class yfnews_reader:
                     self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
                     aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
-                    self.yfn_jsdb[aurl_hash] = dict(
+                    self.yfn_jsdb[aurl_hash] = dict(                # global cache within yfn instance
                         url = self.yfqnews_url,
                         data = self.yfn_crawl_data,
                         result = result
@@ -1007,7 +1007,7 @@ class yfnews_reader:
             
             c4_dict = self.yfn_c4_result[cached_state]
             print ( f"###-debug: C4 result dict keys: {c4_dict.keys()}" ) 
-            print ( f"###-debug: C4 result data: {c4_dict['url']}" )
+            #print ( f"###-debug: C4 result data: {c4_dict['url']}" )
             print ( f"###-debug: C4 result data: {c4_dict['data']}" )
             #print ( f"###-debug: C4 result data: {c4_dict['result']}" )
             
@@ -1176,6 +1176,7 @@ class yfnews_reader:
                 # js_code = js_cmds
                 config = CrawlerRunConfig(
                     extraction_strategy=extraction_strategy,
+                    js_cmds=js_cmds,
                     cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
                     )
         else:
@@ -1191,13 +1192,13 @@ class yfnews_reader:
                     self.yfn_crawl_data = json.loads(result.extracted_content)
                     auh = hashlib.sha256(durl.encode()) # prep hash
                     aurl_hash = auh.hexdigest()         # genertae hash WARN: need to do dedupe check !!
-                    # GLOBALLY set the yfn_jsdb DB dict for this artcile @ key = aurl_hash, vale = { }
-                    self.yfn_c4_result[aurl_hash] = {
-                        'url': durl,
-                        'data': self.yfn_crawl_data,
-                        'result': result
-                    }
-                    logging.info(f'%s  - Create C4 crawl cache entry: {aurl_hash}' % cmi_debug)
+                    self.yfn_c4_result[aurl_hash] = dict(   # C4 local cache - for crawl4ai results, for post-processing
+                        url = durl,
+                        data = self.yfn_crawl_data,
+                        result = result
+                    )
+                    logging.info(f'%s  - Created C4 result cache entry: {aurl_hash}' % cmi_debug)
+                    print (f"###-debug 1201: C4 crawl result dict keys: {self.yfn_c4_data}" )
                     return result
                 else:
                     logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
