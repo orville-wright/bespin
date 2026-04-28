@@ -773,6 +773,7 @@ class yfnews_reader:
             'total_tokens': int(self.total_tokens),
             })
         
+        self.kvio_eng.close_lmdb(2)   # force close
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
         kv_success = self.kvio_eng.open_lmdb_RW(2)
         if kv_success is not None:      # explicit reliable singleton None test
