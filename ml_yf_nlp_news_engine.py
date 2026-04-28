@@ -265,7 +265,7 @@ class yfnews_reader:
         
         js_cmds = [
             "window.scrollTo(0, document.body.scrollHeight);",
-            "await new Promise(resolve => setTimeout(resolve, 2000));"
+            "await new Promise(resolve => setTimeout(resolve, 1000));"
         ]
         
         config = CrawlerRunConfig(
@@ -401,19 +401,20 @@ class yfnews_reader:
                 art_publisher = "Err_no_publisher"
                 update_time = "Err_no_pub_time"
 
-            print(f"Eval cycle:    Depth 1 - Evaluating: {cg} of {self.articles_found}) articles identiifed during news feed skim...")
+            print(f"Eval cycle:    Depth 1 - Evaluating: {cg} of {self.articles_found} articles found in news feed skim...")
             if article_url:
                 # TEST #1 : is this a healtly URL ?
-                if article_url.startswith('http'):              # quick safety check that we have a real URL
+                if article_url.startswith('http') or article_url.startswith('https'):              # quick safety check that we have a real URL
                     self.article_url = article_url
-                    self.a_urlp = urlparse(self.article_url)    # break doin the URL into components
+                    self.a_urlp = urlparse(self.article_url)    # split the URL into components
                     schmeme = self.a_urlp.scheme                # http or https
-                    self.url_netloc = self.a_urlp.netloc
+                    self.url_netloc = self.a_urlp.netloc        # e.g. finaince.yahoo.com
                     path = self.a_urlp.path                     # /path/to/article
                 else:
                     logging.info(f'%s - Mangled source url: {article_url}' % cmi_debug)
-                    return 2
-                
+                    continue        # abandon this article and move to the next one
+                    # return 2      # this abandons/ends the entire scan loop
+
                 # TEST #2 : learn what this URL actually is
                 uhint, uhdescr = self.yfn_uh.uhinter(hcycle, self.article_url)
                 logging.info(f'%s - Source url [{self.a_urlp.netloc}] / u:{uhint} / {uhdescr}' % cmi_debug)
