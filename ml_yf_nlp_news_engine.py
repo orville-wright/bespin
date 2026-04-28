@@ -930,10 +930,11 @@ class yfnews_reader:
 
             self.yfqnews_url = durl
             
-            self.yfn_c4_result[aurl_hash] = dict(   # C4 local cache - for crawl4ai results, for post-processing
+            self.yfn_c4_result[cached_state] = dict(   # C4 local cache - for crawl4ai results, for post-processing
                         url = durl,
                         data = self.yfn_crawl_data,
                         result = result
+                        )
             
             cy = self.yfn_c4_result[cached_state]    # pickup up result dict
             logging.info( f'%s - C4 EVAL.#1: re-read:  {cached_state}' % cmi_debug ) 
