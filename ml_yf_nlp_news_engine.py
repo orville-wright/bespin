@@ -874,7 +874,6 @@ class yfnews_reader:
         # check to see if weve previous read/processed this article
         # ############################################################
         _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
-        self.kvio_eng.env.close
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
@@ -1106,6 +1105,7 @@ class yfnews_reader:
                                 })
 
                             # Create LMBD KV cache entry
+                            self.kvio_eng.close_lmdb(3)   # force close
                             logging.info( f'%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
                             kv_success = self.kvio_eng.open_lmdb_RW(3)
                             if kv_success is not None:
