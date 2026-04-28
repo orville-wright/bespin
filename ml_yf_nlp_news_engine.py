@@ -968,9 +968,8 @@ class yfnews_reader:
         #
         if _built_c4_entry == 1:
             logging.info( f'%s - EVAL.#2 : C4 data entry...' % cmi_debug )
-            logging.info( f'%s - Good C4 data:     Gracefully pre-built: {cached_state}' % cmi_debug ) 
-            #dataset_1 = self.yfn_c4_result[cached_state]['result']
-            dataset_1 = self.yfn_c4_result
+            logging.info( f'%s - Good C4 data:  Gracefully pre-built: {cached_state}' % cmi_debug ) 
+            dataset_1 = self.yfn_c4_result[cached_state]['result']
 
             result_engine = "yfn_c4_result"
             self.articles_crawled[item_idx] = result    # crawl4ai result
@@ -1014,10 +1013,11 @@ class yfnews_reader:
             logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
             
             c4_dict = self.yfn_c4_result[cached_state]
-            print ( f"###-debug: C4 result dict keys: {c4_dict.keys()}" ) 
-            #print ( f"###-debug: C4 result data: {c4_dict['url']}" )
-            print ( f"###-debug: C4 result data: {c4_dict['data']}" )
-            #print ( f"###-debug: C4 result data: {c4_dict['result']}" )
+            print ( f"###-debug: C4 c4_dict keys:     {c4_dict.keys()}" ) 
+            print ( f"###-debug: C4 dataset_1 keys:   {dataset_1.keys()}" )
+            print ( f"###-debug: C4 c4_dict data:     {c4_dict['data']}" )
+            print ( f"###-debug: C4 dataset_1 result: {dataset_1['result']}" )
+            print ( f"###-debug: C4 dataset_1 raw:    {dataset_1['result']}" )
             
             # print the keys of the C4 result dict
             art_all_p = list()                                          # ensure temp list is empty
@@ -1206,7 +1206,7 @@ class yfnews_reader:
                         result = result
                     )
                     logging.info(f'%s  - Created C4 result cache entry: {aurl_hash}' % cmi_debug)
-                    print (f"###-debug: yfn_c4_result type: {type(self.yfn_c4_result)} / keys: {self.yfn_c4_result.keys()}" )
+                    #print (f"###-debug: yfn_c4_result type: {type(self.yfn_c4_result)} / keys: {self.yfn_c4_result.keys()}" )
                     return result
                 else:
                     logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
