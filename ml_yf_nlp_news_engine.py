@@ -1006,7 +1006,12 @@ class yfnews_reader:
             logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
             
             c4_dict = self.yfn_c4_result[cached_state]
-            print ( f"###-debug: C4 result dict keys: {c4_dict.keys()}" )   # print the keys of the C4 result dict
+            print ( f"###-debug: C4 result dict keys: {c4_dict.keys()}" ) 
+            print ( f"###-debug: C4 result data: {c4_dict['url']}" )
+            print ( f"###-debug: C4 result data: {c4_dict['data']}" )
+            print ( f"###-debug: C4 result data: {c4_dict['result']}" )
+            
+            # print the keys of the C4 result dict
             art_all_p = list()                                          # ensure temp list is empty
             for i, element in enumerate(c4_dict['data']):
                     print ( f"###-debug: C4 element {i} : {element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
