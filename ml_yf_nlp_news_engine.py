@@ -1014,8 +1014,8 @@ class yfnews_reader:
             
             c4_dict = self.yfn_c4_result[cached_state]
             print ( f"###-debug: C4 c4_dict keys:     {c4_dict.keys()}" ) 
-            #print ( f"###-debug: C4 dataset_1:        {dataset_1}" )
-            print ( f"###-debug: C4 c4_dict data:     {c4_dict['data']}" )
+            #print ( f"###-debug: C4 dataset_1:        {dataset_1}" )       # rentore raw html page
+            print ( f"###-debug: C4 c4_dict data:     {c4_dict['data']}" )  # should be refined results of crawl
             
             # print the keys of the C4 result dict
             art_all_p = list()                                          # ensure temp list is empty
