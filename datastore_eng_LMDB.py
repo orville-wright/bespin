@@ -57,7 +57,7 @@ class lmdb_io_eng:
         try:
             self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
             logging.info( f'%s     - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
-            logging.info( f'%s     - Instance remains globally open !' % cmi_debug )
+            logging.info( f'%s     - Warning: Instance remains globally open !' % cmi_debug )
             return self.env
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
@@ -70,7 +70,7 @@ class lmdb_io_eng:
 ################# 2
     def open_lmdb_RW(self, yti):
         cmi_debug = __name__+"::"+self.open_lmdb_RW.__name__+".#"+str(self.yti)
-        logging.info( f'%s    - open_lmdb_RO.#{self.yti} Instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s    - open_lmdb_RW.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
 
         try:
@@ -79,11 +79,10 @@ class lmdb_io_eng:
             logging.info( f'%s    - KVstore remains globally open.#{self.yti} Instance: {self.db_name}' % cmi_debug )
             return self.env
         except lmdb.Error as e:
-            print(f"LMDB Open Error: {e}")
-            print(f"Database: {db_inst} - not found.")
+            print(f"LMDB {db_inst} - Open Error: {e}")
             return 0
         except Exception as e:
-            print(f"Open RW mode - Error Exception: {e}")
+            print(f"Open RW mode - Exception failure: {e}")
             return 0
             
 ################# 3
@@ -181,7 +180,6 @@ class lmdb_io_eng:
         _sentiment_count["negative"] = 0
         
         logging.info( f'%s  - Open LMDB READ-ONLY mode...' % cmi_debug )
-        #kv_success = None  # debig control switch
         _kv_success = self.open_lmdb_RO(3)
         if _kv_success is not None:                      #    LMDB opened sucessfully
             ################# LMDB Deep Cache KV store engine
@@ -190,7 +188,7 @@ class lmdb_io_eng:
             _url_hash = data_row['urlhash']             # current article URL hash from main skimm list
             _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
-            logging.info( f'%s  - Check Deep Cache KVstore: {_key}' % cmi_debug )
+            logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
             with _kv_success.begin() as txn:
                 _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
                 if _key_found is not None:
@@ -270,6 +268,7 @@ class lmdb_io_eng:
                             #print (f"JSON: {_final_results}")
                             print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
                             print (f"Deep KV Cache: [ HIT.#0 / Deep cache Read success ! Rehydrated from KVstore... ] {item_idx}" )
+                            _kv_success = self.close_lmdb(3)   # close LMDB after read
                             return 0, _total_tokens, _total_words, self.sen_data, _final_results
                             #
                             # SUCCESS !!!
@@ -277,6 +276,7 @@ class lmdb_io_eng:
                 else:
                     logging.info( f'%s - Deep Cache MISS : No KVstore entry found !' % cmi_debug )
                     print (f"KV Cache.#3:   [ Cache MISS.#3 / No KV entry ! Force article NET read... ] {item_idx}" )
+                    _kv_success = self.close_lmdb(3)
                     return 3, 0, 0, None, None
 
             logging.info( f"%s - Deep Cache ERROR.#4 : ! LMDB I/O cant open RO mode" % cmi_debug )

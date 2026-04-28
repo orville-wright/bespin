@@ -786,6 +786,7 @@ class yfnews_reader:
                 self.kvio_eng.env.close
         else:
             logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
+            self.kvio_eng.env.close
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
         # empty vocabulary pretty-printer logic for eof=""
         if self.sent_ai.empty_vocab > 0:
@@ -873,7 +874,8 @@ class yfnews_reader:
         # check to see if weve previous read/processed this article
         # ############################################################
         _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
-
+        # warning: LMDB opened in RO mode
+        
         match _ec:
             case 0:  # BS4 KVstore cache hit
                 logging.info( f'%s - C4 Deep cache hit / Rehydrated data from KVstore...' % cmi_debug )
@@ -1013,7 +1015,7 @@ class yfnews_reader:
             logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
             
             c4_dict = self.yfn_c4_result[cached_state]
-            print ( f"###-debug: C4 c4_dict keys:     {c4_dict.keys()}" ) 
+            #print ( f"###-debug: C4 c4_dict keys:     {c4_dict.keys()}" ) 
             #print ( f"###-debug: C4 dataset_1:        {dataset_1}" )       # rentore raw html page
             print ( f"###-debug: C4 c4_dict data:     {c4_dict['data']}" )  # should be refined results of crawl
             
@@ -1021,7 +1023,7 @@ class yfnews_reader:
             art_all_p = list()                                          # ensure temp list is empty
             for i, element in enumerate(c4_dict['data']):
                     print ( f"###-debug: C4 element {i} : {element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
-                    art_all_p.append(element.get('Content'))            # extract craw4al element
+                    art_all_p.append(element.get('Content'))            # get craw4al elements (crawl4 dict key='content')
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
                     except TypeError:   # catch None
