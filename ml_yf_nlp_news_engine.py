@@ -1009,7 +1009,7 @@ class yfnews_reader:
             print ( f"###-debug: C4 result dict keys: {c4_dict.keys()}" ) 
             print ( f"###-debug: C4 result data: {c4_dict['url']}" )
             print ( f"###-debug: C4 result data: {c4_dict['data']}" )
-            print ( f"###-debug: C4 result data: {c4_dict['result']}" )
+            #print ( f"###-debug: C4 result data: {c4_dict['result']}" )
             
             # print the keys of the C4 result dict
             art_all_p = list()                                          # ensure temp list is empty
