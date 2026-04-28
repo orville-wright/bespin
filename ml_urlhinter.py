@@ -71,7 +71,6 @@ class url_hinter:
             if a_url.netloc == "finance.yahoo.com":
                 urlp_attr = a_url.path.split('/', 2)    # work on path=object ONLY
                 uhint = uhint_code.get(urlp_attr[1])    # retrieve uhint code/descr tuple from split section #1
-                print ( f"DEBUG: 72 urlp_attr: {urlp_attr}" )    # DEBUG
                 logging.info ( f"%s  - Logic +0 Decoded url: [{a_url.netloc}] / Type: [{urlp_attr[1]}] / u:{uhint[1]} / {uhint[0]}" % cmi_debug )
                 return uhint[1], uhint[0]
             else:

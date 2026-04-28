@@ -352,7 +352,7 @@ class yfnews_reader:
                         else:
                             print(f"Item: {i+1:003}: Empty no article data")
                 else:
-                    logging.warning(f'%s - No articles found in extraction' % cmi_debug)
+                    logging.info(f'%s - No articles found in extraction' % cmi_debug)
                     
             except KeyError:
                 logging.error(f'%s - ERROR URL hash not in Net cache: {hash_state}' % cmi_debug)
@@ -383,6 +383,7 @@ class yfnews_reader:
             return 1
         
         cg = 1
+        bad_url_count = 0
         hcycle = 1
         dedupe_set = set()
         logging.info(f'%s - Article Zone scanning / ml_ingest populating...' % cmi_debug)
@@ -412,6 +413,7 @@ class yfnews_reader:
                     path = self.a_urlp.path                     # /path/to/article
                 else:
                     logging.info(f'%s - Mangled source url: {article_url}' % cmi_debug)
+                    bad_url_count += 1
                     continue        # abandon this article and move to the next one
                     # return 2      # this abandons/ends the entire scan loop
 
@@ -462,11 +464,11 @@ class yfnews_reader:
                     cg += 1
                     hcycle += 1
                 else:
-                    logging.warning(f'%s - Duplicate URL found / Skipping... {aurl_hash[:30]}...' % cmi_debug)
+                    logging.info(f'%s - Duplicate URL found / Skipping... {aurl_hash[:30]}...' % cmi_debug)
                     print(f"Duplicate URL hash found / Skipping... {aurl_hash[:30]}...")
                     continue  # Skip to next article if duplicate URL hash found
             else:
-                logging.warning(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
+                logging.info(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
         return 0
 
     # ################
