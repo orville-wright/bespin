@@ -1199,7 +1199,6 @@ class yfnews_reader:
                         result = result
                     )
                     logging.info(f'%s  - Created C4 result cache entry: {aurl_hash}' % cmi_debug)
-                    print (f"###-debug 1201: C4 crawl result dict keys: {self.yfn_c4_data}" )
                     return result
                 else:
                     logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
