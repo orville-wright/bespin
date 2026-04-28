@@ -75,8 +75,8 @@ class ml_nlpreader:
             eval_state, bad_url_count = ml_yfn_dataset.eval_news_feed_stories(news_symbol)		# Depth: 1 - updates ml_ingest
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(f" ")
-            print(f"Skimmed: {articles_found} / Evaled: {len(ml_yfn_dataset.ml_ingest)} articles @ Depth: 0 - (bad urls: {bad_url_count})")
-            print(f"============================================================================================================")
+            print(f"Skimmed: {articles_found} / Evaled: {len(ml_yfn_dataset.ml_ingest)} articles /(bad urls: {bad_url_count}) @ Depth: 0")
+            print(f"========================================================================================")
             if self.args.get('bool_xray', False):                   # DEBUG: xray
                 ml_yfn_dataset.dump_ml_ingest()
         else:
