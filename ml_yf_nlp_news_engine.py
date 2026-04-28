@@ -382,10 +382,10 @@ class yfnews_reader:
             logging.error(f'%s - No extracted articles available' % cmi_debug)
             return 1
         
-        cg = 1
-        bad_url_count = 0
-        hcycle = 1
-        dedupe_set = set()
+        cg = 1                  # general conter for logging and reporting
+        bad_url_count = 0       # counter for bad URLs found in the article dataset
+        hcycle = 1              # uhinter counter for logging
+        dedupe_set = set()      # deduplication optimization data set
         logging.info(f'%s - Article Zone scanning / ml_ingest populating...' % cmi_debug)
         for article in self.extracted_articles: # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
             self.nlp_x += 1
@@ -466,6 +466,9 @@ class yfnews_reader:
                 else:
                     logging.info(f'%s - Duplicate URL found / Skipping... {aurl_hash[:30]}...' % cmi_debug)
                     print(f"Duplicate URL hash found / Skipping... {aurl_hash[:30]}...")
+                    print (f" ")
+                    cg += 1
+                    hcycle += 1
                     continue  # Skip to next article if duplicate URL hash found
             else:
                 logging.info(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
