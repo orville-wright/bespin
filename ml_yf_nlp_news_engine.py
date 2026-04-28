@@ -918,8 +918,9 @@ class yfnews_reader:
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)
             
-            result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # exec crawl4ai engine t extraction of 1 article's data
-            self.articles_crawled[item_idx] = result  # NOTE USED: future feat: parallel crawl4ai extraction
+            # crawl an indivial article NOW... !!
+            result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # exec crawl4ai engine and extract article's text
+            self.articles_crawled[item_idx] = result  # NOTE UNUSED: future feat: parallel crawl4ai extraction
 
             self.yfqnews_url = durl
             cy = self.yfn_c4_result[cached_state]    # pickup up result dict
@@ -978,7 +979,7 @@ class yfnews_reader:
         logging.info( f'%s - C4 Dataset     {type(dataset_1)}' % cmi_debug )
         logging.info( f'%s - In Cache URL   {self.yfn_c4_result[cached_state]['url']}' % cmi_debug )
         logging.info( f'%s - Sent URL in    {durl}' % cmi_debug )
-        logging.info( f'%s - Ready to exec C4 extractor - get Article TEXT for AI NLP reader...' % cmi_debug )
+        logging.info( f'%s - Ready to exec C4 TEXT extractor for AI NLP reader...' % cmi_debug )
         # Do it this way so that...
         # - we  can spawn multiple async tasks in parallel
         # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
@@ -998,6 +999,7 @@ class yfnews_reader:
             c4_dict = self.yfn_c4_result[cached_state]
             art_all_p = list()                                          # ensure temp list is empty
             for i, element in enumerate(c4_dict['data']):
+                    print ( f"###-debug: C4 element {i} : {element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
                     art_all_p.append(element.get('Content'))            # extract craw4al element
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
@@ -1122,8 +1124,9 @@ class yfnews_reader:
                             print (f"{footer}")
                             print (f"================================ C4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
                             return self.total_tokens, self.total_words, c4_final_results
-
-        print (f"##-@1199: C4 data extrct KV eng - Unknown state!" )
+                    print (f"###-debug: C4 data exttract KV en - NO Action taken !: {_total_chars}" )
+                    return 0, 0, 0
+            print (f"##-@1199: C4 data extrct KV eng - Unknown state!" )
         return 0, 0, None
     
     # ################ 7
