@@ -858,16 +858,19 @@ class yfnews_reader:
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
-            logging.info( f'%s - Ext url found in ml_ingest DB - skipping...' % cmi_debug )
+            logging.info( f'%s - Ext url found in ML-Ingest DB - skipping...' % cmi_debug )
         else:
             durl = data_row['url']
             external = False               # this is a local yahoo.com hosted article
-            logging.info( f'%s - No exturl in ml_ingest DB' % cmi_debug )
+            logging.info( f'%s - No exturl in ML-Ingest DB' % cmi_debug )
             cached_state = data_row['urlhash']
         
         symbol = symbol.upper()
         _extr_eng="C4"
         
+        # #############################################
+        # KV Cache Engine - activated
+        # #############################################
         _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
 
         match _ec:
@@ -891,20 +894,20 @@ class yfnews_reader:
                 logging.info( f'%s - C4 KVstore ERROR.#2 No URL Hash KEY found !force Net read...' % cmi_debug )
                 pass
             case 3:
-                logging.info( f'%s - C4 KVstore MISS.#3 No cache entry !force Net read...' % cmi_debug )
+                logging.info( f'%s - C4 KVstore ERROR.#3 No cache entry...' % cmi_debug )
                 pass
             case 4:
-                logging.info( f'%s - C4 LMDB I/O FAILURE.#4 : Failed to open DB in RO mode !' % cmi_debug )
+                logging.info( f'%s - C4 LMDB I/O FAILURE ERROR.#4 : Failed to open DB in RO mode !' % cmi_debug )
                 pass
             case _:
-                logging.info( f'%s - C4 KVstore ERROR.#def Unknown error code: {_ec} ! force Net read...' % cmi_debug )
+                logging.info( f'%s - C4 KVstore ERROR.#Unknown error code: {_ec} ! force Net read...' % cmi_debug )
                 pass
 
         #####################################################
         # C4
         # Network ret() read the article text
         #
-        logging.info( f'%s - C4 urlhash Net cache lookup: {cached_state}' % cmi_debug )
+        logging.info( f'%s - C4 urlhash: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
         logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
         cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)
@@ -913,21 +916,24 @@ class yfnews_reader:
             self.yfn_jsdb[cached_state]         # pickup the full dict @ key: urlhash - if this doesnt error/excpe = SUCCESS !
             _built_c4_entry = 2
         except KeyError:
-            logging.info( f'%s - C4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
+            logging.info( f'%s - C4 Forcing Network page read !' % cmi_debug )
             cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
             logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)
             
+            # #######################################################
             # crawl an indivial article NOW... !!
+            # #######################################################
             result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # exec crawl4ai engine and extract article's text
-            self.articles_crawled[item_idx] = result  # NOTE UNUSED: future feat: parallel crawl4ai extraction
+            self.articles_crawled[item_idx] = result                     # NOTE UNUSED: future feat: parallel crawl4ai extraction
 
             self.yfqnews_url = durl
             cy = self.yfn_c4_result[cached_state]    # pickup up result dict
             logging.info( f'%s - C4 EVAL.#1: re-read:  {cached_state}' % cmi_debug ) 
             if self.yfn_c4_result[cached_state]:
                 logging.info( f'%s - C4 Found entry:   {cached_state}' % cmi_debug )
-                self.yfn_c4_data = cy['result']        # store the rendered raw data
+                #self.yfn_c4_data = cy['result']        # store the rendered raw data
+                self.yfn_c4_data = result              # store the rendered raw data
                 _dataset_2 = result                    # Basic HTML engine  get()
                 logging.info( f'%s - C4 result:        {type(self.yfn_c4_data)}' % cmi_debug )
                 logging.info( f'%s - C4 JSON data:     {type(cy['data'])}' % cmi_debug )
@@ -1172,7 +1178,7 @@ class yfnews_reader:
             async with AsyncWebCrawler() as crawler:
                 result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
                 if result.success:
-                    logging.info(f'%s  - crawl4ai extraction successful' % cmi_debug)
+                    logging.info(f'%s  - crawl4ai extraction running...' % cmi_debug)
                     self.yfn_crawl_data = json.loads(result.extracted_content)
                     auh = hashlib.sha256(durl.encode()) # prep hash
                     aurl_hash = auh.hexdigest()         # genertae hash WARN: need to do dedupe check !!
