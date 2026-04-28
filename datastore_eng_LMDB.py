@@ -158,7 +158,7 @@ class lmdb_io_eng:
 ################# 6
     def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng):
         cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
-        logging.info( f'%s  - kv_cache_engine.#{_yti} KVstore instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s  - kv_cache_engine.#{_yti}.{_extr_eng} KV DB: {self.db_name}' % cmi_debug )
 
         # Deep Caching engine (LMDB KV store)
         # Has article been read/extracted, and its metadata existing in KVstore
@@ -190,7 +190,7 @@ class lmdb_io_eng:
             _url_hash = data_row['urlhash']             # current article URL hash from main skimm list
             _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
-            logging.info( f'%s - Check Deep Cache KVstore: {_key}' % cmi_debug )
+            logging.info( f'%s  - Check Deep Cache KVstore: {_key}' % cmi_debug )
             with _kv_success.begin() as txn:
                 _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
                 if _key_found is not None:
@@ -276,7 +276,7 @@ class lmdb_io_eng:
                             # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache  
                 else:
                     logging.info( f'%s - Deep Cache MISS : No KVstore entry found !' % cmi_debug )
-                    print (f"KV Cache.#3:   [ Cache MISS.#3 / No KV cache entry ! Force Net read... ] {item_idx}" )
+                    print (f"KV Cache.#3:   [ Cache MISS.#3 / No KV entry ! Force article NET read... ] {item_idx}" )
                     return 3, 0, 0, None, None
 
             logging.info( f"%s - Deep Cache ERROR.#4 : ! LMDB I/O cant open RO mode" % cmi_debug )
