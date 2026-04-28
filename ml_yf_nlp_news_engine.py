@@ -319,7 +319,7 @@ class yfnews_reader:
     def list_news_candidates_depth0(self, symbol, depth, scan_type, hash_state):
         """
         DEPTH -> 0
-        Test and report the Depth 0 scan sucess
+        Test and report the Depth 0 News skin scan results
         - URL hash exists in cache
         - This means URL opened & crawled and data extracted
         - sets GLOBALLY sets Dataset accessor -> self.extracted_articles
@@ -368,11 +368,10 @@ class yfnews_reader:
         Scanning list of news feed stories skimmed from Depth 0
         - and collect some metadata (@ depth 1)
         - data is from Crawl4ai
-        
-        Extract key data elements from each article via crawl4ai dataset indexing @ self.extracted_articles
-        Build a ML ingest DB dataset of articles fro fast post processing
-        Dedupe hash's of articles
-        No network get() requests are made here
+        - Extract data elements from crawl4ai top level skimmed info indexing @ self.extracted_articles
+        - * Build a ML ingest DB dataset of candidate articles for post ML NLP processing
+        - egenrate has or URL and Dedupe hash's across all skimmed articles
+        - No network get() requests are made here, as crawl4ai allready did this during its skim crawl
         """
         cmi_debug = __name__+"::" + self.eval_news_feed_stories.__name__+".#"+str(self.yti)
         logging.info('%s - IN ' % cmi_debug)
@@ -386,13 +385,13 @@ class yfnews_reader:
         bad_url_count = 0       # counter for bad URLs found in the article dataset
         hcycle = 1              # uhinter counter for logging
         dedupe_set = set()      # deduplication optimization data set
-        logging.info(f'%s - Article Zone scanning / ml_ingest populating...' % cmi_debug)
+        logging.info(f'%s - Article Zone scanning / ml_ingest population loop...' % cmi_debug)
         for article in self.extracted_articles: # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
             self.nlp_x += 1
-            art_title = article.get('Title', 'ERROR_no_title')      # extract craw4al element
-            article_url = article.get('Ext_url', '')                # extract craw4al element
-            art_publisher = article.get('Publisher', 'No_publisher • No_pub_time')  # extract craw4al element
-            art_teaser = article.get('Teaser', 'ERROR_no_teaser')   # extract craw4al element
+            art_title = article.get('Title', 'ERROR_no_title')                      # extracted craw4al element
+            article_url = article.get('Ext_url', '')                                # extracted craw4al element
+            art_publisher = article.get('Publisher', 'No_publisher • No_pub_time')  # extracted craw4al element
+            art_teaser = article.get('Teaser', 'ERROR_no_teaser')                   # extracted craw4al element
             try:
                 _ap_sl = art_publisher.split('•')
                 art_publisher =_ap_sl[0]
@@ -465,13 +464,16 @@ class yfnews_reader:
                     hcycle += 1
                 else:
                     logging.info(f'%s - Duplicate URL found / Skipping... {aurl_hash[:30]}...' % cmi_debug)
-                    print(f"Duplicate URL hash found / Skipping... {aurl_hash[:30]}...")
+                    print(f"Duplicate:   URL duplicate found / Skipping... {aurl_hash[:30]}...")
                     print (f" ")
                     cg += 1
                     hcycle += 1
                     continue  # Skip to next article if duplicate URL hash found
             else:
                 logging.info(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
+                print(f"Missing URL: data unusable No URL found / Skipping... {aurl_hash[:30]}...")
+                bad_url_count += 1
+
         return 0, bad_url_count
 
     # ################
@@ -574,7 +576,7 @@ class yfnews_reader:
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
-            logging.info( f'%s - Found exturl ml_ingest DB' % cmi_debug )
+            logging.info( f'%s - Found exturl in ml_ingest DB' % cmi_debug )
         else:
             durl = data_row['url']
             external = False               # this is a local yahoo.com hosted article

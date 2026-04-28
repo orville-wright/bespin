@@ -106,7 +106,7 @@ class ml_nlpreader:
         print(" ")
 
         if not self.ml_yfn_dataset or ml_idx not in self.ml_yfn_dataset.ml_ingest:
-            logging.error(f'%s - No data found for index: {ml_idx}' % cmi_debug)
+            logging.error(f'%s - No data in ML-Ingest DB for index: {ml_idx}' % cmi_debug)
             return 9.9
 
         sn_row = self.ml_yfn_dataset.ml_ingest[ml_idx]
