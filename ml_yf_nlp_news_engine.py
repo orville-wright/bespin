@@ -961,7 +961,9 @@ class yfnews_reader:
         if _built_c4_entry == 1:
             logging.info( f'%s - EVAL.#2 : C4 data entry...' % cmi_debug )
             logging.info( f'%s - Good C4 data:     Gracefully pre-built: {cached_state}' % cmi_debug ) 
-            dataset_1 = self.yfn_c4_result[cached_state]['result']
+            #dataset_1 = self.yfn_c4_result[cached_state]['result']
+            dataset_1 = self.yfn_c4_result
+
             result_engine = "yfn_c4_result"
             self.articles_crawled[item_idx] = result    # crawl4ai result
         elif _built_c4_entry == 2:
@@ -985,7 +987,7 @@ class yfnews_reader:
         logging.info( f'%s - C4 Dataset     {type(dataset_1)}' % cmi_debug )
         logging.info( f'%s - In Cache URL   {self.yfn_c4_result[cached_state]['url']}' % cmi_debug )
         logging.info( f'%s - Sent URL in    {durl}' % cmi_debug )
-        logging.info( f'%s - Ready to exec C4 TEXT extractor for AI NLP reader...' % cmi_debug )
+        logging.info( f'%s - Ready for C4 extractor and AI NLP reader...' % cmi_debug )
         # Do it this way so that...
         # - we  can spawn multiple async tasks in parallel
         # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
@@ -1002,7 +1004,9 @@ class yfnews_reader:
             return 0, 0, 0
         else:
             logging.info( f'%s - Access C4 selector zones in article: [ {item_idx} ]' % cmi_debug )
-            c4_dict = self.yfn_c4_result[cached_state]
+            
+            #c4_dict = self.yfn_c4_result[cached_state]
+            c4_dict = self.yfn_c4_result
             art_all_p = list()                                          # ensure temp list is empty
             for i, element in enumerate(c4_dict['data']):
                     print ( f"###-debug: C4 element {i} : {element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
