@@ -268,7 +268,7 @@ class lmdb_io_eng:
                             #print (f"JSON: {_final_results}")
                             print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
                             print (f"Deep KV Cache: [ HIT.#0 / Deep cache Read success ! Rehydrated from KVstore... ] {item_idx}" )
-                            _kv_success = self.close_lmdb(3)   # close LMDB after read
+                            #_kv_success = self.close_lmdb(3)   # close LMDB after read
                             return 0, _total_tokens, _total_words, self.sen_data, _final_results
                             #
                             # SUCCESS !!!
@@ -276,7 +276,7 @@ class lmdb_io_eng:
                 else:
                     logging.info( f'%s - Deep Cache MISS : No KVstore key found !' % cmi_debug )
                     print (f"KV Cache.#3:   [ Cache MISS.#3 / No KV entry ! Force article NET read... ] {item_idx}" )
-                    _kv_success = self.close_lmdb(3)
+                    #_kv_success = self.close_lmdb(3)
                     return 3, 0, 0, None, None
 
             logging.info( f"%s - Deep Cache ERROR.#4 : ! LMDB I/O cant open RO mode" % cmi_debug )

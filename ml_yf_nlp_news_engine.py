@@ -874,7 +874,6 @@ class yfnews_reader:
         # check to see if weve previous read/processed this article
         # ############################################################
         _ec, _ttk, _ttw, _sen_data, _fr = self.kvio_eng.kv_cache_engine(1, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
-        # warning: LMDB opened in RO mode
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
