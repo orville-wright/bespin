@@ -455,7 +455,6 @@ def main():
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
                     # scraper loadbalancer, Anti-bot avoidance & performance balancing
                     # WARN:  executes sentiment_ai.compute_sentiment()
- 
                     if antibot_load_balancer == 0:                          # randomize  craw4ai / BS4 scrapers
                         _atc, _awc, final_results = news_ai.yfn.artdata_C4_depth3(sn_idx, sent_ai)    # craw4ai engine
                     else:
