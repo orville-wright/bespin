@@ -179,7 +179,7 @@ class lmdb_io_eng:
         _sentiment_count["positive"] = 0
         _sentiment_count["negative"] = 0
         
-        logging.info( f'%s  - Open LMDB READ-ONLY mode...' % cmi_debug )
+        logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
         _kv_success = self.open_lmdb_RO(3)
         if _kv_success is not None:                      #    LMDB opened sucessfully
             ################# LMDB Deep Cache KV store engine
@@ -274,7 +274,7 @@ class lmdb_io_eng:
                             # SUCCESS !!!
                             # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache  
                 else:
-                    logging.info( f'%s - Deep Cache MISS : No KVstore entry found !' % cmi_debug )
+                    logging.info( f'%s - Deep Cache MISS : No KVstore key found !' % cmi_debug )
                     print (f"KV Cache.#3:   [ Cache MISS.#3 / No KV entry ! Force article NET read... ] {item_idx}" )
                     _kv_success = self.close_lmdb(3)
                     return 3, 0, 0, None, None

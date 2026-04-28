@@ -561,7 +561,7 @@ class yfnews_reader:
         """
 
         cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(self.yti)
-        logging.info( f'%s - IN / Work on item... [ {item_idx} ]' % cmi_debug )
+        logging.info( f'%s - IN / Work on BS4 item... [ {item_idx} ]' % cmi_debug )
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
         cached_state = data_row['urlhash']      # eval  DB[] @ item=item_idx, and pull out article urlhash
@@ -845,7 +845,7 @@ class yfnews_reader:
         """
 
         cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(self.yti)
-        logging.info( f'%s - IN / Work on item... [ {item_idx} ]' % cmi_debug )
+        logging.info( f'%s - IN / Work on C4 item... [ {item_idx} ]' % cmi_debug )
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
         self.sent_ai = sentiment_ai
