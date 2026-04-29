@@ -148,15 +148,13 @@ class lmdb_io_eng:
         cmi_debug = __name__+"::"+self.close_lmdb.__name__+".#"+str(self.yti)
         logging.info( f'%s   - close_lmdb.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         try:
-            if self.RO_env is not None:
-                self.RO_env.close()
+            if self.RO_env or self.RW_env is not None:
+                self.RO_env.close()     # gracefully clsoe RO env
+                self.RW_env.close()     # gracefully close RW env
+                self.lmdb_env.close()   # Agressively  close entire LMBD
                 self.db_open_state[self.db_name] = None
-                logging.info( f'%s   - Successfully closed RO LMDB instance.#{self.yti} {self.db_name}' % cmi_debug )
-            elif self.RW_env is not None:
-                self.RW_env.close()
-                self.db_open_state[self.db_name] = None
-                logging.info( f'%s   - Successfully closed RW LMDB instance.#{self.yti} {self.db_name}' % cmi_debug )
-            else:
+                self.RO_env = None
+                self.RW_env = None
                 logging.warning( f'%s   - No open LMDB instance to close.#{self.yti} {self.db_name}' % cmi_debug )
             return 1
         except lmdb.Error as e:
@@ -193,7 +191,7 @@ class lmdb_io_eng:
         logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
         #print (f"debug-188: DB open state: {type(self.db_open_state.get(self.db_name))}")
         if self.db_open_state.get(self.db_name) is None:    # None = closed
-            print (f"debug-195: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
+            print (f"debug-196: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
             self.RO_env = self.open_lmdb_RO(_yti)
         
         print (f"debug-198: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")

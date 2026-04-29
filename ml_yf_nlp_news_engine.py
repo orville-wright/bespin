@@ -779,13 +779,14 @@ class yfnews_reader:
             'total_words': int(self.total_words),
             'total_tokens': int(self.total_tokens),
             })
-        
-        #self.BS4_lmdb_env.close_lmdb("BS4")   # force close
+ 
+        # Create LMBD KV cache entry
+        print (f"debug-784: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         if self.BS4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
             self.BS4_lmdb_env.close_lmdb("BS4")        # force close
+            print (f"debug-787: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
 
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
-
         kv_success = self.BS4_lmdb_env.open_lmdb_RW("BS4")  # re-open in RW mode
         self.BS4_lmdb_env.RW_env = kv_success
         
@@ -797,7 +798,7 @@ class yfnews_reader:
             with self.BS4_lmdb_env.begin(write=True) as _txn:
                 _kvs_json_dataset = json.dumps(_final_data_dict, default=str)    # serialize to JSON
                 _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
-                self.BS4_lmdb_env.close_lmdb("BS4")  # force close
+
         else:
             logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
             self.BS4_lmdb_env.close_lmdb("BS4")  # force close
@@ -829,8 +830,11 @@ class yfnews_reader:
                 )
         print (f"{footer}")
         print (f"================================ BS4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
+        print (f"debug-833: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        self.BS4_lmdb_env.close_lmdb("BS4")
+        print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         return self.total_tokens, self.total_words, bs4_final_results
-
+        
 # #####################################################################################
     # WARNING:
     # sync crawl4 implementation of artdata_BS4_depth3()
