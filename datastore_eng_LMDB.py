@@ -52,8 +52,8 @@ class lmdb_io_eng:
 ################# 1
     def open_lmdb_RO(self, yti):
         cmi_debug = __name__+"::"+self.open_lmdb_RO.__name__+".#"+str(self.yti)
-        logging.info( f'%s     - Open LMBD Read Only mode #{self.yti} DB Instance: {self.db_name}' % cmi_debug )
-        db_inst = self.db_path + self.db_name
+        logging.info( f'%s    - open_lmdb_RO.#{self.yti} Instance: {self.db_name}' % cmi_debug )
+        db_inst = self.db_path+self.db_name
         try:
             self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
             logging.info( f'%s     - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
@@ -74,11 +74,10 @@ class lmdb_io_eng:
         cmi_debug = __name__+"::"+self.open_lmdb_RW.__name__+".#"+str(self.yti)
         logging.info( f'%s    - open_lmdb_RW.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
-
         try:
             self.env = lmdb.open(db_inst, map_size=1024*1024*1024, readonly=False)     # map_size: Maximum size DB = 1GB
             logging.info( f'%s    - Successfully openend KVstore - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
-            logging.info( f'%s    - KVstore remains globally open.#{self.yti} Instance: {self.db_name}' % cmi_debug )
+            logging.info( f'%s    - Warning instance remains globally open' % cmi_debug )
             self.db_open_state[self.db_name] = self.env
             return self.env
         except lmdb.Error as e:
