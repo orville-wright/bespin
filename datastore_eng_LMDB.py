@@ -62,9 +62,11 @@ class lmdb_io_eng:
             return self.env
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
+            self.db_open_state[self.db_name] = None
             return 1
         except Exception as e:
             print(f"Error open_lmdb_RO Exception: {e}")
+            self.db_open_state[self.db_name] = None
             return 0
             
 ################# 2
@@ -81,9 +83,11 @@ class lmdb_io_eng:
             return self.env
         except lmdb.Error as e:
             print(f"LMDB {db_inst} - Open Error: {e}")
+            self.db_open_state[self.db_name] = None
             return 1
         except Exception as e:
             print(f"Open RW mode - Exception failure: {e}")
+            self.db_open_state[self.db_name] = None
             return 0
             
 ################# 3
@@ -185,8 +189,11 @@ class lmdb_io_eng:
         _sentiment_count["negative"] = 0
         
         logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
-        self.env = self.open_lmdb_RO(3)
-        if self.env is not None:                      #    LMDB opened sucessfully
+        print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))}")
+        if self.db_open_state.get(self.db_name) is None:    # None = closed
+            self.env = self.open_lmdb_RO(3)
+            #if self.env is not None:                      #    LMDB opened sucessfully
+        else:
             ################# LMDB Deep Cache KV store engine
             #
             # KVstore REHYDRATON Engine
@@ -195,9 +202,7 @@ class lmdb_io_eng:
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
             logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
             
-            print (f"debug-198: DB open state: {type(self.db_open_state.get(self.db_name))}")
-            #self.db_open_state[self.db_name] = self.env
-            
+            print (f"debug-205: DB open state: {type(self.db_open_state.get(self.db_name))}")
             with self.env.begin() as txn:
                 _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
                 if _key_found is not None:
