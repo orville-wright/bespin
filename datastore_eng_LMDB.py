@@ -190,7 +190,7 @@ class lmdb_io_eng:
         _sentiment_count["negative"] = 0
         
         logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
-        print (f"debug-188: DB open state: {type(self.db_open_state.get(self.db_name))}")
+        #print (f"debug-188: DB open state: {type(self.db_open_state.get(self.db_name))}")
         if self.db_open_state.get(self.db_name) is None:    # None = closed
             self.env = self.open_lmdb_RO(_yti)
         
@@ -204,7 +204,7 @@ class lmdb_io_eng:
         bs4_kvs_key = _key.encode('utf-8')          # byte encode 
         logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
         
-        print (f"debug-205: DB open state: {type(self.db_open_state.get(self.db_name))}")
+        print (f"debug-207: DB open state: {type(self.db_open_state.get(self.db_name))}")
         with self.env.begin() as txn:
             _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
             if _key_found is not None:

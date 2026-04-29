@@ -878,11 +878,10 @@ class yfnews_reader:
         # ############################################################
         print ( f"###-debug: \n1:{_extr_eng}, \n2: {data_row}, \n3: {item_idx}, \n4: {self.sent_ai}, \n5: {_extr_eng}" )
 
-        #_ec, _ttk, _ttw, _sen_data, _fr = self.C4_kvio_eng.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
-        self.C4_kvio_eng.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
+        _ec, _ttk, _ttw, _sen_data, _fr = self.C4_kvio_eng.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
+        #self.C4_kvio_eng.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
         #  kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng)
-        
-        _ec = 3
+        #_ec = 3
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
