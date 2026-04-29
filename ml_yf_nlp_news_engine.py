@@ -876,7 +876,8 @@ class yfnews_reader:
         # KV Cache Engine - activated
         # check to see if weve previous read/processed this article
         # ############################################################
-        _ec, _ttk, _ttw, _sen_data, _fr = self.C4_kvio_eng.kv_cache_engine("C4", symbol, data_row, item_idx, self.sent_ai, _extr_eng)
+        #_ec, _ttk, _ttw, _sen_data, _fr = self.C4_kvio_eng.kv_cache_engine("C4", symbol, data_row, item_idx, self.sent_ai, _extr_eng)
+        self.C4_kvio_eng.kv_cache_engine("C4", symbol, data_row, item_idx, self.sent_ai, _extr_eng)
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
