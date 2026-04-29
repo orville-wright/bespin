@@ -165,9 +165,6 @@ class lmdb_io_eng:
     def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng):
         cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
         logging.info( f'%s  - kv_cache_engine.#{_yti}.{_extr_eng} KV DB: {self.db_name}' % cmi_debug )
-        if self.db_open_state.get(self.db_name) is not None:
-            self.close_lmdb(_yti)   # ensure any open LMDB instance is closed before we start
-        
         # Deep Caching engine (LMDB KV store)
         # Has article been read/extracted, and its metadata existing in KVstore
         # Attempt to rehydrate the article metadata from Deep Cache
