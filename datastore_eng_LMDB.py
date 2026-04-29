@@ -56,8 +56,8 @@ class lmdb_io_eng:
         db_inst = self.db_path+self.db_name
         try:
             self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
-            logging.info( f'%s     - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
-            logging.info( f'%s     - Warning: Instance remains globally open !' % cmi_debug )
+            logging.info( f'%s    - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
+            logging.info( f'%s    - Warning: Instance remains globally open !' % cmi_debug )
             self.db_open_state[self.db_name] = self.env
             return self.env
         except lmdb.Error as e:
@@ -188,8 +188,9 @@ class lmdb_io_eng:
         print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))}")
         if self.db_open_state.get(self.db_name) is None:    # None = closed
             self.env = self.open_lmdb_RO(3)
-            #if self.env is not None:                      #    LMDB opened sucessfully
         else:
+            print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))} / LMBD inst: {self.env}")
+            #if self.env is not None:                      #    LMDB opened sucessfully
             ################# LMDB Deep Cache KV store engine
             #
             # KVstore REHYDRATON Engine
