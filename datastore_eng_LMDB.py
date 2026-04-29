@@ -97,11 +97,11 @@ class lmdb_io_eng:
         db_inst = self.db_path+self.db_name
         
         try:
-            self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
-            self.db_open_state[self.db_name] = self.env
+            self.RO_env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
+            self.db_open_state[self.db_name] = self.RO_env
             logging.info( f'%s   - Successfully opened KVstore - READ-ONLY mode.#{self.yti} {self.db_name}' % cmi_debug )
             logging.info( f'%s   - KVstore remains globally open.#{self.yti} instance: {self.db_name}' % cmi_debug )
-            with self.env.begin() as txn:
+            with self.RO_env.begin() as txn:
                 cursor = txn.cursor()
                 count = 0
                 for key, value in cursor:
@@ -129,7 +129,7 @@ class lmdb_io_eng:
             self.RW_env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
             self.db_open_state[self.db_name] = self.RW_env
             _db0 = self.RW_env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
-            with self.env.begin(write=True) as txn:
+            with self.RW_env.begin(write=True) as txn:
                 txn.drop(_db0, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
             self.RW_env.close()
             self.db_open_state[self.db_name] = None
@@ -194,7 +194,7 @@ class lmdb_io_eng:
         if self.db_open_state.get(self.db_name) is None:    # None = closed
             self.RO_env = self.open_lmdb_RO(_yti)
         
-        print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))} / LMBD inst: {self.env}")
+        print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))} / LMBD inst: {self.RO_env}")
         #if self.env is not None:                      #    LMDB opened sucessfully
         ################# LMDB Deep Cache KV store engine
         #
