@@ -61,7 +61,6 @@ class lmdb_io_eng:
             return self.env
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
-            print(f"Database: {db_inst} - not found.")
             return 0
         except Exception as e:
             print(f"Error open_lmdb_RO Exception: {e}")
@@ -106,7 +105,6 @@ class lmdb_io_eng:
             return 1
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
-            print(f"Database: {db_inst} - not found.")
             return 0
         except Exception as e:
             print(f"Dump RO mode - Error Exception: {e}")
@@ -130,7 +128,6 @@ class lmdb_io_eng:
             return 1
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
-            print(f"Database: {db_inst} - not found.")
             return 0
         except Exception as e:
             print(f"Drop RW mode - Error Exception: {e}")
