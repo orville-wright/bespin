@@ -30,7 +30,7 @@ class lmdb_io_eng:
     db_path = "datastore/"       # filesystem path to locale of LMDB K/V Database
     db_name = "DB_name_not_set"    # LMDB Database instance name
     db_open_state = {}  #
-    RO_env = {}}       # LMDB environment instance for RO mode
+    RO_env = {}       # LMDB environment instance for RO mode
     RW_env = {}       # LMDB environment instance for RW mode
     sent_ai = None      # sentiment_ai instance, set by main() before calling kv_cache_engine()
     yti = 0
