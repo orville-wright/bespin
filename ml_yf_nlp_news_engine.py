@@ -1113,15 +1113,24 @@ class yfnews_reader:
                                 })
 
                             # Create LMBD KV cache entry
-                            self.C4_kvio_eng.close_lmdb("C4")   # force close
+                            #self.C4_kvio_eng.close_lmdb("C4")   # force close
+                            
+                            #kv_success = self.C4_kvio_eng.open_lmdb_RW("C4")
+                            #
+                            # self.C4_kvio_eng.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
+                            
+                            if self.C4_kvio_eng.RO_env is not None:      # explicit reliable singleton None test
+                                self.C4_kvio_eng.close_lmdb("C4")        # force close
+                            
                             logging.info( f'%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
-                            kv_success = self.C4_kvio_eng.open_lmdb_RW("C4")
+                            kv_success = self.C4_kvio_eng.open_lmdb_RW("C4")  # re-open in RW mode
+                            
                             if kv_success is not None:
                                 _url_hash = data_row['urlhash']
                                 _key = "0001"+"."+symbol+"."+_url_hash     # we are looking at the artile here. So test for this K/V data
                                 c4_kvs_key = _key.encode('utf-8')          # byte encode 
                                 logging.info( f'%s - C4 WRITE sent package to KVstore: {_key}' % cmi_debug )
-                                with self.C4_kvio_eng.begin(write=True) as _txn:
+                                with self.C4_kvio_eng.RW_env.begin(write=True) as _txn:
                                     _kvs_json_dataset = json.dumps(_final_data_dict, default=str)
                                     _txn.put(c4_kvs_key, _kvs_json_dataset.encode('utf-8'))     # write data to LMDB
                                     self.C4_kvio_eng.close_lmdb("C4")
