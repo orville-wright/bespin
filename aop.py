@@ -29,7 +29,7 @@ from y_daylosers import y_daylosers
 from y_smallcaps import smallcap_screen
 from y_techevents import y_techevents
 from y_topgainers import y_topgainers
-from datastore_eng_LMBD import lmdb_io_eng
+from datastore_eng_LMDB import lmdb_io_eng
 
 from data_engines_fundamentals.alphavantage_md import alphavantage_md
 from db_graph import db_graph
