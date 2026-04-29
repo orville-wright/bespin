@@ -28,9 +28,9 @@ class lmdb_io_eng:
     cursor = None       # current LMDB Transaction Cursor - not sure if this is safe to store as global attribute
     cycle = 0           # class thread loop counter
     db_path = "datastore/"       # filesystem path to locale of LMDB K/V Database
-    db_name = None      # LMDB Database instance name
+    db_name = "DB_name_not_set"    # LMDB Database instance name
     db_open_state = {}  # 0=closed, 1=open
-    env = None          # current opened LMDB database I/O Transaction handle
+    env = {}            # current opened LMDB database I/O Transaction handle
     sent_ai = None      # sentiment_ai instance, set by main() before calling kv_cache_engine()
     yti = 0
     _n = 0             # negative sentiment count
@@ -93,7 +93,7 @@ class lmdb_io_eng:
     def dump_lmdb_RO(self, yti):
         cmi_debug = __name__+"::"+self.dump_lmdb_RO.__name__+".#"+str(self.yti)
         logging.info( f'%s    - dump_lmdb.#{self.yti} DB Instance: {self.db_name}' % cmi_debug )
-        db_inst = self.db_path + self.db_name
+        db_inst = self.db_path+self.db_name
         
         try:
             self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
@@ -185,9 +185,9 @@ class lmdb_io_eng:
         _sentiment_count["negative"] = 0
         
         logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
-        print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))}")
+        print (f"debug-188: DB open state: {type(self.db_open_state.get(self.db_name))}")
         if self.db_open_state.get(self.db_name) is None:    # None = closed
-            self.env = self.open_lmdb_RO(3)
+            self.env = self.open_lmdb_RO(_yti)
         else:
             print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))} / LMBD inst: {self.env}")
             #if self.env is not None:                      #    LMDB opened sucessfully
