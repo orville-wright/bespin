@@ -876,7 +876,7 @@ class yfnews_reader:
         # KV Cache Engine - activated
         # check to see if weve previous read/processed this article
         # ############################################################
-        print ( f"###-debug: \n1:{extr_eng}, \n2: {data_row}, \n3: {item_idx}, \n4: {self.sent_ai}, \n5: {_extr_eng}" )
+        print ( f"###-debug: \n1:{_extr_eng}, \n2: {data_row}, \n3: {item_idx}, \n4: {self.sent_ai}, \n5: {_extr_eng}" )
 
         _ec, _ttk, _ttw, _sen_data, _fr = self.C4_kvio_eng.kv_cache_engine(_extr_eng, data_row, item_idx, self.sent_ai, _extr_eng)
         #self.C4_kvio_eng.kv_cache_engine("C4", symbol, data_row, item_idx, self.sent_ai, _extr_eng)
