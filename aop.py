@@ -55,10 +55,11 @@ from data_engines_news.hedgeweek_news import hedgeweek_news
 from data_engines_news.gurufocus_news import gurufocus_news
 
 # Main() Global attributes
-args = {}
-articles_found = 0          # number of articles found by the AI news reader for 1 synble scan run
 global args
 global parser
+
+args = {}
+articles_found = 0          # number of articles found by the AI news reader for 1 synble scan run
 lmdb_env = {}               # global LMDB KV database (cross classes accessor)  
 logging.basicConfig(level=logging.INFO)
 uh = url_hinter(1, args)    # everyone needs to be able to get hints on a URL from anywhere
