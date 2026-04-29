@@ -1141,8 +1141,8 @@ class yfnews_reader:
                                 _url_hash = data_row['urlhash']
                                 _key = "0001"+"."+symbol+"."+_url_hash     # we are looking at the artile here. So test for this K/V data
                                 c4_kvs_key = _key.encode('utf-8')          # byte encode 
-                                logging.info( f'%s - C4 WRITE sent package to KVstore: {_key}' % cmi_debug )
-                                with self.C4_lmdb_env.begin(write=True) as _txn:
+                                logging.info( f'%s - C4 WRITE package @ KVstore: {_key}' % cmi_debug )
+                                with self.C4_lmdb_env.RW_env.begin(write=True) as _txn:
                                     _kvs_json_dataset = json.dumps(_final_data_dict, default=str)
                                     _txn.put(c4_kvs_key, _kvs_json_dataset.encode('utf-8'))     # write data to LMDB
                                     #self.C4_lmdb_env.close_lmdb("C4")
