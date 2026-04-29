@@ -781,7 +781,7 @@ class yfnews_reader:
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
             logging.info( f'%s - BS4 WRITE sent package to KVstore: {_key}' % cmi_debug )
-            with self.kvio_eng.env.begin(write=True) as _txn:
+            with self.kvio_eng.begin(write=True) as _txn:
                 _kvs_json_dataset = json.dumps(_final_data_dict, default=str)    # serialize to JSON
                 _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
                 self.kvio_eng.close_lmdb(2)  # force close
