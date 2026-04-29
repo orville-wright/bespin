@@ -192,7 +192,7 @@ class lmdb_io_eng:
         logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
         #print (f"debug-188: DB open state: {type(self.db_open_state.get(self.db_name))}")
         if self.db_open_state.get(self.db_name) is None:    # None = closed
-            self.env = self.open_lmdb_RO(_yti)
+            self.RO_env = self.open_lmdb_RO(_yti)
         
         print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))} / LMBD inst: {self.env}")
         #if self.env is not None:                      #    LMDB opened sucessfully
@@ -205,7 +205,8 @@ class lmdb_io_eng:
         logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
         
         print (f"debug-207: DB open state: {type(self.db_open_state.get(self.db_name))}")
-        with self.env.begin() as txn:
+
+        with self.RO_env.begin() as txn:
             _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
             if _key_found is not None:
                 logging.info( f'%s - Deep Cache KV entry found: validating...' % cmi_debug )
