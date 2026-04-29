@@ -29,8 +29,9 @@ class lmdb_io_eng:
     cycle = 0           # class thread loop counter
     db_path = "datastore/"       # filesystem path to locale of LMDB K/V Database
     db_name = "DB_name_not_set"    # LMDB Database instance name
-    db_open_state = {}  # 0=closed, 1=open
-    env = {}            # current opened LMDB database I/O Transaction handle
+    db_open_state = {}  #
+    RO_env = {}}       # LMDB environment instance for RO mode
+    RW_env = {}       # LMDB environment instance for RW mode
     sent_ai = None      # sentiment_ai instance, set by main() before calling kv_cache_engine()
     yti = 0
     _n = 0             # negative sentiment count
@@ -55,11 +56,11 @@ class lmdb_io_eng:
         logging.info( f'%s    - open_lmdb_RO.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         try:
-            self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
+            self.RO_env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
             logging.info( f'%s    - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
             logging.info( f'%s    - Warning: Instance remains globally open !' % cmi_debug )
-            self.db_open_state[self.db_name] = self.env
-            return self.env
+            self.db_open_state[self.db_name] = self.RO_env
+            return self.RO_env
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
             self.db_open_state[self.db_name] = None
@@ -75,11 +76,11 @@ class lmdb_io_eng:
         logging.info( f'%s    - open_lmdb_RW.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         try:
-            self.env = lmdb.open(db_inst, map_size=1024*1024*1024, readonly=False)     # map_size: Maximum size DB = 1GB
+            self.RW_env = lmdb.open(db_inst, map_size=1024*1024*1024, readonly=False)     # map_size: Maximum size DB = 1GB
             logging.info( f'%s    - Successfully openend KVstore - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
             logging.info( f'%s    - Warning instance remains globally open' % cmi_debug )
-            self.db_open_state[self.db_name] = self.env
-            return self.env
+            self.db_open_state[self.db_name] = self.RW_env
+            return self.RW_env
         except lmdb.Error as e:
             print(f"LMDB {db_inst} - Open Error: {e}")
             self.db_open_state[self.db_name] = None
@@ -123,14 +124,14 @@ class lmdb_io_eng:
         db_inst = self.db_path+self.db_name
 
         try:
-            self.env.close()
+            self.RW_env.close()
             db_inst = self.db_path + self.db_name
-            self.env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
-            self.db_open_state[self.db_name] = self.env
-            _db0 = self.env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
+            self.RW_env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
+            self.db_open_state[self.db_name] = self.RW_env
+            _db0 = self.RW_env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
             with self.env.begin(write=True) as txn:
                 txn.drop(_db0, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
-            self.env.close()
+            self.RW_env.close()
             self.db_open_state[self.db_name] = None
             logging.info( f'%s - DROPPED default database - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
             return 1
@@ -146,10 +147,14 @@ class lmdb_io_eng:
         cmi_debug = __name__+"::"+self.close_lmdb.__name__+".#"+str(self.yti)
         logging.info( f'%s   - close_lmdb.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         try:
-            if self.env is not None:
-                self.env.close()
+            if self.RO_env is not None:
+                self.RO_env.close()
                 self.db_open_state[self.db_name] = None
-                logging.info( f'%s   - Successfully closed LMDB instance.#{self.yti} {self.db_name}' % cmi_debug )
+                logging.info( f'%s   - Successfully closed RO LMDB instance.#{self.yti} {self.db_name}' % cmi_debug )
+            elif self.RW_env is not None:
+                self.RW_env.close()
+                self.db_open_state[self.db_name] = None
+                logging.info( f'%s   - Successfully closed RW LMDB instance.#{self.yti} {self.db_name}' % cmi_debug )
             else:
                 logging.warning( f'%s   - No open LMDB instance to close.#{self.yti} {self.db_name}' % cmi_debug )
             return 1
