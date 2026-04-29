@@ -178,8 +178,8 @@ class lmdb_io_eng:
         _sentiment_count["negative"] = 0
         
         logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
-        _kv_success = self.open_lmdb_RO(3)
-        if _kv_success is not None:                      #    LMDB opened sucessfully
+        self.kv_success = self.open_lmdb_RO(3)
+        if self.kv_success is not None:                      #    LMDB opened sucessfully
             ################# LMDB Deep Cache KV store engine
             #
             # KVstore REHYDRATON Engine
@@ -187,7 +187,7 @@ class lmdb_io_eng:
             _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
             logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
-            with _kv_success.begin() as txn:
+            with self.kv_success.begin() as txn:
                 _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
                 if _key_found is not None:
                     logging.info( f'%s - Deep Cache KV entry found: validating...' % cmi_debug )
