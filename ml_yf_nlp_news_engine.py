@@ -1133,9 +1133,9 @@ class yfnews_reader:
                                 print (f"debug-1133: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
 
                             logging.info( f'%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
-                            print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             kv_success = self.C4_lmdb_env.open_lmdb_RW("C4")  # re-open in RW mode
                             self.C4_lmdb_env.RW_env = kv_success
+                            print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             
                             if kv_success is not None:
                                 _url_hash = data_row['urlhash']
@@ -1145,7 +1145,7 @@ class yfnews_reader:
                                 with self.C4_lmdb_env.begin(write=True) as _txn:
                                     _kvs_json_dataset = json.dumps(_final_data_dict, default=str)
                                     _txn.put(c4_kvs_key, _kvs_json_dataset.encode('utf-8'))     # write data to LMDB
-                                    self.C4_lmdb_env.close_lmdb("C4")
+                                    #self.C4_lmdb_env.close_lmdb("C4")
                             else:
                                 logging.info( f'%s - C4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
                                 pass        # Not Fatal - faield to open LMDB. Continue with manual Network Read
@@ -1175,9 +1175,15 @@ class yfnews_reader:
                                     )
                             print (f"{footer}")
                             print (f"================================ C4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
+
+                            print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                            self.C4_lmdb_env.close_lmdb("C4")
+                            print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             return self.total_tokens, self.total_words, c4_final_results
+
                     print (f"###-debug: C4 data exttract KV en - NO Action taken !: {_total_chars}" )
                     return 0, 0, 0
+
             print (f"##-@1199: C4 data extrct KV eng - Unknown state!" )
         return 0, 0, None
     
