@@ -787,7 +787,7 @@ class yfnews_reader:
                 self.kvio_eng.close_lmdb(2)  # force close
         else:
             logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
-            self.kvio_eng.close_lmdb(2
+            self.kvio_eng.close_lmdb(2)
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
         # empty vocabulary pretty-printer logic for eof=""
         if self.sent_ai.empty_vocab > 0:
