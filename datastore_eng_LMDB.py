@@ -195,7 +195,7 @@ class lmdb_io_eng:
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
             logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
             
-            print (f"debug-198: DB open state: {self.db_open_state.get(self.db_name)}")
+            print (f"debug-198: DB open state: {type(self.db_open_state.get(self.db_name))}")
             #self.db_open_state[self.db_name] = self.env
             
             with self.env.begin() as txn:
