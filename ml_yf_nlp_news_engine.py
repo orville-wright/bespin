@@ -775,8 +775,8 @@ class yfnews_reader:
         
         self.kvio_eng.close_lmdb(2)   # force close
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
-        kv_success = self.kvio_eng.open_lmdb_RW(2)
-        if kv_success is not None:      # explicit reliable singleton None test
+        self.kvio_eng.env = self.kvio_eng.open_lmdb_RW(2)
+        if self.kvio_eng.env is not None:      # explicit reliable singleton None test
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
@@ -784,10 +784,10 @@ class yfnews_reader:
             with self.kvio_eng.env.begin(write=True) as _txn:
                 _kvs_json_dataset = json.dumps(_final_data_dict, default=str)    # serialize to JSON
                 _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
-                self.kvio_eng.env.close
+                self.kvio_eng.close_lmdb(2)  # force close
         else:
             logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
-            self.kvio_eng.env.close
+            self.kvio_eng.close_lmdb(2
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
         # empty vocabulary pretty-printer logic for eof=""
         if self.sent_ai.empty_vocab > 0:
