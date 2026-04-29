@@ -194,7 +194,7 @@ class lmdb_io_eng:
         if self.db_open_state.get(self.db_name) is None:    # None = closed
             self.RO_env = self.open_lmdb_RO(_yti)
         
-        print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))} / LMBD inst: {self.RO_env}")
+        print (f"debug-192: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
         #if self.env is not None:                      #    LMDB opened sucessfully
         ################# LMDB Deep Cache KV store engine
         #
