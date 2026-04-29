@@ -27,11 +27,12 @@ class lmdb_io_eng:
     cr_package = None   # full reslts dict{} of dict_processor ruin
     cursor = None       # current LMDB Transaction Cursor - not sure if this is safe to store as global attribute
     cycle = 0           # class thread loop counter
-    db_path = "datastore/"       # filesystem path to locale of LMDB K/V Database
+    db_path = "datastore/"         # filesystem path to locale of LMDB K/V Database
     db_name = "DB_name_not_set"    # LMDB Database instance name
     db_open_state = {}  #
-    RO_env = {}       # LMDB environment instance for RO mode
-    RW_env = {}       # LMDB environment instance for RW mode
+    lmdb_env = {}       # LMDB global instance, opened @ main::newsai_sent
+    RO_env = {}         # LMDB environment instance for RO mode
+    RW_env = {}         # LMDB environment instance for RW mode
     sent_ai = None      # sentiment_ai instance, set by main() before calling kv_cache_engine()
     yti = 0
     _n = 0             # negative sentiment count
@@ -205,8 +206,7 @@ class lmdb_io_eng:
         bs4_kvs_key = _key.encode('utf-8')          # byte encode 
         logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
         
-        print (f"debug-207: DB open state: {type(self.db_open_state.get(self.db_name))} ")
-
+        print (f"debug-198: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
         with self.RO_env.begin() as txn:
             _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
             if _key_found is not None:

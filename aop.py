@@ -29,6 +29,7 @@ from y_daylosers import y_daylosers
 from y_smallcaps import smallcap_screen
 from y_techevents import y_techevents
 from y_topgainers import y_topgainers
+from datastore_eng_LMBD import lmdb_io_eng
 
 from data_engines_fundamentals.alphavantage_md import alphavantage_md
 from db_graph import db_graph
@@ -54,14 +55,15 @@ from data_engines_news.hedgeweek_news import hedgeweek_news
 from data_engines_news.gurufocus_news import gurufocus_news
 
 # Main() Global attributes
-logging.basicConfig(level=logging.INFO)
-work_inst = 0
-global args
 args = {}
+articles_found = 0          # number of articles found by the AI news reader for 1 synble scan run
+global args
 global parser
-articles_found = 0              # number of articles found by the AI news reader for 1 synble scan run
+lmdb_env = {}               # global LMDB KV database (cross classes accessor)  
+logging.basicConfig(level=logging.INFO)
+uh = url_hinter(1, args)    # everyone needs to be able to get hints on a URL from anywhere
+work_inst = 0
 yti = 1
-uh = url_hinter(1, args)        # everyone needs to be able to get hints on a URL from anywhere
 
 
 parser = argparse.ArgumentParser(prog="Aop", description="Entropy apperture engine")
@@ -425,6 +427,9 @@ def main():
             print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ]" )
             news_ai = ml_nlpreader(1, args, caller="news_ai")
             sent_ai = ml_sentiment(1, args)
+            logging.info(f'%s - Open global LMBD KV cache engine...' % cmi_debug)
+            lmdb_dbname = "LMDB_0001"
+            lmdb_env = lmdb_io_eng("GLOBAL", lmdb_dbname, args)  # create instance of LMDB
             
             logging.info(f'%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
@@ -456,9 +461,9 @@ def main():
                     # scraper loadbalancer, Anti-bot avoidance & performance balancing
                     # WARN:  executes sentiment_ai.compute_sentiment()
                     if antibot_load_balancer == 0:                          # randomize  craw4ai / BS4 scrapers
-                        _atc, _awc, final_results = news_ai.yfn.artdata_C4_depth3(sn_idx, sent_ai)    # craw4ai engine
+                        _atc, _awc, final_results = news_ai.yfn.artdata_C4_depth3(sn_idx, sent_ai, lmdb_env)    # craw4ai engine
                     else:
-                        _atc, _awc, final_results = news_ai.yfn.artdata_BS4_depth3(sn_idx, sent_ai)   # BS4 engine 
+                        _atc, _awc, final_results = news_ai.yfn.artdata_BS4_depth3(sn_idx, sent_ai, lmdb_env)   # BS4 engine 
                     _rnd_loadb = random.randint(1, 100)             # randomize load balancer decison
                     if _rnd_loadb % 2 == 0:
                         antibot_load_balancer = 0                           # choose CRAW4AI scraper (+ unified BS4/C4 chunker)

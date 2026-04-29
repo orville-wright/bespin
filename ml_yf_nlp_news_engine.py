@@ -47,8 +47,14 @@ class yfnews_reader:
     dummy_resp0 = None
     ext_req = None          # HTMLSession request handle
     extracted_articles = None  # crawl4ai extracted articles
-    C4_kvio_eng = None
-    BS4_kvio_eng = None
+    
+#    C4_kvio_eng = None
+#    BS4_kvio_eng = None
+
+    lmdb_env = None         # Global LMBD instance, opened @ main::newsai_sent
+    C4_lmdb_env = None
+    BS4_lmdb_env = None
+
     li_superclass = None    # all possible News articles
     live_resp0 = None
     ml_brief = []           # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
@@ -538,7 +544,7 @@ class yfnews_reader:
     #       Does full get() request for every viable news article found
     # Reads each URL, and crawls that page, extracting key elements e.g. <p>.text
     # Trying to refactor to craw4al, but currently uses BS4
-    def artdata_BS4_depth3(self, item_idx, sentiment_ai):
+    def artdata_BS4_depth3(self, item_idx, sentiment_ai, lmdb_inst):
         """
         Depth: 3
         Extractor:  BS4 -  (engine decidcated to BS4 only)
@@ -567,8 +573,8 @@ class yfnews_reader:
         symbol = data_row['symbol']
         cached_state = data_row['urlhash']      # eval  DB[] @ item=item_idx, and pull out article urlhash
         self.sent_ai = sentiment_ai
-        lmdb_dbname = "LMDB_0001"
-        self.BS4_kvio_eng = lmdb_io_eng("BS4", lmdb_dbname, self.args)
+        self.BS4_lmdb_env = lmdb_inst
+        
         bs4_final_results = dict()  # ensure final_results is empty
         self.sent_ai.empty_vocab = 0
 
@@ -586,7 +592,7 @@ class yfnews_reader:
         symbol = symbol.upper()
         _extr_eng="BS4"
 
-        _ec, _ttk, _ttw, _sen_data, _fr = self.BS4_kvio_eng.kv_cache_engine("BS4", symbol, data_row, item_idx, self.sent_ai, _extr_eng)
+        _ec, _ttk, _ttw, _sen_data, _fr = self.BS4_lmdb_env.kv_cache_engine("BS4", symbol, data_row, item_idx, self.sent_ai, _extr_eng)
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
@@ -774,22 +780,27 @@ class yfnews_reader:
             'total_tokens': int(self.total_tokens),
             })
         
-        self.BS4_kvio_eng.close_lmdb("BS4")   # force close
+        #self.BS4_lmdb_env.close_lmdb("BS4")   # force close
+        if self.BS4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
+            self.BS4_lmdb_env.close_lmdb("BS4")        # force close
 
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
-        self.BS4_kvio_eng = self.BS4_kvio_eng.open_lmdb_RW("BS4")
-        if self.BS4_kvio_eng is not None:      # explicit reliable singleton None test
+
+        kv_success = self.BS4_lmdb_env.open_lmdb_RW("BS4")  # re-open in RW mode
+        self.BS4_lmdb_env.RW_env = kv_success
+        
+        if kv_success is not None:      # explicit reliable singleton None test
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
             logging.info( f'%s - BS4 WRITE sent package to KVstore: {_key}' % cmi_debug )
-            with self.BS4_kvio_eng.begin(write=True) as _txn:
+            with self.BS4_lmdb_env.begin(write=True) as _txn:
                 _kvs_json_dataset = json.dumps(_final_data_dict, default=str)    # serialize to JSON
                 _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
-                self.BS4_kvio_eng.close_lmdb("BS4")  # force close
+                self.BS4_lmdb_env.close_lmdb("BS4")  # force close
         else:
             logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
-            self.BS4_kvio_eng.close_lmdb("BS4")  # force close
+            self.BS4_lmdb_env.close_lmdb("BS4")  # force close
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
         # empty vocabulary pretty-printer logic for eof=""
         if self.sent_ai.empty_vocab > 0:
@@ -826,7 +837,7 @@ class yfnews_reader:
     # HEAVY network data extractor
     # Reads each URL, and crawls that page, extracting key elements
     
-    def artdata_C4_depth3(self, item_idx, sentiment_ai):
+    def artdata_C4_depth3(self, item_idx, sentiment_ai, lmdb_inst):
         """
         Extractor:  CRAWL4AI -  (engine decidcated to BS4 only)
         - Build the Text corpus for 1 (one) article only
@@ -852,8 +863,11 @@ class yfnews_reader:
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
         self.sent_ai = sentiment_ai
-        lmdb_dbname = "LMDB_0001"
-        self.C4_kvio_eng = lmdb_io_eng("C4", lmdb_dbname, self.args)
+        # DSIBALE THIS !!
+        # lmdb_dbname = "LMDB_0001"
+        # self.C4_kvio_eng = lmdb_io_eng("C4", lmdb_dbname, self.args)    # create instance of LMDB
+        self.C4_lmdb_env = lmdb_inst
+
         c4_final_results = dict()  # ensure final_results is empty
         self.sent_ai.empty_vocab = 0
         
@@ -878,7 +892,7 @@ class yfnews_reader:
         # ############################################################
         print ( f"###-debug: \n1:{_extr_eng}, \n2: {data_row}, \n3: {item_idx}, \n4: {self.sent_ai}, \n5: {_extr_eng}" )
 
-        _ec, _ttk, _ttw, _sen_data, _fr = self.C4_kvio_eng.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
+        _ec, _ttk, _ttw, _sen_data, _fr = self.C4_lmdb_env.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
         #self.C4_kvio_eng.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
         #  kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng)
         #_ec = 3
@@ -1113,28 +1127,23 @@ class yfnews_reader:
                                 })
 
                             # Create LMBD KV cache entry
-                            #self.C4_kvio_eng.close_lmdb("C4")   # force close
-                            
-                            #kv_success = self.C4_kvio_eng.open_lmdb_RW("C4")
-                            #
-                            # self.C4_kvio_eng.kv_cache_engine(_extr_eng, symbol, data_row, item_idx, self.sent_ai, _extr_eng)
-                            
-                            if self.C4_kvio_eng.RO_env is not None:      # explicit reliable singleton None test
-                                self.C4_kvio_eng.close_lmdb("C4")        # force close
+
+                            if self.C4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
+                                self.C4_lmdb_env.close_lmdb("C4")        # force close
                             
                             logging.info( f'%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
-                            kv_success = self.C4_kvio_eng.open_lmdb_RW("C4")  # re-open in RW mode
-                            self.C4_kvio_eng.RW_env = kv_success
+                            kv_success = self.C4_lmdb_env.open_lmdb_RW("C4")  # re-open in RW mode
+                            self.C4_lmdb_env.RW_env = kv_success
                             
                             if kv_success is not None:
                                 _url_hash = data_row['urlhash']
                                 _key = "0001"+"."+symbol+"."+_url_hash     # we are looking at the artile here. So test for this K/V data
                                 c4_kvs_key = _key.encode('utf-8')          # byte encode 
                                 logging.info( f'%s - C4 WRITE sent package to KVstore: {_key}' % cmi_debug )
-                                with self.C4_kvio_eng.begin(write=True) as _txn:
+                                with self.C4_lmdb_env.begin(write=True) as _txn:
                                     _kvs_json_dataset = json.dumps(_final_data_dict, default=str)
                                     _txn.put(c4_kvs_key, _kvs_json_dataset.encode('utf-8'))     # write data to LMDB
-                                    self.C4_kvio_eng.close_lmdb("C4")
+                                    self.C4_lmdb_env.close_lmdb("C4")
                             else:
                                 logging.info( f'%s - C4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
                                 pass        # Not Fatal - faield to open LMDB. Continue with manual Network Read
