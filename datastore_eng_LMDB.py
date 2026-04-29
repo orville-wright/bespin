@@ -29,7 +29,7 @@ class lmdb_io_eng:
     cycle = 0           # class thread loop counter
     db_path = "datastore/"       # filesystem path to locale of LMDB K/V Database
     db_name = None      # LMDB Database instance name
-    db_open_state = 0   # 0=closed, 1=open
+    db_open_state = {}  # 0=closed, 1=open
     env = None          # current opened LMDB database I/O Transaction handle
     sent_ai = None      # sentiment_ai instance, set by main() before calling kv_cache_engine()
     yti = 0
@@ -52,16 +52,17 @@ class lmdb_io_eng:
 ################# 1
     def open_lmdb_RO(self, yti):
         cmi_debug = __name__+"::"+self.open_lmdb_RO.__name__+".#"+str(self.yti)
-        logging.info( f'%s     - Open LMBD Read Only mode {self.yti} DB Instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s     - Open LMBD Read Only mode #{self.yti} DB Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path + self.db_name
         try:
             self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
             logging.info( f'%s     - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
             logging.info( f'%s     - Warning: Instance remains globally open !' % cmi_debug )
+            self.db_open_state[self.db_name] = self.env
             return self.env
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
-            return 0
+            return 1
         except Exception as e:
             print(f"Error open_lmdb_RO Exception: {e}")
             return 0
@@ -76,10 +77,11 @@ class lmdb_io_eng:
             self.env = lmdb.open(db_inst, map_size=1024*1024*1024, readonly=False)     # map_size: Maximum size DB = 1GB
             logging.info( f'%s    - Successfully openend KVstore - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
             logging.info( f'%s    - KVstore remains globally open.#{self.yti} Instance: {self.db_name}' % cmi_debug )
+            self.db_open_state[self.db_name] = self.env
             return self.env
         except lmdb.Error as e:
             print(f"LMDB {db_inst} - Open Error: {e}")
-            return 0
+            return 1
         except Exception as e:
             print(f"Open RW mode - Exception failure: {e}")
             return 0
@@ -92,6 +94,7 @@ class lmdb_io_eng:
         
         try:
             self.env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
+            self.db_open_state[self.db_name] = self.env
             logging.info( f'%s   - Successfully opened KVstore - READ-ONLY mode.#{self.yti} {self.db_name}' % cmi_debug )
             logging.info( f'%s   - KVstore remains globally open.#{self.yti} instance: {self.db_name}' % cmi_debug )
             with self.env.begin() as txn:
@@ -105,7 +108,7 @@ class lmdb_io_eng:
             return 1
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
-            return 0
+            return 2
         except Exception as e:
             print(f"Dump RO mode - Error Exception: {e}")
             return 0
@@ -120,10 +123,12 @@ class lmdb_io_eng:
             self.env.close()
             db_inst = self.db_path + self.db_name
             self.env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
+            self.db_open_state[self.db_name] = self.env
             _db0 = self.env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
             with self.env.begin(write=True) as txn:
                 txn.drop(_db0, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
             self.env.close()
+            self.db_open_state[self.db_name] = None
             logging.info( f'%s - DROPPED default database - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
             return 1
         except lmdb.Error as e:
@@ -140,13 +145,14 @@ class lmdb_io_eng:
         try:
             if self.env is not None:
                 self.env.close()
+                self.db_open_state[self.db_name] = None
                 logging.info( f'%s   - Successfully closed LMDB instance.#{self.yti} {self.db_name}' % cmi_debug )
             else:
                 logging.warning( f'%s   - No open LMDB instance to close.#{self.yti} {self.db_name}' % cmi_debug )
             return 1
         except lmdb.Error as e:
             print(f"LMDB Close Error: {e}")
-            return 0
+            return 2
         except Exception as e:
             print(f"Close instance - Error Exception: {e}")
             return 0
@@ -155,7 +161,7 @@ class lmdb_io_eng:
     def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng):
         cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
         logging.info( f'%s  - kv_cache_engine.#{_yti}.{_extr_eng} KV DB: {self.db_name}' % cmi_debug )
-        self.close_lmdb(_yti)   # ensure any open LMDB instance is closed before we start
+        self.env.close()   # ensure any open LMDB instance is closed before we start
         
         # Deep Caching engine (LMDB KV store)
         # Has article been read/extracted, and its metadata existing in KVstore
@@ -178,8 +184,8 @@ class lmdb_io_eng:
         _sentiment_count["negative"] = 0
         
         logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
-        self.kv_success = self.open_lmdb_RO(3)
-        if self.kv_success is not None:                      #    LMDB opened sucessfully
+        self.env = self.open_lmdb_RO(3)
+        if self.env is not None:                      #    LMDB opened sucessfully
             ################# LMDB Deep Cache KV store engine
             #
             # KVstore REHYDRATON Engine
@@ -187,7 +193,7 @@ class lmdb_io_eng:
             _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
             logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
-            with self.kv_success.begin() as txn:
+            with self.env.begin() as txn:
                 _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
                 if _key_found is not None:
                     logging.info( f'%s - Deep Cache KV entry found: validating...' % cmi_debug )
