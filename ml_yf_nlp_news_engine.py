@@ -775,8 +775,8 @@ class yfnews_reader:
         
         self.kvio_eng.close_lmdb(2)   # force close
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
-        self.kvio_eng.env = self.kvio_eng.open_lmdb_RW(2)
-        if self.kvio_eng.env is not None:      # explicit reliable singleton None test
+        self.kvio_eng = self.kvio_eng.open_lmdb_RW(2)
+        if self.kvio_eng is not None:      # explicit reliable singleton None test
             _url_hash = data_row['urlhash']
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 

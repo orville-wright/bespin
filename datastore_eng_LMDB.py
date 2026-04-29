@@ -194,6 +194,10 @@ class lmdb_io_eng:
             _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')          # byte encode 
             logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
+            
+            print (f"debug-198: DB open state: {self.db_open_state.get(self.db_name)}")
+            #self.db_open_state[self.db_name] = self.env
+            
             with self.env.begin() as txn:
                 _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
                 if _key_found is not None:
