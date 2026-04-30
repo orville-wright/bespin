@@ -312,7 +312,7 @@ class yfnews_reader:
             #print ( f"DEBUG: C4_Data dump 3: {escape(result.extracted_content)}" )
             e_string = str(e)
             e_pos_error = e_string.split(' ')
-            print ( f"DEBUG:Except @ pos: {e_pos_error[5]}" )
+            #print ( f"DEBUG:Except @ pos: {e_pos_error[5]}" )
             e_html = result.html
             e_start = int(e_pos_error[5]) - 200
             e_end = int(e_pos_error[5]) + 200 
@@ -694,7 +694,7 @@ class yfnews_reader:
             if _built_bs4_entry == 2:
                 logging.info( f'%s - EVAL.#2 :      BS4 data entry...' % cmi_debug )
                 logging.info( f'%s - Weird Net cache state: Try cached net data: {cached_state}' % cmi_debug )
-                print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
+                #print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
                 _dataset_1 = self.yfn_jsdata.text
                 #self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
                 self.nsoup = BeautifulSoup(_dataset_1, "html.parser")
@@ -1179,13 +1179,13 @@ class yfnews_reader:
 
                             #print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             self.C4_lmdb_env.close_lmdb("C4")
-                            print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                            #print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             return self.total_tokens, self.total_words, c4_final_results
 
-                    print (f"###-debug: C4 data exttract KV en - NO Action taken !: {_total_chars}" )
+                    #print (f"###-debug: C4 data exttract KV en - NO Action taken !: {_total_chars}" )
                     return 0, 0, 0
 
-            print (f"##-@1199: C4 data extrct KV eng - Unknown state!" )
+            #print (f"##-1199: C4 data extrct KV eng - Unknown state!" )
         return 0, 0, None
     
     # ################ 7
