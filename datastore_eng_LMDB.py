@@ -148,14 +148,15 @@ class lmdb_io_eng:
         cmi_debug = __name__+"::"+self.close_lmdb.__name__+".#"+str(self.yti)
         logging.info( f'%s   - close_lmdb.#{_yti} Instance: {self.db_name}' % cmi_debug )
         try:
-            if self.RO_env or self.RW_env is not None:
-                #self.RO_env.close()     # gracefully close RO env
-                #self.RW_env.close()     # gracefully close RW env
-                self.lmdb_env.close()   # Agressively  close entire LMBD
-                self.db_open_state[self.db_name] = None
-                self.RO_env = None
-                self.RW_env = None
-                logging.warning( f'%s   - No open LMDB instance to close.#{self.yti} {self.db_name}' % cmi_debug )
+            if self.RO_env is not None:
+                self.RO_env.close()     # gracefully close RO env
+            elif self.RW_env is not None:
+                self.RW_env.close()     # gracefully close RW env   
+                #self.lmdb_env.close()   # Agressively  close entire LMBD
+            self.db_open_state[self.db_name] = None
+            self.RO_env = None
+            self.RW_env = None
+            logging.info( f'%s   - LMBD instance closed.#{_yti} {self.db_name}' % cmi_debug )
             return 1
         except lmdb.Error as e:
             print(f"LMDB Close Error: {e}")
