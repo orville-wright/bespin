@@ -289,7 +289,7 @@ class lmdb_io_eng:
                         print (f"Deep KV Cache: [ HIT.#0 / Deep cache Read success ! Rehydrated from KVstore... ] {item_idx}" )
                         #self.close_lmdb(3)   # close LMDB after read
                         print (f"debug-291: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
-                        self.close_lmdb("GLOBAL")
+                        self.RO_env.close_lmdb("GLOBAL")
                         print (f"debug-293: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
                         return 0, _total_tokens, _total_words, self.sen_data, _final_results
                         #
@@ -299,7 +299,7 @@ class lmdb_io_eng:
                 logging.info( f'%s - Deep Cache MISS : Key not found !' % cmi_debug )
                 print (f"KV Cache.#3:   [ Cache MISS.#3 / No KV entry ! Force article NET read... ] {item_idx}" )
                 print (f"debug-301: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
-                self.close_lmdb("GLOBAL")
+                self.RO_env.close_lmdb("GLOBAL")
                 print (f"debug-303: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
                 return 3, 0, 0, None, None
 
