@@ -783,12 +783,13 @@ class yfnews_reader:
             })
  
         # Create LMBD KV cache entry
-        print (f"debug-784: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
-        if self.BS4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
-            self.BS4_lmdb_env.close_lmdb("BS4")        # force close
-            print (f"debug-787: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        print (f"debug-786: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        if self.BS4_lmdb_env.RO_env is not None:      # is open? - explicit reliable singleton None test
+            self.BS4_lmdb_env.close_lmdb("BS4")       # force close
+            print (f"debug-789: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
 
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
+        print (f"debug-792: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         kv_success = self.BS4_lmdb_env.open_lmdb_RW("BS4")  # re-open in RW mode
         self.BS4_lmdb_env.RW_env = kv_success
         
@@ -797,7 +798,7 @@ class yfnews_reader:
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
             logging.info( f'%s - BS4 WRITE sent package to KVstore: {_key}' % cmi_debug )
-            with self.BS4_lmdb_env.begin(write=True) as _txn:
+            with kv_success.begin(write=True) as _txn:
                 _kvs_json_dataset = json.dumps(_final_data_dict, default=str)    # serialize to JSON
                 _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
 
