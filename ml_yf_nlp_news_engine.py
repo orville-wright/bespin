@@ -279,7 +279,7 @@ class yfnews_reader:
             excluded_tags=["script", "style", "noscript", "template"],
             extraction_strategy=extraction_strategy,
             scan_full_page=True,
-            verbose=True,
+            verbose=False,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
             stream=True,
             js_code=js_cmds,
             cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
@@ -1223,6 +1223,7 @@ class yfnews_reader:
                 # js_code = js_cmds
                 config = CrawlerRunConfig(
                     extraction_strategy=extraction_strategy,
+                    verbose=False,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
                     js_code=js_cmds,
                     cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
                     )
