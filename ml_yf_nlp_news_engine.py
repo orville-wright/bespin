@@ -781,7 +781,7 @@ class yfnews_reader:
             })
  
         # Create LMBD KV cache entry
-        print (f"debug-784: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        print (f"debug-784: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         if self.BS4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
             self.BS4_lmdb_env.close_lmdb("BS4")        # force close
             print (f"debug-787: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
@@ -1131,15 +1131,15 @@ class yfnews_reader:
                                 })
 
                             # Create LMBD KV cache entry
-                            print (f"debug-1130: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                            print (f"debug-1134: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             if self.C4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
                                 self.C4_lmdb_env.close_lmdb("C4")        # force close
-                                print (f"debug-1133: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                                print (f"debug-1137: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
 
                             logging.info( f'%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
                             kv_success = self.C4_lmdb_env.open_lmdb_RW("C4")  # re-open in RW mode
                             self.C4_lmdb_env.RW_env = kv_success
-                            print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                            print (f"debug-1142: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             
                             if kv_success is not None:
                                 _url_hash = data_row['urlhash']
