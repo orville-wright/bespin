@@ -38,7 +38,7 @@ class yfnews_reader:
     # global accessors
     a_urlp = None
     args = []               # class dict to hold global args being passed in from main() methods
-    article_url = "https://www.defaul_instance_url.com"
+    article_url = "https://www.default_instance_url.com"
     articles_found = 0
     articles_crawled = {}
     cur_dir = None

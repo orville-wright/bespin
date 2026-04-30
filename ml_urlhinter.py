@@ -52,6 +52,7 @@ class url_hinter:
                     'markets': ('Categorized local News', 0),
                     'sectors': ('Categorized Local News', 0),
                     'economy': ('Categorized Local News', 0),
+                    'personal-finance': ('Categorized Local News', 0),
                     'm': ('Fake local micro news', 1),
                     'live': ('Fake local micro news', 1),
                     'video': ('Video story', 2),
