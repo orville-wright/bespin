@@ -288,9 +288,9 @@ class lmdb_io_eng:
                         print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
                         print (f"Deep KV Cache: [ HIT.#0 / Deep cache Read success ! Rehydrated from KVstore... ] {item_idx}" )
                         #self.close_lmdb(3)   # close LMDB after read
-                        print (f"debug-1136: DB open state: {type(self.lmdb_env.db_open_state.get(self.lmdb_env.db_name))} / RO: {self.lmdb_env.RO_env} / RW: {self.lmdb_env.RW_env}")
+                        print (f"debug-1136: DB open state: {type(self.db_open_state.get(self.lmdb_env.db_name))} / RO: {self.lmdb_env.RO_env} / RW: {self.lmdb_env.RW_env}")
                         self.lmdb_env.close_lmdb("GLOBAL")
-                        print (f"debug-1136: DB open state: {type(self.lmdb_env.db_open_state.get(self.lmdb_env.db_name))} / RO: {self.lmdb_env.RO_env} / RW: {self.lmdb_env.RW_env}")
+                        print (f"debug-1136: DB open state: {type(self.db_open_state.get(self.lmdb_env.db_name))} / RO: {self.lmdb_env.RO_env} / RW: {self.lmdb_env.RW_env}")
                         return 0, _total_tokens, _total_words, self.sen_data, _final_results
                         #
                         # SUCCESS !!!
@@ -299,9 +299,9 @@ class lmdb_io_eng:
                 logging.info( f'%s - Deep Cache MISS : Key not found !' % cmi_debug )
                 print (f"KV Cache.#3:   [ Cache MISS.#3 / No KV entry ! Force article NET read... ] {item_idx}" )
 
-                print (f"debug-1136: DB open state: {type(self.lmdb_env.db_open_state.get(self.lmdb_env.db_name))} / RO: {self.lmdb_env.RO_env} / RW: {self.lmdb_env.RW_env}")
+                print (f"debug-1136: DB open state: {type(self.db_open_state.get(self.lmdb_env.db_name))} / RO: {self.lmdb_env.RO_env} / RW: {self.lmdb_env.RW_env}")
                 self.lmdb_env.close_lmdb("GLOBAL")
-                print (f"debug-1136: DB open state: {type(self.lmdb_env.db_open_state.get(self.lmdb_env.db_name))} / RO: {self.lmdb_env.RO_env} / RW: {self.lmdb_env.RW_env}")
+                print (f"debug-1136: DB open state: {type(self.db_open_state.get(self.lmdb_env.db_name))} / RO: {self.lmdb_env.RO_env} / RW: {self.lmdb_env.RW_env}")
 
                 return 3, 0, 0, None, None
 
