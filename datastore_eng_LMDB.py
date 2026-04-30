@@ -192,7 +192,7 @@ class lmdb_io_eng:
 
         if self.db_open_state.get(self.db_name) is not None:    # Open ?
             print (f"debug-194: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
-            self.lmbd_env.close_lmdb("GLOBAL")      # force close any open instance before we open RO for Deep Cache reads
+            self.lmdb_env.close_lmdb("GLOBAL")      # force close any open instance before we open RO for Deep Cache reads
             print (f"debug-196: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
             # force close any open instance before we open RO for Deep Cache reads
         
