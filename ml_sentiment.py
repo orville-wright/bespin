@@ -29,7 +29,8 @@ class ml_sentiment:
     art_buffer = []     # Buffer to hold article text for processing
     blocket_udid = 0    # working blocklet UID
     chunk_udid = 0      # working chunk UID
-    classifier = None   # NLP classidier pipeline
+    classifier = None   # NLP classidier pipeline - real AI model LLM computation. GPU goes brrrr....!!
+    _classifier = None  # optomized singleton (Class attribute) NLP classidier pipeline (class global)
     cr_package = None   # full reslts dict{} of dict_processor run
     cycle = 0           # class thread loop counter
     _cs_count = 0       # scentence count
@@ -79,6 +80,18 @@ class ml_sentiment:
         self._cs_count = 0
         self._cp_count = 0
         self._cr_count = 0
+        
+        # Initialzie the HF NLP classifier pipeline ONCE on class init.
+        # this is the real AI model LLM computation. GPU goes brrrr....!!
+        if ml_sentiment._classifier is None:
+            logging.info( f'%s - Init HF classifier model pipeline: mrm8488/distilroberta...' % cmi_debug )
+            ml_sentiment._classifier = pipeline(
+                task="sentiment-analysis",
+                model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
+            )
+        # Reference the shared model
+        self.classifier = ml_sentiment._classifier      # initialize the class classifier
+        self.tokenizer_mml = self.classifier.tokenizer.model_max_length  # initalize the class tokenizer
         return
 
 ##################################### 2 ####################################
@@ -114,9 +127,9 @@ class ml_sentiment:
 
         # Initialzie the HF NLP classifier pipeline
         # this is the real AI model LLM computation. GPU goes brrrr....!!
-        logging.info( f'%s - Init HF classifier model pipeline: mrm8488/distilroberta...' % cmi_debug )
-        self.classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis")
-        self.tokenizer_mml = self.classifier.tokenizer.model_max_length
+        #logging.info( f'%s - Init HF classifier model pipeline: mrm8488/distilroberta...' % cmi_debug )
+        #self.classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis")
+        #self.tokenizer_mml = self.classifier.tokenizer.model_max_length
 
         self.ttc = 0
         self.twc = 0
