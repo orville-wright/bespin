@@ -149,7 +149,7 @@ class lmdb_io_eng:
         logging.info( f'%s   - close_lmdb.#{_yti} Instance: {self.db_name}' % cmi_debug )
         try:
             if self.RO_env or self.RW_env is not None:
-                self.RO_env.close()     # gracefully clsoe RO env
+                self.RO_env = close()     # gracefully clsoe RO env
                 self.RW_env.close()     # gracefully close RW env
                 self.lmdb_env.close()   # Agressively  close entire LMBD
                 self.db_open_state[self.db_name] = None
@@ -163,7 +163,7 @@ class lmdb_io_eng:
         except Exception as e:
             print(f"Close instance - Error Exception: {e}")
             return 0
-        
+      
 ################# 6
     def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng):
         cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
@@ -208,7 +208,7 @@ class lmdb_io_eng:
         logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
         
         print (f"debug-210: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
-        with self.RO_env.begin() as txn:
+        with self.RO_env.begin() as txn:              # "with context mgr" -> auto forces close of LMDB RO transaction even on errors
             _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
             if _key_found is not None:
                 logging.info( f'%s - Deep Cache KV entry found: validating...' % cmi_debug )
@@ -287,21 +287,17 @@ class lmdb_io_eng:
                         #print (f"JSON: {_final_results}")
                         print ( f"Total tokenz: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
                         print (f"Deep KV Cache: [ HIT.#0 / Deep cache Read success ! Rehydrated from KVstore... ] {item_idx}" )
-                        #self.close_lmdb(3)   # close LMDB after read
-                        print (f"debug-291: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
-                        self.close_lmdb("GLOBAL")
-                        print (f"debug-293: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
+
                         return 0, _total_tokens, _total_words, self.sen_data, _final_results
                         #
                         # SUCCESS !!!
                         # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache  
+                        # note: # "with context mgr" -> auto forces close of LMDB RO transaction
             else:
                 logging.info( f'%s - Deep Cache MISS : Key not found !' % cmi_debug )
                 print (f"KV Cache.#3:   [ Cache MISS.#3 / No KV entry ! Force article NET read... ] {item_idx}" )
-                print (f"debug-301: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
-                self.close_lmdb("GLOBAL")
-                print (f"debug-303: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
                 return 3, 0, 0, None, None
+                # note: # "with context mgr" -> auto forces close of LMDB RO transaction
 
         logging.info( f"%s - Deep Cache ERROR.#4 : ! LMDB I/O cant open RO mode" % cmi_debug )
         print (f"================================ End.#4 KV Cache MISS ! LMDB RO open failure ! Net read... {item_idx} ================================" )
