@@ -149,8 +149,8 @@ class lmdb_io_eng:
         logging.info( f'%s   - close_lmdb.#{_yti} Instance: {self.db_name}' % cmi_debug )
         try:
             if self.RO_env or self.RW_env is not None:
-                self.RO_env.close()     # gracefully close RO env
-                self.RW_env.close()     # gracefully close RW env
+                #self.RO_env.close()     # gracefully close RO env
+                #self.RW_env.close()     # gracefully close RW env
                 self.lmdb_env.close()   # Agressively  close entire LMBD
                 self.db_open_state[self.db_name] = None
                 self.RO_env = None
