@@ -894,7 +894,7 @@ class yfnews_reader:
         # KV Cache Engine - activated
         # check to see if weve previous read/processed this article
         # ############################################################
-        print ( f"###-debug: \n1:{_extr_eng}, \n2: {data_row}, \n3: {item_idx}, \n4: {self.sent_ai}, \n5: {_extr_eng}" )
+        #pint ( f"###-debug: \n1:{_extr_eng}, \n2: {data_row}, \n3: {item_idx}, \n4: {self.sent_ai}, \n5: {_extr_eng}" )
 
         _ec, _ttk, _ttw, _sen_data, _fr = self.C4_lmdb_env.kv_cache_engine("C4", symbol, data_row, item_idx, self.sent_ai, _extr_eng)
         
@@ -1128,15 +1128,15 @@ class yfnews_reader:
                                 })
 
                             # Create LMBD KV cache entry
-                            print (f"debug-1134: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                            #print (f"debug-1134: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             if self.C4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
                                 self.C4_lmdb_env.close_lmdb("C4")        # force close
-                                print (f"debug-1137: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                                #print (f"debug-1137: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
 
                             logging.info( f'%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
                             kv_success = self.C4_lmdb_env.open_lmdb_RW("C4")  # re-open in RW mode
                             self.C4_lmdb_env.RW_env = kv_success
-                            print (f"debug-1142: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                            #print (f"debug-1142: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             
                             if kv_success is not None:
                                 _url_hash = data_row['urlhash']
@@ -1177,7 +1177,7 @@ class yfnews_reader:
                             print (f"{footer}")
                             print (f"================================ C4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
 
-                            print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                            #print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             self.C4_lmdb_env.close_lmdb("C4")
                             print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             return self.total_tokens, self.total_words, c4_final_results

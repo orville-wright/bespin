@@ -192,14 +192,14 @@ class lmdb_io_eng:
         logging.info( f'%s  - Prepare LMDB Read txn...' % cmi_debug )
 
         if self.db_open_state.get(self.db_name) is not None:    # Open ?
-            print (f"debug-194: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
+            #print (f"debug-194: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
             self.close_lmdb("GLOBAL")      # force close any open instance before we open RO for Deep Cache reads
-            print (f"debug-196: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
+            #print (f"debug-196: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
             # force close any open instance before we open RO for Deep Cache reads
         
         
         self.RO_env = self.open_lmdb_RO("GLOBAL")
-        print (f"debug-201: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
+        #print (f"debug-201: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
         ################# LMDB Deep Cache KV store engine
         #
         # KVstore REHYDRATON Engine
@@ -208,7 +208,7 @@ class lmdb_io_eng:
         bs4_kvs_key = _key.encode('utf-8')          # byte encode 
         logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
         
-        print (f"debug-210: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
+        #print (f"debug-210: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
         with self.RO_env.begin() as txn:              # "with context mgr" -> auto forces close of LMDB RO transaction even on errors
             _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
             if _key_found is not None:
