@@ -680,7 +680,7 @@ class yfnews_reader:
                 logging.info( f'%s - Good BS4 data:     Gracefully pre-built: {cached_state}' % cmi_debug )
                 _dataset_1 = self.yfn_jsdata.text
                 #self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
-                self.nsoup = BeautifulSoup(_dataset_1, "html.parser")
+                self.nsoup = BeautifulSoup(_dataset_1, "html.parser")   # scrape the article page with BS4 NOW !
                 self.articles_crawled[item_idx] = self.nsoup
                 self.result_engine = "yfn_jsdb.#1"
                 _built_bs4_entry = 1
@@ -718,9 +718,11 @@ class yfnews_reader:
         logging.info( f'%s - Ready to exec BS4 extractor - get Article TEXT for AI NLP reader...' % cmi_debug )
     
         logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
-        local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
-        local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})        # comes above/before article
-        local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})   # full news article - locally hosted
+        # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})                # full news article - locally hosted
+        
+        local_news = self.nsoup.find(attrs={"class": "body yf-v6n2s3"})                # full news article - locally hosted        
+        local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})            # comes above/before article
+        local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
         try:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
         except AttributeError as _ae:
