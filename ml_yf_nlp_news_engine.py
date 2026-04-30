@@ -786,10 +786,10 @@ class yfnews_reader:
         print (f"debug-786: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         if self.BS4_lmdb_env.RO_env is not None:      # is open? - explicit reliable singleton None test
             self.BS4_lmdb_env.close_lmdb("BS4")       # force close
-            print (f"debug-789: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+            #print (f"debug-789: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
 
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
-        print (f"debug-792: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        #print (f"debug-792: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         kv_success = self.BS4_lmdb_env.open_lmdb_RW("BS4")  # re-open in RW mode
         self.BS4_lmdb_env.RW_env = kv_success
         
@@ -833,9 +833,9 @@ class yfnews_reader:
                 )
         print (f"{footer}")
         print (f"================================ BS4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
-        print (f"debug-833: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        #print (f"debug-833: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         self.BS4_lmdb_env.close_lmdb("BS4")
-        print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        #print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         return self.total_tokens, self.total_words, bs4_final_results
         
 # #####################################################################################
