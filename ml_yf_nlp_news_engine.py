@@ -1,4 +1,7 @@
 #! python3
+import os
+os.environ["CRAWL4AI_LOG_LEVEL"] = "ERROR"
+
 import argparse
 import asyncio
 from glob import escape
@@ -12,7 +15,6 @@ import hashlib
 import json
 import logging
 import numpy as np
-import os
 import pandas as pd
 from pathlib import Path
 import requests
@@ -783,7 +785,7 @@ class yfnews_reader:
             })
  
         # Create LMBD KV cache entry
-        print (f"debug-786: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        #print (f"debug-786: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         if self.BS4_lmdb_env.RO_env is not None:      # is open? - explicit reliable singleton None test
             self.BS4_lmdb_env.close_lmdb("BS4")       # force close
             #print (f"debug-789: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
