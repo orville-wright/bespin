@@ -99,8 +99,6 @@ class lmdb_io_eng:
         
         # you must manually open the DB yourself first...
         try:
-            #self.RO_env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
-            #self.db_open_state[self.db_name] = self.RO_env
             logging.info( f'%s   - Successfully opened KVstore - READ-ONLY mode.#{self.yti} {self.db_name}' % cmi_debug )
             logging.info( f'%s   - KVstore remains globally open.#{self.yti} instance: {self.db_name}' % cmi_debug )
             with self.RO_env.begin() as txn:
