@@ -1,4 +1,7 @@
 #! python3
+import os
+os.environ["CRAWL4AI_LOG_LEVEL"] = "ERROR"
+
 import argparse
 import asyncio
 from glob import escape
@@ -12,7 +15,6 @@ import hashlib
 import json
 import logging
 import numpy as np
-import os
 import pandas as pd
 from pathlib import Path
 import requests
@@ -279,7 +281,7 @@ class yfnews_reader:
             excluded_tags=["script", "style", "noscript", "template"],
             extraction_strategy=extraction_strategy,
             scan_full_page=True,
-            verbose=True,
+            verbose=False,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
             stream=True,
             js_code=js_cmds,
             cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
@@ -680,7 +682,7 @@ class yfnews_reader:
                 logging.info( f'%s - Good BS4 data:     Gracefully pre-built: {cached_state}' % cmi_debug )
                 _dataset_1 = self.yfn_jsdata.text
                 #self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")
-                self.nsoup = BeautifulSoup(_dataset_1, "html.parser")
+                self.nsoup = BeautifulSoup(_dataset_1, "html.parser")   # scrape the article page with BS4 NOW !
                 self.articles_crawled[item_idx] = self.nsoup
                 self.result_engine = "yfn_jsdb.#1"
                 _built_bs4_entry = 1
@@ -718,9 +720,11 @@ class yfnews_reader:
         logging.info( f'%s - Ready to exec BS4 extractor - get Article TEXT for AI NLP reader...' % cmi_debug )
     
         logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
-        local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})             # full news article - locally hosted
-        local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})        # comes above/before article
-        local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})   # full news article - locally hosted
+        # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})                # full news article - locally hosted
+        
+        local_news = self.nsoup.find(attrs={"class": "body yf-v6n2s3"})                # full news article - locally hosted        
+        local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})            # comes above/before article
+        local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
         try:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
         except AttributeError as _ae:
@@ -781,12 +785,13 @@ class yfnews_reader:
             })
  
         # Create LMBD KV cache entry
-        print (f"debug-784: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
-        if self.BS4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
-            self.BS4_lmdb_env.close_lmdb("BS4")        # force close
-            print (f"debug-787: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        #print (f"debug-786: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        if self.BS4_lmdb_env.RO_env is not None:      # is open? - explicit reliable singleton None test
+            self.BS4_lmdb_env.close_lmdb("BS4")       # force close
+            #print (f"debug-789: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
 
         logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
+        #print (f"debug-792: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         kv_success = self.BS4_lmdb_env.open_lmdb_RW("BS4")  # re-open in RW mode
         self.BS4_lmdb_env.RW_env = kv_success
         
@@ -795,7 +800,7 @@ class yfnews_reader:
             _key = "0001"+"."+symbol+"."+_url_hash          # we are looking at the artile here. So test for this K/V data
             bs4_kvs_key = _key.encode('utf-8')              # byte encode 
             logging.info( f'%s - BS4 WRITE sent package to KVstore: {_key}' % cmi_debug )
-            with self.BS4_lmdb_env.begin(write=True) as _txn:
+            with kv_success.begin(write=True) as _txn:
                 _kvs_json_dataset = json.dumps(_final_data_dict, default=str)    # serialize to JSON
                 _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
 
@@ -830,9 +835,9 @@ class yfnews_reader:
                 )
         print (f"{footer}")
         print (f"================================ BS4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
-        print (f"debug-833: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        #print (f"debug-833: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         self.BS4_lmdb_env.close_lmdb("BS4")
-        print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        #print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         return self.total_tokens, self.total_words, bs4_final_results
         
 # #####################################################################################
@@ -1220,6 +1225,7 @@ class yfnews_reader:
                 # js_code = js_cmds
                 config = CrawlerRunConfig(
                     extraction_strategy=extraction_strategy,
+                    verbose=False,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
                     js_code=js_cmds,
                     cache_mode=CacheMode.BYPASS  # Bypass cache for fresh data
                     )
