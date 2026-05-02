@@ -66,6 +66,7 @@ class bc_quote:
         url_endpoint = "https://www.marketwatch.com/investing/stock/"
         
         #url_queryopts = "&insttype=Stock&freq=9&show=True&time=1"
+        url_queryopts = "?mod=mw_quote_tab"
 
         logging.info('%s - Read request : Basic quote URL endpoint' % cmi_debug )
         # with urllib.request.urlopen( f"{url_endpoint}{ticker}{url_queryopts}" ) as url:
