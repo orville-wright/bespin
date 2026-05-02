@@ -35,9 +35,9 @@ else:
     logging.disable(20)                 # Log lvel = INFO
 
 lmdb_dbname = "LMDB_0001"
-lmdb_inst = lmdb_io_eng(1, lmdb_dbname, args)
-lmdb_inst.open_lmdb_RO(1)
-lmdb_inst.dump_lmdb_RO(1)
+lmdb_inst = lmdb_io_eng("RO_DUMP", lmdb_dbname, args)
+lmdb_inst.open_lmdb_RO("RO_DUMP")
+lmdb_inst.dump_lmdb_RO("RO_DUMP")
 
 if args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )

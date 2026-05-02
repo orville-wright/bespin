@@ -97,6 +97,7 @@ class lmdb_io_eng:
         logging.info( f'%s    - dump_lmdb.#{self.yti} DB Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         
+        # you must manually open the DB yourself first...
         try:
             self.RO_env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
             self.db_open_state[self.db_name] = self.RO_env
