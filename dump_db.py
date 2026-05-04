@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 import lmdb
 import logging
+from pprint import pprint
 import random
 from rich import print
 import string
@@ -72,7 +73,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
                 print(f"      hash : {url_hash}")
                 #print(f"      Data: {type(value_str)} - {value_str[:80]}{'...' if len(value_str) > 80 else ''}")
-                print(f"      Data: {type(value_str)} - {value_str}")
+                pprint(value_str, indent=4, width=40)
                 matches += 1
 
             print(f"\nKey filter '{key_filter}': {matches} match(es) from {total} total entries")
