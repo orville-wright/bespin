@@ -71,7 +71,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 value_str = value.decode('utf-8')
                 print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
                 print(f"      hash : {url_hash}")
-                print(f"      value: {value_str[:80]}{'...' if len(value_str) > 80 else ''}")
+                print(f"      Data: {type(value_str)} - {value_str[:80]}{'...' if len(value_str) > 80 else ''}")
                 matches += 1
 
             print(f"\nKey filter '{key_filter}': {matches} match(es) from {total} total entries")
