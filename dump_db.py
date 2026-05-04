@@ -72,9 +72,13 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 value_str = value.decode('utf-8')
 
                 _v_dict = json.loads(value.decode('utf-8'))
-                print ( f"LMBD Database: {db_id} / Ticker: {ticker} / Filtering by:{matched_on}") 
-                print ( f"================================================================" )
-                print( f"{_v_dict["urlhash"]}" )
+                print ( f"LMBD Database: {db_id} / Ticker: {ticker} / Filtering by:{matched_on}" ) 
+                print ( f"============================ News article:  {_v_dict["article"]} ====================================" )
+                print( f"URL hash:  {_v_dict["urlhash"]}" )
+                print( f"Sentences: {_v_dict["scentence"]} / Paragraphs: {_v_dict["paragraph"]} / Randoms: {_v_dict["random"]}" )
+                print ( f"Chunk metrics: @ <= 512 - Chunks: {_v_dict["chunk_count"]} / POsitive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
+                print ( f"Text metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
+                print ( f"Chunk analytics")
 
                 #  print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
                 #print(f"      hash : {url_hash}")
