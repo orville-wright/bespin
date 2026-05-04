@@ -37,19 +37,43 @@ else:
     logging.disable(20)                 # Log lvel = INFO
 
 def dump_lmdb_by_key(lmdb_instance, key_filter):
-    """Scan all LMDB entries and print only those whose key contains key_filter."""
+    """Filter LMDB entries by stock ticker (element #2) or URL hash fragment (element #3).
+
+    Key format: {db_id}.{ticker}.{url_hash}
+      e.g.  0001.XRX.f308c6c74e14976ac6e940c20a329c5e063cf5cfde402d591cfcd28ace1c2b2d
+
+    Matching rules:
+      - ticker  : case-insensitive exact match  (e.g. -k XRX)
+      - url_hash: case-sensitive substring match (e.g. -k f308c6)
+    """
     try:
         with lmdb_instance.RO_env.begin() as txn:
             cursor = txn.cursor()
             total = 0
             matches = 0
+            filter_upper = key_filter.upper()
             for key, value in cursor:
                 key_str = key.decode('utf-8')
                 total += 1
-                if key_filter in key_str:
-                    value_str = value.decode('utf-8')
-                    print(f"{matches:03} / KEY: {key_str} -> VALUE: {value_str[:80]}{'...' if len(value_str) > 80 else ''}")
-                    matches += 1
+
+                parts = key_str.split('.')
+                if len(parts) != 3:
+                    continue                         # skip any malformed keys
+
+                db_id, ticker, url_hash = parts
+
+                ticker_match   = filter_upper == ticker.upper()
+                urlhash_match  = key_filter in url_hash
+                if not ticker_match and not urlhash_match:
+                    continue
+
+                matched_on = "ticker" if ticker_match else "url_hash"
+                value_str = value.decode('utf-8')
+                print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
+                print(f"      hash : {url_hash}")
+                print(f"      value: {value_str[:80]}{'...' if len(value_str) > 80 else ''}")
+                matches += 1
+
             print(f"\nKey filter '{key_filter}': {matches} match(es) from {total} total entries")
     except lmdb.Error as e:
         print(f"LMDB Error: {e}")
