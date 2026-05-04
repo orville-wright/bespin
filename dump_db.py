@@ -76,14 +76,20 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 print ( f"============================ News article:  {_v_dict["article"]} ====================================" )
                 print( f"URL hash:  {_v_dict["urlhash"]}" )
                 print( f"Sentences: {_v_dict["scentence"]} / Paragraphs: {_v_dict["paragraph"]} / Randoms: {_v_dict["random"]}" )
-                print ( f"Chunk metrics: @ <= 512 - Chunks: {_v_dict["chunk_count"]} / POsitive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
+                print ( f"Chunk metrics: @ <= 512 - Chunks: {_v_dict["chunk_count"]+1} / POsitive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
                 print ( f"Text metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
                 print ( f"Chunk analytics")
+
+                for _v_chunk_dict in range(int(_v_dict["chunk_count"])):
+                    _v_key = f"{_v_chunk_dict:03}"
+                    print ( f"  - Chunk dict: {_v_key} / Chunk id: {_v_key["chunk"]} / Ticker: {_v_key["symbol"]}" )
+                    print ( f"  - N-grams:    {_v_key["n-grams"]} / Tokens: {_v_key["tokenz"]} / Alphas: {_v_key["alphas"]}" )
+                    print ( f"  - Chunk sentement:    {_v_key["sent_type"]} / Sentment score: {_v_key["sent_score"]} / Chunker used: {_v_key["trct_state"]}" )
 
                 #  print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
                 #print(f"      hash : {url_hash}")
                 #print(f"Data: {type(value_str)} - {value_str[:80]}{'...' if len(value_str) > 80 else ''}")
-                print(f"Data: {type(value_str)} - {value_str}" )
+                #print(f"Data: {type(value_str)} - {value_str}" )
                 #pprint(value_str, indent=4, width=40)
                 matches += 1
 
