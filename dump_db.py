@@ -82,7 +82,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
 
                 for _v_chunk_dict in range(int(_v_dict["chunk_count"])):
                     _v_key = f"{_v_chunk_dict:03}"
-                    _v_sub_dict = json.loads(_v_key.decode('utf-8'))
+                    _v_sub_dict = json.loads(_v_dict[_v_key].decode('utf-8'))
                     print ( f"  - Chunk dict: {_v_sub_dict} / Chunk id: {_v_sub_dict} / Ticker: {_v_sub_dict["symbol"]}" )
                     print ( f"  - N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
                     print ( f"  - Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
