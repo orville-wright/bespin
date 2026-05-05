@@ -109,9 +109,11 @@ class ml_sentiment:
         Tokenize and compute scentence chunk sentiment
         scentxt = BS4 all <p> zones that look/feel like scentence/paragraph text
                 = Crawl4ai its 1 bulk block of article text
-        WARN: scentxt is a list of BS4 extracted html <p> htlm elements, NOT the raw text. It must be treated as a html data row.
-              crawl4ai extarcts the bulk raw text in 1 list[] and discards the HTML <p> tags.
-              crawl4ai text must be chunked @ model truncation length, i.e.  tokenizer_mml
+        WARN:  scentext is the article test, but it may need to eb pre-0processed depending on which extractor was used (i.e. BS4 or C4)
+        WARN: BS4 extracts html <p> tag elements, NOT the simple raw text. <p> tages contain the text but must be treated as a raw html page data.
+              crawl4ai extracts the bulk raw text and discards all surrounding html tags, dumping a single blob of text into a list[].
+              crawl4ai text must be chunked @ model truncation length, i.e.  tokenizer_mml (e.e.g 512 chars)
+              BS4 also checks LLM truncation length but <p> tags contain short text strings, and are less likely to be truncated.... but theres more of them.  
         """
         #if self.args['bool_verbose'] is True:        # Logging level
         self.yti = item_idx
@@ -121,11 +123,11 @@ class ml_sentiment:
         self.ext_type = ext
         logging.info( f'%s     - Init NLP Tokenizor, Vectorizer & Stopwords engine.#{self.ext_type}...' % cmi_debug )
         
-        self.vectorz = ml_cvbow(item_idx, self.args)   
+        self.vectorz = ml_cvbow(item_idx, self.args)    # scikit-lean NLP M/L
         self.stop_words = stopwords.words('english')
         _dpro_eng = 0
 
-        # Initialzie the HF NLP classifier pipeline
+        # Initialzie the HF NLP LLM classifier pipeline
         # this is the real AI model LLM computation. GPU goes brrrr....!!
         #logging.info( f'%s - Init HF classifier model pipeline: mrm8488/distilroberta...' % cmi_debug )
         #self.classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis")
@@ -158,7 +160,7 @@ class ml_sentiment:
         
         # Crawl4ai extractor
         if self.ext_type == 0:      # Craw4ai
-            logging.info( f"%s - Crawl4ai Data Builder engine.#1 - LLM Trnctn {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
+            logging.info( f"%s - Crawl4ai Blocklet Builder engine.#1 - LLM Trnctn {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
             # input MUST be a crawl4ai prepred list of full article text. 
             # c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
             # therfore chunker has a higher probabliy of needing to do a lot more work for c4
@@ -168,16 +170,16 @@ class ml_sentiment:
             self._cs_count = 0      # " "
             self._cp_count = 0      # " "
             self._cr_count = 0      # " "
-            self.chunk_udid = 0     # reset main chunk subdict key udid
+            self.chunk_udid = 0     # reset main chunk subdict key udid - chunkid
             self.blocket_udid = 0   # reset internal subdict key udid
             self.cr_package = dict()            # reset the cr_package for each <p> tag processed
             self._chunk_profile = dict()        # what type of chunk thisd is (sent/para/randm)
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
-            for i in range(0, len(scentxt)):
-                logging.info( f"%s - C4 Eval pre-chunke bulk TEXT length: {len(scentxt[i])} chars" % cmi_debug )
+            for i in range(0, len(scentxt)):    # this = 1 b/c C4 sends a list[] of 1 big blob of text
+                logging.info( f"%s - C4 Eval pre-chunker @row: {i:03} / TEXT length:{len(scentxt[i])} chars" % cmi_debug )
                 truncated = "Undef"
-                if len(scentxt[i]) >= self.tokenizer_mml:   # self.tokenizer_mml:    # only chunk into blocklets on truncation altert
+                if len(scentxt[i]) >= self.tokenizer_mml:   # self.tokenizer_mml: only chunk into blocklets on truncation alert
                     truncated = "Truncation!"
                     _dpro_eng = 3   # C4 + Truncated
                     logging.info( f"%s - {truncated} Long text blocklet / send LIST to unfied_chunker.#1..." % cmi_debug )
@@ -205,7 +207,7 @@ class ml_sentiment:
         
         # BS4 extractor
         else:
-            logging.info( f"%s - BS4 Data Builder engine.#1 - LLM Trnctn @ {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
+            logging.info( f"%s - BS4 Blockete Builder engine.#1 - LLM Trnctn @ {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
             # WARN: must be a BS4 prepared list of article text
             # - BS4 only sends a list of each individual <p> tags element
             # - 1 at a time from within the articel body
@@ -223,8 +225,8 @@ class ml_sentiment:
             self._chunk_profile = dict()        # what type of chunk thisd is (sent/para/randm)
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
-            for i in range(0, len(scentxt)):    # this = rows of <p> tag text
-                logging.info( f"%s - BS4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i].text)}" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
+            for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
+                logging.info( f"%s - BS4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i].text)} chars" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
                 truncated = "Undef"
                 if len(scentxt[i].text) > self.tokenizer_mml:      # only chunk into blocklets on truncation altert
                     truncated = "Truncation!"
@@ -264,7 +266,7 @@ class ml_sentiment:
         Avoids truncation of text and enbales full text sentiment analysis (no loss of words)
         Honnors word boundaries on chunking logic
         Leverages list[] slicing, b/c dicts dont provide slices
-        
+
         RESULT:
         - a dict{} of beautifully chunked "blocklets" shorter than tokenizer_mml
         - could potentially be a multi element {} if input data is a long text string
