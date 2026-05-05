@@ -77,19 +77,23 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 print ( f"============================ News article:  {working_article} ====================================" )
                 print( f"URL hash:  {_v_dict["urlhash"]}" )
                 print( f"Sentences: {_v_dict["scentence"]} / Paragraphs: {_v_dict["paragraph"]} / Randoms: {_v_dict["random"]}" )
-                print ( f"Chunk metrics: @ <= 512 - Chunks: {_v_dict["chunk_count"]+1} / POsitive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
+                print ( f"Chunk metrics: @ <= 512 - Chunks: {_v_dict["chunk_count"]+1} / Positive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
                 print ( f"Text metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
                 print ( f"Chunk analytics")
 
                 _v_key = 0  # chunk dict allways starts at 000 - ensure reset for each run
                 for _v_chunk_dict in range(int(_v_dict["chunk_count"])+1):  # chunk count is 0 indexed, so add 1 to include the last chunk
-                    _v_key = f"{_v_chunk_dict:03}"
-                    _v_sub_dict = (_v_dict[_v_key])
-                    print ( f"  ======================================= {working_article} : {_v_key} =======================================" )
-                    print ( f"  Chunk dict: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
-                    print ( f"  N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
-                    print ( f"  Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
-                    
+                    try: 
+                        _v_key = f"{_v_chunk_dict:03}"
+                    except KeyError:
+                        print ( f"Chunk dict ERROR: {_v_key} Data dict not found in data set: {working_article}" )
+                        continue
+                    else:
+                        _v_sub_dict = (_v_dict[_v_key])
+                        print ( f"  ======================================= {working_article} : {_v_key} =======================================" )
+                        print ( f"  Chunk dict: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
+                        print ( f"  N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
+                        print ( f"  Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
  
                 #  print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
                 #print(f"      hash : {url_hash}")
