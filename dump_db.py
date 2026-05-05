@@ -84,29 +84,25 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 _v_key = 0  # chunk dict allways starts at 000 - ensure reset for each run
                 for _v_chunk_dict in range(int(_v_dict["chunk_count"])+1):  # chunk count is 0 indexed, so add 1 to include the last chunk
                     try: 
-                        _v_key = f"{_v_chunk_dict:03}"
-                    except KeyError:
-                        print ( f"Chunk dict ERROR: {_v_key} Data dict not found in data set: {working_article}" )
-                        continue
+                        _v_sub_dict = (_v_dict[_v_key])
                     except Exception as e:
                         print (f"Error Type: {type(e).__name__}")
-                        continue
+                        break
                     else:
-                        _v_sub_dict = (_v_dict[_v_key])
                         print ( f"  ======================================= {working_article} : {_v_key} =======================================" )
                         print ( f"  Chunk dict: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
                         print ( f"  N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
                         print ( f"  Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
- 
-                #  print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
-                #print(f"      hash : {url_hash}")
-                #print(f"Data: {type(value_str)} - {value_str[:80]}{'...' if len(value_str) > 80 else ''}")
-                #print(f"Data: {type(value_str)} - {value_str}" )
-                #pprint(value_str, indent=4, width=40)
-                matches += 1
-                _v_key = 0
-                _v_chunk_dict = 0
-                print (" ")
+
+                        #  print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
+                        #print(f"      hash : {url_hash}")
+                        #print(f"Data: {type(value_str)} - {value_str[:80]}{'...' if len(value_str) > 80 else ''}")
+                        #print(f"Data: {type(value_str)} - {value_str}" )
+                        #pprint(value_str, indent=4, width=40)
+                        matches += 1
+                        _v_key = 0
+                        _v_chunk_dict = 0
+                        print (" ")
 
             print(f"\nKey filter '{key_filter}': {matches} match(es) from {total} total entries")
     except lmdb.Error as e:
