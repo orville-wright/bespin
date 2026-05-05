@@ -273,13 +273,7 @@ class ml_sentiment:
 
         WARN:
         input -> list [ ] and resulting ouput .> dict{ }
-
-        - For a C4 input list of text (i.e. a single element list of every long bloob of text)...
-          the last blocklet (i.e. remaaing short tail of text) is currently not propcessed and lost !
-          But, somehow the LBMD KV write knows the correct number of C4 chunks to write, but the last chunk
-          isnt added to the prepared result DATA PACKAGE and is not written into LMDB KV cache entry.
-          So the C4 KV entry is slightly in ERROR (i.e. the chunk dic is short by the final tail data element)
-        - I'm not sure why and am trying to debug why as at 5/April/2026
+        - For a C4 input list of text (i.e. a single element list of and a very long bloob of text)...
 
         RESULT:
         - a dict{} of beautifully chunked "blocklets" shorter than tokenizer_mml
@@ -316,6 +310,7 @@ class ml_sentiment:
                     run_total += _b
                     _remaining = abs_tchars - run_total
                     logging.info( f"%s - Eng.#1 Blocklet dict built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
+                    self.chunk_index += 1
                 break       # end the entire while loop - should be the END of all chars
 
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
@@ -403,7 +398,7 @@ class ml_sentiment:
 
             _truncate_state = dpro_eng_decode.get(_dpro_eng, 'Unknown')  # decode the _dpro_eng var
 
-            logging.info( f"%s - ======== LLM Classifying Chunk: {_chunk_udid:03} via: {_truncate_state} ========" % cmi_debug)
+            logging.info( f"%s - ======== LLM Classifying Blocklet: {_chunk_udid:03} via: {_truncate_state} ========" % cmi_debug)
             logging.info( f"%s - ======== Exec LLM Sentiment classifier/vectorizor  ==================" % cmi_debug )
             
             ####################### LLM NLP #######################
