@@ -303,24 +303,19 @@ class ml_sentiment:
         end = start = 0     # text blocklet positional indexers
         run_total = 0       # cumulative total
 
-        while start < abs_tchars:
-            end = start + tokenizer_mml         # Calc end pos for this chunk (e.g. + 512 chars)
-            #print (f"###-@308: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
-            if end >= abs_tchars:               # test if end would overrun max len of chunk
-                print (f"================================== D E B U G ============================================")
-                blocklet = st_list[0][start:abs_tchars]      # Extract the chunk and add to a holding list:]
-                if blocklet:                     # non-empy chunk? only add non-empty chunks
-                    _b = len(blocklet)  # get len of this chunk (allways at live loc list[0])
-                    end = start + _b    # compute end index point of a short blocklet (should = abs_tchars)
-                    print (f"###debug-320: Blocklet tail overrun - {start:04} / len: {_b} / end: {end} / max: {abs_tchars}")
-                    print (f"{blocklet}")
-                    print (f"============================= E N DD E B U G ============================================")
-                    chunks[self.chunk_index] = blocklet      # add to final output dict DATA PACKAGE
+        while start < abs_tchars:               # continue if there more text to come
+            end = start + tokenizer_mml         # setup a tuncation window
+            if end >= abs_tchars:               # test if end would overrun end of text string
+                blocklet = st_list[0][start:abs_tchars]      # Extract the chunk text and add to a holding list:]
+                if blocklet:                    # only work on non-empty chunks
+                    _b = len(blocklet)          # get len of this chunk (allways at live loc list[0])
+                    end = start + _b            # compute end index point of this short-tail blocklet (should = abs_tchars)
+                    #print (f"###debug-314: Blocklet tail overrun - {start:04} / len: {_b} / end: {end} / max: {abs_tchars}")
+                    #print (f"{blocklet}")
+                    chunks[self.chunk_index] = blocklet      # add to final trail output to dict DATA PACKAGE
                     run_total += _b
                     _remaining = abs_tchars - run_total
                     logging.info( f"%s - Eng.#1 Blocklet built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
-                    #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
-                    # self.chunk_index += 1     # not sure this is needed or correct
                 break       # end the entire while loop - should be the END of all chars
 
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
