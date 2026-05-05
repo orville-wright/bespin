@@ -310,10 +310,12 @@ class ml_sentiment:
                 print (f"================================== D E B U G ============================================")
                 print (f"###debug-320: Blocklet tail overrun TRIGGERED - start: {start} / len: {abs_tchars} / end: {end}")
                 print (f"================================== D E B U G ============================================")
-                blocklet = st_list[start:][:abs_tchars]   # set blocklet = list index slice @ [start:][end:]
+                blocklet = st_list[0][start:abs_tchars]      # Extract the chunk and add to a holding list
+                #blocklet = st_list[start:][:abs_tchars]   # set blocklet = list index slice @ [start:][end:]
                 if blocklet:                       # non-empy chunk? only add non-empty chunks
                     print (f"================================== D E B U G ============================================")
                     print (f"###debug-320: Blocklet tail overrun - DATA: {start} / len: {abs_tchars} / end: {end}")
+                    print (f"{blocklet}")
                     print (f"================================== D E B U G ============================================")
                     run_total += len(blocklet[0])  # get len of this chunk (allways at live loc list[0])
                     #print (f"##-@313: run:{run_total} / len:{len(chunk[0])}")
