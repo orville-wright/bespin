@@ -72,8 +72,9 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 #value_str = value.decode('utf-8')
 
                 _v_dict = json.loads(value.decode('utf-8'))
+                working_article = _v_dict["article"]
                 print ( f"LMBD Database: {db_id} / Ticker: {ticker} / Filtering by:{matched_on}" ) 
-                print ( f"============================ News article:  {_v_dict["article"]} ====================================" )
+                print ( f"============================ News article:  {working_article} ====================================" )
                 print( f"URL hash:  {_v_dict["urlhash"]}" )
                 print( f"Sentences: {_v_dict["scentence"]} / Paragraphs: {_v_dict["paragraph"]} / Randoms: {_v_dict["random"]}" )
                 print ( f"Chunk metrics: @ <= 512 - Chunks: {_v_dict["chunk_count"]+1} / POsitive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
@@ -84,10 +85,10 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 for _v_chunk_dict in range(int(_v_dict["chunk_count"])):
                     _v_key = f"{_v_chunk_dict:03}"
                     _v_sub_dict = (_v_dict[_v_key])
-                    print ( f"  - Chunk dict: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
-                    print ( f"  - N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
-                    print ( f"  - Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
-                    print ( f"================================================================================================" )
+                    print ( f"  Chunk dict: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
+                    print ( f"  N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
+                    print ( f"  Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
+                    print ( f"  ======================================= {working_article} : {_v_key} =========================================================" )
  
                 #  print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
                 #print(f"      hash : {url_hash}")
@@ -97,6 +98,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 matches += 1
                 _v_key = 0
                 _v_chunk_dict = 0
+                print (" ")
 
             print(f"\nKey filter '{key_filter}': {matches} match(es) from {total} total entries")
     except lmdb.Error as e:
