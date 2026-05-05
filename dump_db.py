@@ -88,6 +88,9 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                     except KeyError:
                         print ( f"Chunk dict ERROR: {_v_key} Data dict not found in data set: {working_article}" )
                         continue
+                    except error as e:
+                        print ( f"Chunk dict: {_v_key} ERROR: {e}" )
+                        continue
                     else:
                         _v_sub_dict = (_v_dict[_v_key])
                         print ( f"  ======================================= {working_article} : {_v_key} =======================================" )
