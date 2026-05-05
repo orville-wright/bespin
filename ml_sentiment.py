@@ -308,18 +308,17 @@ class ml_sentiment:
             #print (f"###-@308: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
             if end >= abs_tchars:               # test if end would overrun max len of chunk
                 print (f"================================== D E B U G ============================================")
-                print (f"###debug-320: Blocklet tail overrun TRIGGERED - start: {start} / len: {abs_tchars} / end: {end}")
-                print (f"================================== D E B U G ============================================")
+                print (f"###debug-320: Blocklet tail overrun TRIGGERED - start: {start:04} / len: {_b} / end: {end}")
                 blocklet = st_list[0][start:abs_tchars]      # Extract the chunk and add to a holding list:]
                 if blocklet:                     # non-empy chunk? only add non-empty chunks
-                    print (f"================================== D E B U G ============================================")
-                    print (f"###debug-320: Blocklet tail overrun - DATA: {start} / len: {abs_tchars} / end: {end}")
-                    print (f"{blocklet}")
-                    print (f"================================== D E B U G ============================================")
-                    #chunks[self.chunk_index] = blocklet      # add to final output dict DATA PACKAGE
                     _b = len(blocklet)  # get len of this chunk (allways at live loc list[0])
-                    #run_total += _b
-                    _remaining = start - _b
+                    end = start + _b    # compute end index point of a short blocklet (should = abs_tchars)
+                    print (f"###debug-320: Blocklet tail overrun - DATA: {start:04} / len: {_b} / end: {end} / max: {abs_tchars}")
+                    print (f"{blocklet}")
+                    print (f"============================= E N DD E B U G ============================================")
+                    #chunks[self.chunk_index] = blocklet      # add to final output dict DATA PACKAGE
+                    run_total += _b
+                    _remaining = abs_tchars - run_total
                     logging.info( f"%s - Eng.#1 Blocklet built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                     #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
                     self.chunk_index += 1     # not sure this is needed or correct
