@@ -184,7 +184,7 @@ elif args['key_filter'] is not None:
     print(f"Filtering LMDB entries by key: '{args['key_filter']}'")
     dump_lmdb_by_key(lmdb_inst, args['key_filter'])
 else:
-    lmdb_inst.dump_lmdb_basic("BASIC_DUMP")
+    dump_lmdb_basic("BASIC_DUMP")
 
 if args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
