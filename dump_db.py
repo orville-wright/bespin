@@ -85,10 +85,11 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 for _v_chunk_dict in range(int(_v_dict["chunk_count"])+1):  # chunk count is 0 indexed, so add 1 to include the last chunk
                     _v_key = f"{_v_chunk_dict:03}"
                     _v_sub_dict = (_v_dict[_v_key])
+                    print ( f"  ======================================= {working_article} : {_v_key} =======================================" )
                     print ( f"  Chunk dict: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
                     print ( f"  N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
                     print ( f"  Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
-                    print ( f"  ======================================= {working_article} : {_v_key} =========================================================" )
+                    
  
                 #  print(f"\n{matches:03} | db_id:{db_id}  ticker:{ticker}  matched_on:{matched_on}")
                 #print(f"      hash : {url_hash}")
