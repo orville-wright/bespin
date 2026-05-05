@@ -315,7 +315,7 @@ class ml_sentiment:
                     chunks[self.chunk_index] = blocklet      # add to final trail output to dict DATA PACKAGE
                     run_total += _b
                     _remaining = abs_tchars - run_total
-                    logging.info( f"%s - Eng.#1 Blocklet built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
+                    logging.info( f"%s - Eng.#1 Blocklet dict built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                 break       # end the entire while loop - should be the END of all chars
 
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
