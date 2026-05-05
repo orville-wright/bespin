@@ -307,6 +307,9 @@ class ml_sentiment:
             end = start + tokenizer_mml         # Calc end pos for this chunk (e.g. + 512 chars)
             #print (f"###-@308: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
             if end >= abs_tchars:               # test if end would overrun max len of chunk
+                print (f"================================== D E B U G ============================================")
+                print (f"###debug-320: Blocklet tail overrun start: {start} / len: {abs_tchars} / end: {end}")
+                print (f"================================== D E B U G ============================================")
                 chunk = st_list[start:][:end]   # set chunk = list index slice @ [start:][end:]
                 if chunk:                       # non-empy chunk? only add non-empty chunks
                     run_total += len(chunk[0])  # get len of this chunk (allways at live loc list[0])
@@ -314,7 +317,7 @@ class ml_sentiment:
                     logging.info( f"%s - Eng.#1 Blocklet constructed: {self.chunk_index:03} @ {len(chunk[0]):03} chars [ {run_total:04} ]" % cmi_debug )
                     chunks[self.chunk_index] = chunk                    # add to final output dict DATA PACKAGE
                     #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
-                    # self.chunk_index += 1     # not sure this is needed or correct
+                    self.chunk_index += 1     # not sure this is needed or correct
                 break       # forcefully end the entire while loop 
  
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
