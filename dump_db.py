@@ -141,7 +141,7 @@ def dump_lmdb_deep(lmdb_instance, key_filter):
     return 0
 
 ################# 3
-def dump_lmdb_basic(lmdb_instance, yti):
+def dump_lmdb_basic(lmdb_instance):
     # you must manually open the DB yourself first...
     try:
         with lmdb_instance.RO_env.begin() as txn:
@@ -178,7 +178,7 @@ elif args['key_filter'] is not None:
     print(f"Filtering LMDB entries by key: '{args['key_filter']}'")
     dump_lmdb_by_key(lmdb_inst, args['key_filter'])
 else:
-    dump_lmdb_basic("BASIC_DUMP")
+    dump_lmdb_basic(lmdb_inst)
 
 if args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
