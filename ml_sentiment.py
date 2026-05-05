@@ -336,8 +336,8 @@ class ml_sentiment:
                 #run_total += int(len(blocklet[0]))
                 #print (f"##-@267: runtot:{run_total} / chunk:{self.chunk_index}")
                 #print (f"##-@267: runtot:{run_total} / chunk:{self.chunk_index}")
-                _remaining = run_total - abs_tchars
-                logging.info( f"%s - Eng.#2 Blocklet constructed: {self.chunk_index:03} @ {len(blocklet):03} chars [ {run_total:04} ] remaining [ {_remaining:04} ]" % cmi_debug )
+                _remaining = abs_tchars - run_total
+                logging.info( f"%s - Eng.#2 Blocklet dict built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {run_total:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                 start = chunk_end + (1 if chunk_end < len(st_list) and st_list[chunk_end] == ' ' else 0)
                 self.chunk_index += 1
 
