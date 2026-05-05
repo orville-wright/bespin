@@ -141,16 +141,10 @@ def dump_lmdb_deep(lmdb_instance, key_filter):
     return 0
 
 ################# 3
-def dump_lmdb_basic(self, yti):
-    cmi_debug = __name__+"::"+self.dump_lmdb_RO.__name__+".#"+str(self.yti)
-    logging.info( f'%s    - dump_lmdb.#{self.yti} DB Instance: {self.db_name}' % cmi_debug )
-    db_inst = self.db_path+self.db_name
-    
+def dump_lmdb_basic(lmdb_instance, yti):
     # you must manually open the DB yourself first...
     try:
-        logging.info( f'%s   - Successfully opened KVstore - READ-ONLY mode.#{self.yti} {self.db_name}' % cmi_debug )
-        logging.info( f'%s   - KVstore remains globally open.#{self.yti} instance: {self.db_name}' % cmi_debug )
-        with self.RO_env.begin() as txn:
+        with lmdb_instance.RO_env.begin() as txn:
             cursor = txn.cursor()
             count = 0
             for key, value in cursor:
