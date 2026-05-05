@@ -308,16 +308,22 @@ class ml_sentiment:
             #print (f"###-@308: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
             if end >= abs_tchars:               # test if end would overrun max len of chunk
                 print (f"================================== D E B U G ============================================")
-                print (f"###debug-320: Blocklet tail overrun start: {start} / len: {abs_tchars} / end: {end}")
+                print (f"###debug-320: Blocklet tail overrun TRIGGERED - start: {start} / len: {abs_tchars} / end: {end}")
                 print (f"================================== D E B U G ============================================")
-                chunk = st_list[start:][:end]   # set chunk = list index slice @ [start:][end:]
-                if chunk:                       # non-empy chunk? only add non-empty chunks
-                    run_total += len(chunk[0])  # get len of this chunk (allways at live loc list[0])
+                blocklet = st_list[start:][:abs_tchars]   # set blocklet = list index slice @ [start:][end:]
+                if blocklet:                       # non-empy chunk? only add non-empty chunks
+                    print (f"================================== D E B U G ============================================")
+                    print (f"###debug-320: Blocklet tail overrun - DATA: {start} / len: {abs_tchars} / end: {end}")
+                    print (f"================================== D E B U G ============================================")
+                    run_total += len(blocklet[0])  # get len of this chunk (allways at live loc list[0])
                     #print (f"##-@313: run:{run_total} / len:{len(chunk[0])}")
-                    logging.info( f"%s - Eng.#1 Blocklet constructed: {self.chunk_index:03} @ {len(chunk[0]):03} chars [ {run_total:04} ]" % cmi_debug )
-                    chunks[self.chunk_index] = chunk                    # add to final output dict DATA PACKAGE
+                    logging.info( f"%s - Eng.#1 Blocklet built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {run_total:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                     #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
                     self.chunk_index += 1     # not sure this is needed or correct
+                else:
+                    print (f"================================== D E B U G ============================================")
+                    print (f"###debug-320: Blocklet tail overrun EMPTY - start: {start} / len: {abs_tchars} / end: {end}")
+                    print (f"================================== D E B U G ============================================")                    
                 break       # forcefully end the entire while loop 
  
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
@@ -328,7 +334,7 @@ class ml_sentiment:
                 #print (f"##-@254: at the end!")
             else:
                 chunk_end = last_space
-                blocklet = st_list[0][start:chunk_end]      # Extract the chunk and add to list
+                blocklet = st_list[0][start:chunk_end]      # Extract the chunk and add to a holding list
                 #print (f"##-@258: blocklet:{blocklet} / end:{chunk_end} / last:{last_space}")
                 
             if blocklet:                                    # only add non-empty chunks
