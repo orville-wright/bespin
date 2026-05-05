@@ -37,6 +37,7 @@ if args['bool_verbose'] is True:        # Logging level
 else:
     logging.disable(20)                 # Log lvel = INFO
 
+################# 1
 def dump_lmdb_by_key(lmdb_instance, key_filter):
     """Filter LMDB entries by stock ticker (element #2) or URL hash fragment (element #3).
 
@@ -104,8 +105,9 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
         print(f"LMDB Error: {e}")
     except Exception as e:
         print(f"dump_lmdb_by_key Error: {e}")
+    return 0
 
-
+################# 2
 def dump_lmdb_deep(lmdb_instance, key_filter):
     """Print full values for all LMDB entries whose key contains key_filter.
     Values are parsed and pretty-printed as JSON when possible.
@@ -136,8 +138,35 @@ def dump_lmdb_deep(lmdb_instance, key_filter):
         print(f"LMDB Error: {e}")
     except Exception as e:
         print(f"dump_lmdb_deep Error: {e}")
+    return 0
 
+################# 3
+def dump_lmdb_basic(self, yti):
+    cmi_debug = __name__+"::"+self.dump_lmdb_RO.__name__+".#"+str(self.yti)
+    logging.info( f'%s    - dump_lmdb.#{self.yti} DB Instance: {self.db_name}' % cmi_debug )
+    db_inst = self.db_path+self.db_name
+    
+    # you must manually open the DB yourself first...
+    try:
+        logging.info( f'%s   - Successfully opened KVstore - READ-ONLY mode.#{self.yti} {self.db_name}' % cmi_debug )
+        logging.info( f'%s   - KVstore remains globally open.#{self.yti} instance: {self.db_name}' % cmi_debug )
+        with self.RO_env.begin() as txn:
+            cursor = txn.cursor()
+            count = 0
+            for key, value in cursor:
+                key_str = key.decode('utf-8')
+                value_str = value.decode('utf-8')
+                print(f"{count:03} / KEY: {key_str} / {value_str[:40]}{'...' if len(value_str) > 40 else ''}")
+                count += 1            
+        return 1
+    except lmdb.Error as e:
+        print(f"LMDB Open Error: {e}")
+        return 2
+    except Exception as e:
+        print(f"Dump RO mode - Error Exception: {e}")
+        return 0
 
+################# Main()
 lmdb_dbname = "LMDB_0001"
 lmdb_inst = lmdb_io_eng("RO_DUMP", lmdb_dbname, args)
 lmdb_inst.open_lmdb_RO("RO_DUMP")
@@ -155,7 +184,7 @@ elif args['key_filter'] is not None:
     print(f"Filtering LMDB entries by key: '{args['key_filter']}'")
     dump_lmdb_by_key(lmdb_inst, args['key_filter'])
 else:
-    lmdb_inst.dump_lmdb_RO("RO_DUMP")
+    lmdb_inst.dump_lmdb_basic("BASIC_DUMP")
 
 if args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
