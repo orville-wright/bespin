@@ -80,6 +80,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 print ( f"Text metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
                 print ( f"Chunk analytics")
 
+                _v_key = 0  # chunk dict allways starts at 000 - ensure reset for each run
                 for _v_chunk_dict in range(int(_v_dict["chunk_count"])):
                     _v_key = f"{_v_chunk_dict:03}"
                     _v_sub_dict = (_v_dict[_v_key])
@@ -94,6 +95,8 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 #print(f"Data: {type(value_str)} - {value_str}" )
                 #pprint(value_str, indent=4, width=40)
                 matches += 1
+                _v_key = 0
+                _v_chunk_dict = 0
 
             print(f"\nKey filter '{key_filter}': {matches} match(es) from {total} total entries")
     except lmdb.Error as e:
