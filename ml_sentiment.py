@@ -256,16 +256,17 @@ class ml_sentiment:
     # Helper function
     def unified_chunker(self, st_list, tokenizer_mml, _ext_type, _curr_chunk_udid):
         """
-        Unifided chunker
+        Unified chunker
         Chunks a frame of article text data into smaller blocklets not exceeding LLM tokenizer max length
         WARN: input **must** be a list[]
         - lists provide O(1) indexed access. Are 2-3x more memory efficent than a dict{}
         - lists optomize for index/slice lookups, dicts{} optomize for key lookups 
-        Avoids truncation of text and ebale full text sentiment analysis (no loss of words)
+        Avoids truncation of text and enbales full text sentiment analysis (no loss of words)
         Honnors word boundaries on chunking logic
         Leverages list[] slicing, b/c dicts dont provide slices
+        
         RESULT:
-        - a dict{} of beautifullt chunked "blocklets" shorter than tokenizer_mml
+        - a dict{} of beautifully chunked "blocklets" shorter than tokenizer_mml
         - could potentially be a multi element {} if input data is a long text string
         """        
         cmi_debug = __name__+"::"+self.unified_chunker.__name__+".#"+str(self.yti)
@@ -330,8 +331,10 @@ class ml_sentiment:
         '''
         This engine processes a dict{} of text blocklets (scentences/paragraphs)
         - for 1 article ONLY
-        - 1 set of blocklets (could be truncated or clean)
-        - It executeds the LLM NLP Classifier pipeline on each blocklet
+        - 1 set of blocklets could be truncated or clean
+        - truncated due to being longer than the LLMN truncation limit
+        - or clean... shorter than the LLM truncation limit
+        - It executes the LLM NLP Classifier pipeline on each blocklet
         
         WARN: can only intake a dict{}, so chunker prepares chunks as a dict{} of blocklets
         - Heavy CPU utilization will be triggered
@@ -345,6 +348,7 @@ class ml_sentiment:
         tnc = 0
         ngram_count = 0
         self.element_udid = _blocklet_udid
+        # truncation status micro lookup dict
         dpro_eng_decode = {
             0: "Unknonwn",
             1: "BS4_Trctd",
@@ -353,7 +357,7 @@ class ml_sentiment:
             4: "C4_Clean"
         }
 
-        _x_cr_package = dict()      # ensure cr_packge is loca and empty !
+        _x_cr_package = dict()      # ensure cr_packge is local and empty dict !
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
         logging.info( f"%s - Start DICT processor engine:  {dpro_eng_decode.get(_dpro_eng, 'Unknown')}" % cmi_debug )
         
@@ -402,9 +406,14 @@ class ml_sentiment:
                 _x_cr_package.update({'chunk_count': (_chunk_udid)})  # add to package - current GLOBAL class var
             else:
                 _x_cr_package['chunk_count'] = self.chunk_udid
-                
-            _k = f'{self.element_udid:03}'  # formated JSON dict{} package with global subdict counter ID NUM
-            _x_cr_package[_k]=({ # create a new subdict for this chunk
+            
+            ##################################################################
+            # Built a dataset as a dict to write into LMBD KV cache
+            # formated JSON dict{} package
+            # subdict KEY is element_udid  (e.g. 001)
+            # 
+            _k = f'{self.element_udid:03}' 
+            _x_cr_package[_k]=({            # KEY to create a this subdict for this chunk
                             'symbol': symbol,
                             'chunk': f"{_chunk_udid:03}",
                             'n-grams': f"{twc:03}",
