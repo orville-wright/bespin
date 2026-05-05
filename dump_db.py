@@ -83,6 +83,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
 
                 _v_key = 0  # chunk dict allways starts at 000 - ensure reset for each run
                 for _v_chunk_dict in range(int(_v_dict["chunk_count"])+1):  # chunk count is 0 indexed, so add 1 to include the last chunk
+                    _v_key = f"{_v_chunk_dict:03}"
                     try: 
                         _v_sub_dict = (_v_dict[_v_key])
                     except Exception as e:
