@@ -101,8 +101,8 @@ class ml_sentiment:
                     C4_artdata_depth3  -> compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 0)
         INPUTS:
         1. symbol = ticker symbol
-        2. item_ida = the index num in the ml_index DB
-        3. local_stub_news_p = list[] of text tags or C4 TEXT from article
+        2. item_idx = the index num in the ml_index DB (i.e. the list of candidate news articles)
+        3. local_stub_news_p = list[] of text tags or C4 TEXT blob extracted from the article
         4. urlhash = hash of the url
         5. ext = extractor type (0 = Crawl4ai, 1 = BS4)
         
@@ -160,7 +160,7 @@ class ml_sentiment:
         
         # Crawl4ai extractor
         if self.ext_type == 0:      # Craw4ai
-            logging.info( f"%s - Crawl4ai Blocklet Builder engine.#1 - LLM Trnctn {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
+            logging.info( f"%s - C4 Blocklet Builder engine.#1 - LLM Trnctn {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
             # input MUST be a crawl4ai prepred list of full article text. 
             # c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
             # therfore chunker has a higher probabliy of needing to do a lot more work for c4
@@ -181,10 +181,10 @@ class ml_sentiment:
                 truncated = "Undef"
                 if len(scentxt[i]) >= self.tokenizer_mml:   # self.tokenizer_mml: only chunk into blocklets on truncation alert
                     truncated = "Truncation!"
-                    _dpro_eng = 3   # C4 + Truncated
-                    logging.info( f"%s - {truncated} Long text blocklet / send LIST to unfied_chunker.#1..." % cmi_debug )
+                    _dpro_eng = 3                  # C4 + Truncated
+                    logging.info( f"%s - {truncated} Long text blocklet / sending to unfied_chunker.#1..." % cmi_debug )
                     blocklet_l = list()
-                    blocklet_l.append(scentxt[i])  # stack full article text -> list[]. uified_chunker takes link[] input only
+                    blocklet_l.append(scentxt[i])  # stack full article text -> list[]. uified_chunker takes list[] input only
                     blocklet_d, self.chunk_udid = self.unified_chunker(blocklet_l, self.tokenizer_mml, self.ext_type, self.chunk_udid)   # send list[], result = {} of blocklets
                     self.ttc, _i_twc, _tr_final_results, self.blocket_udid = self.dict_processor(symbol, blocklet_d, _dpro_eng, self.blocket_udid)    # Exec AI NLP classifier inside dict_processor() !!
                     self.twc += _i_twc
@@ -207,7 +207,7 @@ class ml_sentiment:
         
         # BS4 extractor
         else:
-            logging.info( f"%s - BS4 Blockete Builder engine.#1 - LLM Trnctn @ {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
+            logging.info( f"%s - BS4 Blocklet Builder engine.#1 - LLM Trnctn @ {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
             # WARN: must be a BS4 prepared list of article text
             # - BS4 only sends a list of each individual <p> tags element
             # - 1 at a time from within the articel body
@@ -300,7 +300,7 @@ class ml_sentiment:
         logging.info( f"%s   - Start {ext_type_decode.get(_ext_type, 'Unknown')} chunker - chars: {abs_tchars} @ trctn: {tokenizer_mml}" % cmi_debug )
         chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of text > tokenizer_mml"
         self.chunk_index = _curr_chunk_udid     # sub-dict key
-        start = 0           # text blocklet len counter
+        end = start = 0     # text blocklet positional indexers
         run_total = 0       # cumulative total
 
         while start < abs_tchars:
@@ -310,12 +310,12 @@ class ml_sentiment:
                 chunk = st_list[start:][:end]   # set chunk = list index slice @ [start:][end:]
                 if chunk:                       # non-empy chunk? only add non-empty chunks
                     run_total += len(chunk[0])  # get len of this chunk (allways at live loc list[0])
-                    #print (f"##-@242: run:{run_total} / len:{len(chunk[0])}")
+                    #print (f"##-@313: run:{run_total} / len:{len(chunk[0])}")
                     logging.info( f"%s - Eng.#1 Blocklet constructed: {self.chunk_index:03} @ {len(chunk[0]):03} chars [ {run_total:04} ]" % cmi_debug )
-                    chunks[self.chunk_index] = chunk     # add to final output dict DATA PACKAGE
+                    chunks[self.chunk_index] = chunk                    # add to final output dict DATA PACKAGE
                     #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
-                    self.chunk_index += 1
-                break
+                    # self.chunk_index += 1     # not sure this is needed or correct
+                break       # forcefully end the entire while loop 
  
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
             last_space = st_string.rfind(' ', start, end)   # Find last space in chunk avoid breaking words
@@ -342,18 +342,19 @@ class ml_sentiment:
         return chunks, self.chunk_index   # {} of perfect blockelts < tokenizer_mml
     
     #####################################
-    # Helper function
+    # HLLM elper function
     def dict_processor(self, symbol, _text_dict, _dpro_eng, _blocklet_udid):
         '''
         This engine processes a dict{} of text blocklets (scentences/paragraphs)
         - for 1 article ONLY
-        - 1 set of blocklets could be truncated or clean
+        - 1 set of blocklets could be either truncated or clean
         - truncated due to being longer than the LLMN truncation limit
-        - or clean... shorter than the LLM truncation limit
-        - It executes the LLM NLP Classifier pipeline on each blocklet
+        -  clean... shorter than the LLM truncation limit
+        - It executes the LLM NLP Classifier pipeline on each blocklet within the full input dict
         
-        WARN: can only intake a dict{}, so chunker prepares chunks as a dict{} of blocklets
-        - Heavy CPU utilization will be triggered
+        WARN: can only intake a dict{} of text blocklets
+        - The UNIFEID_CHUNKER prepares chunks into a nice dict{} of blocklets
+        - Heavy CPU / GPU utilization will be triggered NOW !
         '''
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
         logging.info( f"%s - Initialize EMPTY DICT processor engine..." % cmi_debug )
@@ -399,14 +400,15 @@ class ml_sentiment:
 
             _truncate_state = dpro_eng_decode.get(_dpro_eng, 'Unknown')  # decode the _dpro_eng var
 
-            logging.info( f"%s - ======== LLM Classifying Chunk {_chunk_udid:03} {_truncate_state} ========" % cmi_debug)
-            logging.info( f"%s - ======== Exec classifier/vectorizor  ==================" % cmi_debug )
+            logging.info( f"%s - ======== LLM Classifying Chunk: {_chunk_udid:03} via: {_truncate_state} ========" % cmi_debug)
+            logging.info( f"%s - ======== Exec LLM Sentiment classifier/vectorizor  ==================" % cmi_debug )
             
             ####################### LLM NLP #######################
             # THIS IS THE HEAVY LIFTING - LLM CLASSIFIER PIPELINE #
             #######################################################
             #
-            clsfr_result = self.classifier(chunk, truncation=True)      # LLM classifier !!!
+            clsfr_result = self.classifier(chunk, truncation=True)      # LLM sentimewnt classifier NOW !!!
+            #
             #print (f"DP-chunk: {_chunk_udid:03} ({clsfr_result[0]['score']}) ", end="" )
             #print ( f"##-@320: CHUNK: {_chunk_udid:03}  {dpro_eng_decode.get(_dpro_eng, 'Unknown')}\n{chunk}" )
             
@@ -429,7 +431,7 @@ class ml_sentiment:
             # subdict KEY is element_udid  (e.g. 001)
             # 
             _k = f'{self.element_udid:03}' 
-            _x_cr_package[_k]=({            # KEY to create a this subdict for this chunk
+            _x_cr_package[_k]=({            # KEY to create this subdict for this chunk
                             'symbol': symbol,
                             'chunk': f"{_chunk_udid:03}",
                             'n-grams': f"{twc:03}",
@@ -469,7 +471,7 @@ class ml_sentiment:
         return ttc, tnc, _x_cr_package, self.element_udid
 
  ###################
-    # Helper function for dict_processor()
+    # LLM Helper function for dict_processor()
     def nlp_sent_engine(self, _this_chunk, symbol, ngram_tkzed, ngram_count, _clsfr_result, _z_cr_package):
         """
         - Computes sentimnent SCORES !!!
@@ -478,7 +480,7 @@ class ml_sentiment:
             1 = RuntimeError
             2 = Empty Vocab
             3 = Other Exception
-        - removes stopwords (that dilute sentiment scoring)
+        - removes stopwords (generic non-domain word noise that dilute sentiment scoring)
         - Calculates High Frequency Words inside the HOT classified LLM Transformer
         - prepares Global DF update results package
         - calls save_sentiment_df() to update sentiment metrics
