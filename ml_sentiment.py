@@ -177,7 +177,7 @@ class ml_sentiment:
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
             for i in range(0, len(scentxt)):    # this = 1 b/c C4 sends a list[] of 1 big blob of text
-                logging.info( f"%s - C4 Eval pre-chunker @row: {i:03} / TEXT length:{len(scentxt[i])} chars" % cmi_debug )
+                logging.info( f"%s - C4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i])} chars" % cmi_debug )
                 truncated = "Undef"
                 if len(scentxt[i]) >= self.tokenizer_mml:   # self.tokenizer_mml: only chunk into blocklets on truncation alert
                     truncated = "Truncation!"
@@ -259,17 +259,31 @@ class ml_sentiment:
     def unified_chunker(self, st_list, tokenizer_mml, _ext_type, _curr_chunk_udid):
         """
         Unified chunker
-        Chunks a frame of article text data into smaller blocklets not exceeding LLM tokenizer max length
-        WARN: input **must** be a list[]
-        - lists provide O(1) indexed access. Are 2-3x more memory efficent than a dict{}
-        - lists optomize for index/slice lookups, dicts{} optomize for key lookups 
+        Chunks a frame of article text data into smaller blocklets to fit within LLM tokenizer max length
+        which is fixed when the LLM is built and trained.
+
+        INFO:
+        - input **must** be a list[ ]
+        - lists provide O(1) indexed access, which are 2-3x more memory efficent than a dict{}
+        - lists optomize for index/slice lookups, dicts{} optomize for key lookups
+
         Avoids truncation of text and enbales full text sentiment analysis (no loss of words)
-        Honnors word boundaries on chunking logic
+        Honnors word boundaries on chunking logic (doesnt split a word)
         Leverages list[] slicing, b/c dicts dont provide slices
+
+        WARN:
+        input -> list [ ] and resulting ouput .> dict{ }
+
+        - For a C4 input list of text (i.e. a single element list of every long bloob of text)...
+          the last blocklet (i.e. remaaing short tail of text) is currently not propcessed and lost !
+          But, somehow the LBMD KV write knows the correct number of C4 chunks to write, but the last chunk
+          isnt added to the prepared result DATA PACKAGE and is not written into LMDB KV cache entry.
+          So the C4 KV entry is slightly in ERROR (i.e. the chunk dic is short by the final tail data element)
+        - I'm not sure why and am trying to debug why as at 5/April/2026
 
         RESULT:
         - a dict{} of beautifully chunked "blocklets" shorter than tokenizer_mml
-        - could potentially be a multi element {} if input data is a long text string
+        - could easily be a multi element {} if input is a long text string
         """        
         cmi_debug = __name__+"::"+self.unified_chunker.__name__+".#"+str(self.yti)
         logging.info( f"%s   - Unified chunking engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
@@ -281,24 +295,24 @@ class ml_sentiment:
 
         if not st_list:     # empty
             return {}       # for BS4, this is a row of <p> tag txt
-        #total_chars = sum(len(v) for v in st_list.values())     # total of all chars in all rows
-        abs_tchars = sum(len(s) for s in st_list)            
+
+        abs_tchars = sum(len(s) for s in st_list)   # total of all chars in all rows
         logging.info( f"%s   - Start {ext_type_decode.get(_ext_type, 'Unknown')} chunker - chars: {abs_tchars} @ trctn: {tokenizer_mml}" % cmi_debug )
         chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of text > tokenizer_mml"
-        self.chunk_index = _curr_chunk_udid     # dict key
+        self.chunk_index = _curr_chunk_udid     # sub-dict key
         start = 0           # text blocklet len counter
         run_total = 0       # cumulative total
 
         while start < abs_tchars:
             end = start + tokenizer_mml         # Calc end pos for this chunk (e.g. + 512 chars)
-            #print (f"###-@237: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
+            #print (f"###-@308: start:{start} / end:{end} / tkml:{tokenizer_mml} / abschars:{abs_tchars}")
             if end >= abs_tchars:               # test if end would overrun max len of chunk
-                chunk = st_list[start:][:end]   # list index slice > to end of list
+                chunk = st_list[start:][:end]   # set chunk = list index slice @ [start:][end:]
                 if chunk:                       # non-empy chunk? only add non-empty chunks
-                    run_total += len(chunk[0])  # get len of this chunk (allwats at slive loc list[0])
+                    run_total += len(chunk[0])  # get len of this chunk (allways at live loc list[0])
                     #print (f"##-@242: run:{run_total} / len:{len(chunk[0])}")
                     logging.info( f"%s - Eng.#1 Blocklet constructed: {self.chunk_index:03} @ {len(chunk[0]):03} chars [ {run_total:04} ]" % cmi_debug )
-                    chunks[self.chunk_index] = chunk     # add to final output dict
+                    chunks[self.chunk_index] = chunk     # add to final output dict DATA PACKAGE
                     #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
                     self.chunk_index += 1
                 break
@@ -315,7 +329,7 @@ class ml_sentiment:
                 #print (f"##-@258: blocklet:{blocklet} / end:{chunk_end} / last:{last_space}")
                 
             if blocklet:                                    # only add non-empty chunks
-                chunks[self.chunk_index] = blocklet         # add to final output dict
+                chunks[self.chunk_index] = blocklet         # add to final output dict DATA PACKAGE
                 #print ( f"2_udid:{self.chunk_index:03} ", end="")  # debug
                 _b = len(blocklet)
                 run_total += _b
@@ -523,7 +537,7 @@ class ml_sentiment:
 ##################################### 1 ####################################
     def save_sentiment_df(self, item_idx, data_set):
         """
-        Save key ML sentiment info to global sentimennt Dataframe
+        Save key ML sentiment info to global sentimennt in-memory Dataframe
         data_set = a dict
         """
         self.yti
