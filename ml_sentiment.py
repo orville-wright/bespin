@@ -310,24 +310,21 @@ class ml_sentiment:
                 print (f"================================== D E B U G ============================================")
                 print (f"###debug-320: Blocklet tail overrun TRIGGERED - start: {start} / len: {abs_tchars} / end: {end}")
                 print (f"================================== D E B U G ============================================")
-                blocklet = st_list[0][start:abs_tchars]      # Extract the chunk and add to a holding list
-                #blocklet = st_list[start:][:abs_tchars]   # set blocklet = list index slice @ [start:][end:]
-                if blocklet:                       # non-empy chunk? only add non-empty chunks
+                blocklet = st_list[0][start:abs_tchars]      # Extract the chunk and add to a holding list:]
+                if blocklet:                     # non-empy chunk? only add non-empty chunks
                     print (f"================================== D E B U G ============================================")
                     print (f"###debug-320: Blocklet tail overrun - DATA: {start} / len: {abs_tchars} / end: {end}")
                     print (f"{blocklet}")
                     print (f"================================== D E B U G ============================================")
-                    run_total += len(blocklet[0])  # get len of this chunk (allways at live loc list[0])
-                    #print (f"##-@313: run:{run_total} / len:{len(chunk[0])}")
-                    logging.info( f"%s - Eng.#1 Blocklet built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {run_total:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
+                    chunks[self.chunk_index] = blocklet      # add to final output dict DATA PACKAGE
+                    _b = len(blocklet)  # get len of this chunk (allways at live loc list[0])
+                    run_total += _b
+                    _remaining = abs_tchars - run_total
+                    logging.info( f"%s - Eng.#1 Blocklet built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                     #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
                     self.chunk_index += 1     # not sure this is needed or correct
-                else:
-                    print (f"================================== D E B U G ============================================")
-                    print (f"###debug-320: Blocklet tail overrun EMPTY - start: {start} / len: {abs_tchars} / end: {end}")
-                    print (f"================================== D E B U G ============================================")                    
-                break       # forcefully end the entire while loop 
- 
+                break       # end the entire while loop - should be the END of all chars
+
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
             last_space = st_string.rfind(' ', start, end)   # Find last space in chunk avoid breaking words
             #print (f"##-@251: lspace:{last_space} / len:{len(st_list[0])}")
