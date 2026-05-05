@@ -316,9 +316,9 @@ class ml_sentiment:
                     print (f"###debug-320: Blocklet tail overrun - DATA: {start} / len: {abs_tchars} / end: {end}")
                     print (f"{blocklet}")
                     print (f"================================== D E B U G ============================================")
-                    chunks[self.chunk_index] = blocklet      # add to final output dict DATA PACKAGE
-                    _b = len(blocklet)  # get len of this chunk (allways at live loc list[0])
-                    run_total += _b
+                    #chunks[self.chunk_index] = blocklet      # add to final output dict DATA PACKAGE
+                    #_b = len(blocklet)  # get len of this chunk (allways at live loc list[0])
+                    #run_total += _b
                     _remaining = abs_tchars - run_total
                     logging.info( f"%s - Eng.#1 Blocklet built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                     #print ( f"1_udid:{self.chunk_index:03} ", end="")  # debug
