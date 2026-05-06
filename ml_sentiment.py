@@ -731,7 +731,7 @@ class ml_sentiment:
             logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
             #print ( f"============================ B S 4    D E B U G ============================" )
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
-                _temp_text = " ".join(scentxt[i].text)
+                _temp_text = _temp_text.join(scentxt[i].text)
             
             print ( f"{_temp_text}")
             # _temp_text = _temp_text + f"{scentxt[i].text}"
