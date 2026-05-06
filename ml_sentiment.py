@@ -732,8 +732,8 @@ class ml_sentiment:
             print ( f"============================ B S 4    D E B U G ============================" )
             _x = "ARTICLE_STARTS_HERE:"
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
-                print ( f"###-debug-735: Type  - {type(scentxt[i].text)}" )
-                print ( f"###-debug-736: Data - {scentxt[i].text}" )
+                #print ( f"###-debug-735: Type  - {type(scentxt[i].text)}" )
+                #print ( f"###-debug-736: Data - {scentxt[i].text}" )
                 _x = _x + ( f" {scentxt[i].text}")      # concat & grow the article to full length
                 #print ( f"###-debug-739: Data - {_x}" )
                 #print ( f"{scentxt[i].text}" )
