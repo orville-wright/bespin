@@ -158,12 +158,13 @@ class ml_sentiment:
         # Compute sentiment for 1 article Full TEXT block
         #
         
-        # Crawl4ai extractor
+        # Crawl4ai pre-processor
+        #
         if self.ext_type == 0:      # Craw4ai
             logging.info( f"%s - C4 Blocklet Builder engine.#1 - LLM Trnctn {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
             # input MUST be a crawl4ai prepred list of full article text. 
-            # c4 dumps all <p> tage text elements into 1 big list - this is how crawl4ai works !!
-            # therfore chunker has a higher probabliy of needing to do a lot more work for c4
+            # c4 strips out all html and<dumps <p> tag text elements into 1 big text blob in a list[ ]
+            # therfore chunker has  to do a more work for c4
             _i_twc = 0              # reset counters (class global attributes)
             self.ttc = 0            # " "
             self.twc = 0            # " "
@@ -176,6 +177,10 @@ class ml_sentiment:
             self._chunk_profile = dict()        # what type of chunk thisd is (sent/para/randm)
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
+            print ( f"============================ C 4    D E B U G ============================" )
+            print ( f"{scentxt}")
+            print ( f"=========================== E N D    D E B U G ===========================" )
+
             for i in range(0, len(scentxt)):    # this = 1 b/c C4 sends a list[] of 1 big blob of text
                 logging.info( f"%s - C4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i])} chars" % cmi_debug )
                 truncated = "Undef"
@@ -205,12 +210,13 @@ class ml_sentiment:
             self.blocket_udid = 0   # after this entire article is processed, reset the blocklet counter
             return self.ttc, self.twc, self.cr_package
         
-        # BS4 extractor
+        # BS4 pre-processor
+        #
         else:
             logging.info( f"%s - BS4 Blocklet Builder engine.#1 - LLM Trnctn @ {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
             # WARN: must be a BS4 prepared list of article text
-            # - BS4 only sends a list of each individual <p> tags element
-            # - 1 at a time from within the articel body
+            # - BS4 only sends a list of rows of individual <p> tags element
+            # - 1 at a time from within the article body
             # The chunker has good probablity of not doing as much work as C4 b/c BS4 <p> text fragemtns are shorter
             self.ext_type = 1   # BS4
             _i_twc = 0              # reset counters (class global attributes)
@@ -225,6 +231,10 @@ class ml_sentiment:
             self._chunk_profile = dict()        # what type of chunk thisd is (sent/para/randm)
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
+            print ( f"============================ B S 4   D E B U G ===========================" )
+            print ( f"{scentxt}")
+            print ( f"=========================== E N D    D E B U G ===========================" )
+
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
                 logging.info( f"%s - BS4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i].text)} chars" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
                 truncated = "Undef"
