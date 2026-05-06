@@ -731,7 +731,7 @@ class ml_sentiment:
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(_source_data)
             _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
-            logging.info (f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}%" % cmi_debug)
+            logging.info (f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}" % cmi_debug)
             return compressed_blob
         elif extractor == 1:    # BS4
             logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
@@ -752,7 +752,7 @@ class ml_sentiment:
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(_source_data)
             _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
-            logging.info( f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}%" % cmi_debug)
+            logging.info( f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}" % cmi_debug)
             return compressed_blob
 
         return 1
