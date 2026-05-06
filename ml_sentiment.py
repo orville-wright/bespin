@@ -734,9 +734,8 @@ class ml_sentiment:
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
                 print ( f"###-debug-735: Type  - {type(scentxt[i].text)}" )
                 print ( f"###-debug-736: Data - {scentxt[i].text}" )
-
-                _x = _x + ( f" {scentxt[i].text}")
-                print ( f"###-debug-739: Data - {_x}" )
+                _x = _x + ( f" {scentxt[i].text}")      # concat & grow the article to full length
+                #print ( f"###-debug-739: Data - {_x}" )
                 #print ( f"{scentxt[i].text}" )
                 #_full_article.join(_bs4_row)
 
