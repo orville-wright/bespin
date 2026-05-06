@@ -716,16 +716,15 @@ class ml_sentiment:
         logging.info( f"%s - article text compressor..." % cmi_debug )
         if extractor == 0:      # C4
             logging.info( f"%s - C4 text compressor engine..." % cmi_debug )
-            # C4 sends a list of 1 big blob of text (all <p> tags text combined into 1 big blob)
-            # - the chunker has to do more work for C4, b/c it has to chunk this big blob into smaller blocklets
             print ( f"============================ C 4    D E B U G ============================" )
-            _source_data = scentxt[0].encode('utf-8')
-            print ( f"{_source_data}")
+            # C4 sends a list of 1 big blob of text (all <p> tags text combined into 1 big blob)
+            print ( f"ARTICLE_STARTS_HERE: {scentxt[0]}")
+            _source_data = scentxt[0].encode('utf-8')   # prepare byte stream for ZSTD compressor
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(_source_data)
             print ( f" " )
             _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
-            print(f"Data: {type(_source_data)} / Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}")
+            print(f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}%")
             print ( f"=========================== C 4    E N D    D E B U G ===========================" )
             return 0
         elif extractor == 1:    # BS4
@@ -743,16 +742,11 @@ class ml_sentiment:
             #
             _final_article = " ".join(_blocklets)
             print ( f"{_final_article}")
-
-            #for i in range(0, len(scentxt)):
-            # _x = _x + ( f" {scentxt[i].text}")      # concat & grow the article to full length - worst memory usage
-            # _temp_text = _temp_text + f"{scentxt[i].text}"
-
-            _source_data = _final_article.encode('utf-8')
+            _source_data = _final_article.encode('utf-8')   # prepare byte stream for ZSTD compressor
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(_source_data)
             _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
-            print(f"Data: {type(_source_data)} / Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}")
+            print(f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}%")
             print ( f"=========================== B S 4   E N D    D E B U G ===========================" )
             return 0
 
