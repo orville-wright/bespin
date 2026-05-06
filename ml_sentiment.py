@@ -719,12 +719,12 @@ class ml_sentiment:
             # C4 sends a list of 1 big blob of text (all <p> tags text combined into 1 big blob)
             # - the chunker has to do more work for C4, b/c it has to chunk this big blob into smaller blocklets
             print ( f"============================ C 4    D E B U G ============================" )
-            source_data = scentxt[0].encode('utf-8')
+            _source_data = scentxt[0].encode('utf-8')
+            print ( f"{_source_data}")
             compressor = zstd.ZstdCompressor(level=3)
-            compressed_blob = compressor.compress(source_data)
-            print ( f"{scentxt}")
+            compressed_blob = compressor.compress(_source_data)
             print ( f" " )
-            print(f"Origi size: {len(source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
+            print(f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
             print ( f"=========================== C 4    E N D    D E B U G ===========================" )
             return 0
         elif extractor == 1:    # BS4
@@ -747,10 +747,10 @@ class ml_sentiment:
             # _x = _x + ( f" {scentxt[i].text}")      # concat & grow the article to full length - worst memory usage
             # _temp_text = _temp_text + f"{scentxt[i].text}"
 
-            #source_data = _full_article.encode('utf-8')
-            #compressor = zstd.ZstdCompressor(level=3)
-            #compressed_blob = compressor.compress(source_data)
-            #print(f"Origi size: {len(source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
+            _source_data = _final_article.encode('utf-8')
+            compressor = zstd.ZstdCompressor(level=3)
+            compressed_blob = compressor.compress(_source_data)
+            print(f"Origi size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
             print ( f"=========================== B S 4   E N D    D E B U G ===========================" )
             return 0
 
