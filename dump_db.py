@@ -22,7 +22,7 @@ global args
 args = {}
 
 parser = argparse.ArgumentParser(prog="Aop", description="LMBD Maintence tool")
-parser.add_argument('-a','--articles', help='dump all article data', action='store_true', dest='ticker_filter', required=True, default=False)
+parser.add_argument('-a','--articles', help='dump all article data', nargs="*", dest='bool_article', required=True, default=False)
 parser.add_argument('-d','--deep', help='Deep data dump of values', action='store_true', dest='bool_data', required=False, default=False)
 parser.add_argument('-i','--init', help='create new emplt KV db', action='store_true', dest='bool_init', required=False, default=False)
 parser.add_argument('-k','--key', help='filter output by KEY substring', action='store', dest='key_filter', required=False, default=None)
@@ -207,6 +207,7 @@ if args['bool_data'] is True and args['key_filter'] is None:
     parser.print_help()
     sys.exit(1)
 
+# parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
 if args['bool_article'] is True:
     print("Dumping article data for all entries...")
     dump_lmdb_articles(lmdb_inst, args['ticker_filter'])
