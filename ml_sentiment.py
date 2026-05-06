@@ -719,7 +719,7 @@ class ml_sentiment:
             # C4 sends a list of 1 big blob of text (all <p> tags text combined into 1 big blob)
             # - the chunker has to do more work for C4, b/c it has to chunk this big blob into smaller blocklets
             #print ( f"============================ C 4    D E B U G ============================" )
-            source_data = scentxt.encode('utf-8')
+            source_data = scentxt[0].encode('utf-8')
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(source_data)
             print ( f"{scentxt}")
