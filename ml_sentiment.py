@@ -724,7 +724,8 @@ class ml_sentiment:
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(_source_data)
             print ( f" " )
-            print(f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
+            _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
+            print(f"Data: {type(_source_data)} / Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}")
             print ( f"=========================== C 4    E N D    D E B U G ===========================" )
             return 0
         elif extractor == 1:    # BS4
@@ -750,7 +751,8 @@ class ml_sentiment:
             _source_data = _final_article.encode('utf-8')
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(_source_data)
-            print(f"Origi size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
+            _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
+            print(f"Data: {type(_source_data)} / Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}")
             print ( f"=========================== B S 4   E N D    D E B U G ===========================" )
             return 0
 
