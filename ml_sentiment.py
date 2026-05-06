@@ -721,7 +721,7 @@ class ml_sentiment:
 
     # #################################### 7
     def text_compressor(self, scentxt, extractor):
-        cmi_debug = __name__+"::"+self.text_compressor.__name__+".#"+str(extractor)
+        cmi_debug = __name__+"::"+self.text_compressor.__name__+".#"+extractor
         logging.info( f"%s - article text compressor..." % cmi_debug )
         if extractor == 0:      # C4
             logging.info( f"%s - C4 text compressor engine..." % cmi_debug )
