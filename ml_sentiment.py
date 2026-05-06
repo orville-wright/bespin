@@ -735,7 +735,7 @@ class ml_sentiment:
                 print ( f"###-debug-735: Type  - {type(scentxt[i].text)}" )
                 print ( f"###-debug-736: Data - {scentxt[i].text}" )
 
-                ( f" {scentxt[i].text}").join(_x)
+                _x = _x + ( f" {scentxt[i].text}")
                 print ( f"###-debug-739: Data - {_x}" )
                 #print ( f"{scentxt[i].text}" )
                 #_full_article.join(_bs4_row)
