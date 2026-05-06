@@ -1,4 +1,6 @@
 #! python3
+from rich.pretty import data
+
 from requests_html import HTMLSession
 import pandas as pd
 #import modin.pandas as pd
@@ -9,6 +11,7 @@ import sys
 import logging
 import argparse
 from rich import print
+import zstandard as zstd
 
 from ml_cvbow import ml_cvbow
 import nltk.data
@@ -716,16 +719,27 @@ class ml_sentiment:
             logging.info( f"%s - C4 text compressor engine..." % cmi_debug )
             # C4 sends a list of 1 big blob of text (all <p> tags text combined into 1 big blob)
             # - the chunker has to do more work for C4, b/c it has to chunk this big blob into smaller blocklets
-            print ( f"============================ C 4    D E B U G ============================" )
+            #print ( f"============================ C 4    D E B U G ============================" )
+            source_data = scentxt.encode('utf-8')
+            compressor = zstd.ZstdCompressor(level=3)
+            compressed_blob = compressor.compress(source_data)
             print ( f"{scentxt}")
+            print ( f" " )
+            print(f"Origi size: {len(source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
             print ( f"=========================== E N D    D E B U G ===========================" )
             return 0
         elif extractor == 1:    # BS4
             logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
-            print ( f"============================ B S 4    D E B U G ============================" )
+            #print ( f"============================ B S 4    D E B U G ============================" )
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
-                print ( f"{scentxt[i].text}")
- 
+                _temp_text = " ".join(scentxt[i].text)
+            
+            print ( f"{_temp_text}")
+            # _temp_text = _temp_text + f"{scentxt[i].text}"
+            source_data = _temp_text.encode('utf-8')
+            compressor = zstd.ZstdCompressor(level=3)
+            compressed_blob = compressor.compress(source_data)
+            print(f"Origi size: {len(source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
             print ( f"=========================== E N D    D E B U G ===========================" )
             return 0
 
