@@ -730,14 +730,15 @@ class ml_sentiment:
         elif extractor == 1:    # BS4
             logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
             print ( f"============================ B S 4    D E B U G ============================" )
-            _blocklets = "ARTICLE_STARTS_HERE:"
+            _blocklets = ["ARTICLE_STARTS_HERE:"]
             _blocklets.extend([item.text for item in scentxt])  # low mem usage, fast list comprehension
-            # Fastest code path via intermediate list comprehension 
+            #
+            # This pattern is the FASTEST execution path via intermediate list extend comprehension 
             # Good memory usage... $O(n) (linear)
             # instead of $O(n^2) (quadratic) for basic imutable string concatination memory trap
             #  
             #_final_article = "ARTICLE_STARTS_HERE: " + " ".join(item.text for item in scentxt)   # generator memory optomized
-            # Best memory utilizaiton, but not as fast a list comprehension
+            # This pattern is BEST memory utilizaiton, but not as fast a list comprehension
             #
             _final_article = " ".join(_blocklets)
             print ( f"{_final_article}")
