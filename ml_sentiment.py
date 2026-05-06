@@ -722,7 +722,7 @@ class ml_sentiment:
             return 0
         elif extractor == 1:    # BS4
             logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
-            print ( f"============================ C 4    D E B U G ============================" )
+            print ( f"============================ B S 4    D E B U G ============================" )
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
                 print ( f"{scentxt[i].text}")
  
