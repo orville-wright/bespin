@@ -10,6 +10,8 @@ import random
 from rich import print
 import string
 import sys
+import zstandard as zstd
+
 from typing import Any, Dict, List, Tuple, Optional
 
 
@@ -20,10 +22,11 @@ global args
 args = {}
 
 parser = argparse.ArgumentParser(prog="Aop", description="LMBD Maintence tool")
-parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
+parser.add_argument('-a','--articles', help='dump oall article data', action='store_true', dest='bool_article', required=False, default=False)
+parser.add_argument('-d','--deep', help='Deep data dump of values', action='store_true', dest='bool_data', required=False, default=False)
 parser.add_argument('-i','--init', help='create new emplt KV db', action='store_true', dest='bool_init', required=False, default=False)
 parser.add_argument('-k','--key', help='filter output by KEY substring', action='store', dest='key_filter', required=False, default=None)
-parser.add_argument('-d','--deep', help='Deep data dump of values', action='store_true', dest='bool_data', required=False, default=False)
+parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 
 
 args = vars(parser.parse_args())        # args as a dict []
@@ -160,6 +163,39 @@ def dump_lmdb_basic(lmdb_instance):
         print(f"Dump RO mode - Error Exception: {e}")
         return 0
 
+################# 4
+def dump_lmdb_articles(lmdb_instance, ticker_filter=None):
+    # you must manually open the DB yourself first...
+    try:
+        with lmdb_instance.RO_env.begin() as txn:
+            cursor = txn.cursor()
+            count = 0
+            for key, value in cursor:
+                key_str = key.decode('utf-8')
+                total += 1
+                if ticker_filter not in key_str:
+                    continue
+                value_str = value.decode('utf-8')
+                matches += 1
+                print (f"=============================== Begin Article ====================================" )
+                print(f"[{matches:03}] KEY: {key_str}")
+                try:
+                    _read_zstd_blob = json.loads(value_str['zstd_blob'])
+                    _decompressor = zstd.ZstdDecompressor()
+                    _pure_article_text = _decompressor.decompress(_read_zstd_blob).decode('utf-8')
+                    print( f"Article text: {_pure_article_text}" )
+                    print (f"=============================== End Article ====================================" )
+                except (json.JSONDecodeError, ValueError):
+                    print(value_str)
+            print(f"\n{'='*70}")
+            print(f"Deep dump '{ticker_filter}': {matches} match(es) from {total} total entries")
+    except lmdb.Error as e:
+        print(f"LMDB Open Error: {e}")
+        return 2
+    except Exception as e:
+        print(f"Dump RO mode - Error Exception: {e}")
+        return 0
+    
 ################# Main()
 lmdb_dbname = "LMDB_0001"
 lmdb_inst = lmdb_io_eng("RO_DUMP", lmdb_dbname, args)
@@ -177,6 +213,9 @@ if args['bool_data'] is True and args['key_filter'] is not None:
 elif args['key_filter'] is not None:
     print(f"Filtering LMDB entries by key: '{args['key_filter']}'")
     dump_lmdb_by_key(lmdb_inst, args['key_filter'])
+elif args['bool_article'] is True:
+    print("Dumping article data for all entries...")
+    dump_lmdb_articles(lmdb_inst, args['key_filter'])
 else:
     dump_lmdb_basic(lmdb_inst)
 

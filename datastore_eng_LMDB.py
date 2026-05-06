@@ -169,7 +169,7 @@ class lmdb_io_eng:
         cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
         logging.info( f'%s  - kv_cache_engine.#{_yti}.{_extr_eng} DB: {self.db_name}' % cmi_debug )
         # Deep Caching engine (LMDB KV store)
-        # Has article been read/extracted, and its metadata existing in KVstore
+        # Has article been read/extracted, and is its metadata existing in LMDB KVstore
         # Attempt to rehydrate the article metadata from Deep Cache
         #
         # RETURNS:
@@ -208,12 +208,14 @@ class lmdb_io_eng:
         logging.info( f'%s  - Check Deep Cache KVstore for key... \n\t [ {_key} ]' % cmi_debug )
         #print (f"debug-210: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
         with self.RO_env.begin() as txn:              # "with context mgr" -> auto forces close of LMDB RO transaction even on errors
-            _key_found = txn.get(bs4_kvs_key)         # lookup key in KVstore
+            _key_found = txn.get(bs4_kvs_key)         # lookup key in LMDB KVstore
             if _key_found is not None:
                 logging.info( f'%s - Deep Cache KV entry found: validating...' % cmi_debug )
-                _final_results = dict()             # ensure _final_results = empty
+                _final_results = dict()               # ensure _final_results = empty
                 try:
                     _v_str = _key_found.decode('utf-8') # lookup KEY & Deserialiize into string
+                    # read_data = msgpack.unpackb(_key_found, raw=False)    # NEW msgpack optomization
+                    #
                 except (UnicodeDecodeError, json.JSONDecodeError) as e:
                     logging.info( f'%s - Error.#1 Deserializing data: {e}"...' % cmi_debug )
                     print (f"================================ End.#1 KV Cache Hit + Data Corrupt (deserializing) ! Net read... {item_idx} ================================" )
