@@ -732,8 +732,8 @@ class ml_sentiment:
             #print ( f"============================ B S 4    D E B U G ============================" )
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
                 _bs4_text = scentxt[i].text
-                _full_article = " ".join(_bs4_text)
-            
+                _full_article = _full_article + " " + _bs4_text
+
             print ( f"{_full_article}")
             # _temp_text = _temp_text + f"{scentxt[i].text}"
             source_data = _full_article.encode('utf-8')
