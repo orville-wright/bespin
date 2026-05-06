@@ -730,13 +730,17 @@ class ml_sentiment:
         elif extractor == 1:    # BS4
             logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
             print ( f"============================ B S 4    D E B U G ============================" )
+            _x = "ARTICLE_STARTS_HERE:"
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
-                _x = f"{scentxt[i].text}"
-                _y = "#".join(_x)
+                print ( f"###-debug-735: Type  - {type(scentxt[i].text)}" )
+                print ( f"###-debug-736: Data - {scentxt[i].text}" )
+
+                _x.join( f" {scentxt[i].text}")
+                print ( f"###-debug-739: Data - {_x}" )
                 #print ( f"{scentxt[i].text}" )
                 #_full_article.join(_bs4_row)
 
-            print ( f"{_y}")
+            print ( f"{_x}")
             # _temp_text = _temp_text + f"{scentxt[i].text}"
             #source_data = _full_article.encode('utf-8')
             #compressor = zstd.ZstdCompressor(level=3)
