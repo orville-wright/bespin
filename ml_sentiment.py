@@ -94,7 +94,7 @@ class ml_sentiment:
         self.tokenizer_mml = self.classifier.tokenizer.model_max_length  # initalize the class tokenizer
         return
 
-##################################### 2 ####################################
+    # #################################### 1
     def compute_sentiment(self, symbol, item_idx, scentxt, urlhash, ext):
         """
         called by:  BS4_artdata_depth3 -> compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
@@ -177,10 +177,9 @@ class ml_sentiment:
             self._chunk_profile = dict()        # what type of chunk thisd is (sent/para/randm)
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
-            print ( f"============================ C 4    D E B U G ============================" )
-            print ( f"{scentxt}")
-            print ( f"=========================== E N D    D E B U G ===========================" )
 
+            self.text_compressor(scentxt, self.ext_type)
+            
             for i in range(0, len(scentxt)):    # this = 1 b/c C4 sends a list[] of 1 big blob of text
                 logging.info( f"%s - C4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i])} chars" % cmi_debug )
                 truncated = "Undef"
@@ -231,9 +230,8 @@ class ml_sentiment:
             self._chunk_profile = dict()        # what type of chunk thisd is (sent/para/randm)
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
-            print ( f"============================ B S 4   D E B U G ===========================" )
-            print ( f"{scentxt}")
-            print ( f"=========================== E N D    D E B U G ===========================" )
+
+            self.text_compressor(scentxt, self.ext_type)
 
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
                 logging.info( f"%s - BS4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i].text)} chars" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
@@ -264,7 +262,7 @@ class ml_sentiment:
             self.blocket_udid = 0   # after this entire article is processed, reset the blocklet counter
         return self.ttc, self.twc, self.cr_package
     
-    #####################################
+    # #################################### 2
     # Helper function
     def unified_chunker(self, st_list, tokenizer_mml, _ext_type, _curr_chunk_udid):
         """
@@ -349,8 +347,8 @@ class ml_sentiment:
 
         return chunks, self.chunk_index   # {} of perfect blockelts < tokenizer_mml
     
-    #####################################
-    # HLLM elper function
+    # #################################### 3
+    # LLM Helper function
     def dict_processor(self, symbol, _text_dict, _dpro_eng, _blocklet_udid):
         '''
         This engine processes a dict{} of text blocklets (scentences/paragraphs)
@@ -478,7 +476,7 @@ class ml_sentiment:
                     print ("Unknown LLM/Vect error!")
         return ttc, tnc, _x_cr_package, self.element_udid
 
- ###################
+    # #################################### 4
     # LLM Helper function for dict_processor()
     def nlp_sent_engine(self, _this_chunk, symbol, ngram_tkzed, ngram_count, _clsfr_result, _z_cr_package):
         """
@@ -544,7 +542,7 @@ class ml_sentiment:
             print ( f"ERROR sent engine !!: {e}")
             return 3
 
-##################################### 1 ####################################
+    # #################################### 5
     def save_sentiment_df(self, item_idx, data_set):
         """
         Save key ML sentiment info to global sentimennt in-memory Dataframe
@@ -579,7 +577,7 @@ class ml_sentiment:
         logging.info( f"%s - Rehydrate metrics DF @ article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
         return
 
-##################################### 3 ####################################
+    # #################################### 6
     def sentiment_metrics(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
         """
         Compute precise sentiment analysis based on aggregated data from df_final
@@ -708,3 +706,27 @@ class ml_sentiment:
         logging.info( f'%s - Global Sentiment DF updated...' % cmi_debug )        
 
         return results
+
+
+    # #################################### 7
+    def text_compressor(self, scentxt, extractor):
+        cmi_debug = __name__+"::"+self.text_compressor.__name__+".#"+str(self.yti)
+        logging.info( f"%s - article text compressor..." % cmi_debug )
+        if extractor == 0:      # C4
+            logging.info( f"%s - C4 text compressor engine..." % cmi_debug )
+            # C4 sends a list of 1 big blob of text (all <p> tags text combined into 1 big blob)
+            # - the chunker has to do more work for C4, b/c it has to chunk this big blob into smaller blocklets
+            print ( f"============================ C 4    D E B U G ============================" )
+            print ( f"{scentxt}")
+            print ( f"=========================== E N D    D E B U G ===========================" )
+            return 0
+        elif extractor == 1:    # BS4
+            logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
+            print ( f"============================ C 4    D E B U G ============================" )
+            for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
+                print ( f"{scentxt[i].text}")
+ 
+            print ( f"=========================== E N D    D E B U G ===========================" )
+            return 0
+
+        return 1
