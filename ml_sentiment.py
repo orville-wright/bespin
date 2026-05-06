@@ -725,22 +725,32 @@ class ml_sentiment:
             print ( f"{scentxt}")
             print ( f" " )
             print(f"Origi size: {len(source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
-            print ( f"=========================== E N D    D E B U G ===========================" )
+            print ( f"=========================== C 4    E N D    D E B U G ===========================" )
             return 0
         elif extractor == 1:    # BS4
             logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
             print ( f"============================ B S 4    D E B U G ============================" )
-            _x = "ARTICLE_STARTS_HERE:"
-            for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
-                _x = _x + ( f" {scentxt[i].text}")      # concat & grow the article to full length
+            _blocklets = "ARTICLE_STARTS_HERE:"
+            _blocklets.extend([item.text for item in scentxt])  # low mem usage, fast list comprehension
+            # Fastest code path via intermediate list comprehension 
+            # Good memory usage... $O(n) (linear)
+            # instead of $O(n^2) (quadratic) for basic imutable string concatination memory trap
+            #  
+            #_final_article = "ARTICLE_STARTS_HERE: " + " ".join(item.text for item in scentxt)   # generator memory optomized
+            # Best memory utilizaiton, but not as fast a list comprehension
+            #
+            _final_article = " ".join(_blocklets)
+            print ( f"{_final_article}")
 
-            print ( f"{_x}")
+            #for i in range(0, len(scentxt)):
+            # _x = _x + ( f" {scentxt[i].text}")      # concat & grow the article to full length - worst memory usage
             # _temp_text = _temp_text + f"{scentxt[i].text}"
+
             #source_data = _full_article.encode('utf-8')
             #compressor = zstd.ZstdCompressor(level=3)
             #compressed_blob = compressor.compress(source_data)
             #print(f"Origi size: {len(source_data)} bytes / Compressed size: {len(compressed_blob)} bytes")
-            print ( f"=========================== E N D    D E B U G ===========================" )
+            print ( f"=========================== B S 4   E N D    D E B U G ===========================" )
             return 0
 
         return 1
