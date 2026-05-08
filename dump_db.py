@@ -43,6 +43,7 @@ else:
     logging.disable(20)                 # Log lvel = INFO
 
 ################# 1
+# book_deep
 def dump_lmdb_by_key(lmdb_instance, key_filter):
     """Filter LMDB entries by stock ticker (element #2) or URL hash fragment (element #3).
     Will print  Parent dict and all blocklet chunk sub-dicts for each matching entry. 
@@ -80,12 +81,19 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 #value_str = value.decode('utf-8')
 
                 _v_dict = json.loads(value.decode('utf-8'))
-                working_article = _v_dict["article"]
+                working_article = _v_dict["article"]        # article number
                 print ( f"LMBD Database: {db_id} / Ticker: {ticker} / Filtering by:{matched_on}" ) 
                 print ( f"============================ News article:  {working_article} ====================================" )
                 print( f"URL hash:  {_v_dict["urlhash"]}" )
                 print( f"Sentences: {_v_dict["scentence"]} / Paragraphs: {_v_dict["paragraph"]} / Randoms: {_v_dict["random"]}" )
-                print ( f"Chunk metrics: @ <= 512 - Chunks: {_v_dict["chunk_count"]+1} / Positive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
+                print ( f"Chunk blocklets: {_v_dict["chunk_count"]} / Positive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
+                print ( f"Article ZSTD compressed text: {_v_dict["article_text"][:100]}{'...' if len(_v_dict["article_text"]) > 1 else ''}" )
+                try:
+                    _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
+                    print ( f"ZSTD article blob: {_zstd_article_text[:500]}{'...' if len(_zstd_article_text) > 1 else ''}" )
+                except KeyError:
+                    print ( f"LMDB entry has not ZSTD compressed article entry." )
+
                 print ( f"Text metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
                 print ( f"Chunk analytics")
 
@@ -98,8 +106,8 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                         print (f"Error Type: {type(e).__name__}")
                         break
                     else:
-                        print ( f"  ======================================= {working_article} : {_v_key} =======================================" )
-                        print ( f"  Chunk dict: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
+                        print ( f"  ======================================= Chunk blocklet : {_v_key} of ({_v_dict["chunk_count"]}) =======================================" )
+                        print ( f"  Chunk KEY: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
                         print ( f"  N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
                         print ( f"  Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
                         matches += 1
