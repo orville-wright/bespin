@@ -185,40 +185,52 @@ def dump_lmdb_basic(lmdb_instance):
 # parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
 
 def dump_lmdb_articles(lmdb_instance, ticker_filter=None):
-    # you must manually open the DB yourself first...
-    if args['bool_articles'] is not None:
-            ticker_filter = (args['bool_articles'][1]).upper()
-            arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit new scraping system to 20 runs.
-            cmi_debug = __name__+"::newsai_sent.#1"
-            try:
-                with lmdb_instance.RO_env.begin() as txn:
-                    cursor = txn.cursor()
-                    count = 0
-                    for key, value in cursor:
-                        key_str = key.decode('utf-8')
-                        count += 1
-                        if ticker_filter not in key_str:
-                            continue
-                        value_str = value.decode('utf-8')
-                        matches += 1
-                        print (f"=============================== Begin Article ====================================" )
-                        print(f"[{matches:03}] KEY: {key_str}")
-                        try:
-                            _read_zstd_blob = json.loads(value_str['zstd_blob'])
-                            _decompressor = zstd.ZstdDecompressor()
-                            _pure_article_text = _decompressor.decompress(_read_zstd_blob).decode('utf-8')
-                            print( f"Article text: {_pure_article_text}" )
-                            print (f"=============================== End Article ====================================" )
-                        except (json.JSONDecodeError, ValueError):
-                            print(value_str)
-                    print(f"\n{'='*70}")
-                    print(f"Deep dump '{ticker_filter}': {matches} match(es) from {count} total entries")
-            except lmdb.Error as e:
-                print(f"LMDB Open Error: {e}")
-                return 2
-            except Exception as e:
-                print(f"Dump RO mode - Error Exception: {e}")
-            return 0
+    try:
+        with lmdb_instance.RO_env.begin() as txn:
+            cursor = txn.cursor()
+            total = 0
+            matches = 0
+            filter_upper = ticker_filter.upper()
+            for key, value in cursor:
+                key_str = key.decode('utf-8')
+                total += 1
+
+                parts = key_str.split('.')
+                if len(parts) != 3:
+                    total += 1
+                    continue                         # skip any malformed keys
+
+                db_id, ticker, url_hash = parts
+
+                ticker_match   = filter_upper == ticker.upper()
+                if not ticker_match:
+                    total += 1
+                    continue
+
+                #value_str = value.decode('utf-8')
+
+                _v_dict = json.loads(value.decode('utf-8'))
+                working_article = _v_dict["article"]        # article number
+                print ( f"LMBD Database: {db_id} / All Ticker entries for: {ticker}" ) 
+                print ( f"============================ News article:  {working_article} ====================================" )
+                try:
+                    _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
+                    print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
+                    zstd_blob_uncompressed = zstd.ZstdDecompressor().decompress(_zstd_article_text)
+                    print ( f"{_zstd_article_text}" )                                                        
+                    matches += 1
+                    total += 1
+                except KeyError:
+                    print ( f"LMDB entry has no ZSTD compressed article entry." )
+                    total += 1
+
+        print (" ")
+        print(f"\Ticker filter '{ticker_filter}': {matches} match(es) from {total} total entries")
+    except lmdb.Error as e:
+        print(f"LMDB Error: {e}")
+    except Exception as e:
+        print(f"dump_lmdb_by_key Error: {e}")
+    return 0
         
 ################# Main()
 lmdb_dbname = "LMDB_0001"
