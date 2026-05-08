@@ -231,11 +231,11 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit=None):
                     total += 1
 
         print (" ")
-        print(f"\Ticker filter '{ticker_filter}': {matches} match(es) from {total} total entries")
+        print( f"Ticker filter '{ticker_filter}': {matches} match(es) from {total} total entries")
     except lmdb.Error as e:
-        print(f"LMDB Error: {e}")
+        print( f"LMDB Error: {e}")
     except Exception as e:
-        print(f"dump_lmdb_by_key Error: {e}")
+        print( f"dump_lmdb_by_key Error: {e}")
     return 0
         
 ################# Main()
@@ -262,7 +262,7 @@ if args['bool_basic'] is True:
 
 # -a or --articles
 # bool_articles
-elif args['bool_articles'] is True:
+elif args['bool_articles'] is not False:
     if (args['bool_articles'][0]) is not None:
         print( f"Dumping article TEXT for all {args['ticker_filter']} entries...")
         filter_ticker = (args['bool_articles'][0]).upper()
