@@ -251,30 +251,28 @@ elif args['bool_articles'] is True and args['bool_articles'][1] is not None:
 
 # -d or --deep
 # requries a key filter -k or --key
-elif args['bool_deep'] is True and args['key_filter'] is not None:
-    print( f"Full dump filtered by key: {args['key_filter']}")
-    dump_lmdb_by_key(lmdb_inst, args['key_filter'])
-    lmdb_inst.close_lmdb("DEEP_DUMP")
-    sys.exit(0)
-    """
+elif args['bool_deep'] is True:
+    if args['key_filter'] is not None:
+        print( f"Full dump filtered by key: {args['key_filter']}")
+        dump_lmdb_by_key(lmdb_inst, args['key_filter'])
+        lmdb_inst.close_lmdb("DEEP_DUMP")
+        sys.exit(0)
     else:
         print ( f"ERROR: Deep dump of values requries a key filter !" )
         parser.print_help()
         sys.exit(1)
-    """
 
 # -x or --xray
 # dump_lmdb_xray
-elif args['bool_xray'] is True and args['key_filter'] is not None:
-    dump_lmdb_xray(lmdb_inst, args['key_filter'])
-    lmdb_inst.close_lmdb("XRAY_DUMP")
-    sys.exit(0)
-    """
+elif args['bool_xray'] is True:
+    if args['key_filter'] is not None:
+        dump_lmdb_xray(lmdb_inst, args['key_filter'])
+        lmdb_inst.close_lmdb("XRAY_DUMP")
+        sys.exit(0)
     else:
         print ( f"ERROR: XRAY dump of single Value requries a key filter !" )
         parser.print_help()
         sys.exit(1)
-    """
 
 elif args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
@@ -282,6 +280,7 @@ elif args['bool_init'] is True:
     lmdb_inst = lmdb_io_eng(1, lmdb_dbname, args)
     env = lmdb_inst.open_lmdb_RW(1)
     env.close()
+
 else:
     print ( f"ERROR: No valid dump option selected. Please choose one of the following:" )
     parser.print_help()
