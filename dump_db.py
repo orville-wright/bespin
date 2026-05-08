@@ -184,10 +184,13 @@ def dump_lmdb_basic(lmdb_instance):
 # -a or --article
 # parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
 
-def dump_lmdb_articles(lmdb_instance, ticker_filter=None):
+def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit=None):
     try:
         with lmdb_instance.RO_env.begin() as txn:
             cursor = txn.cursor()
+            if article_limit is None:
+                article_limit = 0  # No limit if not specified
+
             total = 0
             matches = 0
             filter_upper = ticker_filter.upper()
@@ -219,6 +222,9 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter=None):
                     zstd_blob_uncompressed = zstd.ZstdDecompressor().decompress(_zstd_article_text)
                     print ( f"{_zstd_article_text}" )                                                        
                     matches += 1
+                    if matches == article_limit:
+                        print ( f"Article limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump." )
+                        break
                     total += 1
                 except KeyError:
                     print ( f"LMDB entry has no ZSTD compressed article entry." )
@@ -257,12 +263,18 @@ if args['bool_basic'] is True:
 # -a or --articles
 # bool_articles
 elif args['bool_articles'] is True:
-    if args['bool_articles'][1] is not None:
-        print( f"Dumping article data for all {args['ticker_filter']} entries...")
-        filter_ticker = (args['bool_articles'][1]).upper()
-        dump_lmdb_articles(lmdb_inst, args['ticker_filter'])
-        lmdb_inst.close_lmdb("ARTICLES_DUMP")
-        sys.exit(0)
+    if args['bool_articles'][0] is not None:
+        print( f"Dumping article TEXT for all {args['ticker_filter']} entries...")
+        filter_ticker = (args['bool_articles'][0]).upper()
+        if args['bool_articles'][1] is not None:
+            article_limit = int(args['bool_articles'][1])
+            dump_lmdb_articles(lmdb_inst, args['ticker_filter'], article_limit)
+            lmdb_inst.close_lmdb("ARTICLES_DUMP")
+            sys.exit(0)
+        else:
+            dump_lmdb_articles(lmdb_inst, args['ticker_filter'], None)
+            lmdb_inst.close_lmdb("ARTICLES_DUMP")
+            sys.exit(0)
     else:
         print ( f"ERROR: Dumping article Text requries a ticker symbol filter ! [as 2nd parameter]" )
         parser.print_help()
