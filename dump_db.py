@@ -87,7 +87,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 print( f"URL hash:  {_v_dict["urlhash"]}" )
                 print( f"Sentences: {_v_dict["scentence"]} / Paragraphs: {_v_dict["paragraph"]} / Randoms: {_v_dict["random"]}" )
                 print ( f"Chunk blocklets: {_v_dict["chunk_count"]} / Positive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
-                print ( f"Article ZSTD compressed text: {_v_dict["article_text"][:100]}{'...' if len(_v_dict["article_text"]) > 1 else ''}" )
+
                 try:
                     _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
                     print ( f"ZSTD article blob: {_zstd_article_text[:500]}{'...' if len(_zstd_article_text) > 1 else ''}" )
