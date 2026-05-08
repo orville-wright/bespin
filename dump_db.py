@@ -22,11 +22,13 @@ global args
 args = {}
 
 parser = argparse.ArgumentParser(prog="Aop", description="LMBD Maintence tool")
-parser.add_argument('-a','--articles', help='dump all article data', nargs="*", dest='bool_article', required=True, default=False)
-parser.add_argument('-d','--deep', help='Deep data dump of values', action='store_true', dest='bool_data', required=False, default=False)
-parser.add_argument('-i','--init', help='create new emplt KV db', action='store_true', dest='bool_init', required=False, default=False)
-parser.add_argument('-k','--key', help='filter output by KEY substring', action='store', dest='key_filter', required=False, default=None)
-parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
+parser.add_argument('-a','--articles', help='Dump all article data for a specific ticker', nargs="*", dest='bool_articles', required=True, default=False)
+parser.add_argument('-b','--basic', help='Simple view into all LMBD KV entries', nargs="*", dest='bool_basic', required=False, default=False)
+parser.add_argument('-d','--deep', help='Deep data dump of values', action='store_true', dest='bool_deep', required=False, default=False)
+parser.add_argument('-i','--init', help='Create new emplt KV db', action='store_true', dest='bool_init', required=False, default=False)
+parser.add_argument('-k','--key', help='filter output by KEY sub-string', action='store', dest='key_filter', required=False, default=None)
+parser.add_argument('-v','--verbose', help='Verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
+parser.add_argument('-x','--xray', help='Deep XRAY of LBDM', action='store_true', dest='bool_vxray', required=False, default=False)
 
 
 args = vars(parser.parse_args())        # args as a dict []
@@ -43,13 +45,15 @@ else:
 ################# 1
 def dump_lmdb_by_key(lmdb_instance, key_filter):
     """Filter LMDB entries by stock ticker (element #2) or URL hash fragment (element #3).
+    Will print  Parent dict and all blocklet chunk sub-dicts for each matching entry. 
+    Will not print article text filed
 
-    Key format: {db_id}.{ticker}.{url_hash}
-      e.g.  0001.XRX.f308c6c74e14976ac6e940c20a329c5e063cf5cfde402d591cfcd28ace1c2b2d
-
-    Matching rules:
-      - ticker  : case-insensitive exact match  (e.g. -k XRX)
-      - url_hash: case-sensitive substring match (e.g. -k f308c6)
+    Full Key format: {db_id}.{ticker}.{url_hash}
+        e.g.  0001.XRX.f308c6c74e14976ac6e940c20a329c5e063cf5cfde402d591cfcd28ace1c2b2d
+        
+        Filter Matching rules:
+        - ticker  : case-insensitive exact match  (e.g. -k XRX)
+        - url_hash: case-sensitive substring match (e.g. -k f308c6)
     """
     try:
         with lmdb_instance.RO_env.begin() as txn:
@@ -111,10 +115,14 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
     return 0
 
 ################# 2
-def dump_lmdb_deep(lmdb_instance, key_filter):
-    """Print full values for all LMDB entries whose key contains key_filter.
-    Values are parsed and pretty-printed as JSON when possible.
-    Requires key_filter — call only after validating --key is set."""
+def dump_lmdb_xray(lmdb_instance, key_filter):
+    """
+    Print an xray of values for 1 explcit LMDB enty that matches the key_filter.
+    Will also dump the article text field
+    Values are parsed and pretty-printed as standard JSON when possible.
+
+    Requires key_filter — call only after validating --key is set.
+    """
     try:
         with lmdb_instance.RO_env.begin() as txn:
             cursor = txn.cursor()
@@ -140,7 +148,7 @@ def dump_lmdb_deep(lmdb_instance, key_filter):
     except lmdb.Error as e:
         print(f"LMDB Error: {e}")
     except Exception as e:
-        print(f"dump_lmdb_deep Error: {e}")
+        print(f"dump_lmdb_xray Error: {e}")
     return 0
 
 ################# 3
@@ -164,62 +172,103 @@ def dump_lmdb_basic(lmdb_instance):
         return 0
 
 ################# 4
+# ################################## 2
+# -a or --article
+# parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
+
 def dump_lmdb_articles(lmdb_instance, ticker_filter=None):
     # you must manually open the DB yourself first...
-    try:
-        with lmdb_instance.RO_env.begin() as txn:
-            cursor = txn.cursor()
-            count = 0
-            for key, value in cursor:
-                key_str = key.decode('utf-8')
-                count += 1
-                if ticker_filter not in key_str:
-                    continue
-                value_str = value.decode('utf-8')
-                matches += 1
-                print (f"=============================== Begin Article ====================================" )
-                print(f"[{matches:03}] KEY: {key_str}")
-                try:
-                    _read_zstd_blob = json.loads(value_str['zstd_blob'])
-                    _decompressor = zstd.ZstdDecompressor()
-                    _pure_article_text = _decompressor.decompress(_read_zstd_blob).decode('utf-8')
-                    print( f"Article text: {_pure_article_text}" )
-                    print (f"=============================== End Article ====================================" )
-                except (json.JSONDecodeError, ValueError):
-                    print(value_str)
-            print(f"\n{'='*70}")
-            print(f"Deep dump '{ticker_filter}': {matches} match(es) from {count} total entries")
-    except lmdb.Error as e:
-        print(f"LMDB Open Error: {e}")
-        return 2
-    except Exception as e:
-        print(f"Dump RO mode - Error Exception: {e}")
-        return 0
-    
+    if args['bool_articles'] is not None:
+            ticker_filter = (args['bool_articles'][1]).upper()
+            arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit new scraping system to 20 runs.
+            cmi_debug = __name__+"::newsai_sent.#1"
+            try:
+                with lmdb_instance.RO_env.begin() as txn:
+                    cursor = txn.cursor()
+                    count = 0
+                    for key, value in cursor:
+                        key_str = key.decode('utf-8')
+                        count += 1
+                        if ticker_filter not in key_str:
+                            continue
+                        value_str = value.decode('utf-8')
+                        matches += 1
+                        print (f"=============================== Begin Article ====================================" )
+                        print(f"[{matches:03}] KEY: {key_str}")
+                        try:
+                            _read_zstd_blob = json.loads(value_str['zstd_blob'])
+                            _decompressor = zstd.ZstdDecompressor()
+                            _pure_article_text = _decompressor.decompress(_read_zstd_blob).decode('utf-8')
+                            print( f"Article text: {_pure_article_text}" )
+                            print (f"=============================== End Article ====================================" )
+                        except (json.JSONDecodeError, ValueError):
+                            print(value_str)
+                    print(f"\n{'='*70}")
+                    print(f"Deep dump '{ticker_filter}': {matches} match(es) from {count} total entries")
+            except lmdb.Error as e:
+                print(f"LMDB Open Error: {e}")
+                return 2
+            except Exception as e:
+                print(f"Dump RO mode - Error Exception: {e}")
+            return 0
+        
 ################# Main()
 lmdb_dbname = "LMDB_0001"
 lmdb_inst = lmdb_io_eng("RO_DUMP", lmdb_dbname, args)
 lmdb_inst.open_lmdb_RO("RO_DUMP")
 
 
-if args['bool_data'] is True and args['key_filter'] is None:
-    print("ERROR: --deep requires --key to also be specified")
+# ################################## main()
+# differnt ways to dump the LMDB...
+# 1. dump_lmdb_by_key       : bool_deep        : -d or --deep (reqwuires a key filter)
+# 2. dump_lmdb_xray         : bool_xray        : -x or --xray
+# 3. dump_lmdb_basic()      : no switches / no options
+# 4. dump_lmdb_articles()   : bool_articles     : -a or --articles
+#    NOTE: -k or --key = your supplied filter
+
+# -b' or '--basic'
+# bool_basic
+if args['bool_basic'] is True:
+    print( f"Simple dump of the full LMDV... ")
+    dump_lmdb_basic(lmdb_inst)
+    lmdb_inst.close_lmdb()
+    sys.exit(0)
+
+# -a or --articles
+# bool_articles
+if args['bool_articles'] is True and args['bool_articles'][1] is not None:
+    print( f"Dumping article data for all {args['ticker_filter']} entries...")
+    filter_ticker = args['bool_articles'][1]).upper()
+    dump_lmdb_articles(lmdb_inst, args['ticker_filter'])
+    lmdb_inst.close_lmdb()
+    sys.exit(0)
+else:
+    print ( f"ERROR: Dumping article data requries a ticker symbol filter !" )
     parser.print_help()
     sys.exit(1)
 
-# parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
-if args['bool_article'] is True:
-    print("Dumping article data for all entries...")
-    dump_lmdb_articles(lmdb_inst, args['ticker_filter'])
-
-if args['bool_data'] is True and args['key_filter'] is not None:
-    print(f"Deep dump for key filter: '{args['key_filter']}'")
-    dump_lmdb_deep(lmdb_inst, args['key_filter'])
-elif args['key_filter'] is not None:
-    print(f"Filtering LMDB entries by key: '{args['key_filter']}'")
+# -d or --deep
+# requries a key filter -k or --key
+if args['bool_deep'] is True and args['key_filter'] is not None:
+    print(f"Full dump filtered by key: '{args['key_filter']}'")
     dump_lmdb_by_key(lmdb_inst, args['key_filter'])
+    lmdb_inst.close_lmdb()
+    sys.exit(0)
 else:
-    dump_lmdb_basic(lmdb_inst)
+    print ( f"ERROR: Deep dump of values requries a key filter !" )
+    parser.print_help()
+    sys.exit(1)
+
+# -x or --xray
+# dump_lmdb_xray
+if args['bool_xray'] is True and args['key_filter'] is not None:
+    dump_lmdb_xray(lmdb_inst, args['key_filter'])
+    lmdb_inst.close_lmdb()
+    sys.exit(0)
+else:
+    print ( f"ERROR: XRAY dump of single Value requries a key filter !" )
+    parser.print_help()
+    sys.exit(1)
 
 if args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
@@ -227,4 +276,3 @@ if args['bool_init'] is True:
     lmdb_inst = lmdb_io_eng(1, lmdb_dbname, args)
     env = lmdb_inst.open_lmdb_RW(1)
     env.close()
-
