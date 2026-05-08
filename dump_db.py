@@ -219,7 +219,9 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit=None):
                 try:
                     _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
                     print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
-                    zstd_blob_uncompressed = zstd.ZstdDecompressor().decompress(_zstd_article_text).decode('utf-8')
+                    decompressor = zstd.ZstdDecompressor()
+                    zstd_blob_uncompressed = decompressor.decompress(_zstd_article_text).decode('utf-8')
+                    #= zstd.ZstdDecompressor().decompress(_zstd_article_text).decode('utf-8')
                     print ( f"{zstd_blob_uncompressed}" )                                                        
                     matches += 1
                     if matches == article_limit:
