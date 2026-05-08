@@ -23,7 +23,7 @@ args = {}
 
 parser = argparse.ArgumentParser(prog="Aop", description="LMBD Maintence tool")
 parser.add_argument('-a','--articles', help='Dump all article data for a specific ticker', nargs="*", dest='bool_articles', required=True, default=False)
-parser.add_argument('-b','--basic', help='Simple view into all LMBD KV entries', nargs="*", dest='bool_basic', required=False, default=False)
+parser.add_argument('-b','--basic', help='Simple view into all LMBD KV entries', action='store_true', dest='bool_basic', required=False, default=False)
 parser.add_argument('-d','--deep', help='Deep data dump of values', action='store_true', dest='bool_deep', required=False, default=False)
 parser.add_argument('-i','--init', help='Create new emplt KV db', action='store_true', dest='bool_init', required=False, default=False)
 parser.add_argument('-k','--key', help='filter output by KEY sub-string', action='store', dest='key_filter', required=False, default=None)
