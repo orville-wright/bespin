@@ -180,7 +180,7 @@ class ml_sentiment:
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
 
-            _zstd_article_blob = self.text_compressor(scentxt, self.ext_type)
+            _zstd_article_blob = self.zstd_text_compressor(scentxt, self.ext_type)       # compress article text into a ZSTD binary blob
             
             for i in range(0, len(scentxt)):    # this = 1 b/c C4 sends a list[] of 1 big blob of text
                 logging.info( f"%s - C4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i])} chars" % cmi_debug )
@@ -234,7 +234,7 @@ class ml_sentiment:
             self.kv_json_dataset = dict()       # reset the GLOBAL JSON dict. hold full blocklet JSON struct for this article
             self._chunk_profile = { 'scentence': 0, 'paragraph': 0, 'random': 0 }
 
-            _zstd_article_blob = self.text_compressor(scentxt, self.ext_type)
+            _zstd_article_blob = self.zstd_text_compressor(scentxt, self.ext_type)    # compress article text into a ZSTD binary blob
 
             for i in range(0, len(scentxt)):    # this = num of rows of <p> tag text
                 logging.info( f"%s - BS4 Eval pre-chunker @row: {i:03} / TEXT length: {len(scentxt[i].text)} chars" % cmi_debug )   # cycle through all scentenses/paragraphs sent to us
@@ -720,21 +720,21 @@ class ml_sentiment:
 
 
     # #################################### 7
-    def text_compressor(self, scentxt, extractor):
-        cmi_debug = __name__+"::"+self.text_compressor.__name__
-        #logging.info( f"%s - article text compressor..." % cmi_debug )
-        if extractor == 0:      # C4
-            logging.info( f"%s - C4 text compressor engine..." % cmi_debug )
+    def zstd_text_compressor(self, scentxt, _extractor):
+        cmi_debug = __name__+"::" + self.zstd_text_compressor.__name__+".#"+str(_extractor)
+        logging.info( f"%s - article text compressor..." % cmi_debug )
+        if _extractor == 0:      # C4
+            logging.info( f"%s - C4 ZSTD text compressor engine..." % cmi_debug )
             # C4 sends a list of 1 big blob of text (all <p> tags text combined into 1 big blob)
             # print ( f"ARTICLE_STARTS_HERE: {scentxt[0]}")     # for debugging...
             _source_data = scentxt[0].encode('utf-8')   # prepare byte stream for ZSTD compressor
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(_source_data)
             _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
-            logging.info( f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}")
+            logging.info( f"Orig size: {len(_source_data)} bytes / Cmprssd size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}%")
             return compressed_blob
-        elif extractor == 1:    # BS4
-            logging.info( f"%s - BS4 text compressor engine..." % cmi_debug )
+        elif _extractor == 1:    # BS4
+            logging.info( f"%s - BS4 ZSTD text compressor engine..." % cmi_debug )
             _blocklets = ["ARTICLE_STARTS_HERE:"]
             _blocklets.extend([item.text for item in scentxt])  # low mem usage, fast list comprehension
             #
@@ -752,7 +752,7 @@ class ml_sentiment:
             compressor = zstd.ZstdCompressor(level=3)
             compressed_blob = compressor.compress(_source_data)
             _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
-            logging.info( f"Orig size: {len(_source_data)} bytes / Compressed size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}")
+            logging.info( f"Orig size: {len(_source_data)} bytes / Cmprssd size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f}%")
             return compressed_blob
 
         return 1
