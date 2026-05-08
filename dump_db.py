@@ -258,7 +258,8 @@ elif args['bool_deep'] is True:
         lmdb_inst.close_lmdb("DEEP_DUMP")
         sys.exit(0)
     else:
-        print ( f"ERROR: Deep dump of values requries a key filter !" )
+        print ( f"ERROR: Deep dump of values requries a key filter [add -k or --key option] !" )
+        print ( f" " )
         parser.print_help()
         sys.exit(1)
 
@@ -270,7 +271,8 @@ elif args['bool_xray'] is True:
         lmdb_inst.close_lmdb("XRAY_DUMP")
         sys.exit(0)
     else:
-        print ( f"ERROR: XRAY dump of single Value requries a key filter !" )
+        print ( f"ERROR: XRAY dump of single LMDB Value entry requries a key filter [add -k or --key option] !" )
+        print ( f" " )
         parser.print_help()
         sys.exit(1)
 
