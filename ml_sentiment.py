@@ -321,7 +321,7 @@ class ml_sentiment:
                     chunks[self.chunk_index] = blocklet      # add to final trail output to dict DATA PACKAGE
                     run_total += _b
                     _remaining = abs_tchars - run_total
-                    logging.info( f"%s - Eng.#1 Blocklet dict built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
+                    logging.info( f"%s - Eng.#1 Blocklet: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {abs_tchars:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                     self.chunk_index += 1
                 break       # end the entire while loop - should be the END of all chars
 
@@ -345,7 +345,7 @@ class ml_sentiment:
                 #print (f"##-@267: runtot:{run_total} / chunk:{self.chunk_index}")
                 #print (f"##-@267: runtot:{run_total} / chunk:{self.chunk_index}")
                 _remaining = abs_tchars - run_total
-                logging.info( f"%s - Eng.#2 Blocklet dict built: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {run_total:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
+                logging.info( f"%s - Eng.#2 Blocklet: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {run_total:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                 start = chunk_end + (1 if chunk_end < len(st_list) and st_list[chunk_end] == ' ' else 0)
                 self.chunk_index += 1
 
@@ -721,6 +721,27 @@ class ml_sentiment:
 
     # #################################### 7
     def zstd_text_compressor(self, scentxt, _extractor):
+        """
+        Compresses article text into a ZSTD binary blob
+        So we can store it in the article LMDB KV cache entry
+        - ZSTD is a fast compression algorithm, low CPU utilizaiton, good compression ratios ~50% for text data
+        - C4 sends a list of 1 big blob of htlp striped text (all <p> tags text combined into 1 big blob)
+        - BS4 sends a list of rows of individual <p> tags html element text (needs careful prep-prossing)
+        
+        WARNING:
+        This is an initial template implementation...
+        - my v1 LMDB storage archietcure is inefficent and contains hidden bloat. It needs to be redesigned as per below.
+        
+        TODO:
+        1. Dont use Base64 JSON encoding. It adds a 33% overhead in size.
+        2. Use msgpack() raw binary packing of ZSTD compressed text binary blob into LMDB
+        3. Force LMBD into raw binary storage mode for the ZSTD blob data (raw=True)
+        4. Use "Minified" dict key strategy in the _cr_package dict. Avoid "Key Name Tax", reduce size of JSON package
+        5. Convert urlhash into 32 raw bytes <bytes.fromhex()> instead of 64-char hex string. Lean efficent storage +  faster lookups
+        
+        - migrate _cr_package dict and LMDB to the above.
+          It is Lean, more efficient, faster encoding, fast lookups, more scalable.
+        """
         cmi_debug = __name__+"::" + self.zstd_text_compressor.__name__+".#"+str(_extractor)
         logging.info( f"%s - article text compressor..." % cmi_debug )
         if _extractor == 0:      # C4
@@ -728,11 +749,11 @@ class ml_sentiment:
             # C4 sends a list of 1 big blob of text (all <p> tags text combined into 1 big blob)
             # print ( f"ARTICLE_STARTS_HERE: {scentxt[0]}")     # for debugging...
             _source_data = scentxt[0].encode('utf-8')   # prepare byte stream for ZSTD compressor
-            compressor = zstd.ZstdCompressor(level=3)
-            compressed_blob = compressor.compress(_source_data)
-            _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
-            logging.info( f"%s - Orig size: {len(_source_data)} bytes / Cmprssd size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f} pct" % cmi_debug )
-            return compressed_blob
+            _compressor = zstd.ZstdCompressor(level=3)
+            compressed_C4_blob = _compressor.compress(_source_data)
+            _perctg_compressed = len(compressed_C4_blob) / len(_source_data) * 100
+            logging.info( f"%s - Orig size: {len(_source_data)} bytes / Cmprssd size: {len(compressed_C4_blob)} bytes / optz: {_perctg_compressed:.2f} pct" % cmi_debug )
+            return compressed_C4_blob
         elif _extractor == 1:    # BS4
             logging.info( f"%s - BS4 ZSTD text compressor engine..." % cmi_debug )
             _blocklets = ["ARTICLE_STARTS_HERE:"]
@@ -744,15 +765,16 @@ class ml_sentiment:
             # instead of $O(n^2) (quadratic) for basic imutable string concatination memory trap
             #  
             # But, this pattern (below) is BEST memory utilizaiton, but not as fast a list comprehension
-            #_final_article = "ARTICLE_STARTS_HERE: " + " ".join(item.text for item in scentxt)   # generator memory optomized
+            # generator memory optomized pattern, but slower than list comprehension
+            #_final_article = "ARTICLE_STARTS_HERE: " + " ".join(item.text for item in scentxt)
             #
             _final_article = " ".join(_blocklets)
             # print ( f"{_final_article}")      # for debugging...
             _source_data = _final_article.encode('utf-8')   # prepare byte stream for ZSTD compressor
-            compressor = zstd.ZstdCompressor(level=3)
-            compressed_blob = compressor.compress(_source_data)
-            _perctg_compressed = len(compressed_blob) / len(_source_data) * 100
-            logging.info( f"%s - Orig size: {len(_source_data)} bytes / Cmprssd size: {len(compressed_blob)} bytes / optz: {_perctg_compressed:.2f} pct" % cmi_debug )
-            return compressed_blob
+            _compressor = zstd.ZstdCompressor(level=3)
+            compressed_BS4_blob = _compressor.compress(_source_data)
+            _perctg_compressed = len(compressed_BS4_blob) / len(_source_data) * 100
+            logging.info( f"%s - Orig size: {len(_source_data)} bytes / Cmprssd size: {len(compressed_BS4_blob)} bytes / optz: {_perctg_compressed:.2f} pct" % cmi_debug )
+            return compressed_BS4_blob
 
         return 1
