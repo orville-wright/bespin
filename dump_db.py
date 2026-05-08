@@ -263,10 +263,10 @@ if args['bool_basic'] is True:
 # -a or --articles
 # bool_articles
 elif args['bool_articles'] is True:
-    if args['bool_articles'][0] is not None:
+    if args['bool_articles'][0]:
         print( f"Dumping article TEXT for all {args['ticker_filter']} entries...")
         filter_ticker = (args['bool_articles'][0]).upper()
-        if args['bool_articles'][1] is not None:
+        if args['bool_articles'][1]:
             article_limit = int(args['bool_articles'][1])
             dump_lmdb_articles(lmdb_inst, args['ticker_filter'], article_limit)
             lmdb_inst.close_lmdb("ARTICLES_DUMP")
