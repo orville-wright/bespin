@@ -231,7 +231,7 @@ lmdb_inst.open_lmdb_RO("RO_DUMP")
 if args['bool_basic'] is True:
     print( f"Simple dump of the full LMDV... ")
     dump_lmdb_basic(lmdb_inst)
-    lmdb_inst.close_lmdb()
+    lmdb_inst.close_lmdb("BASIC_DUMP")
     sys.exit(0)
 
 # -a or --articles
@@ -240,7 +240,7 @@ if args['bool_articles'] is True and args['bool_articles'][1] is not None:
     print( f"Dumping article data for all {args['ticker_filter']} entries...")
     filter_ticker = (args['bool_articles'][1]).upper()
     dump_lmdb_articles(lmdb_inst, args['ticker_filter'])
-    lmdb_inst.close_lmdb()
+    lmdb_inst.close_lmdb("ARTICLES_DUMP")
     sys.exit(0)
 else:
     print ( f"ERROR: Dumping article data requries a ticker symbol filter !" )
@@ -252,7 +252,7 @@ else:
 if args['bool_deep'] is True and args['key_filter'] is not None:
     print(f"Full dump filtered by key: '{args['key_filter']}'")
     dump_lmdb_by_key(lmdb_inst, args['key_filter'])
-    lmdb_inst.close_lmdb()
+    lmdb_inst.close_lmdb("DEEP_DUMP")
     sys.exit(0)
 else:
     print ( f"ERROR: Deep dump of values requries a key filter !" )
@@ -263,7 +263,7 @@ else:
 # dump_lmdb_xray
 if args['bool_xray'] is True and args['key_filter'] is not None:
     dump_lmdb_xray(lmdb_inst, args['key_filter'])
-    lmdb_inst.close_lmdb()
+    lmdb_inst.close_lmdb("XRAY_DUMP")
     sys.exit(0)
 else:
     print ( f"ERROR: XRAY dump of single Value requries a key filter !" )
