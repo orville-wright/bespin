@@ -256,18 +256,17 @@ if args['bool_basic'] is True:
 
 # -a or --articles
 # bool_articles
-elif args['bool_articles'] is True and args['bool_articles'][1] is not None:
-    print( f"Dumping article data for all {args['ticker_filter']} entries...")
-    filter_ticker = (args['bool_articles'][1]).upper()
-    dump_lmdb_articles(lmdb_inst, args['ticker_filter'])
-    lmdb_inst.close_lmdb("ARTICLES_DUMP")
-    sys.exit(0)
-    """
+elif args['bool_articles'] is True:
+    if args['bool_articles'][1] is not None:
+        print( f"Dumping article data for all {args['ticker_filter']} entries...")
+        filter_ticker = (args['bool_articles'][1]).upper()
+        dump_lmdb_articles(lmdb_inst, args['ticker_filter'])
+        lmdb_inst.close_lmdb("ARTICLES_DUMP")
+        sys.exit(0)
     else:
-        print ( f"ERROR: Dumping article data requries a ticker symbol filter !" )
+        print ( f"ERROR: Dumping article Text requries a ticker symbol filter ! [as 2nd parameter]" )
         parser.print_help()
         sys.exit(1)
-    """
 
 # -d or --deep
 # requries a key filter -k or --key
