@@ -264,15 +264,15 @@ if args['bool_basic'] is True:
 # bool_articles
 elif args['bool_articles'] is not False:
     if (args['bool_articles'][0]) is not None:
-        print( f"Dumping article TEXT for all {args['ticker_filter']} entries...")
-        filter_ticker = (args['bool_articles'][0]).upper()
+        _filter = (args['bool_articles'][0]).upper()
+        print( f"Dumping article TEXT for all {_filter} entries...")
         if (args['bool_articles'][1]) is not None:
             article_limit = int(args['bool_articles'][1])
-            dump_lmdb_articles(lmdb_inst, args['ticker_filter'], article_limit)
+            dump_lmdb_articles(lmdb_inst, _filter, article_limit)
             lmdb_inst.close_lmdb("ARTICLES_DUMP")
             sys.exit(0)
         else:
-            dump_lmdb_articles(lmdb_inst, args['ticker_filter'], None)
+            dump_lmdb_articles(lmdb_inst, _filter, None)
             lmdb_inst.close_lmdb("ARTICLES_DUMP")
             sys.exit(0)
     else:
