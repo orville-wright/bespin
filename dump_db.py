@@ -232,6 +232,9 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit=None):
                 except KeyError:
                     print ( f"LMDB entry has no ZSTD compressed article entry." )
                     total += 1
+                except sys.exception as e:
+                    print ( f"Error decompressing ZSTD article blob: {e}" )
+                    total += 1
 
         print (" ")
         print( f"Ticker filter '{ticker_filter}': {matches} match(es) from {total} total entries")
