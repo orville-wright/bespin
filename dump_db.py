@@ -28,7 +28,7 @@ parser.add_argument('-d','--deep', help='Deep data dump of values. Required a ke
 parser.add_argument('-i','--init', help='Create new emplt KV db', action='store_true', dest='bool_init', required=False, default=False)
 parser.add_argument('-k','--key', help='filter output by KEY sub-string', action='store', dest='key_filter', required=False, default=None)
 parser.add_argument('-v','--verbose', help='Verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
-parser.add_argument('-x','--xray', help='Deep XRAY of LBDM', action='store_true', dest='bool_vxray', required=False, default=False)
+parser.add_argument('-x','--xray', help='Deep XRAY of LBDM', action='store_true', dest='bool_xray', required=False, default=False)
 
 
 args = vars(parser.parse_args())        # args as a dict []
