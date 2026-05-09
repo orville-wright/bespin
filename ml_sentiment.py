@@ -10,6 +10,7 @@ import sys
 import logging
 import argparse
 from rich import print
+import base64
 import zstandard as zstd
 
 from ml_cvbow import ml_cvbow
@@ -750,10 +751,11 @@ class ml_sentiment:
             # print ( f"ARTICLE_STARTS_HERE: {scentxt[0]}")     # for debugging...
             _source_data = scentxt[0].encode('utf-8')   # prepare byte stream for ZSTD compressor
             _compressor = zstd.ZstdCompressor(level=3)
-            compressed_C4_blob = _compressor.compress(_source_data)
-            _perctg_compressed = len(compressed_C4_blob) / len(_source_data) * 100
-            logging.info( f"%s - Orig size: {len(_source_data)} bytes / Cmprssd size: {len(compressed_C4_blob)} bytes / optz: {_perctg_compressed:.2f} pct" % cmi_debug )
-            return compressed_C4_blob
+            _compressed_C4_bytes = _compressor.compress(_source_data)
+            _perctg_compressed = len(_compressed_C4_bytes) / len(_source_data) * 100
+            b64_compressed_C4_blob = base64.b64decode(_compressed_C4_bytes).decode('utf-8')
+            logging.info( f"%s - Orig size: {len(_source_data)} bytes / Cmprssd size: {len(_compressed_C4_bytes)} bytes / optz: {_perctg_compressed:.2f} pct" % cmi_debug )
+            return b64_compressed_C4_blob
         elif _extractor == 1:    # BS4
             logging.info( f"%s - BS4 ZSTD text compressor engine..." % cmi_debug )
             _blocklets = ["ARTICLE_STARTS_HERE:"]
@@ -772,9 +774,10 @@ class ml_sentiment:
             # print ( f"{_final_article}")      # for debugging...
             _source_data = _final_article.encode('utf-8')   # prepare byte stream for ZSTD compressor
             _compressor = zstd.ZstdCompressor(level=3)
-            compressed_BS4_blob = _compressor.compress(_source_data)
-            _perctg_compressed = len(compressed_BS4_blob) / len(_source_data) * 100
-            logging.info( f"%s - Orig size: {len(_source_data)} bytes / Cmprssd size: {len(compressed_BS4_blob)} bytes / optz: {_perctg_compressed:.2f} pct" % cmi_debug )
-            return compressed_BS4_blob
+            _compressed_BS4_bytes = _compressor.compress(_source_data)
+            _perctg_compressed = len(_compressed_BS4_bytes) / len(_source_data) * 100
+            b64_compressed_BS4_blob = base64.b64decode(_compressed_BS4_bytes).decode('utf-8')
+            logging.info( f"%s - Orig size: {len(_source_data)} bytes / Cmprssd size: {len(_compressed_BS4_bytes)} bytes / optz: {_perctg_compressed:.2f} pct" % cmi_debug )
+            return b64_compressed_BS4_blob
 
         return 1
