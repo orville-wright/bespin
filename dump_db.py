@@ -211,19 +211,18 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                     _v_dict = json.loads(value.decode('utf-8'))
                     working_article = _v_dict["article"]        # article number
                     print ( f"LMBD Database: {db_id} / Dumping {article_limit} Articles entries for: {ticker_filter}" ) 
-                    print ( f"============================ News article:  {working_article} ====================================" )
+                    print ( f"================= News article:  {working_article} / Item {matches} of {article_limit}  ====================================" )
                     try:
                         _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
                         b64_binencd_cmprssd_data = base64.b64decode(_zstd_article_text)
-                        print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
-                        print ( f"type: ({type(b64_binencd_cmprssd_data)}" )
+                        #print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
                         decompressor = zstd.ZstdDecompressor()
                         zstd_blob_uncompressed = decompressor.decompress(b64_binencd_cmprssd_data).decode('utf-8')
                         #= zstd.ZstdDecompressor().decompress(_zstd_article_text).decode('utf-8')
                         print ( f"{zstd_blob_uncompressed}" )                                                        
                         matches += 1
                         if matches == article_limit:
-                            print ( f"Limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump." )
+                            print ( f"Limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump.\n" )
                             break
                         total += 1
                     except KeyError:
