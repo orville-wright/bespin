@@ -122,9 +122,8 @@ class lmdb_io_eng:
         cmi_debug = __name__+"::"+self.drop_lmdb_RW.__name__+".#"+str(self.yti)
         logging.info( f'%s   - drop_lmdb_RW.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
-
         try:
-            self.RW_env.close()
+            self.RW_env.close_lmdb(yti)
             db_inst = self.db_path + self.db_name
             self.RW_env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
             self.db_open_state[self.db_name] = self.RW_env
