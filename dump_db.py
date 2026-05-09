@@ -196,44 +196,41 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
             for key, value in cursor:
                 key_str = key.decode('utf-8')
                 total += 1
-
-                parts = key_str.split('.')
+                parts = [p.strip() for p in key_str.split('.')]
                 if len(parts) != 3:
                     total += 1
                     print ( f"Bad keys - not 3 parts !!")
-                    breakpoint()
-                    #continue                         # skip any malformed keys
+                    continue                         # skip any malformed keys
 
-                db_id, ticker_filter, url_hash = parts
-                if not ticker_filter:
+                db_id, ticker_symbol, url_hash = parts
+                if ticker_symbol.upper() != ticker_filter:
                     total += 1
-                    print ( f"Math fial - not the Ticker Symbol {ticker_filter} !!")
-                    breakpoint()
-                    #continue
-
-                _v_dict = json.loads(value.decode('utf-8'))
-                working_article = _v_dict["article"]        # article number
-                print ( f"LMBD Database: {db_id} / Dumping {article_limit} Articles entries for: {ticker_filter}" ) 
-                print ( f"============================ News article:  {working_article} ====================================" )
-                try:
-                    _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
-                    print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
-                    print ( f"type1: ({type(_zstd_article_text)}" )
-                    decompressor = zstd.ZstdDecompressor()
-                    zstd_blob_uncompressed = decompressor.decompress(_zstd_article_text).decode('utf-8')
-                    #= zstd.ZstdDecompressor().decompress(_zstd_article_text).decode('utf-8')
-                    print ( f"{zstd_blob_uncompressed}" )                                                        
-                    matches += 1
-                    if matches == article_limit:
-                        print ( f"Limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump." )
-                        break
-                    total += 1
-                except KeyError:
-                    print ( f"LMDB entry has no ZSTD compressed article entry." )
-                    total += 1
-                except Exception as e:
-                    print ( f"Error decompressing ZSTD article blob: {e}" )
-                    total += 1
+                    print ( f"Skipping: {ticker_symbol} mismtach for filter: {ticker_filter} !")
+                    continue
+                else:
+                    _v_dict = json.loads(value.decode('utf-8'))
+                    working_article = _v_dict["article"]        # article number
+                    print ( f"LMBD Database: {db_id} / Dumping {article_limit} Articles entries for: {ticker_filter}" ) 
+                    print ( f"============================ News article:  {working_article} ====================================" )
+                    try:
+                        _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
+                        print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
+                        print ( f"type: ({type(_zstd_article_text)}" )
+                        decompressor = zstd.ZstdDecompressor()
+                        zstd_blob_uncompressed = decompressor.decompress(_zstd_article_text).decode('utf-8')
+                        #= zstd.ZstdDecompressor().decompress(_zstd_article_text).decode('utf-8')
+                        print ( f"{zstd_blob_uncompressed}" )                                                        
+                        matches += 1
+                        if matches == article_limit:
+                            print ( f"Limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump." )
+                            break
+                        total += 1
+                    except KeyError:
+                        print ( f"LMDB entry has no ZSTD compressed article entry." )
+                        total += 1
+                    except Exception as e:
+                        print ( f"Error decompressing ZSTD article blob: {e}" )
+                        total += 1
 
         print (" ")
         print( f"Ticker filter '{ticker_filter}': {matches} match(es) from {total} total entries")
