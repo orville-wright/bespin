@@ -268,42 +268,45 @@ if args['bool_basic'] is True:
 
 # -a or --articles
 # bool_articles
-elif args['bool_articles'] is not False:
+elif args.get('bool_articles'): 
     _filter = None
-    _xxx = None
-    print ( f"###-Debug-274: HERE !!" )
+    articles_list = args['bool_articles']
+    
     try:
-        _ticker_symbol = (args['bool_articles'][0])
-        print ( f"###-Debug-277: ticker symbol: {_ticker_symbol}" )
+        _ticker_symbol = articles_list[0]
+        print(f"###-Debug-277: ticker symbol: {_ticker_symbol}")
+
         match _ticker_symbol:
-            case 0 if _ticker_symbol is None:
-                print( f"debug: {_xxx} - No ticker symbol filter provided for article dump." )
+            # Matches if the first element is specifically None
+            case None:
+                print("No ticker symbol filter provided.")
                 parser.print_help()
                 sys.exit(3)
-            case 1 if _ticker_symbol is type(str):
-                _filter = (args['bool_articles'][0]).upper()
-                print( f"Dumping article TEXT for all {_filter} entries...")
-                if (args['bool_articles'][1]) is not None:
-                    article_limit = int(args['bool_articles'][1])
+            
+            # Matches if the first element is a string
+            case str(symbol):
+                _filter = symbol.upper()
+                print(f"Dumping article TEXT for all {_filter} entries...")
+                
+                # Check length before accessing index 1 to avoid another IndexError
+                if len(articles_list) > 1 and articles_list[1] is not None:
+                    article_limit = int(articles_list[1])
                     dump_lmdb_articles(lmdb_inst, _filter, article_limit)
-                    lmdb_inst.close_lmdb("ARTICLES_DUMP")
-                    sys.exit(0)
                 else:
                     dump_lmdb_articles(lmdb_inst, _filter, 0)
-                    lmdb_inst.close_lmdb("ARTICLES_DUMP")
-                    sys.exit(2)
+                
+                lmdb_inst.close_lmdb("ARTICLES_DUMP")
+                sys.exit(0)
+
             case _:
-                print( f"Bad parameters - 1: {_filter} / 2: {args['bool_articles'][1]}" )
+                print(f"Bad parameters: {articles_list}")
                 parser.print_help()
                 sys.exit(1)
-    except IndexError:
-        print ( f"ERROR: Dumping article Text requries a ticker symbol filter ! [as 2nd parameter]" )
+
+    except (IndexError, ValueError) as e:
+        print(f"ERROR: Invalid parameters provided: {e}")
         parser.print_help()
         sys.exit(2)
-    except Exception as e:
-        print ( f"Error processing article dump parameters: {e}" )
-        parser.print_help()
-        sys.exit(1)
 
 
 # -d or --deep
