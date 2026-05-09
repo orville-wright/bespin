@@ -270,11 +270,13 @@ if args['bool_basic'] is True:
 # bool_articles
 elif args['bool_articles'] is not False:
     _filter = None
+    _xxx = None
     try:
         _ticker_symbol = args['bool_articles'][0]
+        _xxx = 1
         match _ticker_symbol:
             case 0 if _ticker_symbol is None:
-                print( f"No ticker symbol filter provided for article dump." )
+                print( f"debug: {_xxx} - No ticker symbol filter provided for article dump." )
                 parser.print_help()
                 sys.exit(3)
             case 1 if _ticker_symbol is type(str):
