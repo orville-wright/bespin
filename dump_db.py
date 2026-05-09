@@ -333,7 +333,7 @@ elif args['bool_init'] is True:
     lmdb_inst.RO_env.close() 
     lmdb_inst.open_lmdb_RW("INTI_DUMP")
     with lmdb_inst.RW_env.begin(write=True) as txn:
-        _db_handle = lmdb_inst.RW_env.open_db(name=lmdb_dbname, txn=txn)
+        _db_handle = lmdb_inst.RW_env.open_db(name=lmdb_dbname.encode())
         txn.drop(_db_handle, delete=False)
     lmdb_inst.RW_env.close()
 else:
