@@ -330,7 +330,7 @@ elif args['bool_xray'] is True:
 elif args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
     lmdb_dbname = "LMDB_0001"
-    lmdb_inst.close() 
+    lmdb_inst.RO_env.close() 
     """    
     lmdb_inst.close_lmdb("RO_DUMP")
     lmdb_inst.close_lmdb("RO_DUMP")
