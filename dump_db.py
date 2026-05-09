@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import base64
 from datetime import datetime
 import json
 import lmdb
@@ -205,7 +206,6 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                 db_id, ticker_symbol, url_hash = parts
                 if ticker_symbol.upper() != ticker_filter:
                     total += 1
-                    #print ( f"Skipping: {ticker_symbol} mismtach for filter: {ticker_filter} !")
                     continue
                 else:
                     _v_dict = json.loads(value.decode('utf-8'))
@@ -214,6 +214,7 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                     print ( f"============================ News article:  {working_article} ====================================" )
                     try:
                         _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
+                        binary_data = base64.b64decode(_zstd_article_text)
                         print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
                         print ( f"type: ({type(_zstd_article_text)}" )
                         decompressor = zstd.ZstdDecompressor()
