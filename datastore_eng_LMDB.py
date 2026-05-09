@@ -54,7 +54,7 @@ class lmdb_io_eng:
 ################# 1
     def open_lmdb_RO(self, _yti):
         cmi_debug = __name__+"::"+self.open_lmdb_RO.__name__+".#"+str(_yti)
-        logging.info( f'%s    - open_lmdb_RO.#{_yti} Instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s    - Caller.#{_yti} DEBUG-57: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         try:
             self.RO_env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
@@ -92,14 +92,14 @@ class lmdb_io_eng:
             return 0
             
 ################# 3
-    def dump_lmdb_RO(self, yti):
-        cmi_debug = __name__+"::"+self.dump_lmdb_RO.__name__+".#"+str(self.yti)
+    def dump_lmdb_RO(self, _yti):
+        cmi_debug = __name__+"::"+self.dump_lmdb_RO.__name__+".#"+str(_yti)
         logging.info( f'%s    - dump_lmdb.#{self.yti} DB Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         
         # you must manually open the DB yourself first...
         try:
-            logging.info( f'%s   - Successfully opened KVstore - READ-ONLY mode.#{self.yti} {self.db_name}' % cmi_debug )
+            logging.info( f'%s   - Successfully opened KVstore - READ-ONLY mode.#{_yti} {self.db_name}' % cmi_debug )
             logging.info( f'%s   - KVstore remains globally open.#{self.yti} instance: {self.db_name}' % cmi_debug )
             with self.RO_env.begin() as txn:
                 cursor = txn.cursor()
