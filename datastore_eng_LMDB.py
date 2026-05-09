@@ -118,22 +118,21 @@ class lmdb_io_eng:
             return 0
 
 ################# 4
-    def drop_lmdb_RW(self, yti):
+    def drop_lmdb_RW(self, _yti):
+        # WARN: you MUST manuall close the LMDB yourself before calling this method
+        
         cmi_debug = __name__+"::"+self.drop_lmdb_RW.__name__+".#"+str(self.yti)
-        logging.info( f'%s   - Caller #{yti} LMDB: {self.db_name} assumed RO Inst: {self.RO_env}' % cmi_debug )
+        logging.info( f'%s   - Caller #{_yti} LMDB: {self.db_name} assumed RO Inst: {self.RO_env}' % cmi_debug )
         db_inst = self.db_path+self.db_name
-        #db_instance.RW_env.close_lmdb(yti)
-        self.RO_env.close_lmdb(yti)       # forcefull close RO and RW opened LMDB using global DB env (state agnostic)
         try:
             self.RW_env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
             self.db_open_state[self.db_name] = self.RW_env
             _db0 = self.RW_env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
             with self.RW_env.begin(write=True) as txn:
                 txn.drop(_db0, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
-            #db_instance.close()
-            self.RW_env.close_lmdb(yti)
+            self.RW_env.close_lmdb(_yti)
             self.db_open_state[self.db_name] = None
-            logging.info( f'%s - DROPPED default database - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
+            logging.info( f'%s - DROPPED default database - READ-WRITE mode.#{_yti} {self.db_name}' % cmi_debug )
             return 1
         except lmdb.Error as e:
             print(f"LMDB Open Error: {e}")
@@ -145,7 +144,7 @@ class lmdb_io_eng:
 ################# 5
     def close_lmdb(self, _yti):
         cmi_debug = __name__+"::"+self.close_lmdb.__name__+".#"+str(self.yti)
-        logging.info( f'%s   - close_lmdb.#{_yti} Instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s   - Caller #{_yti} Instance: {self.db_name}' % cmi_debug )
         try:
             if self.RO_env is not None:
                 logging.info( f'%s   - closing READ_ONLY instance' % cmi_debug )
