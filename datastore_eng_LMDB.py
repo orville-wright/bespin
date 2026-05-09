@@ -122,10 +122,11 @@ class lmdb_io_eng:
         # WARN: you MUST manuall close the LMDB yourself before calling this method
         
         cmi_debug = __name__+"::"+self.drop_lmdb_RW.__name__+".#"+str(_yti)
-        logging.info( f'%s   - Caller #{_yti} LMDB: {self.db_name} assumed RO Inst: {self.RO_env}' % cmi_debug )
+        logging.info( f'%s   - Caller #{_yti} {self.db_name} assumed RO Inst: {self.RO_env}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         try:
-            self.RW_env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
+            self.RW_env = lmdb.open(db_inst, map_size=1024*1024*1024, max_dbs=0)  # max_dbs=0 for default DB only
+            # self.RW_env = lmdb.open(db_inst, map_size=1024*1024*1024, readonly=False)     # map_size: Maximum size DB = 1GB 
             self.db_open_state[self.db_name] = self.RW_env
             _db0 = self.RW_env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
             with self.RW_env.begin(write=True) as txn:
