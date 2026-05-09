@@ -189,10 +189,10 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
         with lmdb_instance.RO_env.begin() as txn:
             cursor = txn.cursor()
             if article_limit is None:
-                article_limit = 0  # No limit if not specified
+                article_limit = int(0)  # No limit if not specified
 
-            total = 0
-            matches = 0
+            total = int(0)
+            matches = int(0)
             for key, value in cursor:
                 key_str = key.decode('utf-8')
                 total += 1
@@ -209,7 +209,7 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
 
                 _v_dict = json.loads(value.decode('utf-8'))
                 working_article = _v_dict["article"]        # article number
-                print ( f"LMBD Database: {db_id} / All Ticker entries for: {ticker_filter}" ) 
+                print ( f"LMBD Database: {db_id} / Dumping {article_limit} Articles entries for: {ticker_filter}" ) 
                 print ( f"============================ News article:  {working_article} ====================================" )
                 try:
                     _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
@@ -221,13 +221,13 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                     print ( f"{zstd_blob_uncompressed}" )                                                        
                     matches += 1
                     if matches == article_limit:
-                        print ( f"Article limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump." )
+                        print ( f"Limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump." )
                         break
                     total += 1
                 except KeyError:
                     print ( f"LMDB entry has no ZSTD compressed article entry." )
                     total += 1
-                except exception as e:
+                except Exception as e:
                     print ( f"Error decompressing ZSTD article blob: {e}" )
                     total += 1
 
@@ -277,7 +277,7 @@ elif args.get('bool_articles'):
             case str(symbol):
                 _filter = symbol.upper()
                 # Check length before accessing index 1 to avoid another IndexError
-                if len(articles_list) > 1 and articles_list[1] is not None:
+                if len(articles_list) > 1 and articles_list[1] != 0:
                     article_limit = int(articles_list[1])
                     print(f"Dumping article TEXT for {article_limit} {_filter} entries...")
                     dump_lmdb_articles(lmdb_inst, _filter, article_limit)
