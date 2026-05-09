@@ -276,12 +276,15 @@ elif args.get('bool_articles'):
             # Matches if the first element is a string
             case str(symbol):
                 _filter = symbol.upper()
-                print(f"Dumping article TEXT for all {_filter} entries...")
                 # Check length before accessing index 1 to avoid another IndexError
                 if len(articles_list) > 1 and articles_list[1] is not None:
                     article_limit = int(articles_list[1])
+                    print(f"Dumping article TEXT for {article_limit} {_filter} entries...")
                     dump_lmdb_articles(lmdb_inst, _filter, article_limit)
+                    lmdb_inst.close_lmdb("ARTICLES_DUMP")
+                    sys.exit(0)
                 else:
+                    print(f"Dumping article TEXT for all {_filter} entries...")
                     dump_lmdb_articles(lmdb_inst, _filter, 0)
                     lmdb_inst.close_lmdb("ARTICLES_DUMP")
                     sys.exit(0)
