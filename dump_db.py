@@ -331,8 +331,10 @@ elif args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
     lmdb_dbname = "LMDB_0001"
     lmdb_inst = lmdb_io_eng(1, lmdb_dbname, args)
-    env = lmdb_inst.open_lmdb_RW(1)
-    env.close()
+    lmdb_inst.drop_lmdb_RW(1)
+    #env = lmdb_inst.open_lmdb_RW(1)
+    lmdb_inst.close_lmdb("INIT_DROP")
+    #env.close()
 
 else:
     print ( f"ERROR: No valid dump option selected. Please choose one of the following:" )
