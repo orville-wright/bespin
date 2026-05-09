@@ -130,7 +130,7 @@ class lmdb_io_eng:
             _db0 = self.RW_env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
             with self.RW_env.begin(write=True) as txn:
                 txn.drop(_db0, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
-            db_instance.close()
+            db_instance.close_lmdb()
             self.db_open_state[self.db_name] = None
             logging.info( f'%s - DROPPED default database - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
             return 1
