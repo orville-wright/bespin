@@ -121,7 +121,7 @@ class lmdb_io_eng:
     def drop_lmdb_RW(self, _yti):
         # WARN: you MUST manuall close the LMDB yourself before calling this method
         
-        cmi_debug = __name__+"::"+self.drop_lmdb_RW.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.drop_lmdb_RW.__name__+".#"+str(_yti)
         logging.info( f'%s   - Caller #{_yti} LMDB: {self.db_name} assumed RO Inst: {self.RO_env}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         try:
@@ -143,14 +143,14 @@ class lmdb_io_eng:
 
 ################# 5
     def close_lmdb(self, _yti):
-        cmi_debug = __name__+"::"+self.close_lmdb.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.close_lmdb.__name__+".#"+str(_yti)
         logging.info( f'%s   - Caller #{_yti} Instance: {self.db_name}' % cmi_debug )
         try:
             if self.RO_env is not None:
-                logging.info( f'%s   - closing READ_ONLY instance' % cmi_debug )
+                logging.info( f'%s   - closing READ_ONLY instance {self.RO_env}' % cmi_debug )
                 self.RO_env.close()     # gracefully close RO env
             elif self.RW_env is not None:
-                logging.info( f'%s   - closing READ_WRITE instance' % cmi_debug )
+                logging.info( f'%s   - closing READ_WRITE instance {self.RW_env}' % cmi_debug )
                 self.RW_env.close()     # gracefully close RW env   
                 #self.lmdb_env.close()   # Agressively  close entire LMBD
             self.db_open_state[self.db_name] = None
