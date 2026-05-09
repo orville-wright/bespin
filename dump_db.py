@@ -200,12 +200,16 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                 parts = key_str.split('.')
                 if len(parts) != 3:
                     total += 1
-                    continue                         # skip any malformed keys
+                    print ( f"Bad keys - not 3 parts !!")
+                    break
+                    #continue                         # skip any malformed keys
 
                 db_id, ticker_filter, url_hash = parts
                 if not ticker_filter:
                     total += 1
-                    continue
+                    print ( f"Math fial - not the Ticker Symbol {ticker_filter} !!")
+                    break
+                    #continue
 
                 _v_dict = json.loads(value.decode('utf-8'))
                 working_article = _v_dict["article"]        # article number
