@@ -333,7 +333,7 @@ elif args['bool_init'] is True:
     lmdb_inst.close_lmdb("RO_DUMP")
     lmdb_inst = lmdb_io_eng(1, lmdb_dbname, args)
     lmdb_inst.open_lmdb_RW("INTI_DUMP")
-    lmdb_inst.drop_lmdb_RW(1)
+    lmdb_inst.drop_lmdb_RW(1, lmdb_inst)
 else:
     print ( f"ERROR: No valid dump option selected. Please choose one of the following:" )
     parser.print_help()

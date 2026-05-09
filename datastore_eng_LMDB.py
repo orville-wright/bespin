@@ -118,12 +118,12 @@ class lmdb_io_eng:
             return 0
 
 ################# 4
-    def drop_lmdb_RW(self, yti):
+    def drop_lmdb_RW(self, yti, db_instance):
         cmi_debug = __name__+"::"+self.drop_lmdb_RW.__name__+".#"+str(self.yti)
         logging.info( f'%s   - drop_lmdb_RW.#{self.yti} Instance: {self.db_name}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         try:
-            self.RW_env.close_lmdb(yti)
+            db_instance.RW_env.close_lmdb(yti)
             db_inst = self.db_path + self.db_name
             self.RW_env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
             self.db_open_state[self.db_name] = self.RW_env
