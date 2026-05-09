@@ -201,14 +201,14 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                 if len(parts) != 3:
                     total += 1
                     print ( f"Bad keys - not 3 parts !!")
-                    break
+                    breakpoint()
                     #continue                         # skip any malformed keys
 
                 db_id, ticker_filter, url_hash = parts
                 if not ticker_filter:
                     total += 1
                     print ( f"Math fial - not the Ticker Symbol {ticker_filter} !!")
-                    break
+                    breakpoint()
                     #continue
 
                 _v_dict = json.loads(value.decode('utf-8'))
