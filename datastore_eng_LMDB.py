@@ -133,7 +133,7 @@ class lmdb_io_eng:
             with self.RW_env.begin(write=True) as txn:
                 txn.drop(_db0, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
                 logging.info( f'%s - DROPPED default LMDB {type(_db0)} - RW mode.#{_yti} {self.db_name}' % cmi_debug )
-            self.RW_env.close_lmdb(_yti)
+            self.RW_env.close(_yti)
             self.db_open_state[self.db_name] = None
             return 1
         except lmdb.Error as e:
