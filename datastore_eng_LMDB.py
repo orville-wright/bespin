@@ -135,7 +135,7 @@ class lmdb_io_eng:
             logging.info( f'%s - DROPPED default database - READ-WRITE mode.#{_yti} {self.db_name}' % cmi_debug )
             return 1
         except lmdb.Error as e:
-            print(f"LMDB Open Error: {e}")
+            print(f"LMDB Drop Error: {e}")
             return 0
         except Exception as e:
             print(f"Drop RW mode - Error Exception: {e}")
