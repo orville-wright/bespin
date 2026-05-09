@@ -331,6 +331,11 @@ elif args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
     lmdb_dbname = "LMDB_0001"
     lmdb_inst.RO_env.close() 
+    lmdb_inst.open_lmdb_RW("INTI_DUMP")
+    with lmdb_inst.RW_env.begin(write=True) as txn:
+        txn.drop(lmdb_inst.RW_env.open_db(name=lmdb_dbname), delete=False)
+    lmdb_inst.RW_env.close()
+    
     """    
     lmdb_inst.close_lmdb("RO_DUMP")
     lmdb_inst.close_lmdb("RO_DUMP")
