@@ -125,7 +125,7 @@ class lmdb_io_eng:
         logging.info( f'%s   - Caller #{_yti} {self.db_name} assumed RO Inst: {self.RO_env}' % cmi_debug )
         db_inst = self.db_path+self.db_name
         try:
-            self.RW_env = lmdb.open(db_inst, map_size=1024*1024*1024, max_dbs=0, metasync=True, sync=True, map_sync=False)  # max_dbs=0 for default DB only
+            self.RW_env = lmdb.open(db_inst, map_size=1024*1024*1024, max_dbs=0, readonly=False)  # max_dbs=0 for default DB only
             # self.RW_env = lmdb.open(db_inst, map_size=1024*1024*1024, readonly=False)     # map_size: Maximum size DB = 1GB 
             logging.info( f'%s   - Caller #{_yti} {self.db_name} Opened Inst as RW: {self.RW_env}' % cmi_debug )
             self.db_open_state[self.db_name] = self.RW_env
