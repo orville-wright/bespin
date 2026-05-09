@@ -269,22 +269,39 @@ if args['bool_basic'] is True:
 # -a or --articles
 # bool_articles
 elif args['bool_articles'] is not False:
-    if (args['bool_articles'][0]) is not None:
-        _filter = (args['bool_articles'][0]).upper()
-        print( f"Dumping article TEXT for all {_filter} entries...")
-        if (args['bool_articles'][1]) is not None:
-            article_limit = int(args['bool_articles'][1])
-            dump_lmdb_articles(lmdb_inst, _filter, article_limit)
-            lmdb_inst.close_lmdb("ARTICLES_DUMP")
-            sys.exit(0)
-        else:
-            dump_lmdb_articles(lmdb_inst, _filter, None)
-            lmdb_inst.close_lmdb("ARTICLES_DUMP")
-            sys.exit(0)
-    else:
+    _filter = None
+    try:
+        _ticker_symbol = args['bool_articles'][0]
+        match _ticker_symbol:
+            case 0 if _ticker_symbol is None:
+                print( f"No ticker symbol filter provided for article dump." )
+                parser.print_help()
+                sys.exit(3)
+            case 1 if _ticker_symbol is type(str):
+                _filter = (args['bool_articles'][0]).upper()
+                print( f"Dumping article TEXT for all {_filter} entries...")
+                if (args['bool_articles'][1]) is not None:
+                    article_limit = int(args['bool_articles'][1])
+                    dump_lmdb_articles(lmdb_inst, _filter, article_limit)
+                    lmdb_inst.close_lmdb("ARTICLES_DUMP")
+                    sys.exit(0)
+                else:
+                    dump_lmdb_articles(lmdb_inst, _filter, 0)
+                    lmdb_inst.close_lmdb("ARTICLES_DUMP")
+                    sys.exit(2)
+            case _:
+                print( f"Bad parameters - 1: {_filter} / 2: {args['bool_articles'][1]}" )
+                parser.print_help()
+                sys.exit(1)
+    except IndexError:
         print ( f"ERROR: Dumping article Text requries a ticker symbol filter ! [as 2nd parameter]" )
         parser.print_help()
+        sys.exit(2)
+    except Exception as e:
+        print ( f"Error processing article dump parameters: {e}" )
+        parser.print_help()
         sys.exit(1)
+
 
 # -d or --deep
 # requries a key filter -k or --key
