@@ -333,10 +333,10 @@ elif args['bool_xray'] is True:
 
 elif args['bool_init'] is True:
     lmdb_dbname = "LMDB_0001"
-    print ( f"Initialize empty LMDB by dropping data from: {type(lmdb_inst.RO_env)} @ {lmdb_inst.db_path}{lmdb_dbname}..." )
+    print ( f"Init empty LMDB by dropping data from: {lmdb_inst.RO_env} @ {lmdb_inst.db_path}{lmdb_dbname}..." )
     # god damn it... close it first !!!
-    lmdb_inst.close_lmdb("INIT_DUMP") 
-    lmdb_inst.drop_lmdb_RW("INIT_DUMP")
+    lmdb_inst.close_lmdb("INIT_CLOSE") 
+    lmdb_inst.drop_lmdb_RW("INIT_DROP")
     #lmdb_inst.open_lmdb_RW("INTI_DUMP")
     """
     # I should be able to call .drop_lmdb_RW()
