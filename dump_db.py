@@ -221,7 +221,7 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                         #= zstd.ZstdDecompressor().decompress(_zstd_article_text).decode('utf-8')
                         print ( f"{zstd_blob_uncompressed}" )                                                        
                         matches += 1
-                        if matches == article_limit:
+                        if matches > article_limit:
                             print ( f"Limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump.\n" )
                             break
                         total += 1
