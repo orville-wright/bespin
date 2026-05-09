@@ -184,7 +184,7 @@ def dump_lmdb_basic(lmdb_instance):
 # -a or --article
 # parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
 
-def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit=None):
+def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit):
     try:
         with lmdb_instance.RO_env.begin() as txn:
             cursor = txn.cursor()
@@ -193,7 +193,6 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit=None):
 
             total = 0
             matches = 0
-            filter_upper = ticker_filter.upper()
             for key, value in cursor:
                 key_str = key.decode('utf-8')
                 total += 1
@@ -203,23 +202,19 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit=None):
                     total += 1
                     continue                         # skip any malformed keys
 
-                db_id, ticker, url_hash = parts
-
-                ticker_match   = filter_upper == ticker.upper()
-                if not ticker_match:
+                db_id, ticker_filter, url_hash = parts
+                if not ticker_filter:
                     total += 1
                     continue
 
-                #value_str = value.decode('utf-8')
-
                 _v_dict = json.loads(value.decode('utf-8'))
                 working_article = _v_dict["article"]        # article number
-                print ( f"LMBD Database: {db_id} / All Ticker entries for: {ticker}" ) 
+                print ( f"LMBD Database: {db_id} / All Ticker entries for: {ticker_filter}" ) 
                 print ( f"============================ News article:  {working_article} ====================================" )
                 try:
                     _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
                     print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
-                    print ( f"type1: ({type(_zstd_article_text)}) / type2: {(_zstd_article_text).decode('utf-8')}" )
+                    print ( f"type1: ({type(_zstd_article_text)}" )
                     decompressor = zstd.ZstdDecompressor()
                     zstd_blob_uncompressed = decompressor.decompress(_zstd_article_text).decode('utf-8')
                     #= zstd.ZstdDecompressor().decompress(_zstd_article_text).decode('utf-8')
@@ -232,7 +227,7 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit=None):
                 except KeyError:
                     print ( f"LMDB entry has no ZSTD compressed article entry." )
                     total += 1
-                except sys.exception as e:
+                except exception as e:
                     print ( f"Error decompressing ZSTD article blob: {e}" )
                     total += 1
 
@@ -271,33 +266,25 @@ if args['bool_basic'] is True:
 elif args.get('bool_articles'): 
     _filter = None
     articles_list = args['bool_articles']
-    
     try:
         _ticker_symbol = articles_list[0]
-        print(f"###-Debug-277: ticker symbol: {_ticker_symbol}")
-
         match _ticker_symbol:
-            # Matches if the first element is specifically None
             case None:
                 print("No ticker symbol filter provided.")
                 parser.print_help()
                 sys.exit(3)
-            
             # Matches if the first element is a string
             case str(symbol):
                 _filter = symbol.upper()
                 print(f"Dumping article TEXT for all {_filter} entries...")
-                
                 # Check length before accessing index 1 to avoid another IndexError
                 if len(articles_list) > 1 and articles_list[1] is not None:
                     article_limit = int(articles_list[1])
                     dump_lmdb_articles(lmdb_inst, _filter, article_limit)
                 else:
                     dump_lmdb_articles(lmdb_inst, _filter, 0)
-                
-                lmdb_inst.close_lmdb("ARTICLES_DUMP")
-                sys.exit(0)
-
+                    lmdb_inst.close_lmdb("ARTICLES_DUMP")
+                    sys.exit(0)
             case _:
                 print(f"Bad parameters: {articles_list}")
                 parser.print_help()
