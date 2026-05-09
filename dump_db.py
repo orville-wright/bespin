@@ -184,7 +184,7 @@ def dump_lmdb_basic(lmdb_instance):
 # -a or --article
 # parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
 
-def dump_lmdb_articles(lmdb_instance, ticker_filter=None, article_limit):
+def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
     try:
         with lmdb_instance.RO_env.begin() as txn:
             cursor = txn.cursor()
