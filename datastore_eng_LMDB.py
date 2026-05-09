@@ -59,7 +59,7 @@ class lmdb_io_eng:
         try:
             self.RO_env = lmdb.open(db_inst, readonly=True)     # map_size: Maximum size DB = 1GB
             logging.info( f'%s    - Successfully opened KVstore - READ-ONLY mode' % cmi_debug )
-            logging.info( f'%s    - {type(self.RO_env)} {self.RO_env} remains globally open!' % cmi_debug )
+            logging.info( f'%s    - LMDB {self.RO_env} remains globally open!' % cmi_debug )
             self.db_open_state[self.db_name] = self.RO_env      # {LMBD_0001: <class env> }
             return self.RO_env
         except lmdb.Error as e:
