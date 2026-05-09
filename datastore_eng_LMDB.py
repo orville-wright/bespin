@@ -118,7 +118,7 @@ class lmdb_io_eng:
             return 0
 
 ################# 4
-    def drop_lmdb_RW(self, yti, db_instance):
+    def drop_lmdb_RW(self, yti):
         cmi_debug = __name__+"::"+self.drop_lmdb_RW.__name__+".#"+str(self.yti)
         logging.info( f'%s   - drop_lmdb_RW.#{self.yti} LMDB: {self.db_name} Instance: {self.lmdb_env}' % cmi_debug )
         db_inst = self.db_path+self.db_name
