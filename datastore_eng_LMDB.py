@@ -120,17 +120,18 @@ class lmdb_io_eng:
 ################# 4
     def drop_lmdb_RW(self, yti, db_instance):
         cmi_debug = __name__+"::"+self.drop_lmdb_RW.__name__+".#"+str(self.yti)
-        logging.info( f'%s   - drop_lmdb_RW.#{self.yti} Instance: {self.db_name}' % cmi_debug )
+        logging.info( f'%s   - drop_lmdb_RW.#{self.yti} LMDB: {self.db_name} Instance: {self.lmdb_env}' % cmi_debug )
         db_inst = self.db_path+self.db_name
+        #db_instance.RW_env.close_lmdb(yti)
+        self.lmdb_env.close_lmdb(yti)       # forcefull close RO and RW opened LMDB using global DB env (state agnostic)
         try:
-            db_instance.RW_env.close_lmdb(yti)
-            db_inst = self.db_path + self.db_name
             self.RW_env = lmdb.open(db_inst, max_dbs=0)     # max_dbs=0 for default DB only
             self.db_open_state[self.db_name] = self.RW_env
             _db0 = self.RW_env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
             with self.RW_env.begin(write=True) as txn:
                 txn.drop(_db0, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
-            db_instance.close()
+            #db_instance.close()
+            self.RW_env.close_lmdb(yti)
             self.db_open_state[self.db_name] = None
             logging.info( f'%s - DROPPED default database - READ-WRITE mode.#{self.yti} {self.db_name}' % cmi_debug )
             return 1

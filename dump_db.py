@@ -244,7 +244,11 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
 lmdb_dbname = "LMDB_0001"
 lmdb_inst = lmdb_io_eng("RO_DUMP", lmdb_dbname, args)
 lmdb_inst.open_lmdb_RO("RO_DUMP")
-
+# Instance attributes
+# db_open_state = {}  #
+# lmdb_env = {}       # LMDB global instance, opened @ main::newsai_sent
+# RO_env = {}         # LMDB environment instance for RO mode
+# RW_env = {}         # LMDB environment instance for RW mode
 
 # ################################## main()
 # differnt ways to dump the LMDB...
@@ -330,8 +334,10 @@ elif args['bool_xray'] is True:
 elif args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
     lmdb_dbname = "LMDB_0001"
-    lmdb_inst.RO_env.close() 
-    lmdb_inst.open_lmdb_RW("INTI_DUMP")
+    lmdb_inst.lmdb_env.drop_lmdb_RW("INIT_DUMP")
+    #lmdb_inst.RO_env.close() 
+    lmdb_inst.lmdb_env.open_lmdb_RW("INTI_DUMP")
+    # I should be able to call .drop_lmdb_RW()
     with lmdb_inst.RW_env.begin(write=True) as txn:
         _db_handle = lmdb_inst.RW_env.open_db(name=lmdb_dbname.encode())
         txn.drop(_db_handle, delete=False)
