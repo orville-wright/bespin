@@ -205,7 +205,7 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                 db_id, ticker_symbol, url_hash = parts
                 if ticker_symbol.upper() != ticker_filter:
                     total += 1
-                    print ( f"Skipping: {ticker_symbol} mismtach for filter: {ticker_filter} !")
+                    #print ( f"Skipping: {ticker_symbol} mismtach for filter: {ticker_filter} !")
                     continue
                 else:
                     _v_dict = json.loads(value.decode('utf-8'))
