@@ -273,8 +273,8 @@ elif args['bool_articles'] is not False:
     _xxx = None
     print ( f"###-Debug-274: HERE !!" )
     try:
-        _ticker_symbol = args['bool_articles'][0]
-        _xxx = 1
+        _ticker_symbol = args['bool_articles'][1]
+        print ( f"###-Debug-274: ticker symbol: {_ticker_symbol}" )
         match _ticker_symbol:
             case 0 if _ticker_symbol is None:
                 print( f"debug: {_xxx} - No ticker symbol filter provided for article dump." )
