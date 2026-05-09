@@ -127,12 +127,12 @@ class lmdb_io_eng:
         try:
             self.RW_env = lmdb.open(db_inst, map_size=1024*1024*1024, max_dbs=0, readonly=False)  # max_dbs=0 for default DB only
             # self.RW_env = lmdb.open(db_inst, map_size=1024*1024*1024, readonly=False)     # map_size: Maximum size DB = 1GB 
-            logging.info( f'%s   - Caller #{_yti} {self.db_name} Opened Inst as RW: {self.RW_env}' % cmi_debug )
+            logging.info( f'%s   - Caller #{_yti} {self.db_name} Opened in RW mode: {self.RW_env}' % cmi_debug )
             self.db_open_state[self.db_name] = self.RW_env
-            #_db0 = self.RW_env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
+            _db0 = self.RW_env.open_db(key=None)            # default DB addressed by key=None, returns handle of default DB
             with self.RW_env.begin(write=True) as txn:
-                txn.drop(self.RW_env, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
-                logging.info( f'%s - DROPPED default database - RW mode.#{_yti} {self.db_name}' % cmi_debug )
+                txn.drop(_db0, delete=False)            # delete all keys in db0, do not delete db0 virtual named DB)
+                logging.info( f'%s - DROPPED default LMDB {type(_db0)} - RW mode.#{_yti} {self.db_name}' % cmi_debug )
             self.RW_env.close_lmdb(_yti)
             self.db_open_state[self.db_name] = None
             return 1
