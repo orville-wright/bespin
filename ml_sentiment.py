@@ -759,7 +759,7 @@ class ml_sentiment:
             return b64_compressed_C4_blob
         elif _extractor == 1:    # BS4
             logging.info( f"%s - BS4 ZSTD text compressor engine..." % cmi_debug )
-            _blocklets = ["ARTICLE_STARTS_HERE:"]
+            _blocklets = [" "]
             _blocklets.extend([item.text for item in scentxt])  # low mem usage, fast list comprehension
             #
             # INFO:

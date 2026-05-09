@@ -25,11 +25,11 @@ args = {}
 parser = argparse.ArgumentParser(prog="Aop", description="LMBD Maintence tool")
 parser.add_argument('-a','--articles', help='Dump all article data for a specific ticker', nargs="*", dest='bool_articles', required=False, default=False)
 parser.add_argument('-b','--basic', help='Simple view into all LMBD KV entries', action='store_true', dest='bool_basic', required=False, default=False)
-parser.add_argument('-d','--deep', help='Deep data dump of values. Required a key', action='store_true', dest='bool_deep', required=False, default=False)
+parser.add_argument('-d','--deep', help='Deep dump of values. Requires -k|--key TICKER or URLHASH', action='store_true', dest='bool_deep', required=False, default=False)
 parser.add_argument('-i','--init', help='Create new emplt KV db', action='store_true', dest='bool_init', required=False, default=False)
-parser.add_argument('-k','--key', help='filter output by KEY sub-string', action='store', dest='key_filter', required=False, default=None)
+parser.add_argument('-k','--key', help='Filter output by KEY sub-string', action='store', dest='key_filter', required=False, default=None)
 parser.add_argument('-v','--verbose', help='Verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
-parser.add_argument('-x','--xray', help='Deep XRAY of LBDM', action='store_true', dest='bool_xray', required=False, default=False)
+parser.add_argument('-x','--xray', help='Deep full record XRAY. Requires -k|--key TICKER or URLHASH', action='store_true', dest='bool_xray', required=False, default=False)
 
 
 args = vars(parser.parse_args())        # args as a dict []
@@ -193,7 +193,7 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                 article_limit = int(0)  # No limit if not specified
 
             total = int(0)
-            matches = int(0)
+            matches = int(1)
             for key, value in cursor:
                 key_str = key.decode('utf-8')
                 total += 1
@@ -306,6 +306,9 @@ elif args.get('bool_articles'):
 
 # -d or --deep
 # requries a key filter -k or --key
+# key can be symbol ticker or urlhash
+# - if ticker symbol, it will recursively print all records for that symbol
+# - if urlhash, it will explicitly match just that urlhash (which are mostly 99% unique)
 elif args['bool_deep'] is True:
     if args['key_filter'] is not None:
         print( f"Full dump filtered by key: {args['key_filter']}")
@@ -337,14 +340,6 @@ elif args['bool_init'] is True:
     # god damn it... close it first !!!
     lmdb_inst.close_lmdb("INIT_CLOSE") 
     lmdb_inst.drop_lmdb_RW("INIT_DROP")
-    #lmdb_inst.open_lmdb_RW("INTI_DUMP")
-    """
-    # I should be able to call .drop_lmdb_RW()
-    with lmdb_inst.begin(write=True) as txn:
-        _db_handle = lmdb_inst.open_db(name=lmdb_dbname.encode())
-        txn.drop(_db_handle, delete=False)
-    lmdb_inst.RW_env.close()
-    """
 else:
     print ( f"ERROR: No valid dump option selected. Please choose one of the following:" )
     parser.print_help()
