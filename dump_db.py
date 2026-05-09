@@ -330,6 +330,8 @@ elif args['bool_xray'] is True:
 elif args['bool_init'] is True:
     print ( "Initializing New Empty LMDB KV Database..." )
     lmdb_dbname = "LMDB_0001"
+    lmdb_inst.close() 
+    """    
     lmdb_inst.close_lmdb("RO_DUMP")
     lmdb_inst.close_lmdb("RO_DUMP")
     lmdb_inst.close_lmdb("RO_DUMP")
@@ -340,6 +342,7 @@ elif args['bool_init'] is True:
     lmdb_inst.open_lmdb_RW("INTI_DUMP")
     lmdb_inst.drop_lmdb_RW(2, lmdb_inst)
     lmdb_inst.close()
+    """
 else:
     print ( f"ERROR: No valid dump option selected. Please choose one of the following:" )
     parser.print_help()
