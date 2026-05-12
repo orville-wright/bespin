@@ -71,9 +71,9 @@ parser = argparse.ArgumentParser(prog="Aop", description="Entropy apperture engi
 parser.add_argument('-a','--allnews', help='ML/NLP News sentiment AI for all stocks', action='store_true', dest='bool_news', required=False, default=False)
 #
 #parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', action='store', dest='newsai_sent', required=False, default=False)
+parser.add_argument('-c','--news-cycle', help='Full news cycle sentiment for evey data engine', action='store_true', dest='news_cycle', required=False, default=False)
 parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment for 1 stock [ticker] [num-of-articles]', nargs="*", dest='newsai_sent', required=False, default=False)
 #
-parser.add_argument('--news-cycle', help='Full news cycle extarct from eveny data engine', action='store_true', dest='news_cycle', required=False, default=False)
 parser.add_argument('-p','--perf', help='Tech event performance sentiment', action='store_true', dest='bool_te', required=False, default=False)
 parser.add_argument('-q','--quote', help='Get ticker price action quote', action='store', dest='qsymbol', required=False, default=False)
 parser.add_argument('-s','--screen', help='Small cap screener logic', action='store_true', dest='bool_scr', required=False, default=False)
