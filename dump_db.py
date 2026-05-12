@@ -22,14 +22,14 @@ logging.basicConfig(level=logging.INFO)
 global args
 args = {}
 
-parser = argparse.ArgumentParser(prog="Aop", description="LMBD Maintence tool")
-parser.add_argument('-a','--articles', help='Dump all article data for a specific ticker', nargs="*", dest='bool_articles', required=False, default=False)
-parser.add_argument('-b','--basic', help='Simple view into all LMBD KV entries', action='store_true', dest='bool_basic', required=False, default=False)
-parser.add_argument('-d','--deep', help='Deep dump of values. Requires -k|--key TICKER or URLHASH', action='store_true', dest='bool_deep', required=False, default=False)
-parser.add_argument('-i','--init', help='Create new emplt KV db', action='store_true', dest='bool_init', required=False, default=False)
+parser = argparse.ArgumentParser(prog="dump_db", description="LMBD Data Mgmt tool")
+parser.add_argument('-a','--articles', help='Dump article text for a ticker. [symbol, count num|0]', nargs="*", dest='bool_articles', required=False, default=False)
+parser.add_argument('-b','--basic', help='Simple 1-line view of all LMBD KV entries', action='store_true', dest='bool_basic', required=False, default=False)
+parser.add_argument('-d','--deep', help='Deep dump of values. Requires -k|--key TICKER/URLHASH', action='store_true', dest='bool_deep', required=False, default=False)
+parser.add_argument('-i','--init', help='Reset empty KV db of all data', action='store_true', dest='bool_init', required=False, default=False)
 parser.add_argument('-k','--key', help='Filter output by KEY sub-string', action='store', dest='key_filter', required=False, default=None)
 parser.add_argument('-v','--verbose', help='Verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
-parser.add_argument('-x','--xray', help='Deep full record XRAY. Requires -k|--key TICKER or URLHASH', action='store_true', dest='bool_xray', required=False, default=False)
+parser.add_argument('-x','--xray', help='Full dict record XRAY. Requires -k|--key TICKER/URLHASH', action='store_true', dest='bool_xray', required=False, default=False)
 
 
 args = vars(parser.parse_args())        # args as a dict []
