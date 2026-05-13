@@ -290,8 +290,8 @@ class lmdb_io_eng:
                         #sent_fn = _final_results["negative_count"]
 
                         #print (f"JSON: {_final_results}")
-                        print ( f"Total tokenz:  {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
-                        print (f"Deep KV Cache: [ HIT.#0 / Deep cache hit ! Rehydrated from KVstore... ] {item_idx}" )
+                        print ( f"Artc metrics:  Tokens: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
+                        ##-debug print (f"Deep KV Cache: [ HIT.#0 / Deep cache hit ! Rehydrated from KVstore... ] {item_idx}" )
 
                         return 0, _total_tokens, _total_words, self.sen_data, _final_results
                         #
