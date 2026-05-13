@@ -915,7 +915,7 @@ class yfnews_reader:
                 #print (f"##-@817: sen_stats_df:\n{self.sen_stats_df}" )
                 #print (f"##-@818: _fr:\n{_fr}" )
                 logging.info( f'%s - C4 Rehydrated sentiment metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
-                print (f"================================ C4 End.#0 Deep Cache HIT ! / Rehydrated AI Metrics: {item_idx} ================================" )
+                print ( f"================ C4 End.#0 KV Cache HIT ! / Rehydrated AI Metrics: {item_idx} ================" )
                 return _ttk, _ttw, _fr                        
             case 1:  # C4 KVstore cache miss
                 logging.info( f'%s - C4 KVstore ERROR.#1 Deserialization failure !force Net read...' % cmi_debug )
