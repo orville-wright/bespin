@@ -374,7 +374,7 @@ class yfnews_reader:
     def eval_news_feed_stories(self, symbol):
         """
         Depth : 1
-        Scanning list of news feed stories skimmed from Depth 0
+        Scanning list of news feed stories after intiial skim from Depth 0
         - and collect some metadata (@ depth 1)
         - data is from Crawl4ai
         - Extract data elements from crawl4ai top level skimmed info indexing @ self.extracted_articles
@@ -429,14 +429,14 @@ class yfnews_reader:
                 uhint, uhdescr = self.yfn_uh.uhinter(hcycle, self.article_url)
                 logging.info(f'%s - Source url [{self.a_urlp.netloc}] / u:{uhint} / {uhdescr}' % cmi_debug)
                 if uhint == 0: thint = 0.0      # real news / local page
-                elif uhint == 1: thint = 1.0    # fake news / remote-stub @ YFN stub
+                elif uhint == 1: thint = 1.0    # fake news / local stub -> remote-stub @ YFN stub
                 elif uhint == 2: thint = 4.0    # video
                 elif uhint == 3: thint = 1.1    # remote article
                 elif uhint == 4: thint = 7.0    # research report
                 elif uhint == 5: thint = 6.0    # bulk yahoo premium service
                 else: thint = 9.9               # unknown
                 
-                inf_type = self.yfn_uh.confidence_lvl(thint)    # list[] from global URLhonter instance
+                inf_type = self.yfn_uh.confidence_lvl(thint)    # list[] from global URLhinter instance
                 ml_atype = uhint
                 
                 
@@ -480,7 +480,7 @@ class yfnews_reader:
                     continue  # Skip to next article if duplicate URL hash found
             else:
                 logging.info(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
-                print(f"Missing URL: data unusable No URL found / Skipping... {aurl_hash[:30]}...")
+                print(f"Missing URL:   data unusable No URL found / Skipping... {aurl_hash[:30]}...")
                 bad_url_count += 1
 
         return 0, bad_url_count

@@ -149,7 +149,7 @@ class url_hinter:
                 9.0: ('Unknown thint 9.0', 9),
                 9.9: ('Unknown page structure', 9),
                 10.0: ('ERROR unknown state', 9),
-                99.9: ('Default NO-YET-SET', 9),
+                99.9: ('Default NOT-YET-SET', 9),
                 }
         logging.info ( f"%s    - Inferr localty hint: [{thint}]" % cmi_debug )
         thint_descr = tcode.get(thint)    # tuple : page type description / locality code 0=local/1=remote
