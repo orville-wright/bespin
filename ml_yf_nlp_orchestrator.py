@@ -127,10 +127,10 @@ class ml_nlpreader:
             inf_type = self.yfn_uh.confidence_lvl(thint)
             print(f"Article type:  [ +{uhint} ] / {sn_row['url']}")
             ##-debug print(f"Origin URL:    [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
-            print(f"{locality_code.get(inf_type[1])}")
+            ##-debug print(f"{locality_code.get(inf_type[1])}")
             uhint, uhdescr = self.yfn_uh.uhinter(10, p_r_xturl)
             ##-debug print(f"Target URL:    [ {p_r_xturl.netloc} ] / {uhdescr} / ", end="")
-            print(f"{locality_code.get(uhint)} [ u:{uhint} ]")
+            ##-debug print(f"{locality_code.get(uhint)} [ u:{uhint} ]")
             return thint
         
         # ################# 1: Fake news article - Micro-ad
@@ -149,11 +149,11 @@ class ml_nlpreader:
                 p_r_xturl = urlparse(r_xturl)
                 inf_type = self.yfn_uh.confidence_lvl(thint)
                 print(f"Article type:  [ +{uhint} ] / {sn_row['url']}")
-                print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / {uhdescr} /", end="")
-                print(f"{locality_code.get(inf_type[1], 'in flux')}")
+                ##-debug print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / {uhdescr} /", end="")
+                ##-debug print(f"{locality_code.get(inf_type[1], 'in flux')}")
                 uhint, uhdescr = self.yfn_uh.uhinter(111, p_r_xturl)
-                print(f"Hints:         {uhdescr} / ", end="")
-                print(f"{locality_code.get(uhint, 'in flux')} [ u:{uhint} ]")
+                ##-debug print(f"Hints:         {uhdescr} / ", end="")
+                ##-debug print(f"{locality_code.get(uhint, 'in flux')} [ u:{uhint} ]")
                 logging.info(f"%s - skipping..." % cmi_debug)
                 return thint
             except Exception as e:
@@ -168,9 +168,9 @@ class ml_nlpreader:
             inf_type = self.yfn_uh.confidence_lvl(thint)
             uhint, uhdescr = self.yfn_uh.uhinter(12, t_url)
             print(f"Article type:  [ +{uhint} ] / Video stream cannot be processed by AI model")
-            print(f"URL:           {sn_row['url']}")
-            print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
-            print(f"{locality_code.get(inf_type[1], 'in flux')}")
+            ##-debug print(f"URL:           {sn_row['url']}")
+            ##-debug print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
+            ##-debug print(f"{locality_code.get(inf_type[1], 'in flux')}")
             logging.info(f"%s - skipping..." % cmi_debug)
             return thint
         
@@ -182,9 +182,9 @@ class ml_nlpreader:
             inf_type = self.yfn_uh.confidence_lvl(thint)
             uhint, uhdescr = self.yfn_uh.uhinter(13, t_url)
             print(f"Article type:  [ +{uhint} ] / Unreliable external article data")
-            print(f"URL:           {sn_row['url']}")
-            print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
-            print(f"{locality_code.get(inf_type[1], 'in flux')}")
+            ##-debug print(f"URL:           {sn_row['url']}")
+            ##-debug print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
+            ##-debug print(f"{locality_code.get(inf_type[1], 'in flux')}")
             logging.info(f"%s - skipping..." % cmi_debug)
             return thint
 
