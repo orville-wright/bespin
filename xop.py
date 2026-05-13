@@ -93,7 +93,7 @@ def main():
     print ( " " )
     print ( "#################### I n i t a l i z i n g ####################" )
     print ( " " )
-    print ( "CMDLine args:", parser.parse_args() )
+    #print ( "CMDLine args:", parser.parse_args() )
     if args['bool_verbose'] is True:        # Logging level
         print ( "Enabeling verbose info logging..." )
         logging.disable(0)                  # Log level = OFF
@@ -345,11 +345,11 @@ def main():
                     if ai_nlp_cycle < arg_cycle:        # only counting real articles, not junk, fake, adds etc
                         pass
                     else:
-                        print (f"Exiting AI NLP cycle @ article: {ai_nlp_cycle}...")
+                        ##-debug print (f"Exiting AI NLP cycle @ article: {ai_nlp_cycle}...")
                         break                    
                 else:
                     print (f"Skipping:      [ UNREADABLE / Article not valid for AI NLP Sentiment analysis] {ai_nlp_cycle}")
-                    print (f"================================ End.0 Skipping / No action taken ! {ai_nlp_cycle} ================================" )
+                    print (f"================ End.0 Skipping / No action taken ! {ai_nlp_cycle} ================" )
 
             ################################################################
             # END  AI AI NLP article processing data scraping loop

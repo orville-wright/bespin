@@ -126,10 +126,10 @@ class ml_nlpreader:
             p_r_xturl = urlparse(r_xturl)
             inf_type = self.yfn_uh.confidence_lvl(thint)
             print(f"Article type:  [ +{uhint} ] / {sn_row['url']}")
-            print(f"Origin URL:    [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
+            ##-debug print(f"Origin URL:    [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
             print(f"{locality_code.get(inf_type[1])}")
             uhint, uhdescr = self.yfn_uh.uhinter(10, p_r_xturl)
-            print(f"Target URL:    [ {p_r_xturl.netloc} ] / {uhdescr} / ", end="")
+            ##-debug print(f"Target URL:    [ {p_r_xturl.netloc} ] / {uhdescr} / ", end="")
             print(f"{locality_code.get(uhint)} [ u:{uhint} ]")
             return thint
         

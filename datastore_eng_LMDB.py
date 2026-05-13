@@ -300,7 +300,7 @@ class lmdb_io_eng:
                         # note: # "with context mgr" -> auto forces close of LMDB RO transaction
             else:
                 logging.info( f'%s - Deep Cache MISS : Key not found !' % cmi_debug )
-                print (f"KV Cache.#3:   [ Cache MISS.#3 / No LMDB entry ! Forcing article read via net... ] {item_idx}" )
+                ##-debug print (f"KV Cache.#3:   [ Cache MISS.#3 / No LMDB entry ! Forcing article read via net... ] {item_idx}" )
                 return 3, 0, 0, None, None
                 # note: # "with context mgr" -> auto forces close of LMDB RO transaction
 

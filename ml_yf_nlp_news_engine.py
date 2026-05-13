@@ -608,7 +608,7 @@ class yfnews_reader:
                 #print (f"##-debug-561: sen_stats_df:\n{self.sen_stats_df}" )
                 #print (f"##-debug-562: _fr:\n{_fr}" )
                 logging.info( f'%s - BS4 Rehydrated sentiment metrics from KV cache: {self.sent_ai.sentiment_count}' % cmi_debug )
-                print (f"================================ BS4 End.#0 Deep Cache HIT ! / Rehydrated AI Metrics: {item_idx} ================================" )
+                print ( f"================ BS4 End.#0 KV Cache HIT ! / Rehydrated AI Metrics: {item_idx} ================" )
                 return _ttk, _ttw, _fr                        
             case 1:  # BS4 KVstore cache miss
                 logging.info( f'%s - BS4 KVstore ERROR.#1 Deserialization failure !force Net read...' % cmi_debug )
@@ -659,7 +659,7 @@ class yfnews_reader:
                         case 1:  # BS4 KVstore cache hit
                             logging.info( f'%s - FAILED to read article / ERROR code: {xhash}' % cmi_debug )
                             logging.info( f'%s - BS4 prep simple Net get() due to KV cache miss : {self.sent_ai.sentiment_count}' % cmi_debug )
-                            print (f"================================ BS4 Net req() FAILURE / Cannot read article URL: {item_idx} ================================" )
+                            print (f"================ BS4 Net read FAILURE / Cannot read article URL: {item_idx} ================" )
                             return 0, 0, None                  
                         case 0:  # BS4 KVstore cache miss
                             logging.info( f'%s - BS4 prep simple Net get() success ! continue forcing Net read...' % cmi_debug )
@@ -729,7 +729,7 @@ class yfnews_reader:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
         except AttributeError as _ae:
             logging.info( f'%s - BS4 Error FAILED to find_all TEXT <p_tags>: {_ae}"...' % cmi_debug )
-            print (f"================================ BS4 End.#9 Net Read / KV Cache miss ! BS4 FAILURE ! {item_idx} ================================" )
+            print ( f"================ BS4 End.#9 KV Cache miss ! Reading article over net: {item_idx} ================" )
             return 0, 0, None   # This is likely a YF Advertising redirect to non-Yahoo webpage
         else:
             pass
@@ -827,14 +827,14 @@ class yfnews_reader:
             'bs4_rows': bs4_p_tag_count
         })
 
-        footer = (f"Total tokenz: {self.total_tokens} / "
+        footer = (f"Total tokenz:  {self.total_tokens} / "
                   f"Words: {self.total_words} / "
                   f"Chars: {_total_chars} / "
                   f"Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / "
                   f"BS4 ptags: {bs4_p_tag_count}"
                 )
-        print (f"{footer}")
-        print (f"================================ BS4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
+        print ( f"{footer}")
+        print ( f"================ BS4 End.#2 / KV Cache miss ! New cache entry created: {item_idx} ================" )
         #print (f"debug-833: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         self.BS4_lmdb_env.close_lmdb("BS4")
         #print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
@@ -1177,10 +1177,10 @@ class yfnews_reader:
                             footer = (f"Total tokenz: {self.total_tokens} / "
                                     f"Words: {self.total_words} / "
                                     f"Chars: {_total_chars} / "
-                                    f"Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n} / "
+                                    f"Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}"
                                     )
                             print (f"{footer}")
-                            print (f"================================ C4 End.#2 Net Read / KV Cache miss ! KV created: {item_idx} ================================" )
+                            print (f"================ C4 End.#2 / KV Cache miss ! New cache entry created: {item_idx} ================" )
 
                             #print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             self.C4_lmdb_env.close_lmdb("C4")
