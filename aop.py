@@ -32,7 +32,7 @@ from y_topgainers import y_topgainers
 from datastore_eng_LMDB import lmdb_io_eng
 
 from data_engines_fundamentals.alphavantage_md import alphavantage_md
-from db_graph import db_graph
+from neo4j_graphdb import neo4j_auradb
 from data_engines_fundamentals.fred_md import fred_md
 from data_engines_fundamentals.eodhistoricaldata_md import eodhistoricaldata_md
 from data_engines_fundamentals.financialmodelingprep_md import financialmodelingprep_md
@@ -434,9 +434,6 @@ def main():
             
             logging.info(f'%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
-            
-            # kgraphdb = db_graph(1, args)                # inst a class 
-            # kgraphdb.con_aopkgdb(1)                     # connect to neo4j db
 
             _atc = 0     # article specific stats : tokenz count
             _acc = 0     # article specific stats : chars count
@@ -636,10 +633,11 @@ def main():
             if skip_kg_build is True:
                 pass
             else:
+                # kgraphdb = neo4j_auradb(1, args)            # create an inst of an Neo4j AURA Knowledge Graph DB
+                # kgraphdb.con_neo4j_auradb(1)                # connect to our free Neo4j AURA DB 
                 try:
-                    found_sym = kgraphdb.check_node_exists(1, news_symbol)
-                except TypeError:
-                    # Type:class 'NoneType' is discovered here...
+                    found_sym = kgraphdb.check_node_exists(1, news_symbol)  # test if this stock ticker exists in the Graph
+                except TypeError:                             # Type:class 'NoneType' is discovered here...
                     kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
                     print ( f"Error: Symbol node does NOT exist - creating ! fst:{type(kg_node_id)} / fs:{kg_node_id}" )
                     #kg_node_id = kgraphdb.create_sym_node(news_symbol)
@@ -680,7 +678,7 @@ def main():
                             print (f"Weird return code during GraphDB node exist check!" )  
                             print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
                             res = kgraphdb.dump_symbols(1)
-                            kgraphdb.close_aopkgdb(1, kgraphdb.driver)
+                            kgraphdb.close_neo4j_auradb(1, kgraphdb.driver)
 
 
 #################################################################################

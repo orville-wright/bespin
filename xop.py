@@ -32,7 +32,7 @@ from y_topgainers import y_topgainers
 from datastore_eng_LMDB import lmdb_io_eng
 
 from data_engines_fundamentals.alphavantage_md import alphavantage_md
-from db_graph import db_graph
+from neo4j_graphdb import neo4j_auradb
 from data_engines_fundamentals.fred_md import fred_md
 from data_engines_fundamentals.eodhistoricaldata_md import eodhistoricaldata_md
 from data_engines_fundamentals.financialmodelingprep_md import financialmodelingprep_md
@@ -476,7 +476,7 @@ def main():
                             print (f"Weird return code during GraphDB node exist check!" )  
                             print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
                             res = kgraphdb.dump_symbols(1)
-                            kgraphdb.close_aopkgdb(1, kgraphdb.driver)
+                            kgraphdb.close_neo4j_kgdb(1, kgraphdb.driver)
 
 
 #################################################################################

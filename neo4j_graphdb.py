@@ -13,19 +13,19 @@ from neo4j import GraphDatabase, RoutingControl
 
 
 # ML / NLP section ################### 0 ##########################################
-class db_graph:
+class neo4j_auradb:
     """
     Class to Graph Database operations
     """
 
     # global accessors
-    URI = None
-    AUTH = None
+    URI = None           # neo4j AURA free instance connection URL (laoded from .env)
+    AUTH = None          # neo4j AURA free instance auth credential (loaded from .env)
     args = []            # class dict to hold global args being passed in from main() methods
     driver = None        # driver instance
     yfn = None           # Yahoo Finance News reader instance
-    graph_df0 = None
-    yti = 0
+    graph_df0 = None     # Pandas Data Frame
+    yti = None           # unique instance identifier
     cycle = 0            # class thread loop counter
 
     def __init__(self, yti, global_args):
@@ -51,26 +51,27 @@ class db_graph:
 
 ##################################### 1 ####################################
 
-    def con_aopkgdb(self, yti):
+    def con_neo4j_auradb(self, _yti):
         """
-        Connect to the Neo4j KnowledgeGraph DB
+        Connect to the Neo4j AURA KnowledgeGraph DB (Free limited web service)
         """
-        self.yti = yti
-        cmi_debug = __name__+"::"+self.con_aopkgdb.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.con_neo4j_auradb.__name__+".#"+str(_yti)
         logging.info('%s - IN' % cmi_debug )
         # URI examples: "neo4j://localhost", "neo4j+s://xxx.databases.neo4j.io"
         with GraphDatabase.driver(self.URI, auth=self.AUTH) as driver:
             driver.verify_connectivity()
-            logging.info( f'%s - Neo4j KG driver connection.#{yti} established... ' % cmi_debug )
+            logging.info( f'%s - Neo4j AURA DB driver connection.#{_yti} established... ' % cmi_debug )
             self.driver = driver
             return driver
 
 ##################################### 2 ####################################
 
-    def close_aopkgdb(self, yti, driver):
+    def close_neo4j_auradb(self, _yti, driver):
         """
-        Close our connection to the aopkgdb
+        Close our connection to the Neo4j AURA KnowledgeGraph DB (Free limited web service)
         """
+        cmi_debug = __name__+"::"+self.close_neo4j_auradb.__name__+".#"+str(_yti)
+        logging.info('%s - IN' % cmi_debug )
         driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
         session = self.driver.session(database="neo4j")
         session.close()
