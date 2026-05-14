@@ -56,13 +56,17 @@ class neo4j_auradb:
         Connect to the Neo4j AURA KnowledgeGraph DB (Free limited web service)
         """
         cmi_debug = __name__+"::"+self.con_neo4j_auradb.__name__+".#"+str(_yti)
-        logging.info('%s - IN' % cmi_debug )
+        logging.info( f"%s - IN instance: {self.instance}" % cmi_debug )
         # URI examples: "neo4j://localhost", "neo4j+s://xxx.databases.neo4j.io"
         with GraphDatabase.driver(self.URI, auth=self.AUTH) as driver:
-            driver.verify_connectivity()
-            logging.info( f'%s - Neo4j AURA DB driver connection.#{_yti} established... ' % cmi_debug )
-            self.driver = driver
-            return driver
+            try:
+                driver.verify_connectivity()
+                logging.info( f'%s - Neo4j AURA DB driver connection.#{_yti} established... ' % cmi_debug )
+                self.driver = driver
+                return driver
+            except Exception as e:
+                print (f"Neo4j AURA DB connection failed: {e}")
+                return None
 
 ##################################### 2 ####################################
 
