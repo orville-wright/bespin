@@ -3,7 +3,11 @@
     "allow": [
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(pip *)",
+      "Bash(python3 *)",
+      "Bash(python3 -m json.tool)",
+      "Bash(uv *)"
     ]
   }
 }
