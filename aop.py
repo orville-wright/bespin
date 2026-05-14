@@ -633,21 +633,10 @@ def main():
             if skip_kg_build is True:
                 pass
             else:
-                kgraphdb = neo4j_auradb("AOP_AURA", args)            # create an inst of an Neo4j AURA Knowledge Graph DB
-                kgraphdb.con_neo4j_auradb("AOP_AURA")                # connect to our free Neo4j AURA DB 
+                kgraphdb = neo4j_auradb(AOP_AURA, args)            # create an inst of an Neo4j AURA Knowledge Graph DB
+                kgraphdb.con_neo4j_auradb(AOP_AURA)                # connect to our free Neo4j AURA DB 
                 try:
-                    found_sym = kgraphdb.check_node_exists("AOP_AURA", news_symbol)  # test if this stock ticker exists in the Graph
-                except TypeError:                             # Type:class 'NoneType' is discovered here...
-                    kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
-                    print ( f"Error: Symbol node does NOT exist - creating ! fst:{type(kg_node_id)} / fs:{kg_node_id}" )
-                    #kg_node_id = kgraphdb.create_sym_node(news_symbol)
-                    # create a neo4j nodes Relationships, Properties and Types for each article thats associated with this symbol
-                    kgraphdb.create_article_nodes(df_final, news_symbol)
-                    kgraphdb.create_sym_art_rels(news_symbol, df_final,agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                    kgraphdb.news_agency()
-                    print ( f"Error: Created Article nodes, Relationships, New Agency also !" )
-                    created = True
-                else:
+                    found_sym = kgraphdb.check_node_exists(AOP_AURA, news_symbol)  # test if this stock ticker exists in the Graph
                     match found_sym:
                         # FIX: add unknown elments later (need to gather them from elsewhere first)
                         # Article must be created first, then related to their parent symbol node
@@ -679,6 +668,22 @@ def main():
                             print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
                             res = kgraphdb.dump_symbols(1)
                             kgraphdb.close_neo4j_auradb(1, kgraphdb.driver)
+                            
+                except TypeError:                             # Type:class 'NoneType' is discovered here...
+                    kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
+                    print ( f"Error: Symbol node does NOT exist - creating ! fst:{type(kg_node_id)} / fs:{kg_node_id}" )
+                    #kg_node_id = kgraphdb.create_sym_node(news_symbol)
+                    # create a neo4j nodes Relationships, Properties and Types for each article thats associated with this symbol
+                    kgraphdb.create_article_nodes(df_final, news_symbol)
+                    kgraphdb.create_sym_art_rels(news_symbol, df_final,agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                    kgraphdb.news_agency()
+                    print ( f"Error: Created Article nodes, Relationships, New Agency also !" )
+                    created = True
+                except Exception as e:
+                        print (f"Failed checking node entry: {e}")
+                        return False
+            
+
 
 
 #################################################################################

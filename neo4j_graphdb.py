@@ -181,14 +181,18 @@ class neo4j_auradb:
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(_yti)
         logging.info( f'%s - Check {self.driver} for existing Symbol [ {symbol} ]' % cmi_debug )
-
-        with self.driver.session() as session:
-            query = ("MATCH (s:Symbol {symbol: $symbol}) "
-                     "RETURN s.id IS NOT NULL AS present")
-
-            result = session.run(query, symbol=symbol)     # Result object
-            record = result.single()
-            return record
+        try:
+            with self.driver.session() as session:
+                query = """
+                        ("MATCH (s:Symbol {symbol: $symbol})
+                        "RETURN s.id IS NOT NULL AS present")
+                        """
+                result = session.run(query, symbol=symbol)     # Result object
+                record = result.single()
+                return record       # will return 'None' if nothing found
+        except Exception as e:
+            logging.error( f"%s - Exception checking node entity: {e}")
+            return False
 
 ##################################### 6 ####################################
 
