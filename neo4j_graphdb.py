@@ -62,7 +62,7 @@ class neo4j_auradb:
             try:
                 driver.verify_connectivity()
                 self.driver = driver
-                logging.info( f'%s - {self.driver} connection.#{_yti} verified !' % cmi_debug )
+                logging.info( f'%s - {self.driver} connection verified !' % cmi_debug )
                 return driver
             except Exception as e:
                 print (f"Neo4j AURA DB connection failed: {e}")
@@ -182,7 +182,7 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(_yti)
         logging.info( f'%s - Check {self.driver} for existing Symbol [ {symbol} ]' % cmi_debug )
 
-        with self.driver.session(database_="neo4j") as session:
+        with self.driver.session() as session:
             query = ("MATCH (s:Symbol {symbol: $symbol}) "
                      "RETURN s.id IS NOT NULL AS present")
 
