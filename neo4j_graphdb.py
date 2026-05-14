@@ -23,6 +23,7 @@ class neo4j_auradb:
     AUTH = None          # neo4j AURA free instance auth credential (loaded from .env)
     args = []            # class dict to hold global args being passed in from main() methods
     driver = None        # driver instance
+    instance = None      #  Neo4j databse instacne name : i.e. used in database="name"
     yfn = None           # Yahoo Finance News reader instance
     graph_df0 = None     # Pandas Data Frame
     yti = None           # unique instance identifier
@@ -44,10 +45,9 @@ class neo4j_auradb:
             self.URI = os.getenv("NEO4J_URI")
             USERNAME = os.getenv("NEO4J_USERNAME")
             PASSWORD = os.getenv("NEO4J_PASSWORD")
+            INSTANCE = os.getenv("NEO4J_DATABASE")
             self.AUTH = (USERNAME, PASSWORD)
-
-
-        return
+            self.instance = INSTANCE
 
 ##################################### 1 ####################################
 
@@ -73,7 +73,7 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.close_neo4j_auradb.__name__+".#"+str(_yti)
         logging.info('%s - IN' % cmi_debug )
         driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
-        session = self.driver.session(database="neo4j")
+        session = self.driver.session(database=self.instance)
         session.close()
         driver.close()
         return
@@ -90,7 +90,7 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.create_sym_node.__name__+".#"+str(self.yti)
         # logging.info( f'%s - Creating enhanced graph node for ticker symbol: [ {ticker_symbol} ]...' % cmi_debug )
 
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session(database=self.instance) as session:
             if sentiment_df is not None and not sentiment_df.empty:
                 # Extract sentiment data from first row
                 row = sentiment_df.iloc[0]
@@ -151,7 +151,7 @@ class neo4j_auradb:
         # n.data = {'s': {'symbol': 'pfe', 'id': '8df7d4f3-a74a-4a9d-930c-83191bdb88d5'}}
 
         print ( f"Node symbols in Graph...")
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session(database=self.instance) as session:
             query = ("MATCH ( s:Symbol ) "
                      "RETURN s")
             result = session.run(query)     # Result object
@@ -179,7 +179,7 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(self.yti)
         logging.info( f'%s - Check KG db for existing Symbol [ {symbol} ]' % cmi_debug )
 
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session(database=self.instance) as session:
             query = ("MATCH (s:Symbol {symbol: $symbol}) "
                      "RETURN s.id IS NOT NULL AS present")
 
@@ -204,7 +204,7 @@ class neo4j_auradb:
         created_nodes = []
         skipped_nodes = []
         
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session(database=self.instance) as session:
             for idx, row in df_final.iterrows():
                 # Skip the totals row
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
@@ -279,7 +279,7 @@ class neo4j_auradb:
         created_relationships = []
         skipped_relationships = []
         
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session(database=self.instance) as session:
             for idx, row in df_final.iterrows():
                 # Skip the totals row
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
@@ -364,7 +364,7 @@ class neo4j_auradb:
         skipped_relationships = []
         yahoo_node_created = False
         
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session(database=self.instance) as session:
             # Check if YahooFinance node already exists
             check_yahoo_query = "MATCH (y:YahooFinance) RETURN y.id AS existing_id LIMIT 1"
             check_result = session.run(check_yahoo_query)
