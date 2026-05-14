@@ -633,10 +633,10 @@ def main():
             if skip_kg_build is True:
                 pass
             else:
-                kgraphdb = neo4j_auradb(AOP_AURA, args)            # create an inst of an Neo4j AURA Knowledge Graph DB
-                kgraphdb.con_neo4j_auradb(AOP_AURA)                # connect to our free Neo4j AURA DB 
+                kgraphdb = neo4j_auradb("AOP_AURA", args)            # create an inst of an Neo4j AURA Knowledge Graph DB
+                kgraphdb.con_neo4j_auradb("AOP_AURA")                # connect to our free Neo4j AURA DB 
                 try:
-                    found_sym = kgraphdb.check_node_exists(AOP_AURA, news_symbol)  # test if this stock ticker exists in the Graph
+                    found_sym = kgraphdb.check_node_exists("AOP_AURA", news_symbol)  # test if this stock ticker exists in the Graph
                     match found_sym:
                         # FIX: add unknown elments later (need to gather them from elsewhere first)
                         # Article must be created first, then related to their parent symbol node
