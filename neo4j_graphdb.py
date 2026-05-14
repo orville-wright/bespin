@@ -182,7 +182,7 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(_yti)
         logging.info( f'%s - Check {self.driver} for existing Symbol [ {symbol} ]' % cmi_debug )
 
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session(database_="neo4j") as session:
             query = ("MATCH (s:Symbol {symbol: $symbol}) "
                      "RETURN s.id IS NOT NULL AS present")
 
