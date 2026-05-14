@@ -1,4 +1,4 @@
-self.instance#! python3
+#! python3
 from requests_html import HTMLSession
 import logging
 import argparse
