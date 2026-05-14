@@ -633,8 +633,8 @@ def main():
             if skip_kg_build is True:
                 pass
             else:
-                kgraphdb = neo4j_auradb(1, args)            # create an inst of an Neo4j AURA Knowledge Graph DB
-                kgraphdb.con_neo4j_auradb(1)                # connect to our free Neo4j AURA DB 
+                kgraphdb = neo4j_auradb("AOP_AURA", args)            # create an inst of an Neo4j AURA Knowledge Graph DB
+                kgraphdb.con_neo4j_auradb("AOP_AURA")                # connect to our free Neo4j AURA DB 
                 try:
                     found_sym = kgraphdb.check_node_exists(1, news_symbol)  # test if this stock ticker exists in the Graph
                 except TypeError:                             # Type:class 'NoneType' is discovered here...

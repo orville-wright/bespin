@@ -61,7 +61,7 @@ class neo4j_auradb:
         with GraphDatabase.driver(self.URI, auth=self.AUTH) as driver:
             try:
                 driver.verify_connectivity()
-                logging.info( f'%s - Neo4j AURA DB driver connection.#{_yti} established... ' % cmi_debug )
+                logging.info( f'%s - Neo4j AURA DB connection.#{_yti} {self.driver} established... ' % cmi_debug )
                 self.driver = driver
                 return driver
             except Exception as e:
