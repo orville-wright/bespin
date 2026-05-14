@@ -77,7 +77,7 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.close_neo4j_auradb.__name__+".#"+str(_yti)
         logging.info('%s - IN' % cmi_debug )
         driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
-        session = self.driver.session(database="neo4j"")
+        session = self.driver.session(database="neo4j")
         session.close()
         driver.close()
         return
