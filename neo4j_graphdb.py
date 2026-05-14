@@ -180,9 +180,9 @@ class neo4j_auradb:
         """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(_yti)
-        logging.info( f'%s - Check Neo4j Graph for existing Symbol [ {symbol} ]' % cmi_debug )
+        logging.info( f'%s - Check {self.driver.session} for existing Symbol [ {symbol} ]' % cmi_debug )
 
-        with self.driver.session(database_=self.instance) as session:
+        with self.driver.session(database=(str(self.instance))) as session:
             query = ("MATCH (s:Symbol {symbol: $symbol}) "
                      "RETURN s.id IS NOT NULL AS present")
 
