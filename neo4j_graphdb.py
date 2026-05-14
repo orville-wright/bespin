@@ -191,7 +191,7 @@ class neo4j_auradb:
                 record = result.single()
                 return record       # will return 'None' if nothing found
         except Exception as e:
-            logging.error( f"%s - Exception checking node entity: {e}")
+            logging.error( f"%s - Exception checking node entity: {e}" % cmi_debug )
             return False
 
 ##################################### 6 ####################################

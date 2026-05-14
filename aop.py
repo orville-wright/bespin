@@ -680,7 +680,7 @@ def main():
                     print ( f"Error: Created Article nodes, Relationships, New Agency also !" )
                     created = True
                 except Exception as e:
-                        print (f"Failed checking node entry: {e}")
+                        logging.error ( f"%s - Failed checking node entry: {e}" % cmi_debug )
                         return False
             
 
