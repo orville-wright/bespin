@@ -116,9 +116,9 @@ class neo4j_auradb:
         """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.create_sym_node.__name__+".#"+str(self.yti)
-        # logging.info( f'%s - Creating enhanced graph node for ticker symbol: [ {ticker_symbol} ]...' % cmi_debug )
+        logging.info( f'%s - Creating graph node for symbol: [ {ticker_symbol} ]...' % cmi_debug )
 
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session() as session:
             if sentiment_df is not None and not sentiment_df.empty:
                 # Extract sentiment data from first row
                 row = sentiment_df.iloc[0]
@@ -178,7 +178,7 @@ class neo4j_auradb:
         # n.data = {'s': {'symbol': 'pfe', 'id': '8df7d4f3-a74a-4a9d-930c-83191bdb88d5'}}
 
         print ( f"Node symbols in Graph...")
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session() as session:
             query = ("MATCH ( s:Symbol ) "
                      "RETURN s")
             result = session.run(query)     # Result object
@@ -210,7 +210,7 @@ class neo4j_auradb:
         created_nodes = []
         skipped_nodes = []
         
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session() as session:
             for idx, row in df_final.iterrows():
                 # Skip the totals row
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
@@ -284,7 +284,7 @@ class neo4j_auradb:
         created_relationships = []
         skipped_relationships = []
         
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session() as session:
             for idx, row in df_final.iterrows():
                 # Skip the totals row
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
@@ -368,7 +368,7 @@ class neo4j_auradb:
         skipped_relationships = []
         yahoo_node_created = False
         
-        with self.driver.session(database="neo4j") as session:
+        with self.driver.session() as session:
             # Check if YahooFinance node already exists
             check_yahoo_query = "MATCH (y:YahooFinance) RETURN y.id AS existing_id LIMIT 1"
             check_result = session.run(check_yahoo_query)
