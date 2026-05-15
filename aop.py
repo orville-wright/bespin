@@ -634,8 +634,8 @@ def main():
                 pass
             else:
                 kgraphdb = neo4j_auradb("AOP_AURA", args)            # create an inst of an Neo4j AURA Knowledge Graph DB
-                kgraphdb.con_neo4j_auradb("AOP_AURA")                # connect to our free Neo4j AURA DB 
                 try:
+                    kgraphdb.con_neo4j_auradb("AOP_AURA")                # connect to our free Neo4j AURA DB 
                     found_sym = kgraphdb.check_node_exists("AOP_AURA", news_symbol)  # test if this stock ticker exists in the Graph
                     match found_sym:
                         # FIX: add unknown elments later (need to gather them from elsewhere first)
@@ -663,11 +663,13 @@ def main():
                             print (f" ")
                             print ( f"Flase: Symbol node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )
                             print ( f"Created new KG node_id: {_kgec}" )
+                        case 99:
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                         case _:
                             print (f"Weird return code during GraphDB node exist check!" )  
                             print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
                             res = kgraphdb.dump_symbols(1)
-                            kgraphdb.close_neo4j_auradb(1, kgraphdb.driver)
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                             
                 except TypeError:                             # Type:class 'NoneType' is discovered here...
                     kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)

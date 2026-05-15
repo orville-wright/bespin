@@ -12,7 +12,7 @@ from neo4j import GraphDatabase, RoutingControl
 
 
 
-# ML / NLP section ################### 0 ##########################################
+# ML / NLP section ################### Class
 class neo4j_auradb:
     """
     Class to Graph Database operations
@@ -35,13 +35,11 @@ class neo4j_auradb:
 
         self.args = global_args                            # Only set once per INIT. all methods are set globally
         self.yti = yti
-
-        # Load environment variables from .env file
         load_status = dotenv.load_dotenv()
         if load_status is False:
             raise RuntimeError('Environment variables not loaded.')
         else:
-            # Retrieve Neo4j Aura credentials from environment variables
+            # Retrieve Neo4j Aura credentials from .env file variables
             self.URI = os.getenv("NEO4J_URI")
             USERNAME = os.getenv("NEO4J_USERNAME")
             PASSWORD = os.getenv("NEO4J_PASSWORD")
@@ -49,8 +47,7 @@ class neo4j_auradb:
             self.AUTH = (USERNAME, PASSWORD)
             self.instance = INSTANCE        # WARNING: Free Neo4j AURA doesn't allow multiple named instances. "neo4j" only!
 
-##################################### 1 ####################################
-
+# ########################### 1
     def con_neo4j_auradb(self, _yti):
         """
         Connect to the Neo4j AURA KnowledgeGraph DB (Free limited web service)
@@ -58,32 +55,55 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.con_neo4j_auradb.__name__+".#"+str(_yti)
         logging.info( f"%s - IN instance: {self.instance}" % cmi_debug )
         # URI examples: "neo4j://localhost", "neo4j+s://xxx.databases.neo4j.io"
-        with GraphDatabase.driver(self.URI, auth=self.AUTH) as driver:
-            try:
-                driver.verify_connectivity()
-                self.driver = driver
-                logging.info( f'%s - {self.driver} connection verified !' % cmi_debug )
-                return driver
-            except Exception as e:
-                print (f"Neo4j AURA DB connection failed: {e}")
-                return None
+        # BAD code - with GraphDatabase.driver(self.URI, auth=self.AUTH) as _driver:    
+        try:
+            _driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
+            _driver.verify_connectivity()
+            self.driver = _driver       # cache driver object handle inside class instance
+            logging.info( f'%s - {self.driver} connection verified !' % cmi_debug )
+            return self.driver
+        except Exception as e:
+            print (f"Neo4j AURA DB connection failed: {e}")
+            self.driver = None
+            return None
 
-##################################### 2 ####################################
-
-    def close_neo4j_auradb(self, _yti, driver):
+# ###########################  2
+    def close_neo4j_auradb(self, _yti, _driver):
         """
         Close our connection to the Neo4j AURA KnowledgeGraph DB (Free limited web service)
         """
         cmi_debug = __name__+"::"+self.close_neo4j_auradb.__name__+".#"+str(_yti)
-        logging.info('%s - IN' % cmi_debug )
-        driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
-        session = self.driver.session(database="neo4j")
-        session.close()
-        driver.close()
+        logging.info( f"%s - Working DB: {_driver} / Class DB: {self.driver}" % cmi_debug )
+        #_driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
+        #session = self.driver.session()
+        self.driver.close()
+        _driver.close()
         return
 
-##################################### 3 ####################################
+# ###########################  3
+    def check_node_exists(self, _yti, ticker_symbol):
+        """
+        Create a Graph NODE
+        Assumes driver has been successfully created and saved to self.driver
+        node_data_package = dict of data we want created in GraphDB
+        """
+        symbol = ticker_symbol.upper()
+        cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(_yti)
+        logging.info( f'%s - Check {self.driver} for Symbol [ {symbol} ]' % cmi_debug )
+        try:
+            with self.driver.session() as session:
+                query = """
+                        ("MATCH (s:Symbol {symbol: $symbol})
+                        "RETURN s.id IS NOT NULL AS present")
+                        """
+                result = session.run(query, symbol=symbol)     # Result object
+                record = result.single()
+                return record       # will return 'None' if nothing found
+        except Exception as e:
+            logging.error( f"%s - Exception checking node: {e}" % cmi_debug )
+            return 99
 
+# ###########################  4
     def create_sym_node(self, ticker_symbol, sentiment_df=None):
         """
         Create a Symbol Graph NODE with enhanced sentiment data
@@ -138,8 +158,7 @@ class neo4j_auradb:
             record = result.single()
             return record["node_id"]
 
-##################################### 4 ####################################
-
+# ###########################  5
     def dump_symbols(self, yti):
         """
         Create a Graph NODE
@@ -171,31 +190,7 @@ class neo4j_auradb:
             rec_done = result.consume()       # ResultSummary objects
             return rec_done
 
-##################################### 5 #####################################
-    def check_node_exists(self, _yti, ticker_symbol):
-        """
-        Create a Graph NODE
-        Assumes driver has been successfully created and saved to self.driver
-        node_data_package = dict of data we want created in GraphDB
-        """
-        symbol = ticker_symbol.upper()
-        cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(_yti)
-        logging.info( f'%s - Check {self.driver} for existing Symbol [ {symbol} ]' % cmi_debug )
-        try:
-            with self.driver.session() as session:
-                query = """
-                        ("MATCH (s:Symbol {symbol: $symbol})
-                        "RETURN s.id IS NOT NULL AS present")
-                        """
-                result = session.run(query, symbol=symbol)     # Result object
-                record = result.single()
-                return record       # will return 'None' if nothing found
-        except Exception as e:
-            logging.error( f"%s - Exception checking node entity: {e}" % cmi_debug )
-            return False
-
-##################################### 6 ####################################
-
+# ###########################  6
     def create_article_nodes(self, df_final, symbol):
         """
         Create Article Graph NODEs from df_final dataframe using APOC for dynamic labels
@@ -269,8 +264,7 @@ class neo4j_auradb:
         logging.info( f'%s - Summary: {len(created_nodes)} nodes created, {len(skipped_nodes)} nodes skipped (already existed)' % cmi_debug )
         return created_nodes     # Returns a list of tuples (node_id, urlhash) for created nodes
 
-##################################### 7 ####################################
-
+# ###########################  7
     def create_sym_art_rels(self, ticker_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown"):
         """
         Create HAS_ARTICLE relationships between Symbol and Article nodes
@@ -356,8 +350,7 @@ class neo4j_auradb:
         logging.info( f'%s - Summary: {len(created_relationships)} relationships created, {len(skipped_relationships)} relationships skipped (already existed)' % cmi_debug )
         return created_relationships
 
-##################################### 8 ####################################
-
+# ###########################  8
     def news_agency(self):
         """
         Create YahooFinance NewsAgency node and establish STOCK_NEWS relationships with all Symbol nodes
