@@ -101,11 +101,8 @@ class neo4j_auradb:
                 RETURN count(s) > 0 AS present
                 """
                 result = session.run(query, symbol=symbol)     # Result object
-                record = result.single()
-                print ( f"============================================" )
-                print ( f"##-debug-105: r: {record}" )
-                print ( f"============================================" )
-                return record       # will return 'None' if nothing found
+                record = result.single()            # class 'neo4j._data.Record'> output... <Record present=False>
+                return record["present"]            # will return 'None' if nothing found
         except Exception as e:
             logging.error( f"%s - Exception checking node: {e}" % cmi_debug )
             return 99
