@@ -87,6 +87,10 @@ class neo4j_auradb:
         Assumes driver has been successfully created and saved to self.driver
         node_data_package = dict of data we want created in GraphDB
         """
+        # query = """
+        # MATCH (s:Symbol {symbol: $symbol})
+        # RETURN s.id IS NOT NULL AS present
+        # """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(_yti)
         logging.info( f'%s - Check {self.driver} for Symbol [ {symbol} ]' % cmi_debug )
@@ -94,9 +98,8 @@ class neo4j_auradb:
             with self.driver.session() as session:
                 query = """
                 MATCH (s:Symbol {symbol: $symbol})
-                RETURN s.id IS NOT NULL AS present
+                RETURN count(s) > 0 AS present
                 """
-
                 result = session.run(query, symbol=symbol)     # Result object
                 record = result.single()
                 return record       # will return 'None' if nothing found
