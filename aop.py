@@ -648,13 +648,14 @@ def main():
                                 print ( f"Creating new Graph symbol node: {type(kg_node_id)} / fs:{kg_node_id}" )
                                 _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                                kgraphdb.news_agency()
                                 print ( f"Created new graph synbol node: {_kgec}" )
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
                         case True:
                             #if args['bool_verbose'] is True:
                             print (f" ")
-                            print ( f"Trigger: {found_sym}: Symbol node [ {news_symbol} ] exist: {type(found_sym)}" )
+                            print ( f"Trigger: {found_sym} {type(found_sym)} - Symbol node [ {news_symbol} ] exist: {type(found_sym)}" )
                             print ( f"Skipping Graph Node creation..." )
                         case None:
                             print (f" ")
@@ -663,7 +664,7 @@ def main():
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                             #if args['bool_verbose'] is True:
                             print (f" ")
-                            print ( f"Merged new Symbol article node_id: {_kgec}" )
+                            print ( f"Merged new articles into Symbol node: {_kgec}" )
                         case 99:
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                         case _:
