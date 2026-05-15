@@ -382,7 +382,8 @@ class neo4j_auradb:
                 create_yahoo_query = (
                     "CREATE (y:YahooFinance {"
                     "NewsAgency: 'YahooFinance', "
-                    "id: randomUUID()"
+                    "id: 'YahooFinance', "
+                    "uid: randomUUID()"
                     "}) RETURN y.id AS node_id"
                 )
                 yahoo_result = session.run(create_yahoo_query)
@@ -429,13 +430,6 @@ class neo4j_auradb:
                 rel_result = session.run(create_rel_query, symbol=symbol)
                 rel_record = rel_result.single()
                 
-                '''
-                if rel_record:
-                    created_relationships.append(symbol)
-                    logging.info( f'%s - Created STOCK_NEWS rel -> {symbol}' % cmi_debug )
-                else:
-                    logging.warning( f'%s - Create rel FAILED for symbol: {symbol}' % cmi_debug )
-                '''
                 
         logging.info( f'%s - YF node create: {yahoo_node_created} : {len(created_relationships)} : {len(skipped_relationships)} skipped' % cmi_debug )
         return {

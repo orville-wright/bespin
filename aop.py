@@ -645,7 +645,7 @@ def main():
                             print ( f"Trigger: {found_sym} {type(found_sym)} - Symbol node [ {news_symbol} ] does NOT exist: " )
                             try:
                                 kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
-                                print ( f"Creating new Graph symbol node: {type(kg_node_id)} / fs:{kg_node_id}" )
+                                print ( f"New Graph symbol node created: {kg_node_id}" )
                                 _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                                 kgraphdb.news_agency()
