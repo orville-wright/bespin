@@ -643,27 +643,24 @@ def main():
                         case False:
                             print (f" ")
                             print ( f"Trigger: {found_sym} {type(found_sym)} - Symbol node [ {news_symbol} ] does NOT exist: " )
-                            kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
-                            print ( f"Creating new Graph symbol node: {type(kg_node_id)} / fs:{kg_node_id}" )
-                            _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
-                            kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                            created = True
-                            #if args['bool_verbose'] is True:
-                            print (f" ")
-                            print ( f"None: Symbol does NOT exists / status check: fst:{type(found_sym)} / fs:{found_sym}" )
-                            print ( f"Created new KG nodes: {_kgec}" )
+                            try:
+                                kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
+                                print ( f"Creating new Graph symbol node: {type(kg_node_id)} / fs:{kg_node_id}" )
+                                _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
+                                kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                                print ( f"Created new graph synbol node: {_kgec}" )
+                            except Exception as _fe:
+                                logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
                         case True:
                             #if args['bool_verbose'] is True:
                             print (f" ")
                             print ( f"Trigger: {found_sym}: Symbol node [ {news_symbol} ] exist: {type(found_sym)}" )
                             print ( f"Skipping Graph Node creation..." )
-                            created = False
                         case None:
                             print (f" ")
                             print ( f"Trigger: {found_sym} {type(found_sym)} - Empty Symbol node [ {news_symbol} ] discovered: " )
                             _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                            created = True
                             #if args['bool_verbose'] is True:
                             print (f" ")
                             print ( f"Merged new Symbol article node_id: {_kgec}" )
@@ -673,8 +670,7 @@ def main():
                             print (f"Weird return code during GraphDB node exist check!" )  
                             print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
                             res = kgraphdb.dump_symbols(1)
-                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
-                            
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)   
                 except TypeError:                             # Type:class 'NoneType' is discovered here...
                     kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
                     print ( f"Error: Symbol node does NOT exist - creating ! fst:{type(kg_node_id)} / fs:{kg_node_id}" )
@@ -684,9 +680,8 @@ def main():
                     kgraphdb.create_sym_art_rels(news_symbol, df_final,agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                     kgraphdb.news_agency()
                     print ( f"Error: Created Article nodes, Relationships, New Agency also !" )
-                    created = True
                 except Exception as e:
-                        logging.error ( f"%s - Failed checking node entry: {e}" % cmi_debug )
+                        logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
                         return False
             
 
