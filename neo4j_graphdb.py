@@ -125,7 +125,8 @@ class neo4j_auradb:
                 query = (
                     "CREATE (s:Symbol {"
                     "symbol: $symbol, "
-                    "id: randomUUID(), "
+                    "id: $symbol, "
+                    "uid: randomUUID(), "
                     "sentiment: $sentiment, "
                     "ratio: $ratio, "
                     "p_pct: $p_pct, "
