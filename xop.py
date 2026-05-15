@@ -417,7 +417,7 @@ def main():
             print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
             print (f"LLM Vec Tokenz:  {_ttcz} - Chars: {_tccz} / Words: {_twcz} / scent/paras: {(_tscz + _tpcz + _trcz)} | AI read time: {(ai_sent_time / 60):.2f} mins" )
             print (f"Human read time: {(hpt_mins):.1f} mins ({(hpt_hours):.1f} hours)  | Human analyst time: {analyst_time:.1f} hours" )
-            print (f"AI performance:  {round((hpt_mins * 60) / (ai_sent_time / 60))} Faster than a Human  |   Analyst cost: ${round(analyst_cost):,}" )
+            print (f"AI performance:  {round((hpt_mins * 60) / (ai_sent_time / 60))}X Faster than a Human  |   Analyst cost: ${round(analyst_cost):,}" )
             print (f" ")
             
             pd.set_option('display.max_rows', None)
