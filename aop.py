@@ -641,6 +641,8 @@ def main():
                         # FIX: add unknown elments later (need to gather them from elsewhere first)
                         # Article must be created first, then related to their parent symbol node
                         case None:
+                            print (f" ")
+                            print ( f"Trigger: {found_sym}: Symbol node [ {news_symbol} ] exist: {type(found_sym)}" )
                             kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
                             print ( f"Error: Symbol node does NOT exist - creating ! fst:{type(kg_node_id)} / fs:{kg_node_id}" )
                             _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
@@ -653,16 +655,18 @@ def main():
                         case True:
                             #if args['bool_verbose'] is True:
                             print (f" ")
-                            print ( f"True: Symbol node  exist - Graph Node NOT created ! fst:{type(found_sym)} / fs:{found_sym}" )
+                            print ( f"Trigger: {found_sym}: Symbol node [ {news_symbol} ] exist: {type(found_sym)}" )
+                            print ( f"Skipping Graph Node creation..." )
                             created = False
                         case False:
+                            print (f" ")
+                            print ( f"Trigger: {found_sym}: Symbol node [ {news_symbol} ] does NOT exist: {type(found_sym)}" )
                             _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                             created = True
                             #if args['bool_verbose'] is True:
                             print (f" ")
-                            print ( f"Flase: Symbol node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )
-                            print ( f"Created new KG node_id: {_kgec}" )
+                            print ( f"Created a new KG node_id: {_kgec}" )
                         case 99:
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                         case _:
