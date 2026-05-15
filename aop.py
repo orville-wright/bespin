@@ -646,10 +646,10 @@ def main():
                             try:
                                 kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
                                 print ( f"New Graph symbol node created: {kg_node_id}" )
-                                _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
+                                _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                                 kgraphdb.news_agency()
-                                print ( f"Created new graph synbol node: {_kgec}" )
+                                print ( f"Created new graph article nodes: {_gc}" )
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
                         case True:
@@ -660,11 +660,11 @@ def main():
                         case None:
                             print (f" ")
                             print ( f"Trigger: {found_sym} {type(found_sym)} - Empty Symbol node [ {news_symbol} ] discovered: " )
-                            _kgec = kgraphdb.create_article_nodes(df_final, news_symbol)
+                            _gm = kgraphdb.create_article_nodes(df_final, news_symbol)
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                             #if args['bool_verbose'] is True:
                             print (f" ")
-                            print ( f"Merged new articles into Symbol node: {_kgec}" )
+                            print ( f"Merged new articles into Symbol node: {_gm}" )
                         case 99:
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                         case _:
