@@ -102,6 +102,9 @@ class neo4j_auradb:
                 """
                 result = session.run(query, symbol=symbol)     # Result object
                 record = result.single()
+                print ( f"============================================" )
+                print ( f"##-debug-105: r: {result}" )
+                print ( f"============================================" )
                 return record       # will return 'None' if nothing found
         except Exception as e:
             logging.error( f"%s - Exception checking node: {e}" % cmi_debug )
