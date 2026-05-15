@@ -93,9 +93,10 @@ class neo4j_auradb:
         try:
             with self.driver.session() as session:
                 query = """
-                        ("MATCH (s:Symbol {symbol: $symbol})
-                        "RETURN s.id IS NOT NULL AS present")
-                        """
+                MATCH (s:Symbol {symbol: $symbol})
+                RETURN s.id IS NOT NULL AS present
+                """
+
                 result = session.run(query, symbol=symbol)     # Result object
                 record = result.single()
                 return record       # will return 'None' if nothing found
