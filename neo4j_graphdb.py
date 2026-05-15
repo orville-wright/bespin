@@ -138,7 +138,7 @@ class neo4j_auradb:
                     "p_mean: $p_mean, "
                     "n_mean: $n_mean, "
                     "z_mean: $z_mean"
-                    "}) RETURN s.id AS node_id"
+                    "}) RETURN s.uid AS node_id"
                 )
                 result = session.run(query, 
                     symbol=symbol,
@@ -384,7 +384,7 @@ class neo4j_auradb:
                     "NewsAgency: 'YahooFinance', "
                     "id: 'YahooFinance', "
                     "uid: randomUUID()"
-                    "}) RETURN y.id AS node_id"
+                    "}) RETURN y.uid AS node_id"
                 )
                 yahoo_result = session.run(create_yahoo_query)
                 yahoo_record = yahoo_result.single()
@@ -411,8 +411,7 @@ class neo4j_auradb:
                 check_rel_result = session.run(check_rel_query, symbol=symbol)
                 existing_rel = check_rel_result.single()
                 
-                if existing_rel:
-                    # Relationship already exists, skip creation
+                if existing_rel:            # Relationship already exists, skip creation
                     skipped_relationships.append(symbol)
                     # logging.info( f'%s - STOCK_NEWS rel exists for symbol: {symbol}, skipping' % cmi_debug )
                     continue
@@ -429,9 +428,8 @@ class neo4j_auradb:
                 
                 rel_result = session.run(create_rel_query, symbol=symbol)
                 rel_record = rel_result.single()
-                
-                
-        logging.info( f'%s - YF node create: {yahoo_node_created} : {len(created_relationships)} : {len(skipped_relationships)} skipped' % cmi_debug )
+
+        logging.info( f'%s - YF node create: {yahoo_node_created} / Created: {len(created_relationships)} / Skipped: {len(skipped_relationships)}' % cmi_debug )
         return {
             "node_created": yahoo_node_created,
             "relationships_created": created_relationships,
