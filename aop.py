@@ -640,24 +640,30 @@ def main():
                     match found_sym:
                         # FIX: add unknown elments later (need to gather them from elsewhere first)
                         # Article must be created first, then related to their parent symbol node
-                        case False:
-                            print (f" ")
+                        case False:             # stock ticker symbol node does not exist
                             print ( f"Trigger: {found_sym} {type(found_sym)} - Symbol node [ {news_symbol} ] does NOT exist: " )
                             try:
                                 kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
                                 print ( f"New Graph symbol node created: {kg_node_id}" )
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
+                                print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                                print (f"Created article relationship.")
                                 kgraphdb.news_agency()
-                                print ( f"Created new graph article nodes: {_gc}" )
+                                print (f"Refreshed News Agency ownership.")
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
-                        case True:
-                            #if args['bool_verbose'] is True:
+                        case True:              # stock ticker symbol node exists 
                             print (f" ")
                             print ( f"Trigger: {found_sym} {type(found_sym)} - Symbol node [ {news_symbol} ] exist: {type(found_sym)}" )
-                            print ( f"Skipping Graph Node creation..." )
-                        case None:
+                            print ( f"Skipping SymbolnNode creation... merging new articles..." )
+                            _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
+                            print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
+                            kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                            print (f"Created article relationship.")
+                            kgraphdb.news_agency()
+                            print (f"Refreshed News Agency ownership.")
+                        case None:              # ??? needs investigation
                             print (f" ")
                             print ( f"Trigger: {found_sym} {type(found_sym)} - Empty Symbol node [ {news_symbol} ] discovered: " )
                             _gm = kgraphdb.create_article_nodes(df_final, news_symbol)
