@@ -14,13 +14,27 @@ class alpaca_md:
     Alpaca Market Data retriever class
     Provides live quotes and OHLCV candlestick data via Alpaca API
     """
+
+    DATA_BASE_URL = "https://data.alpaca.markets/v2/"
+    PAPER_TRADING_BASE_URL = "https://paper-api.alpaca.markets/v2/"
+    LIVE_TRADING_BASE_URL = "https://api.alpaca.markets/v2/"
+    VALID_FEEDS = {"iex", "sip", "delayed_sip", "boats", "overnight", "otc"}
     
     def __init__(self, inst_id, args=None):
+        load_dotenv()
         self.inst_id = inst_id
-        self.args = args if args else {}
+        self.args = vars(args) if args is not None and not isinstance(args, dict) else (args or {})
         self.api_key = None
         self.secret_key = None
-        self.base_url = "https://data.alpaca.markets/v2/"
+        self.api_key_env_var = None
+        self.secret_key_env_var = None
+        self.base_url = self._normalize_base_url(
+            os.getenv("APCA_API_DATA_URL"),
+            self.DATA_BASE_URL,
+        )
+        self.trading_base_url = self._get_trading_base_url()
+        self.feed = self._get_feed()
+        self.timeout = float(os.getenv("ALPACA_TIMEOUT", "30"))
         self.quote_data = {}
         self.bars_data = {}
         self.symbols_list = []
@@ -29,16 +43,71 @@ class alpaca_md:
         self._load_credentials()
         
     def _load_credentials(self):
-        """Load Alpaca API credentials from environment variables"""
-        load_status = load_dotenv()
-        if not load_status:
-            raise RuntimeError('Environment variables not loaded.')
-            
-        self.api_key = os.getenv("ALPACA_API-KEY")
-        self.secret_key = os.getenv("ALPACA_SEC-KEY")
+        """Load Alpaca API credentials from environment variables.
+
+        Alpaca's documented environment names are APCA_API_KEY_ID and
+        APCA_API_SECRET_KEY. The legacy ALPACA_* names are kept for backwards
+        compatibility with this project.
+        """
+        self.api_key, self.api_key_env_var = self._first_env_value(
+            "APCA_API_KEY_ID",
+            "ALPACA_API_KEY",
+            "ALPACA_API-KEY",
+        )
+        self.secret_key, self.secret_key_env_var = self._first_env_value(
+            "APCA_API_SECRET_KEY",
+            "ALPACA_SECRET_KEY",
+            "ALPACA_API_SECRET_KEY",
+            "ALPACA_SEC-KEY",
+        )
         
         if not self.api_key or not self.secret_key:
-            raise ValueError("Alpaca API credentials not found in environment variables.")
+            raise ValueError(
+                "Alpaca API credentials not found. Set APCA_API_KEY_ID and "
+                "APCA_API_SECRET_KEY in .env. Legacy ALPACA_API-KEY and "
+                "ALPACA_SEC-KEY are also supported."
+            )
+
+    def _first_env_value(self, *names):
+        """Return the first non-empty environment variable value and its name."""
+        for name in names:
+            value = os.getenv(name)
+            if value and value.strip():
+                return value.strip(), name
+        return None, None
+
+    def _normalize_base_url(self, env_value, default):
+        """Normalize Alpaca base URLs so endpoint joins are predictable."""
+        base_url = (env_value or default).strip().rstrip("/")
+        if not base_url.endswith("/v2"):
+            base_url = f"{base_url}/v2"
+        return f"{base_url}/"
+
+    def _get_trading_base_url(self):
+        """Return trading API base URL used by the clock endpoint."""
+        env_base_url = os.getenv("APCA_API_BASE_URL") or os.getenv("ALPACA_TRADING_BASE_URL")
+        if env_base_url:
+            return self._normalize_base_url(env_base_url, self.PAPER_TRADING_BASE_URL)
+
+        paper_setting = os.getenv("ALPACA_PAPER", "true").strip().lower()
+        default_url = (
+            self.LIVE_TRADING_BASE_URL
+            if paper_setting in {"0", "false", "no"}
+            else self.PAPER_TRADING_BASE_URL
+        )
+        return self._normalize_base_url(None, default_url)
+
+    def _get_feed(self):
+        """Return configured stock data feed, defaulting to free-plan IEX."""
+        feed = self.args.get("alpaca_feed") if isinstance(self.args, dict) else None
+        feed = feed or os.getenv("ALPACA_DATA_FEED") or os.getenv("APCA_API_DATA_FEED") or "iex"
+        feed = feed.strip().lower()
+        if feed not in self.VALID_FEEDS:
+            raise ValueError(
+                f"Invalid Alpaca data feed '{feed}'. "
+                f"Valid feeds: {', '.join(sorted(self.VALID_FEEDS))}"
+            )
+        return feed
             
     def get_headers(self):
         """Return headers for Alpaca API requests"""
@@ -47,16 +116,67 @@ class alpaca_md:
             "APCA-API-KEY-ID": self.api_key,
             "APCA-API-SECRET-KEY": self.secret_key
         }
+
+    def _get_json(self, url, params, action):
+        """GET an Alpaca JSON endpoint and log useful details on API errors."""
+        try:
+            response = requests.get(
+                url,
+                headers=self.get_headers(),
+                params=params,
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError:
+            self._log_response_error(response, action)
+            raise
+
+    def _log_response_error(self, response, action):
+        """Log Alpaca error responses without exposing credentials."""
+        try:
+            response_body = response.json()
+        except ValueError:
+            response_body = response.text.strip()
+
+        base_message = (
+            f"{action} failed: HTTP {response.status_code} for {response.url}. "
+            f"Alpaca response: {response_body}"
+        )
+
+        if response.status_code == 401:
+            logging.error(
+                "%s. Check that %s and %s contain a matching Alpaca key/secret "
+                "pair for this account/environment, and that the APCA-* auth "
+                "headers are being accepted.",
+                base_message,
+                self.api_key_env_var,
+                self.secret_key_env_var,
+            )
+            return
+
+        response_text = str(response_body).lower()
+        if (
+            response.status_code in {403, 422}
+            and "subscription" in response_text
+            and "sip" in response_text
+        ):
+            logging.error(
+                "%s. Your account likely cannot query realtime SIP data. Use "
+                "ALPACA_DATA_FEED=iex for the free feed or subscribe to SIP.",
+                base_message,
+            )
+            return
+
+        logging.error(base_message)
     
-    def get_live_quote(self, symbol):
+    def get_live_quote(self, symbol, feed=None):
         """Get live quote for a single symbol"""
         url = f"{self.base_url}stocks/quotes/latest"
-        params = {"symbols": symbol.upper()}
+        params = {"symbols": symbol.upper(), "feed": feed or self.feed}
         
         try:
-            response = requests.get(url, headers=self.get_headers(), params=params)
-            response.raise_for_status()
-            data = response.json()
+            data = self._get_json(url, params, f"fetching quote for {symbol.upper()}")
             
             if 'quotes' in data and symbol.upper() in data['quotes']:
                 quote = data['quotes'][symbol.upper()]
@@ -70,7 +190,7 @@ class alpaca_md:
             logging.error(f"Error fetching quote for {symbol}: {e}")
             return None
             
-    def get_bars(self, symbol, timeframe="1Min", start_date=None, end_date=None, limit=100):
+    def get_bars(self, symbol, timeframe="1Min", start_date=None, end_date=None, limit=100, feed=None):
         """Get OHLCV bars for a symbol"""
         url = f"{self.base_url}stocks/bars"
         
@@ -87,14 +207,12 @@ class alpaca_md:
             "end": end_date,
             "limit": limit,
             "adjustment": "raw",
-            "feed": "sip",
+            "feed": feed or self.feed,
             "sort": "asc"
         }
         
         try:
-            response = requests.get(url, headers=self.get_headers(), params=params)
-            response.raise_for_status()
-            data = response.json()
+            data = self._get_json(url, params, f"fetching bars for {symbol.upper()}")
             
             if 'bars' in data and symbol.upper() in data['bars']:
                 bars = data['bars'][symbol.upper()]
@@ -108,19 +226,17 @@ class alpaca_md:
             logging.error(f"Error fetching bars for {symbol}: {e}")
             return None
             
-    def get_multiple_quotes(self, symbols_list):
+    def get_multiple_quotes(self, symbols_list, feed=None):
         """Get live quotes for multiple symbols"""
         if isinstance(symbols_list, str):
             symbols_list = [symbols_list]
             
         symbols_str = ",".join([s.upper() for s in symbols_list])
         url = f"{self.base_url}stocks/quotes/latest"
-        params = {"symbols": symbols_str}
+        params = {"symbols": symbols_str, "feed": feed or self.feed}
         
         try:
-            response = requests.get(url, headers=self.get_headers(), params=params)
-            response.raise_for_status()
-            data = response.json()
+            data = self._get_json(url, params, "fetching multiple quotes")
             
             if 'quotes' in data:
                 for symbol, quote in data['quotes'].items():
@@ -192,13 +308,11 @@ class alpaca_md:
             
     def get_market_status(self):
         """Check if market is open"""
-        url = f"{self.base_url.replace('data.', '')}clock"
+        url = f"{self.trading_base_url}clock"
         try:
-            response = requests.get(url, headers=self.get_headers())
-            response.raise_for_status()
-            data = response.json()
+            data = self._get_json(url, None, "fetching market status")
             return data.get('is_open', False)
-        except:
+        except requests.exceptions.RequestException:
             return False
 
 def show_data(data):

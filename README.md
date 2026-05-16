@@ -407,8 +407,9 @@ Create a `.env` file in the project root with your API credentials:
 ```env
 # Market data APIs
 FINNHUB_API_KEY=your_key
-ALPACA_API-KEY=your_key
-ALPACA_SEC-KEY=your_secret
+APCA_API_KEY_ID=your_alpaca_key
+APCA_API_SECRET_KEY=your_alpaca_secret
+ALPACA_DATA_FEED=iex
 FRED_API_KEY=your_key
 POLYGON_API_KEY=your_key
 TIINGO_API_TOKEN=your_token

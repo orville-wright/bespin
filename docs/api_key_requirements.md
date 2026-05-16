@@ -157,8 +157,9 @@ STOCKDATA_API_TOKEN=your_stockdata_api_token_here
 TWELVEDATA_API_KEY=your_twelvedata_api_key_here
 
 # Existing extractors
-ALPACA_API-KEY=your_alpaca_api_key_here
-ALPACA_SEC-KEY=your_alpaca_secret_key_here
+APCA_API_KEY_ID=your_alpaca_api_key_here
+APCA_API_SECRET_KEY=your_alpaca_secret_key_here
+ALPACA_DATA_FEED=iex
 FRED_API_KEY=your_fred_api_key_here
 POLYGON_API_KEY=your_polygon_api_key_here
 TIINGO_API_TOKEN=your_tiingo_api_token_here
