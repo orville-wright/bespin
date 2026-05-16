@@ -6,9 +6,9 @@ import pandas as pd
 from datetime import datetime, timedelta, date
 import time
 from dotenv import load_dotenv
-import json
 import logging
 
+# #################### class
 class alpaca_md:
     """
     Alpaca Market Data retriever class
@@ -41,7 +41,10 @@ class alpaca_md:
         
         # Initialize credentials
         self._load_credentials()
-        
+
+# #################### 1
+# _INIT_ helper method
+#
     def _load_credentials(self):
         """Load Alpaca API credentials from environment variables.
 
@@ -68,6 +71,9 @@ class alpaca_md:
                 "ALPACA_SEC-KEY are also supported."
             )
 
+# #################### 2
+# _INIT_ helper method
+#
     def _first_env_value(self, *names):
         """Return the first non-empty environment variable value and its name."""
         for name in names:
@@ -76,6 +82,9 @@ class alpaca_md:
                 return value.strip(), name
         return None, None
 
+# #################### 3
+# _INIT_ helper method
+#
     def _normalize_base_url(self, env_value, default):
         """Normalize Alpaca base URLs so endpoint joins are predictable."""
         base_url = (env_value or default).strip().rstrip("/")
@@ -83,6 +92,7 @@ class alpaca_md:
             base_url = f"{base_url}/v2"
         return f"{base_url}/"
 
+# #################### 4
     def _get_trading_base_url(self):
         """Return trading API base URL used by the clock endpoint."""
         env_base_url = os.getenv("APCA_API_BASE_URL") or os.getenv("ALPACA_TRADING_BASE_URL")
@@ -97,6 +107,9 @@ class alpaca_md:
         )
         return self._normalize_base_url(None, default_url)
 
+# #################### 5
+# _INIT_ helper method
+#
     def _get_feed(self):
         """Return configured stock data feed, defaulting to free-plan IEX."""
         feed = self.args.get("alpaca_feed") if isinstance(self.args, dict) else None
@@ -108,15 +121,12 @@ class alpaca_md:
                 f"Valid feeds: {', '.join(sorted(self.VALID_FEEDS))}"
             )
         return feed
-            
-    def get_headers(self):
-        """Return headers for Alpaca API requests"""
-        return {
-            "accept": "application/json",
-            "APCA-API-KEY-ID": self.api_key,
-            "APCA-API-SECRET-KEY": self.secret_key
-        }
 
+##################################################################
+# Core class methods
+##################################################################
+
+# #################### 6
     def _get_json(self, url, params, action):
         """GET an Alpaca JSON endpoint and log useful details on API errors."""
         try:
@@ -132,6 +142,20 @@ class alpaca_md:
             self._log_response_error(response, action)
             raise
 
+# #################### 6
+# Helper method for _get_json()
+#
+    def get_headers(self):
+        """Return headers for Alpaca API requests"""
+        return {
+            "accept": "application/json",
+            "APCA-API-KEY-ID": self.api_key,
+            "APCA-API-SECRET-KEY": self.secret_key
+        }
+
+# #################### 8
+# Helper method for _get_json()
+#
     def _log_response_error(self, response, action):
         """Log Alpaca error responses without exposing credentials."""
         try:
@@ -169,7 +193,9 @@ class alpaca_md:
             return
 
         logging.error(base_message)
-    
+
+ # #################### 9
+ # builds a list of quote data for 1 single symbol
     def get_live_quote(self, symbol, feed=None):
         """Get live quote for a single symbol"""
         url = f"{self.base_url}stocks/quotes/latest"
@@ -189,7 +215,8 @@ class alpaca_md:
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching quote for {symbol}: {e}")
             return None
-            
+
+# #################### 10
     def get_bars(self, symbol, timeframe="1Min", start_date=None, end_date=None, limit=100, feed=None):
         """Get OHLCV bars for a symbol"""
         url = f"{self.base_url}stocks/bars"
@@ -225,7 +252,10 @@ class alpaca_md:
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching bars for {symbol}: {e}")
             return None
-            
+
+# #################### 11
+# send in a list of multiple symbols
+#
     def get_multiple_quotes(self, symbols_list, feed=None):
         """Get live quotes for multiple symbols"""
         if isinstance(symbols_list, str):
@@ -249,7 +279,17 @@ class alpaca_md:
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching multiple quotes: {e}")
             return {}
-            
+
+# #################### 12
+# A Helper method
+# WARNING: his method is BADLY named !!
+# - It doesnt primarily format the data.... 
+# - It actually does the real API data get() via the network
+#
+# leverged by: 
+# - get_multiple_quotes()
+# - get_live_quote
+#
     def _format_quote_data(self, quote, symbol):
         """Format quote data into standardized dictionary"""
         return {
@@ -263,7 +303,14 @@ class alpaca_md:
             'Exchange': quote.get('bx', 'Unknown'),
             'Source': 'Alpaca'
         }
-        
+
+# #################### 13
+# A Helper methodf
+# used by get_live_quote()
+# TARNING: his method is BADLY named !!
+# - It doesnt primarily format the bar data.... 
+# - It actually does the real API data get() via the network
+#
     def _format_bars_data(self, bars, symbol):
         """Format bars data into pandas DataFrame"""
         if not bars:
@@ -284,7 +331,11 @@ class alpaca_md:
             })
             
         return pd.DataFrame(bars_list)
-        
+
+# #################### 14
+# assumes a list of symbols & their quotes allready exists in 
+# # the prebuilt working dict: quote_data{}
+#
     def build_quote_df(self):
         """Build DataFrame from collected quote data"""
         if not self.quote_data:
@@ -295,7 +346,10 @@ class alpaca_md:
             quotes_list.append(quote)
             
         return pd.DataFrame(quotes_list)
-        
+
+# #################### 15
+# assumes a list of symbols & their quotes allready exists in 
+# # the prebuilt working dict: quote_data{}
     def print_quotes(self):
         """Print formatted quote data"""
         if not self.quote_data:
@@ -305,7 +359,8 @@ class alpaca_md:
         print("========== Alpaca Live Quotes ==========")
         for symbol, quote in self.quote_data.items():
             print(f"{symbol}: Bid: ${quote['Bid_price']:.2f} Ask: ${quote['Ask_price']:.2f} Last: ${quote['Last_price']:.2f}")
-            
+
+# #################### 16
     def get_market_status(self):
         """Check if market is open"""
         url = f"{self.trading_base_url}clock"
@@ -315,8 +370,11 @@ class alpaca_md:
         except requests.exceptions.RequestException:
             return False
 
+# #################### 17
+"""
+# DISABLED
 def show_data(data):
-    """Legacy function for backward compatibility"""
+    # Legacy function for backward compatibility
     my_keys = data.keys()
     list_of_my_keys = list(my_keys)
     print ( f"Look at the {list_of_my_keys[0]} data in a Pretty & Nicer format..." )
@@ -326,9 +384,15 @@ def show_data(data):
         print ( f"DATA ITEM #{i} is -> {data_list[i]}" )
 
     return data_list
+"""
 
 ############################## MAIN #############################################
-# Example usage and testing of the alpaca_md class
+#
+# This is example usage and testing code for  the alpaca_md class
+# Tghe module is a class only. Not a executable code.
+# TODO: Delete main() when module is tagged as STABLE
+
+
 def main():
     """Example usage of alpaca_md class"""
     try:
@@ -341,19 +405,19 @@ def main():
         
         # Test single quote
         test_symbol = "AAPL"
-        print(f"Getting quote for {test_symbol}...")
+        print(f"TEST #1: Getting a single quote for 1 symbol{test_symbol}...")
         quote = alpaca.get_live_quote(test_symbol)
         if quote:
             print(f"Quote data: {quote}")
         
         # Test multiple quotes
-        test_symbols = ["AAPL", "GOOGL", "MSFT"]
-        print(f"\nGetting quotes for {test_symbols}...")
+        test_symbols = ["IBM", "MU", "AMD", "AAPL", "GOOGL", "MSFT", "NVDA", "RKLB", "TSLA"]
+        print(f"\nTEST #1: Getting multiple quotes for {test_symbols}...")
         quotes = alpaca.get_multiple_quotes(test_symbols)
         alpaca.print_quotes()
         
         # Test bars data
-        print(f"\nGetting bars data for {test_symbol}...")
+        print(f"\nTEST #3: Getting bars data for 1 symbol {test_symbol}...")
         bars_df = alpaca.get_bars(test_symbol, timeframe="1Min", limit=10)
         if bars_df is not None and not bars_df.empty:
             print(f"Bars data shape: {bars_df.shape}")
