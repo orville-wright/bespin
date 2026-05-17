@@ -825,6 +825,8 @@ def main():
         print("========== Alpha Vantage Market Data Test ==========")
         
         # Test symbol search
+        test_symbol = "AAPL"
+
         """
         test_search = "Apple"
         print(f"Searching for '{test_search}'...")
@@ -834,7 +836,6 @@ def main():
             print(search_results.head())
         
         # Test global quote
-        test_symbol = "AAPL"
         print(f"\nGetting global quote for {test_symbol}...")
         quote = av.get_global_quote(test_symbol)
         if quote:
