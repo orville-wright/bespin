@@ -877,7 +877,7 @@ def main():
         time.sleep(4)
         # Test market news
         print(f"\nGetting market news for {test_symbol}...")
-        news_data = av.market_news(tickers=test_symbol, limit=5)
+        news_data = av.market_news(tickers=test_symbol, limit=50)
         if news_data and 'feed' in news_data:
             print(f"News articles retrieved: {len(news_data['feed'])}")
             if news_data['feed']:
