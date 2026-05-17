@@ -880,10 +880,13 @@ def main():
         news_data = av.market_news(tickers=test_symbol, limit=50)
         if news_data and 'feed' in news_data:
             print(f"News articles retrieved: {len(news_data['feed'])}")
-            if news_data['feed']:
-                first_article = news_data['feed'][0]
-                print(f"Latest article: {first_article.get('title')}")
-                print(f"Sentiment: {first_article.get('overall_sentiment_label')} ({first_article.get('overall_sentiment_score')})")
+            for idx, article in enumerate(news_data['feed']):
+                print(f"\n--- Article {idx + 1} ---")
+                print(f"Title: {article.get('title')}")
+                print(f"Source: {article.get('source')}")
+                print(f"Published: {article.get('time_published')}")
+                print(f"Sentiment: {article.get('overall_sentiment_label')} ({article.get('overall_sentiment_score')})")
+                print(f"URL: {article.get('url')}")
         
     except Exception as e:
         print(f"Error in main: {e}")
