@@ -352,7 +352,8 @@ def main():
         # Demo symbols that work with demo token
         test_symbol = "IBM"
         print(f"Getting EOD data for {test_symbol}...")
-        eod_data = eod.get_eod_data(test_symbol, 'US', limit=5)
+        # eod_data = eod.get_eod_data(test_symbol, 'US', limit=5)
+        eod_data = eod.get_eod_data(test_symbol, 'US')
         if not eod_data.empty:
             print(f"EOD data shape: {eod_data.shape}")
             print(eod_data.head())
@@ -368,7 +369,7 @@ def main():
             print(f"Company: {fundamentals.get('name')} ({fundamentals.get('sector')})")
             print(f"Market Cap: {fundamentals.get('market_cap')}")
         
-        test_symbols = ["AAPL", "TSLA"]  # Demo-available symbols
+        test_symbols = ["AAPL", "TSLA", "NVDA", "MU", "AMD", "IBM"]  # Demo-available symbols
         print(f"\nGetting market summary for {test_symbols}...")
         summary = eod.get_market_summary(test_symbols, 'US')
         if not summary.empty:
