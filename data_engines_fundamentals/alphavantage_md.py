@@ -5,7 +5,8 @@ import logging
 import os
 import dotenv
 import json
-from datetime import datetime, timedelta, time
+import time
+from datetime import datetime, timedelta
 from rich import print
 
 class alphavantage_md:
