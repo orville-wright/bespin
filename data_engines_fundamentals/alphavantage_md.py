@@ -825,12 +825,14 @@ def main():
         print("========== Alpha Vantage Market Data Test ==========")
         
         # Test symbol search
+        """
         test_search = "Apple"
         print(f"Searching for '{test_search}'...")
         search_results = av.get_search_results(test_search)
         if not search_results.empty:
             print(f"Search results shape: {search_results.shape}")
             print(search_results.head())
+        """
         
         # Test global quote
         test_symbol = "AAPL"
