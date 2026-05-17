@@ -832,7 +832,6 @@ def main():
         if not search_results.empty:
             print(f"Search results shape: {search_results.shape}")
             print(search_results.head())
-        """
         
         # Test global quote
         test_symbol = "AAPL"
@@ -840,13 +839,21 @@ def main():
         quote = av.get_global_quote(test_symbol)
         if quote:
             print(f"Quote data: {quote}")
-        
+        """
+
         # Test daily data
         print(f"\nGetting daily data for {test_symbol}...")
         daily_df = av.get_daily_data(test_symbol, outputsize='compact')
         if not daily_df.empty:
             print(f"Daily data shape: {daily_df.shape}")
             print(daily_df.head())
+        
+        # Test technical indicator
+        print(f"\nGetting SMA for {test_symbol}...")
+        sma_df = av.get_sma(test_symbol, interval='daily', time_period=20)
+        if not sma_df.empty:
+            print(f"SMA data shape: {sma_df.shape}")
+            print(sma_df.head())
         
         # Test company overview
         print(f"\nGetting company overview for {test_symbol}...")
@@ -856,13 +863,6 @@ def main():
             print(f"Sector: {overview.get('sector')}")
             print(f"Market Cap: {overview.get('market_cap')}")
             print(f"P/E Ratio: {overview.get('pe_ratio')}")
-        
-        # Test technical indicator
-        print(f"\nGetting SMA for {test_symbol}...")
-        sma_df = av.get_sma(test_symbol, interval='daily', time_period=20)
-        if not sma_df.empty:
-            print(f"SMA data shape: {sma_df.shape}")
-            print(sma_df.head())
         
         # Test market status
         print(f"\nGetting market status...")
