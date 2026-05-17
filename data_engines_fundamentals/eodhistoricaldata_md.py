@@ -340,6 +340,8 @@ class eodhistoricaldata_md:
             logging.error(f"Error getting market summary: {e}")
             return pd.DataFrame()
 
+# ################################ testing
+#
 def main():
     """Example usage of eodhistoricaldata_md class"""
     try:
@@ -348,7 +350,7 @@ def main():
         print("========== EOD Historical Data API Test ==========")
         
         # Demo symbols that work with demo token
-        test_symbol = "AAPL"
+        test_symbol = "IBM"
         print(f"Getting EOD data for {test_symbol}...")
         eod_data = eod.get_eod_data(test_symbol, 'US', limit=5)
         if not eod_data.empty:
