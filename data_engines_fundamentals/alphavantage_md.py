@@ -5,7 +5,7 @@ import logging
 import os
 import dotenv
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from rich import print
 
 class alphavantage_md:
@@ -848,6 +848,8 @@ def main():
         if not daily_df.empty:
             print(f"Daily data shape: {daily_df.shape}")
             print(daily_df.head())
+        
+        time.sleep(4)
         
         # Test technical indicator
         print(f"\nGetting SMA for {test_symbol}...")
