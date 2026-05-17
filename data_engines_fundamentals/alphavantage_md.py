@@ -874,6 +874,7 @@ def main():
         if market_status:
             print(f"Market status retrieved successfully")
         
+        time.sleep(4)
         # Test market news
         print(f"\nGetting market news for {test_symbol}...")
         news_data = av.market_news(tickers=test_symbol, limit=5)
