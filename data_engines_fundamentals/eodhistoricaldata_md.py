@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import logging
 import os
-import dotenv
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from rich import print
 
@@ -20,14 +20,14 @@ class eodhistoricaldata_md:
         self.base_url = "https://eodhd.com/api"
         
         # Load environment variables from .env file
-        load_status = dotenv.load_dotenv()
+        load_status = load_dotenv()
         if load_status is False:
             logging.warning('Environment variables not loaded from .env file.')
-        
-        # Get API token from environment
-        self.api_token = os.getenv('EODHISTORICALDATA_API_TOKEN')
+
+        # Get API key from environment
+        self.api_token = os.getenv('EODHD_API_KEY')
         if not self.api_token:
-            logging.warning("EODHISTORICALDATA_API_TOKEN not found in environment. Using demo token for limited testing.")
+            logging.warning("EODHD_API_KEY not found in environment. Using demo token for limited testing.")
             self.api_token = "demo"  # Demo token for AAPL.US, TSLA.US, VTI.US, AMZN.US, BTC-USD.CC, EURUSD.FOREX
         
         self.session = requests.Session()
