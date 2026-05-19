@@ -46,7 +46,7 @@ class eodhistoricaldata_md:
         """
         try:
             if not date_from:
-                date_from = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+                date_from = (datetime.now() - timedelta(days=10)).strftime('%Y-%m-%d')
             if not date_to:
                 date_to = datetime.now().strftime('%Y-%m-%d')
             
