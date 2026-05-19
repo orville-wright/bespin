@@ -18,7 +18,7 @@ This document provides comprehensive research findings for 11 additional market 
 ### 2. EOD Historical Data (eodhistoricaldata.com)
 - **Status**: ✅ Extractor Created (`eodhistoricaldata_md.py`)
 - **API Key Required**: YES
-- **Environment Variable**: `EODHISTORICALDATA_API_TOKEN`
+- **Environment Variable**: `EODHD_API_KEY`
 - **Free Tier**: 20 API calls/day
 - **Features**: End-of-day data, real-time quotes (15-20 min delay), fundamentals, technical indicators
 - **Demo Token**: "demo" works for AAPL.US, TSLA.US, VTI.US, AMZN.US, BTC-USD.CC, EURUSD.FOREX
@@ -181,7 +181,7 @@ Add these to your `.env` file for the new extractors:
 
 ```bash
 # EOD Historical Data
-EODHISTORICALDATA_API_TOKEN=your_eod_api_token_here
+EODHD_API_KEY=your_eod_api_token_here
 
 # FinancialModelingPrep
 FINANCIALMODELINGPREP_API_KEY=your_fmp_api_key_here
