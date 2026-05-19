@@ -417,7 +417,7 @@ MARKETSTACK_API_KEY=your_key
 STOCKDATA_API_TOKEN=your_token
 TWELVEDATA_API_KEY=your_key
 ALPHAVANTAGE_API_KEY=your_key
-EODHISTORICALDATA_API_TOKEN=your_token
+EODHD_API_KEY=your_token
 FINANCIALMODELINGPREP_API_KEY=your_key
 
 # Neo4j knowledge graph (optional)
