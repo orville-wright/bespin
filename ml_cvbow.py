@@ -7,6 +7,13 @@ import sys
 
 # ML capabilities
 from sklearn.feature_extraction.text import CountVectorizer
+import nltk
+
+# NTLK stopwords corpora kindeness...
+# Get absolute path to local nltk_data folder and tell ntlk to look there
+project_root = os.path.dirname(os.path.abspath(__file__))
+local_nltk_path = os.path.join(project_root, "nltk_data")
+nltk.data.path.insert(0, local_nltk_path)
 from nltk.corpus import stopwords
 
 # logging setup
