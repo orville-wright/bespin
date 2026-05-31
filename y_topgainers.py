@@ -178,13 +178,18 @@ class y_topgainers:
             co_name_lj = (re.sub(r'[\'\"]', '', co_name_lj) )             # remove " ' and strip leading/trailing spaces     
             price_cl = (re.sub(r'\,', '', price))                         # remove ,
             price_clean = float(price_cl)
-            change_clean = float(change_val)
+            change_sign_multiplier = -1 if change_sign == "-" or str(change_val).strip().startswith("-") else 1
+            change_cl = re.sub(r'[\+\-,]', "", str(change_val))
+            change_clean = float(change_cl) * change_sign_multiplier
 
             if pct_val == "N/A":
-                pct_val = float(0.0)                               # Bad data. FOund a filed with N/A instead of read num
+                pct_clean = float(0.0)                              # Bad data. FOund a filed with N/A instead of read num
             else:
+                pct_sign_multiplier = -1 if pct_sign == "-" or str(pct_val).strip().startswith("-") else 1
                 pct_cl = re.sub(r'[\%\+\-,]', "", pct_val )
-                pct_clean = float(pct_cl)
+                pct_clean = float(pct_cl) * pct_sign_multiplier
+                if change_clean < 0 and pct_clean > 0:
+                    pct_clean = -pct_clean
 
             ################################ 5 ####################################
             mktcap = (re.sub(r'[N\/A]', '0', mktcap))               # handle N/A
