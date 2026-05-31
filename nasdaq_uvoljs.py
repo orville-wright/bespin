@@ -160,19 +160,23 @@ class un_volumes:
             co_name_lj = (re.sub('[\']', '', co_name_lj) )                 # remove " ' and strip leading/trailing spaces
 
             price_cl = (re.sub('[ $,]', '', price))                        # remove $ sign
-            price_net_cl = (re.sub(r'[\-+]', '', price_net))                # remove - + signs
-            price_pct_cl = (re.sub(r'[\-+%]', '', price_pct))               # remove - + % signs
+            price_net_cl = (re.sub(r'[\+]', '', price_net))                 # remove + sign, preserve -
+            price_pct_cl = (re.sub(r'[\+%]', '', price_pct))                # remove +/% signs, preserve -
             vol_abs_cl = (re.sub('[,]', '', vol_abs))                      # remove ,
             vol_abs_cl = (re.sub('[,]', '', vol_abs))                      # remove ,
             vol_pct_cl = (re.sub('[%]', '', vol_pct))                      # remover %
+            price_net_clean = round(float(price_net_cl), 2)
+            price_pct_clean = round(float(price_pct_cl), 2)
+            if price_net_clean < 0 and price_pct_clean > 0:
+                price_pct_clean = -price_pct_clean
 
             self.list_data = [[ \
                        x, \
                        re.sub('\'', '', co_sym_lj), \
                        co_name_lj, \
                        round(float(price_cl), 2), \
-                       round(float(price_net_cl), 2), \
-                       round(float(price_pct_cl), 2), \
+                       price_net_clean, \
+                       price_pct_clean, \
                        round(float(vol_abs_cl)), \
                        round(float(vol_pct_cl), 1), \
                        time_now ]]
