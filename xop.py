@@ -1,6 +1,9 @@
 #! python3
 
 import asyncio
+import nest_asyncio
+nest_asyncio.apply()
+
 import random
 import pandas as pd
 #import modin.pandas as pd

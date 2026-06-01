@@ -4,6 +4,9 @@ os.environ["CRAWL4AI_LOG_LEVEL"] = "ERROR"
 
 import argparse
 import asyncio
+import nest_asyncio
+nest_asyncio.apply()
+
 from glob import escape
 from bs4 import BeautifulSoup
 from crawl4ai import LLMConfig
@@ -11,11 +14,13 @@ from crawl4ai import BrowserConfig
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
 from crawl4ai import JsonCssExtractionStrategy
 from datetime import datetime, date
+
 import hashlib
 import json
 import logging
 import numpy as np
 import pandas as pd
+
 from pathlib import Path
 import requests
 from requests_html import HTMLSession
