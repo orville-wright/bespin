@@ -157,8 +157,3 @@ dependencies = [
     "zipp",
     "zstandard>=0.25.0",
 ]
-# Git Safely freeze for uv.lock (universal target python version)
-# prevents Git from optomozing uv.lock on every machine each time project is run
-# foring contstant uv.lock overwrites and git change tracking of uv.lock
-[tool.uv]
-target-python = "3.12"
