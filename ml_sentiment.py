@@ -110,11 +110,13 @@ class ml_sentiment:
     @classmethod
     def preload_classifier(cls):
         """Spins up the model loading process in a background thread."""
-        cmi_debug = __name__+"::"+"Thread.#{yti} initlzr"
+        cmi_debug = __name__+"::"+"Thread initlzr"
         with cls._lock:
             if cls._classifier is None and cls._load_thread is None:
-                logging.info( f"%s - Background Thread init HF classifier pipeline..."  % cmi_debug )
+                print ( f"Background INIT Thread created..." )
+                logging.info( f"%s - Background Thread init HF classifier pipeline started..."  % cmi_debug )
                 cls._load_thread = threading.Thread(target=cls._bg_load_worker, daemon=True)
+                print ( f"Background INIT Thread started..." )
                 cls._load_thread.start()
 
     # #################### # class decorator #2
@@ -123,12 +125,14 @@ class ml_sentiment:
         """The worker method executed by the background thread."""
         try:
             from transformers import pipeline
+            print ( f"Scenario A: Transformer pipeline module imported..." )
             model_pipeline = pipeline(
                 task="sentiment-analysis",
                 model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
             )
             with cls._lock:
                 cls._classifier = model_pipeline
+                print ( f"Model pipeline is now WARM..." )
                 logging.info("Background model loading complete. GPU is warm!")
         except Exception as e:
             logging.error(f"Failed to background-load HF model: {e}")
@@ -139,16 +143,19 @@ class ml_sentiment:
         """Safely fetch HF classifier, waiting for the background thread if it's still running."""
         # Scenario A: Background thread was started and is still running
         if cls._load_thread is not None:
+            print ( f"Main Thread joined. Model pipeline is HOT" )
             cls._load_thread.join()  # Blocks main thread ONLY if the model isn't fully loaded yet
         
         # Scenario B: Preload wasn't called, or background thread finished
         with cls._lock:
             if cls._classifier is None:
                 from transformers import pipeline
+                print ( f"Forcing COLD Transformer pipeline module import NOW..." )
                 cls._classifier = pipeline(
                     task="sentiment-analysis",
                     model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
                 )
+                print ( f"Model pipeline was COLD..." )
             return cls._classifier
 
 
