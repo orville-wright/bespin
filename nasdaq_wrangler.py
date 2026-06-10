@@ -403,8 +403,8 @@ class nq_wrangler:
             logging.info('%s - Price NET is unchanged' % cmi_debug )
             cc_errors += 1
         else:
-            self.price_net_cl = (re.sub(r'[\-+]', '', self.price_net))              # remove - + signs
-            self.price_net_cl = float(self.price_net)
+            self.price_net_cl = (re.sub(r'[\+,]', '', self.price_net))              # remove +/, signs, preserve -
+            self.price_net_cl = float(self.price_net_cl)
 
         if self.price_pct == "N/A":
             self.price_pct_cl = float(0)
@@ -419,8 +419,10 @@ class nq_wrangler:
             logging.info('%s - Price pct is bad, field is Null/empty' % cmi_debug )
             cc_errors += 1
         else:
-            self.price_pct = (re.sub(r'[\-+%]', '', self.price_pct))                # remove - + % signs
+            self.price_pct = (re.sub(r'[\+%,]', '', self.price_pct))                # remove +/%/, signs, preserve -
             self.price_pct_cl = float(self.price_pct)
+            if self.price_net_cl < 0 and self.price_pct_cl > 0:
+                self.price_pct_cl = -self.price_pct_cl
 
         # ################# open price(s) need extra treatment & care...
         """
