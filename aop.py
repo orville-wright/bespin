@@ -428,7 +428,11 @@ def main():
             print ( " " )
             print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ]" )
             news_ai = ml_nlpreader(1, args, caller="news_ai")
-            sent_ai = ml_sentiment(1, args)
+            
+            # Threaded optimization : Phase 1
+            ml_sentiment.preload_classifier()
+            # create a Thread to background preload the heavy HF classifier pipeline
+            
             logging.info(f'%s - Open global LMBD KV cache engine...' % cmi_debug)
             lmdb_dbname = "LMDB_0001"
             lmdb_env = lmdb_io_eng("GLOBAL", lmdb_dbname, args)  # create instance of LMDB
@@ -436,6 +440,13 @@ def main():
             logging.info(f'%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
 
+            # Threaded optimization : Phase 2
+            # The articles_found scrape/skim takes 10 ~ 15 seconds to complete
+            # - This gives a fair time window to the HF Classifier pipeline preload Phase 1 Thread to complete.
+            # - once articles_found returns, we can instantiate an ml_sentiment class
+            # - which should be very fast, as its pipeline initiatization was done earlier
+            sent_ai = ml_sentiment(1, args)
+            
             _atc = 0     # article specific stats : tokenz count
             _acc = 0     # article specific stats : chars count
             _awc = 0     # article specific stats :  words count

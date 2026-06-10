@@ -8,6 +8,7 @@ import re
 import os
 import sys
 import logging
+import threading
 import argparse
 from rich import print
 import base64
@@ -17,7 +18,7 @@ from ml_cvbow import ml_cvbow
 import nltk.data
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from transformers import pipeline
+#from transformers import pipeline
 
 # ML / NLP section #############################################################
 class ml_sentiment:
@@ -34,6 +35,8 @@ class ml_sentiment:
     chunk_udid = 0      # working chunk UID
     classifier = None   # NLP classidier pipeline - real AI model LLM computation. GPU goes brrrr....!!
     _classifier = None  # optomized singleton (Class attribute) NLP classidier pipeline (class global)
+    _load_thread = None         # Track the background initialization worker
+    _lock = threading.Lock()    # Thread lock
     cr_package = None   # full reslts dict{} of dict_processor run
     cycle = 0           # class thread loop counter
     _cs_count = 0       # scentence count
@@ -87,19 +90,67 @@ class ml_sentiment:
         self._cs_count = 0
         self._cp_count = 0
         self._cr_count = 0
-        
+
+        """        
         # Initialzie the HF NLP classifier pipeline ONCE on class init.
         # this is the real AI model LLM computation. GPU goes brrrr....!!
         if ml_sentiment._classifier is None:
-            logging.info( f'%s - Init HF classifier model pipeline: mrm8488/distilroberta...' % cmi_debug )
+            logging.info( f'%s - Init HF classifier model pipeline NOW: mrm8488/distilroberta...' % cmi_debug )
             ml_sentiment._classifier = pipeline(
                 task="sentiment-analysis",
                 model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
             )
         # Reference the shared model
         self.classifier = ml_sentiment._classifier      # initialize the class classifier
-        self.tokenizer_mml = self.classifier.tokenizer.model_max_length  # initalize the class tokenizer
-        return
+        self.tokenizer_mml = self.classifier.tokenizer.model_max_length  # save model tokenizer max_length
+        """
+        #return      # techncially as Class init does not require a return
+
+    # #################### # clas decorator #1
+    @classmethod
+    def preload_classifier(cls):
+        """Spins up the model loading process in a background thread."""
+        cmi_debug = __name__+"::"+"Thread.#{yti} initlzr"
+        with cls._lock:
+            if cls._classifier is None and cls._load_thread is None:
+                logging.info( f"%s - Background Thread init HF classifier pipeline..."  % cmi_debug )
+                cls._load_thread = threading.Thread(target=cls._bg_load_worker, daemon=True)
+                cls._load_thread.start()
+
+    # #################### # class decorator #2
+    @classmethod
+    def _bg_load_worker(cls):
+        """The worker method executed by the background thread."""
+        try:
+            from transformers import pipeline
+            model_pipeline = pipeline(
+                task="sentiment-analysis",
+                model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
+            )
+            with cls._lock:
+                cls._classifier = model_pipeline
+                logging.info("Background model loading complete. GPU is warm!")
+        except Exception as e:
+            logging.error(f"Failed to background-load HF model: {e}")
+
+    # #################### # class decorator #3                           
+    @classmethod
+    def _get_classifier(cls):
+        """Safely fetch HF classifier, waiting for the background thread if it's still running."""
+        # Scenario A: Background thread was started and is still running
+        if cls._load_thread is not None:
+            cls._load_thread.join()  # Blocks main thread ONLY if the model isn't fully loaded yet
+        
+        # Scenario B: Preload wasn't called, or background thread finished
+        with cls._lock:
+            if cls._classifier is None:
+                from transformers import pipeline
+                cls._classifier = pipeline(
+                    task="sentiment-analysis",
+                    model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
+                )
+            return cls._classifier
+
 
     # #################################### 1
     def compute_sentiment(self, symbol, item_idx, scentxt, urlhash, ext):
@@ -139,6 +190,11 @@ class ml_sentiment:
         #logging.info( f'%s - Init HF classifier model pipeline: mrm8488/distilroberta...' % cmi_debug )
         #self.classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis")
         #self.tokenizer_mml = self.classifier.tokenizer.model_max_length
+
+        # Threaded Preload aware initlaizer
+        classifier = self._get_classifier()
+        self.tokenizer_mml = classifier.tokenizer.model_max_length
+        self.classifier = classifier
 
         self.ttc = 0
         self.twc = 0
