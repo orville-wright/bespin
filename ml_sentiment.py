@@ -54,7 +54,11 @@ class ml_sentiment:
     twc = 0             # Total cumulative Word count in this artcile being analyzed
     yti = 0
     
-    # Techcnial analysys dict defines sentiment score to description mapping
+    # Technical analysys dict defines sentiment score to description mapping
+    # each dict item is a list that contains 2 items
+    # - a sentiment description
+    # - a value assocaited to that description
+    # this is useful b/c we can access the listfrom within math/logic, e.g. s_categories[225][0]
     s_categories = {
             225: (['Bullishly positive', 225]),
             100: (['Trending bullish', 100]),
