@@ -69,7 +69,6 @@ uh = url_hinter(1, args)    # everyone needs to be able to get hints on a URL fr
 work_inst = 0
 yti = 1
 
-
 parser = argparse.ArgumentParser(prog="Aop", description="Entropy apperture engine")
 parser.add_argument('-a','--allnews', help='ML/NLP News sentiment AI for all stocks', action='store_true', dest='bool_news', required=False, default=False)
 parser.add_argument('-d','--deep', help='Deep converged multi data list', action='store_true', dest='bool_deep', required=False, default=False)
@@ -87,10 +86,11 @@ parser.add_argument('-u','--unusual', help='unusual up & down volume', action='s
 parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
 #
+
+"""
 parser.add_argument('--alpaca', help='Get Alpaca live quotes for symbol', action='store', dest='alpaca_symbol', required=False, default=False)
 parser.add_argument('--alpaca-bars', help='Get Alpaca OHLCV bars for symbol', action='store', dest='alpaca_bars', required=False, default=False)
 parser.add_argument('--alpaca-feed', help='Alpaca data feed: iex, sip, delayed_sip, boats, overnight, or otc', action='store', dest='alpaca_feed', required=False, default=None)
-"""
 parser.add_argument('--sec', help='Get SEC filings for symbol', action='store', dest='sec_symbol', required=False, default=False)
 parser.add_argument('--fred', help='Get FRED economic data snapshot', action='store_true', dest='bool_fred', required=False, default=False)
 parser.add_argument('--polygon', help='Get Polygon.io quote for symbol', action='store', dest='polygon_symbol', required=False, default=False)
@@ -110,7 +110,6 @@ parser.add_argument('--eodhistoricaldata', help='Get EOD Historical Data for sym
 parser.add_argument('--financialmodelingprep', help='Get FinancialModelingPrep data for symbol', action='store', dest='financialmodelingprep_symbol', required=False, default=False)
 parser.add_argument('--stooq', help='Get Stooq historical data for symbol', action='store', dest='stooq_symbol', required=False, default=False)
 """
-
 
 ############################# main() ##################################
 
@@ -837,7 +836,7 @@ def main():
     OHLCV bars data with 1-minute granularity
     """
     
-    if args['alpaca_symbol'] is not False:
+    if args['alpaca_symbol'] is True:
         alpaca_symbol = args['alpaca_symbol'].upper()
         print(f"========== Alpaca Live Quote for: {alpaca_symbol} ==========")
         
@@ -861,7 +860,7 @@ def main():
         
         print(" ")
         
-    if args['alpaca_bars'] is not False:
+    if args['alpaca_bars'] is True:
         bars_symbol = args['alpaca_bars'].upper()
         print(f"========== Alpaca OHLCV Bars for: {bars_symbol} ==========")
         
@@ -902,7 +901,7 @@ def main():
 #################################################################################
 
     # SEC EDGAR filings integration
-    if args['sec_symbol'] is not False:
+    if args['sec_symbol'] is True:
         sec_symbol = args['sec_symbol'].upper()
         print(f"========== SEC EDGAR Filings for: {sec_symbol} ==========")
         
@@ -981,7 +980,7 @@ def main():
 #####################################################################
 ##### Polygon.io integration
 #####
-    if args['polygon_symbol'] is not False:
+    if args['polygon_symbol'] is True:
         polygon_symbol = args['polygon_symbol'].upper()
         print(f"========== Polygon.io Data for: {polygon_symbol} ==========")
         
@@ -1037,7 +1036,7 @@ def main():
 
 #####################################################################
 ##### Tiingo comprehensive data integration
-    if args['tiingo_symbol'] is not False:
+    if args['tiingo_symbol'] is True:
         tiingo_symbol = args['tiingo_symbol'].upper()
         print(f"========== Tiingo Comprehensive Data for: {tiingo_symbol} ==========")
         
