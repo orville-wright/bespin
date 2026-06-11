@@ -6,7 +6,6 @@ import os
 import sys
 
 # ML capabilities
-from sklearn.feature_extraction.text import CountVectorizer
 import nltk
 
 # NTLK stopwords corpora kindeness...
@@ -44,6 +43,11 @@ class ml_cvbow:
         cmi_debug = __name__+"::"+self.__init__.__name__+".#"+str(self.yti)
         logging.info('%s - INSTANTIATE' % cmi_debug )
         # init empty DataFrame with present colum names
+        
+        #  optimzation
+        # only import sklearn modules when this code is needed. Not globally at execute time
+        from sklearn.feature_extraction.text import CountVectorizer
+
         self.args = global_args
         nltk_data_path = os.path.abspath("./nltk_data/corpora/")
         #stop_words = set(stopwords.words('english'))
@@ -63,7 +67,7 @@ class ml_cvbow:
         """
         cmi_debug = __name__+"::"+self.fitandtransform.__name__+".#"+str(self.yti)
         logging.info('%s - Init Vectorizor Fit/Transform on corpus...' % cmi_debug )
-
+        
         # fit_transform is is equivalent to fit followed by transform, but more efficiently implemented
         # the data & attributes available are also differnet to fit followed by transform
         self.ft_tdmatrix = self.vectorizer.fit_transform(self.corpus)
