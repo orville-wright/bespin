@@ -27,6 +27,7 @@ class ml_cvbow:
     """
 
     # global accessors
+    _CountVectorizer_cls = None  # Class-level cache for the imported module
     ft_tdmatrix = ""        # term-document matrix learnt from a FIT & TRANSFORM count vectorization
     fo_tokens = ""          # Vocabulary of tokens in a doc (NOT a Term doc Matrix)
     vectorizer = ""         # tokenized & count matrix handle
@@ -39,23 +40,56 @@ class ml_cvbow:
     cycle = 0               # class thread loop counter
     args = []
 
+
+    @classmethod
+    def _get_vectorizer_class(cls):
+        """Lazy-loads the scikit-learn module only when requested. - see reset_corpus() for loader trigger"""
+        if cls._CountVectorizer_cls is None:
+            from sklearn.feature_extraction.text import CountVectorizer
+            cls._CountVectorizer_cls = CountVectorizer
+        return cls._CountVectorizer_cls
+
+    # ########## init    
     def __init__(self, yti, global_args):
         cmi_debug = __name__+"::"+self.__init__.__name__+".#"+str(self.yti)
         logging.info('%s - INSTANTIATE' % cmi_debug )
         # init empty DataFrame with present colum names
-        
-        #  optimzation
-        # only import sklearn modules when this code is needed. Not globally at execute time
-        from sklearn.feature_extraction.text import CountVectorizer
 
         self.args = global_args
+        CountVectorizer = self._get_vectorizer_class()  # Safely fetch the lazy-loaded class blueprint
+        self.vectorizer = CountVectorizer()
+        
         nltk_data_path = os.path.abspath("./nltk_data/corpora/")
         #stop_words = set(stopwords.words('english'))
-        self.vectorizer = CountVectorizer()
         #self.vectorizer = CountVectorizer(stop_words=stopwords)
         return
 
 # ########## 1
+    def reset_corpus(self, new_corpus):
+        """
+        reset the corpus and initialize it with something new
+        new_corpus = string of data
+        Note: This method trigger importing the sklearn module
+        - so it must be the first method ever called once the class has been instantiated.
+        - otherwise, the sklearn module wont be loaded
+        """
+        cmi_debug = __name__+"::"+self.reset_corpus.__name__+".#"+str(self.yti)
+        logging.info('%s - IN' % cmi_debug )
+
+	# reset corpus to something new OR empty
+        if new_corpus == 0:
+            self.corpus = []
+            return
+        else:
+            self.corpus.clear()
+            # Fetch the class lazily here too
+            CountVectorizer = self._get_vectorizer_class()
+            self.vectorizer = CountVectorizer()  # Re-initialize the vectorizer as EMPTY
+            self.corpus.append(new_corpus)
+
+        return
+    
+# ########## 2
     def fitandtransform(self):
         """
         Learn the vocabulary dictionary and return document-term matrix.
@@ -74,7 +108,7 @@ class ml_cvbow:
         logging.info('%s - Vectorizor fit complete. TD Matrix built !' % cmi_debug )
         return self.ft_tdmatrix
 
-# ########## 2
+# ########## 3
     def fitonly(self):
         """
         ONLY learn the vocabulary of tokens in raw docusment, but dont build a Term Document matrix.
@@ -89,7 +123,7 @@ class ml_cvbow:
         self.fo_tokens = self.vectorizer.fit(self.corpus)
         return self.fo_tokens
 
-# ########## 3
+# ########## 4
     def view_tdmatrix(self):
         """
         Decode the full CSR matrix and view the elements in a human readable table.
@@ -119,14 +153,14 @@ class ml_cvbow:
 
         return
 
-# ########## 4
+# ########## 5
     def is_scentence(self, p_line):
          if p_line.strip().endswith(('.', '?', '!')):
              return True
          else:
              return False
 
-# ########## 5
+# ########## 6
     def is_paragraph(self, p_line):
          if p_line.count('.') > 1 or p_line.count('?') > 1 or p_line.count('!') > 1:
              return True
@@ -168,25 +202,3 @@ class ml_cvbow:
         vmax_words.append(int(vmax))
         logging.info('%s      - High Freq words identieid & computed !' % cmi_debug )
         return vmax_words        # the English word with the highest frequency count
-
-# ########## 7
-    def reset_corpus(self, new_corpus):
-        """
-        reset the corpus and initialize it with something new
-        new_corpus = string of data
-        """
-        cmi_debug = __name__+"::"+self.reset_corpus.__name__+".#"+str(self.yti)
-        logging.info('%s - IN' % cmi_debug )
-
-	# reset corpus to something new OR empty
-        if new_corpus == 0:
-            self.corpus = []
-            return
-        else:
-            self.corpus.clear()
-            self.vectorizer = CountVectorizer()  # Re-initialize the vectorizer as EMPTY
-            self.corpus.append(new_corpus)
-
-        return
-
-
