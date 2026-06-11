@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! python3
 
 import asyncio
 import random
@@ -31,8 +31,9 @@ from y_techevents import y_techevents
 from y_topgainers import y_topgainers
 from datastore_eng_LMDB import lmdb_io_eng
 
-from data_engines_fundamentals.alphavantage_md import alphavantage_md
 from neo4j_graphdb import neo4j_auradb
+"""
+from data_engines_fundamentals.alphavantage_md import alphavantage_md
 from data_engines_fundamentals.fred_md import fred_md
 from data_engines_fundamentals.eodhistoricaldata_md import eodhistoricaldata_md
 from data_engines_fundamentals.financialmodelingprep_md import financialmodelingprep_md
@@ -53,6 +54,7 @@ from data_engines_news.fxstreet_news import fxstreet_news
 from data_engines_news.investing_news import investing_news
 from data_engines_news.hedgeweek_news import hedgeweek_news
 from data_engines_news.gurufocus_news import gurufocus_news
+"""
 
 # Main() Global attributes
 global args
