@@ -128,10 +128,12 @@ class y_cookiemonster:
                 page = browser.new_page()
                 
                 # Navigate to Yahoo Finance
-                page.goto(js_url)
+                #page.goto(js_url)
+                age.goto(js_url, wait_until="domcontentloaded")
                 
                 # Wait for the content to fully render (Yahoo uses heavy JS)
-                page.wait_for_load_state("networkidle")
+                #page.wait_for_load_state("networkidle")
+                #page.wait_for_selector("table", timeout=10000)
                 
                 # Get the fully rendered HTML
                 #html_content = page.content()
