@@ -1,21 +1,21 @@
 #! python3
 
-from requests_html import HTMLSession
+#from requests_html import HTMLSession
 import pandas as pd
 #import modin.pandas as pd
 import numpy as np
 import re
-import os
-import sys
+#import os
+#import sys
 import logging
 import threading
-import argparse
+#import argparse
 from rich import print
 import base64
 import zstandard as zstd
 
 from ml_cvbow import ml_cvbow
-import nltk.data
+#import nltk.data
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 #from transformers import pipeline

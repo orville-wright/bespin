@@ -1,9 +1,8 @@
 #! python3
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 import logging
-import argparse
 import os
-import sys
+#import sys
 
 # ML capabilities
 import nltk
