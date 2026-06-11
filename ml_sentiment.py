@@ -28,40 +28,40 @@ class ml_sentiment:
     """
 
     # global accessors
-    active_urlhash = None  # Current URL hash being processed
-    args = []           # class dict to hold global args being passed in from main() methods
-    art_buffer = []     # Buffer to hold article text for processing
-    blocket_udid = 0    # working blocklet UID
-    chunk_udid = 0      # working chunk UID
-    classifier = None   # NLP classidier pipeline - real AI model LLM computation. GPU goes brrrr....!!
-    _classifier = None  # optomized singleton (Class attribute) NLP classidier pipeline (class global)
+    active_urlhash = None   # Current URL hash being processed
+    args = []               # class dict to hold global args being passed in from main() methods
+    art_buffer = []         # Buffer to hold article text for processing
+    blocket_udid = 0        # working blocklet UID
+    chunk_udid = 0          # working chunk UID
+    classifier = None       # NLP classidier pipeline - real AI model LLM computation. GPU goes brrrr....!!
+    _classifier = None      # optomized singleton (Class attribute) NLP classidier pipeline (class global)
     _load_thread = None         # Track the background initialization worker
     _lock = threading.Lock()    # Thread lock
-    cr_package = None   # full reslts dict{} of dict_processor run
-    cycle = 0           # class thread loop counter
-    _cs_count = 0       # scentence count
-    _cp_count = 0       # paragraph count
-    _cr_count = 0       # random text block count
+    cr_package = None       # full reslts dict{} of dict_processor run
+    cycle = 0               # class thread loop counter
+    _cs_count = 0           # scentence count
+    _cp_count = 0           # paragraph count
+    _cr_count = 0           # random text block count
     kv_json_dataset = None  # JSON dataset to be used for kvstore
     df0_row_count = 0
-    empty_vocab = 0     # tracker that LLM found empty vocab
-    mlnlp_uh = None     # URL Hinter instance
-    sen_df0 = None      # sentiment for this artile ONLY (gets overwritten each time per article)
-    sen_df1 = None      # uNUSED
-    sen_df2 = None      # ? unknown
-    sen_df3 = None      # A long lasting DF to collect all sentiment data
-    sen_data = []       # Data to be added to the DataFrame
+    empty_vocab = 0         # tracker that LLM found empty vocab
+    mlnlp_uh = None         # URL Hinter instance
+    sen_df0 = None          # sentiment for this artile ONLY (gets overwritten each time per article)
+    sen_df1 = None          # NUSED
+    sen_df2 = None          # ? unknown
+    sen_df3 = None          # A long lasting DF to collect all sentiment data
+    sen_data = []           # Data to be added to the DataFrame
     sentiment_count = None  # Sentiment counts for this article
-    tsenparas = 0       # total sentences & paragraphs
-    ttc = 0             # Total Tokens generated in the scnetcne being analyzed
-    twc = 0             # Total cumulative Word count in this artcile being analyzed
+    tsenparas = 0           # total sentences & paragraphs
+    ttc = 0                 # Total Tokens generated in the scnetcne being analyzed
+    twc = 0                 # Total cumulative Word count in this artcile being analyzed
     yti = 0
     
-    # Technical analysys dict defines sentiment score to description mapping
+    # Technical analysys lookup dict defines sentiment score to description mapping
     # each dict item is a list that contains 2 items
     # - a sentiment description
     # - a value assocaited to that description
-    # this is useful b/c we can access the listfrom within math/logic, e.g. s_categories[225][0]
+    # this is useful b/c we can access the list from within math/logic, e.g. s_categories[225][0]
     s_categories = {
             225: (['Bullishly positive', 225]),
             100: (['Trending bullish', 100]),
@@ -91,22 +91,9 @@ class ml_sentiment:
         self._cp_count = 0
         self._cr_count = 0
 
-        """        
-        # Initialzie the HF NLP classifier pipeline ONCE on class init.
-        # this is the real AI model LLM computation. GPU goes brrrr....!!
-        if ml_sentiment._classifier is None:
-            logging.info( f'%s - Init HF classifier model pipeline NOW: mrm8488/distilroberta...' % cmi_debug )
-            ml_sentiment._classifier = pipeline(
-                task="sentiment-analysis",
-                model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
-            )
-        # Reference the shared model
-        self.classifier = ml_sentiment._classifier      # initialize the class classifier
-        self.tokenizer_mml = self.classifier.tokenizer.model_max_length  # save model tokenizer max_length
-        """
         #return      # techncially as Class init does not require a return
 
-    # #################### # clas decorator #1
+    # #################### # init class decorator #1
     @classmethod
     def preload_classifier(cls):
         """Spins up the model loading process in a background thread."""
@@ -119,7 +106,7 @@ class ml_sentiment:
                 print ( f"Background INIT Thread started..." )
                 cls._load_thread.start()
 
-    # #################### # class decorator #2
+    # #################### # init class decorator #2
     @classmethod
     def _bg_load_worker(cls):
         """The worker method executed by the background thread."""
@@ -137,7 +124,7 @@ class ml_sentiment:
         except Exception as e:
             logging.error(f"Failed to background-load HF model: {e}")
 
-    # #################### # class decorator #3                           
+    # #################### # init class decorator #3                           
     @classmethod
     def _get_classifier(cls):
         """Safely fetch HF classifier, waiting for the background thread if it's still running."""
@@ -159,6 +146,7 @@ class ml_sentiment:
             return cls._classifier
 
 
+    # General class factory methods
     # #################################### 1
     def compute_sentiment(self, symbol, item_idx, scentxt, urlhash, ext):
         """
@@ -172,15 +160,14 @@ class ml_sentiment:
         5. ext = extractor type (0 = Crawl4ai, 1 = BS4)
         
         Tokenize and compute scentence chunk sentiment
-        scentxt = BS4 all <p> zones that look/feel like scentence/paragraph text
+        scentxt = BS4 all html <p> zones that look/feel like scentence/paragraph text
                 = Crawl4ai its 1 bulk block of article text
-        WARN:  scentext is the article test, but it may need to eb pre-0processed depending on which extractor was used (i.e. BS4 or C4)
-        WARN: BS4 extracts html <p> tag elements, NOT the simple raw text. <p> tages contain the text but must be treated as a raw html page data.
+        WARN: scentext is the article test, but it may need to be pre-processed depending on which extractor was used (i.e. BS4 or C4)
+        WARN: BS4 extracts html <p> tag elements, NOT the simple raw text. <p> tags contain the text but must be pre-processed as an html element.
               crawl4ai extracts the bulk raw text and discards all surrounding html tags, dumping a single blob of text into a list[].
-              crawl4ai text must be chunked @ model truncation length, i.e.  tokenizer_mml (e.e.g 512 chars)
+              all text blocks (especially craw4ai block) must be chunked @ model LLM truncation length, i.e.  tokenizer_mml (e.e.g 512 chars)
               BS4 also checks LLM truncation length but <p> tags contain short text strings, and are less likely to be truncated.... but theres more of them.  
         """
-        #if self.args['bool_verbose'] is True:        # Logging level
         self.yti = item_idx
         self.active_urlhash = urlhash
         cmi_debug = __name__+"::"+self.compute_sentiment.__name__+".#"+str(self.yti)
@@ -194,11 +181,7 @@ class ml_sentiment:
 
         # Initialzie the HF NLP LLM classifier pipeline
         # this is the real AI model LLM computation. GPU goes brrrr....!!
-        #logging.info( f'%s - Init HF classifier model pipeline: mrm8488/distilroberta...' % cmi_debug )
-        #self.classifier = pipeline(task="sentiment-analysis", model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis")
-        #self.tokenizer_mml = self.classifier.tokenizer.model_max_length
-
-        # Threaded Preload aware initlaizer
+        # Threaded Preload aware LLM initlaizer
         classifier = self._get_classifier()
         self.tokenizer_mml = classifier.tokenizer.model_max_length
         self.classifier = classifier
@@ -565,7 +548,7 @@ class ml_sentiment:
             1 = RuntimeError
             2 = Empty Vocab
             3 = Other Exception
-        - removes stopwords (generic non-domain word noise that dilute sentiment scoring)
+        - removes stopwords (generic non-domain word noise that dilutes sentiment scoring)
         - Calculates High Frequency Words inside the HOT classified LLM Transformer
         - prepares Global DF update results package
         - calls save_sentiment_df() to update sentiment metrics
