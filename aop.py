@@ -707,14 +707,6 @@ def main():
                 except Exception as e:
                         logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
                         return False
-            
-
-
-
-#################################################################################
-##############              MARKET DATA EXTRACTORS                     ##########
-#################################################################################
-
 
 #################################################################################
 ###############                    QUOTES                            ############
@@ -828,15 +820,20 @@ def main():
         print ( f"========================================================" )
         print ( " " )
 
-#################################################################################
-# ALPACA API Integration - Live quotes and bars ################################
-#################################################################################
 
-    """
-    ALPACA API INTEGRATION
-    Live quotes via Alpaca API - real-time data during market hours
-    OHLCV bars data with 1-minute granularity
-    """
+if __name__ == '__main__':
+    main()
+
+"""
+    #################################################################################
+    # ALPACA API Integration - Live quotes and bars ################################
+    #################################################################################
+
+    #
+    # ALPACA API INTEGRATION
+    # Live quotes via Alpaca API - real-time data during market hours
+    # OHLCV bars data with 1-minute granularity
+    #
     
     if args['alpaca_symbol'] is True:
         alpaca_symbol = args['alpaca_symbol'].upper()
@@ -898,7 +895,6 @@ def main():
         
         print(" ")
 
-"""
 #################################################################################
 # NEW DATA SOURCES - SEC, FRED, Polygon.io Integration ########################
 #################################################################################
@@ -1664,6 +1660,3 @@ def main():
         print(" ")
 
 """
-
-if __name__ == '__main__':
-    main()
