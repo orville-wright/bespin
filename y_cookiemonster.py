@@ -5,6 +5,7 @@ import logging
 import pandas as pd
 from requests_html import HTMLSession
 import requests
+from playwright.sync_api import sync_playwright
 #import modin.pandas as pd
 
 # logging setup
@@ -106,6 +107,7 @@ class y_cookiemonster:
         logging.info( f"%s - URL: {js_url}" % cmi_debug )
         logging.info( f"%s - Init JS_session HTMLsession() setup" % cmi_debug )
 
+        """
         js_session = HTMLSession()
         try:
             with js_session.get( js_url ) as self.js_resp0:
@@ -117,5 +119,25 @@ class y_cookiemonster:
                 js_session.cookies.update(self.yahoo_headers)
         finally:
             js_session.close()
+        """
+
+        # playwright migration code
+        with sync_playwright() as p:
+                # Launch a headless browser
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                
+                # Navigate to Yahoo Finance
+                page.goto(js_url)
+                
+                # Wait for the content to fully render (Yahoo uses heavy JS)
+                page.wait_for_load_state("networkidle")
+                
+                # Get the fully rendered HTML
+                #html_content = page.content()
+                self.js_resp0 = page.content()
+                browser.close()
+                
+                #return html_content
 
         return self.js_resp0
