@@ -67,16 +67,14 @@ class y_topgainers:
         cmi_debug = __name__+"::"+self.ext_get_data.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
         logging.info('%s - ext request pre-processed by cookiemonster...' % cmi_debug )
-        # use preexisting resposne from  managed req (handled by cookie monster) 
+
+        # pickup pre-renderd playwright page from (handled by Y_cookiemonster) 
         r = self.ext_req
         logging.info( f"%s - BS4 stream processing..." % cmi_debug )
-
-        # self.soup = BeautifulSoup(r.text, 'html.parser')
-        self.soup = BeautifulSoup(r, 'html.parser')     # playwright alignment
+        self.soup = BeautifulSoup(r, 'html.parser')     # playwright rendered data
 
         self.tag_tbody = self.soup.find('tbody')
         self.tr_rows = self.tag_tbody.find_all("tr")
-        #self.all_tag_tr = self.soup.find(attrs={"class": "simpTblRow"})
         logging.info('%s Page processed by BS4 engine' % cmi_debug )
         return
     
