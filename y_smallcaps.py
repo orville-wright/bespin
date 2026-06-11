@@ -71,24 +71,24 @@ class smallcap_screen:
 # method #1
     def ext_get_data(self, yti):
         """
-        Connect to finance.yahoo.com and extract (scrape) the raw string data out of
-        the webpage data tables. Returns a BS4 handle.
-        Send hint which engine processed & rendered the html page
-        not implimented yet...
-            0. Simple HTML engine
-            1. JAVASCRIPT HTML render engine (down redering a complex JS page in to simple HTML)
+        Activate BeautifulSoup4 to extract the raw html data from a
+        previously rendered webpage - (rendered by y_cookiemonster).
+        NOTE:
+        - y_cookiemonster now uses playwright for rendering
+        - ext_req is now the full html page as rendered by playwright (not a response object
         """
         self.yti = yti
         cmi_debug = __name__+"::"+self.ext_get_data.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
         logging.info('%s - ext request pre-processed by cookiemonster...' % cmi_debug )
-        # use preexisting resposne from  managed req (handled by cookie monster) 
+
+        # pickup pre-renderd playwright page from (handled by Y_cookiemonster)
         r = self.ext_req
         logging.info( f"%s - BS4 stream processing..." % cmi_debug )
-        self.soup = BeautifulSoup(r.text, 'html.parser')
+        self.soup = BeautifulSoup(r, 'html.parser')     # playwright rendered data
+
         self.tag_tbody = self.soup.find('tbody')
         self.tr_rows = self.tag_tbody.find_all("tr")
-        #self.all_tag_tr = self.soup.find(attrs={"class": "simpTblRow"})
         logging.info('%s Page processed by BS4 engine' % cmi_debug )
         return
 
