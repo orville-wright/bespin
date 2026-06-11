@@ -15,9 +15,9 @@ import hashlib
 #from rich.markup import escape
 
 import asyncio
-import nest_asyncio
+#import nest_asyncio
 # Apply netst_asyncio patch immediately
-nest_asyncio.apply()
+#nest_asyncio.apply()
 
 import os
 import json

@@ -86,6 +86,7 @@ parser.add_argument('-u','--unusual', help='unusual up & down volume', action='s
 parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
 #
+"""
 parser.add_argument('--alpaca', help='Get Alpaca live quotes for symbol', action='store', dest='alpaca_symbol', required=False, default=False)
 parser.add_argument('--alpaca-bars', help='Get Alpaca OHLCV bars for symbol', action='store', dest='alpaca_bars', required=False, default=False)
 parser.add_argument('--alpaca-feed', help='Alpaca data feed: iex, sip, delayed_sip, boats, overnight, or otc', action='store', dest='alpaca_feed', required=False, default=None)
@@ -107,6 +108,7 @@ parser.add_argument('--twelvedata', help='Get Twelve Data comprehensive data for
 parser.add_argument('--eodhistoricaldata', help='Get EOD Historical Data for symbol', action='store', dest='eodhistoricaldata_symbol', required=False, default=False)
 parser.add_argument('--financialmodelingprep', help='Get FinancialModelingPrep data for symbol', action='store', dest='financialmodelingprep_symbol', required=False, default=False)
 parser.add_argument('--stooq', help='Get Stooq historical data for symbol', action='store', dest='stooq_symbol', required=False, default=False)
+"""
 
 
 ############################# main() ##################################
