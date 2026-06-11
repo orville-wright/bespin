@@ -11,8 +11,7 @@ from glob import escape
 from bs4 import BeautifulSoup
 from crawl4ai import LLMConfig
 from crawl4ai import BrowserConfig
-# moved down into calleing method to optomize boot time
-# from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
 from crawl4ai import JsonCssExtractionStrategy
 from datetime import datetime, date
 
@@ -257,11 +256,7 @@ class yfnews_reader:
         Symbol: Stock symbol NEWS FEED for articles (e.g. https://finance.yahoo.com/quote/OTLY/news?p=OTLY )
         Scan_type: 0 = html | 1 = crawl4ai extraction (deprecated)
         Share class accessors of where the New Articles live
-        """
-        # deferr crawl4ai module import until its absoluetly necessary
-        # to optomize main code boot up time
-        from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
-        
+        """       
         cmi_debug = __name__+"::" + self.yahoofin_news_depth0.__name__+".#"+str(self.yti)+"."+str(idx_x)+"_ASYNC"
         if not self.yfqnews_url or not isinstance(self.yfqnews_url, str):       # set  @async_nlp_read_one by form_endpoint()
             logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
