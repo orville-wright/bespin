@@ -1,5 +1,6 @@
 #! python3
 
+import websockets.client  # Force-loads the client module into the websockets namespace
 import asyncio
 import random
 import pandas as pd
