@@ -469,21 +469,22 @@ def main():
             ai_sent_start_time = time.perf_counter()  # Mark the start time
             antibot_load_balancer = 0
             ai_nlp_cycle = int(0)
-            for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # all pages extrated in ml_ingest
+            for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # Main LOOP - all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()                    # reset DataFrame for each article
                 thint = news_ai.nlp_summary_report(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for      
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    # scraper loadbalancer, Anti-bot avoidance & performance balancing
+                    # ################################################################
+                    # Anti-bot avoidance & performance scraper load-balancer
                     # WARN:  executes sentiment_ai.compute_sentiment()
-                    if antibot_load_balancer == 0:                          # randomize  craw4ai / BS4 scrapers
+                    if antibot_load_balancer == 0:                  # randomize  craw4ai / BS4 scrapers
                         _atc, _awc, final_results = news_ai.yfn.artdata_C4_depth3(sn_idx, sent_ai, lmdb_env)    # craw4ai engine
                     else:
                         _atc, _awc, final_results = news_ai.yfn.artdata_BS4_depth3(sn_idx, sent_ai, lmdb_env)   # BS4 engine 
                     _rnd_loadb = random.randint(1, 100)             # randomize load balancer decison
                     if _rnd_loadb % 2 == 0:
-                        antibot_load_balancer = 0                           # choose CRAW4AI scraper (+ unified BS4/C4 chunker)
+                        antibot_load_balancer = 0                   # choose CRAW4AI scraper (+ unified BS4/C4 chunker)
                     else:
-                        antibot_load_balancer = 1                           # choose BS4 scraper (+ unified BS4/C4 chunker)
+                        antibot_load_balancer = 1                   # choose BS4 scraper (+ unified BS4/C4 chunker)
                     if _atc == 0 and _awc == 0 and final_results is None:  # error state (extract FAILURE)
                         continue
 
@@ -575,11 +576,11 @@ def main():
             # DONE
             # - cycling through all articles for this stock symbol
             # - computing sentiment for all articles found
-            # - Display final stats and results next
+            # - Display final stats and results Summary report
 
             # DEBUG
             if args['bool_verbose'] is True:        # Logging level
-                news_ai.yfn.dump_ml_ingest()
+                news_ai.yfn.dump_ml_ingest()        # the list of candidate articles we read
                 #print (f"{sent_ai.sen_df0}")
  
             #sent_ai.sen_df1 = sent_ai.sen_df0.groupby('snt').agg(['count'])
@@ -627,6 +628,9 @@ def main():
             ai_sent_end_time = time.perf_counter()                          # Mark the end time
             ai_sent_time = ai_sent_end_time - ai_sent_start_time            # compute total time
 
+            # #############################################
+            # Final Summary report
+            # #############################################
             print ( f"========================= Final Sentiment Analysis for: {news_symbol.upper()} ================================" )       
             precise_results = sent_ai.sentiment_metrics(
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
@@ -635,12 +639,16 @@ def main():
             print (f"\n=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ==================================" )
             print (f"LLM Vec Tokenz:  {_ttcz} - Chars: {_tccz} / Words: {_twcz} / scent/paras: {(_tscz + _tpcz + _trcz)} | AI read time: {(ai_sent_time / 60):.2f} mins" )
             print (f"Human read time: {(hpt_mins):.1f} mins ({(hpt_hours):.1f} hours)  | Human analyst time: {analyst_time:.1f} hours" )
-            print (f"AI performance:  {round((hpt_mins * 60) / (ai_sent_time / 60))} Faster than a Human  |   Analyst cost: ${round(analyst_cost):,}" )
+            print (f"AI performance:  {round((hpt_mins * 60) / (ai_sent_time / 60))}X Faster than a Human  |   Analyst cost: ${round(analyst_cost):,}" )
             print (f" ")
             
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             
+            # ############### Done reading many articles ###################
+
+
+
             #################################################################
             # Neo4j DATBASE FUNCTIONS
             # KGdb stats
