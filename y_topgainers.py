@@ -1,15 +1,13 @@
 #! python3
-from bs4 import BeautifulSoup
-import logging
-import numpy as np
-import pandas as pd
-import re
 import requests
-from rich import print
-#import modin.pandas as pd
+from bs4 import BeautifulSoup
+import pandas as pd
+import numpy as np
+import re
+import logging
 import time
+from rich import print
 
-# logging setup
 logging.basicConfig(level=logging.INFO)
 
 #####################################################

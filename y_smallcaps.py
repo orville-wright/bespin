@@ -2,16 +2,12 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-#import modin.pandas as pd
 import numpy as np
 import re
 import logging
-import argparse
 import time
 from rich import print
 
-
-# logging setup
 logging.basicConfig(level=logging.INFO)
 
 #####################################################
@@ -193,6 +189,8 @@ class smallcap_screen:
             vol = next(extr_strs)            # 6 : volume with scale indicator/ e.g "70.250k"
             avg_vol = next(extr_strs)        # 7 : Avg. vol over 3 months) / e.g "61,447"
             mktcap = next(extr_strs)         # 8 : Market cap with scale indicator / e.g "15.753B"
+            
+            
             ############################### 4 ####################################
             # now wrangle the data...
             co_sym_lj = f"{co_sym:<6}"                                   # left justify TXT in DF & convert to raw string
@@ -336,7 +334,7 @@ class smallcap_screen:
         """ 1. Sort by Cur_price """
         """ 2. exclude any company with Market Cap > $299M """
         """ 3. manage company's with Market cap in BILLION's (requires special handeling) """
-        """ 3. exclude any comany with %gain less than 5% """
+        """ 3. exclude any company with %gain less than 5% """
         """ 4. SMALL CAP stocks only - Excludes Medium. Large, Mega cap companies!!"""
 
         cmi_debug = __name__+"::"+self.screener_logic.__name__+".#"+str(self.yti)
@@ -360,7 +358,7 @@ class smallcap_screen:
         lowconame = lowsym_ser.iloc[2]
         lowpctchange = lowsym_ser.iloc[5]
 
-        print ( f"\n========== Small cap Analysis / @ Mkt Cap > $299M ===============================================" )
+        print ( "\n========== Small cap Analysis / @ Mkt Cap > $299M ===============================================" )
         # Allways make sure this is key #1 in the recommendations dict
         rx['1'] = ('Small cap % gainer:', lowsym.rstrip(), '$'+str(ulp), lowconame.rstrip(), '+%'+str(lowpctchange) )
 

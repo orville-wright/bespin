@@ -34,6 +34,8 @@ from datastore_eng_LMDB import lmdb_io_eng
 
 from neo4j_graphdb import neo4j_auradb
 """
+Disbaled for now
+TODO: Move out to xop.py
 from data_engines_fundamentals.alphavantage_md import alphavantage_md
 from data_engines_fundamentals.fred_md import fred_md
 from data_engines_fundamentals.eodhistoricaldata_md import eodhistoricaldata_md
@@ -896,6 +898,7 @@ def main():
         
         print(" ")
 
+"""
 #################################################################################
 # NEW DATA SOURCES - SEC, FRED, Polygon.io Integration ########################
 #################################################################################
@@ -1660,6 +1663,7 @@ def main():
         
         print(" ")
 
+"""
 
 if __name__ == '__main__':
     main()
