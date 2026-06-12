@@ -97,9 +97,9 @@ class ml_sentiment:
     @classmethod
     def preload_classifier(cls):
         """Spins up the model loading process in a background thread."""
-        cmi_debug = __name__+"::"+"Thread initlzr"
         with cls._lock:
             if cls._classifier is None and cls._load_thread is None:
+                cmi_debug = __name__+"::"+"Thread initlzr"
                 logging.info( f"%s - Background Thread init HF classifier pipeline started..."  % cmi_debug )
                 print ( "Main thread: Creating new Background LLM INIT thread..." )
                 cls._load_thread = threading.Thread(target=cls._bg_load_worker, daemon=True)
@@ -112,17 +112,18 @@ class ml_sentiment:
         """The worker method executed by the background thread."""
         try:
             from transformers import pipeline
-            print ( "Bkgrnd worker thread: LLM pipeline module importing..." )
+            print ( "Thread initalizer: worker imported HF LLM piple module..." )
             model_pipeline = pipeline(
                 task="sentiment-analysis",
                 model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
             )
             with cls._lock:
                 cls._classifier = model_pipeline
-                print ( "Bkgrnd worker thread: Model pipeline is now WARM..." )
-                logging.info("Background model loading complete. GPU is warm!")
+                cmi_debug = __name__+"::"+"Thread bg_load_worker"
+                print ( "Thread initalizer: Worker pre-warming LLM Model pipeline..." )
+                logging.info( f"Background model loading complete. GPU is warm!" % cmi_debug )
         except Exception as e:
-            logging.error(f"Bkgrnd worker thread: Failed to background-load HF model: {e}")
+            logging.error(f"bg_load_worker: worker failed to background-load HF model: {e}")
 
     # #################### # init class decorator #3                           
     @classmethod
@@ -130,6 +131,7 @@ class ml_sentiment:
         """Safely fetch HF classifier, waiting for the background thread if it's still running."""
         # Scenario A: Background thread was started and is still running
         if cls._load_thread is not None:
+            cmi_debug = __name__+"::"+"Thread get_classifier"
             cls._load_thread.join()  # Blocks main thread ONLY if the model isn't fully loaded yet
             logging.info( f"%s - Main thread: Model pipeline is HOT"  % cmi_debug )
             # print ( "Main thread: Model pipeline is HOT" )
@@ -137,6 +139,7 @@ class ml_sentiment:
         # Scenario B: Preload wasn't called, or background thread finished
         with cls._lock:
             if cls._classifier is None:
+                cmi_debug = __name__+"::"+"Thread get_classifier"
                 from transformers import pipeline
                 logging.info( f"%s - Main thread: Model pipeline is COLD / forcing import now"  % cmi_debug )
                 #print ( "Main thread: Forcing COLD Transformer pipeline module import NOW..." )
