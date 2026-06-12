@@ -135,7 +135,7 @@ class ml_nlpreader:
         
         # ################# 1: Fake news article - Micro-ad
         elif sn_row['type'] == 1:
-            print(f"Analyzing...   {sn_row['symbol']} / Fake News article - Micro-ad: {ml_idx} - AI will not eval sentiment")
+            print(f"Analyzing...   {sn_row['symbol']} / Fake Micro-ad: {ml_idx} - AI will not eval sentiment")
             t_url = urlparse(sn_row['url'])
             uhint, uhdescr = self.yfn_uh.uhinter(11, t_url)
             thint = sn_row['thint']
@@ -162,7 +162,7 @@ class ml_nlpreader:
 
         # ################# 2: Video story
         elif sn_row['type'] == 2:
-            print(f"Analyzing...   {sn_row['symbol']} / Video article - Not readable: {ml_idx} - AI will not eval sentiment")
+            print(f"Analyzing...   {sn_row['symbol']} / Video article: {ml_idx} - AI will not eval sentiment")
             t_url = urlparse(sn_row['url'])
             thint = sn_row['thint']
             inf_type = self.yfn_uh.confidence_lvl(thint)
@@ -176,7 +176,7 @@ class ml_nlpreader:
         
         # ################# 3: External publication
         elif sn_row['type'] == 3:
-            print(f"Analyzing...   {sn_row['symbol']} / Random Filler item - Not readable: {ml_idx} - AI will not eval sentiment")
+            print(f"Analyzing...   {sn_row['symbol']} / Random Filler item: {ml_idx} - AI will not eval sentiment")
             t_url = urlparse(sn_row['url'])
             thint = sn_row['thint']
             inf_type = self.yfn_uh.confidence_lvl(thint)
