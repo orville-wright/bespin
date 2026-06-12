@@ -824,7 +824,7 @@ class ml_sentiment:
 
         net_sentiment = (positive_strength - negative_strength) / total_strength
 
-        # Classification
+        # Classification - based on industry standard rankings
         if neutral_share >= 0.45:
             sentiment = "Neutral"
 
@@ -859,29 +859,31 @@ class ml_sentiment:
         confidence = max(positive_share,negative_share,neutral_share)
 
         # Display
+        # Net score (sentiment oscialtor) is critially importnat
+        # - Industry range: -1.0  |  0.0  |  +1.0
         print()
         print(f"Symbol:      {symbol}")
-        print(f"Sentiment:   {sentiment}")
-        print(f"Net Score:   {net_sentiment:+.3f}")
-        print(f"Confidence:  {confidence:.1%}")
+        print(f"Sentiment:   {sentiment}  | Overall news coverage")
+        print(f"Net Score:   {net_sentiment:+.3f}  | Sentiment oscilator direction")
+        print(f"Confidence:  {confidence:.1%}  | Dominant share" )
         print()
 
         print(
             f"Positive: "
-            f"{positive_share:.1%}"
-            f"  (strength={positive_strength:.3f})"
+            f"{positive_share:.1%} of all sentiment evidence"
+            f"  (Force weight : {positive_strength:.3f})"
         )
 
         print(
             f"Neutral:  "
-            f"{neutral_share:.1%}"
-            f"  (strength={neutral_strength:.3f})"
+            f"{neutral_share:.1%} of all sentiment evidence"
+            f"  (Force weight: {neutral_strength:.3f})"
         )
 
         print(
             f"Negative: "
-            f"{negative_share:.1%}"
-            f"  (strength={negative_strength:.3f})"
+            f"{negative_share:.1%} of all sentiment evidence"
+            f"  (Force weight: {negative_strength:.3f})"
         )
 
         results = {
