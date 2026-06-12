@@ -1062,7 +1062,7 @@ class yfnews_reader:
                         _total_chars = 7    # force analysis, possible PREMIUM paywall block page
                     match _total_chars:
                         case 0:
-                            print ( f"================================ C4 End.#0 No data: {item_idx} ================================")
+                            print ( f"================ C4 End.#0 No data: {item_idx} ================")
                             return 0, 0, 0
                         case 7:
                             yfn_prem_paywall = element.get('Premium_paywall')
@@ -1082,12 +1082,12 @@ class yfnews_reader:
                                 'negative_count': 0
                             })
                                 print ("Premium Paywalled article. Skipping...")
-                                print ( f"================================ C4 End.#1 YF Premium paywall: {item_idx} ================================")
+                                print ( f"================ C4 End.#1 YF Premium paywall: {item_idx} ================")
                                 #return 0, 0, _final_data_dict
                                 return 0, 0, None
                             else:
                                 print ("Unknown article type. Skipping...")
-                                print ( f"================================ C4 End.#2 Unknown type: {item_idx} ================================")
+                                print ( f"================ C4 End.#2 Unknown type: {item_idx} ================")
                                 return 0, 0, 0
                         case _:
                             ####################################################################
