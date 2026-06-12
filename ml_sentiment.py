@@ -644,7 +644,7 @@ class ml_sentiment:
         return
 
     # #################################### 6
-    def sentiment_metrics(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
+    def sentiment_metrics_BAD(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
         """
         Compute precise sentiment analysis based on aggregated data from df_final
         
@@ -773,8 +773,139 @@ class ml_sentiment:
 
         return results
 
-
     # #################################### 7
+
+def sentiment_metrics(
+        self,
+        symbol,
+        df_final,
+        positive_c,
+        negative_c,
+        positive_t,
+        negative_t,
+        neutral_t):
+
+    """
+    positive_c = number of positive articles
+    negative_c = number of negative articles
+
+    positive_t = mean positive confidence [0-1]
+    negative_t = mean negative confidence [0-1]
+    neutral_t  = mean neutral confidence  [0-1]
+    """
+
+    total_articles = positive_c + negative_c
+
+    if total_articles == 0:
+        return None
+
+    # Article percentages
+    positive_pct = positive_c / total_articles
+    negative_pct = negative_c / total_articles
+
+    # Raw sentiment strengths
+    positive_strength = positive_pct * positive_t
+    negative_strength = negative_pct * negative_t
+    neutral_strength = neutral_t
+
+    # Normalize strengths
+    total_strength = (positive_strength + negative_strength + neutral_strength)
+    if total_strength == 0:
+        total_strength = 1e-9
+
+    positive_share = positive_strength / total_strength
+    negative_share = negative_strength / total_strength
+    neutral_share = neutral_strength / total_strength
+
+    # Net sentiment score
+    # -1.0 = max bearish
+    #  0.0 = neutral
+    # +1.0 = max bullish
+
+    net_sentiment = (positive_strength - negative_strength) / total_strength
+
+    # Classification
+    if neutral_share >= 0.45:
+        sentiment = "Neutral"
+
+    elif net_sentiment >= 0.75:
+        sentiment = "Extremely Bullish"
+
+    elif net_sentiment >= 0.50:
+        sentiment = "Strongly Bullish"
+
+    elif net_sentiment >= 0.25:
+        sentiment = "Bullish"
+
+    elif net_sentiment >= 0.10:
+        sentiment = "Slightly Bullish"
+
+    elif net_sentiment <= -0.75:
+        sentiment = "Extremely Bearish"
+
+    elif net_sentiment <= -0.50:
+        sentiment = "Strongly Bearish"
+
+    elif net_sentiment <= -0.25:
+        sentiment = "Bearish"
+
+    elif net_sentiment <= -0.10:
+        sentiment = "Slightly Bearish"
+
+    else:
+        sentiment = "Neutral"
+
+    # Confidence
+    confidence = max(positive_share,negative_share,neutral_share)
+
+    # Display
+    print()
+    print(f"Symbol:      {symbol}")
+    print(f"Sentiment:   {sentiment}")
+    print(f"Net Score:   {net_sentiment:+.3f}")
+    print(f"Confidence:  {confidence:.1%}")
+    print()
+
+    print(
+        f"Positive: "
+        f"{positive_share:.1%}"
+        f"  (strength={positive_strength:.3f})"
+    )
+
+    print(
+        f"Neutral:  "
+        f"{neutral_share:.1%}"
+        f"  (strength={neutral_strength:.3f})"
+    )
+
+    print(
+        f"Negative: "
+        f"{negative_share:.1%}"
+        f"  (strength={negative_strength:.3f})"
+    )
+
+    results = {
+        "symbol": symbol,
+        "sentiment": sentiment,
+        "net_sentiment": round(net_sentiment, 4),
+        "confidence": round(confidence, 4),
+        "positive_share": round(positive_share, 4),
+        "neutral_share": round(neutral_share, 4),
+        "negative_share": round(negative_share, 4),
+        "positive_strength": round(positive_strength, 4),
+        "neutral_strength": round(neutral_strength, 4),
+        "negative_strength": round(negative_strength, 4),
+        "positive_mean": positive_t,
+        "neutral_mean": neutral_t,
+        "negative_mean": negative_t,
+        "positive_count": positive_c,
+        "negative_count": negative_c
+    }
+
+    return results
+
+
+    # #################################### 8
     def zstd_text_compressor(self, scentxt, _extractor):
         """
         Compresses article text into a ZSTD binary blob
