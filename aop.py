@@ -430,7 +430,8 @@ def main():
             news_symbol = (args['newsai_sent'][0]).upper()
             arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit scraping to nn articles.
             cmi_debug = __name__+"::newsai_sent.#1"
-            ai_nlp_cycle = int(0)
+            ai_nlp_cycle = int(1)
+            bad_articles = int(1)
 
             final_sent_df = pd.DataFrame()              # reset DataFrame for each article
             
@@ -570,8 +571,9 @@ def main():
                         break                    
                 else:
                     print (f"Skipping:      [ UNREADABLE / Article not valid Sentiment analysis] {sn_idx}")
-                    print (f"================ End.0 Skipping / No action taken ! {sn_idx} ================" )
+                    print (f"================ End.0 Skipping / No action taken ! {bad_articles} / {sn_idx} ================" )
                     ai_nlp_cycle += 1
+                    bad_articles += 1
                     
             ################################################################
             # END  AI AI NLP article processing data scraping loop
