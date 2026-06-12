@@ -121,7 +121,7 @@ class ml_sentiment:
                 cls._classifier = model_pipeline
                 cmi_debug = __name__+"::"+"Thread bg_load_worker"
                 print ( "Thread initalizer: Worker pre-warming LLM Model pipeline..." )
-                logging.info( f"Background model loading complete. GPU is warm!" % cmi_debug )
+                logging.info( f"%s - Background model loading complete. GPU is warm!" % cmi_debug )
         except Exception as e:
             logging.error(f"bg_load_worker: worker failed to background-load HF model: {e}")
 
