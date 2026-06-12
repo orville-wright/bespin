@@ -135,7 +135,7 @@ class ml_nlpreader:
         
         # ################# 1: Fake news article - Micro-ad
         elif sn_row['type'] == 1:
-            print(f"Analyzing...   {sn_row['symbol']} / Fake Micro-ad: {ml_idx} - AI will not eval sentiment")
+            print(f"Analyzing...   {sn_row['symbol']} / Fake Micro-ad art: {ml_idx} - AI will not eval sentiment")
             t_url = urlparse(sn_row['url'])
             uhint, uhdescr = self.yfn_uh.uhinter(11, t_url)
             thint = sn_row['thint']
