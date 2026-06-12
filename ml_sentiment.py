@@ -131,18 +131,19 @@ class ml_sentiment:
         # Scenario A: Background thread was started and is still running
         if cls._load_thread is not None:
             cls._load_thread.join()  # Blocks main thread ONLY if the model isn't fully loaded yet
-            print ( "Main thread: Model pipeline is HOT" )
-        
+            logging.info( f"%s - Main thread: Model pipeline is HOT"  % cmi_debug )
+            # print ( "Main thread: Model pipeline is HOT" )
+
         # Scenario B: Preload wasn't called, or background thread finished
         with cls._lock:
             if cls._classifier is None:
                 from transformers import pipeline
-                print ( "Main thread: Forcing COLD Transformer pipeline module import NOW..." )
+                logging.info( f"%s - Main thread: Model pipeline is COLD / forcing import now"  % cmi_debug )
+                #print ( "Main thread: Forcing COLD Transformer pipeline module import NOW..." )
                 cls._classifier = pipeline(
                     task="sentiment-analysis",
                     model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
                 )
-                print ( "Model pipeline was COLD..." )
             return cls._classifier
 
 
