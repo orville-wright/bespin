@@ -603,6 +603,9 @@ def main():
             final_sent_df['art'] = final_sent_df['art'].astype(object)
             totals_df['urlhash'] = ''       # Or np.nan if preferred for a numerical representation
             
+            # ############################################################### 
+            # jumbo Dataframe that holds all sentimnent metrics for this run
+            # ############################################################### 
             df_final = pd.concat([final_sent_df, totals_df])
             # print ( f"{df_final}")
             print (f"\n")
@@ -645,6 +648,8 @@ def main():
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             
+            print ( f"DEBUG:{sent_ai.sen_df3}")
+
             # ############### Done reading many articles ###################
 
 

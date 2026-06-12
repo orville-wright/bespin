@@ -765,7 +765,7 @@ class ml_sentiment:
         
         self.df0_row = pd.DataFrame(self.s_data, columns=[ 'Symbol', 'Sentiment', 'Ratio', 'P_pct', 'P_cat', 'P_score', 'N_pct', 'N_cat', 'N_score', 'P_mean', 'N_mean', 'Z_mean' ] )
         self.sen_df3 = pd.concat([self.sen_df3, self.df0_row])
-        logging.info( f'%s - Global Sentiment DF updated...' % cmi_debug )        
+        logging.info( '%s - Global Sentiment DF updated...' % cmi_debug )        
 
         return results
 
