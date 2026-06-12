@@ -472,7 +472,7 @@ def main():
             ai_sent_start_time = time.perf_counter()  # Mark the start time
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # Main LOOP - all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()                    # reset DataFrame for each article
-                thint = news_ai.nlp_summary_report(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for      
+                thint = news_ai.nlp_summary_report(3, sn_idx)       # get this TYPE of new article from ml_ingest : sn_idx = article counter loop
                 if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
                     # ################################################################
                     # Anti-bot avoidance & performance scraper load-balancer
@@ -569,8 +569,8 @@ def main():
                         print (f"Exiting AI NLP cycle @ article: {ai_nlp_cycle}...")
                         break                    
                 else:
-                    print (f"Skipping:      [ UNREADABLE / Article not valid for AI NLP Sentiment analysis] {ai_nlp_cycle}")
-                    print (f"================ End.0 Skipping / No action taken ! {ai_nlp_cycle} ================" )
+                    print (f"Skipping:      [ UNREADABLE / Article not valid Sentiment analysis] {sn_idx}")
+                    print (f"================ End.0 Skipping / No action taken ! {sn_idx} ================" )
                     ai_nlp_cycle += 1
                     
             ################################################################
