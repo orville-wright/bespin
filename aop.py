@@ -428,13 +428,15 @@ def main():
 
     if args['newsai_sent'] is not False:
             news_symbol = (args['newsai_sent'][0]).upper()
-            arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit new scraping system to 20 runs.
+            arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit scraping to nn articles.
             cmi_debug = __name__+"::newsai_sent.#1"
-            final_sent_df = pd.DataFrame()              # reset DataFrame for each article
+            ai_nlp_cycle = int(0)
 
+            final_sent_df = pd.DataFrame()              # reset DataFrame for each article
+            
             # Threaded optimization pre-loader : Phase 1
             ml_sentiment.preload_classifier()
-            # create a Thread to background preload the heavy HF classifier pipeline
+            # create a Thread to background to preload the heavy HF classifier pipeline
 
             print ( " " )
             print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ]" )
@@ -466,9 +468,8 @@ def main():
             _tpcz = 0    # Cumulative : Total paragraphs read
             _trcz = 0    # Cumulative : Total rands read
             
-            ai_sent_start_time = time.perf_counter()  # Mark the start time
             antibot_load_balancer = 0
-            ai_nlp_cycle = int(0)
+            ai_sent_start_time = time.perf_counter()  # Mark the start time
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # Main LOOP - all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()                    # reset DataFrame for each article
                 thint = news_ai.nlp_summary_report(3, sn_idx)       # TESTING: News article TYPE in ml_ingest to look for      
@@ -560,6 +561,7 @@ def main():
                     aggmean_sent_df = pd.concat([aggmean_sent_df, sent_df_row])
                     merge_row = pd.merge(news_ai.yfn.sen_stats_df, aggmean_sent_df, on=['art', 'urlhash'])
                     final_sent_df = pd.concat([final_sent_df, merge_row], ignore_index=True)
+                    
                     ai_nlp_cycle += 1
                     if ai_nlp_cycle < arg_cycle:        # only counting real articles, not junk, fake, adds etc
                         pass
@@ -568,8 +570,9 @@ def main():
                         break                    
                 else:
                     print (f"Skipping:      [ UNREADABLE / Article not valid for AI NLP Sentiment analysis] {ai_nlp_cycle}")
-                    print (f"================================ End.0 Skipping / No action taken ! {ai_nlp_cycle} ================================" )
-
+                    print (f"================ End.0 Skipping / No action taken ! {ai_nlp_cycle} ================" )
+                    ai_nlp_cycle += 1
+                    
             ################################################################
             # END  AI AI NLP article processing data scraping loop
             ################################################################
@@ -648,7 +651,7 @@ def main():
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             
-            print ( f"DEBUG:{sent_ai.sen_df3}")
+            print ( f"DEBUG:\n{sent_ai.sen_df3}\n")
 
             # ############### Done reading many articles ###################
 
