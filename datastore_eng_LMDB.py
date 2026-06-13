@@ -203,9 +203,12 @@ class lmdb_io_eng:
         
         self.RO_env = self.open_lmdb_RO("GLOBAL")
         #print (f"debug-201: DB open state: {type(self.db_open_state.get(self.db_name))} / RO: {self.RO_env} / RW: {self.RW_env}")
-        ################# LMDB Deep Cache KV store engine
-        #
-        # KVstore REHYDRATON Engine
+
+        ################# LMDB Deep Cache KV store loop #################
+        # KVstore sentiment REHYDRATON Engine
+        # - a cache hit reads all sentiment metrics from LMDB KV Cache
+        # - avoids net I/O read() and is near instant rehydration (LMDB = Lightnight fast)
+        ##################################################################
         _url_hash = data_row['urlhash']             # current article URL hash from main skimm list
         _key = "0001"+"."+symbol+"."+_url_hash      # we are looking at the artile here. So test for this K/V data
         bs4_kvs_key = _key.encode('utf-8')          # byte encode 
@@ -222,7 +225,7 @@ class lmdb_io_eng:
                     #
                 except (UnicodeDecodeError, json.JSONDecodeError) as e:
                     logging.info( f'%s - Error.#1 Deserializing data: {e}"...' % cmi_debug )
-                    print (f"================================ End.#1 KV Cache Hit + Data Corrupt (deserializing) ! Net read... {item_idx} ================================" )
+                    print (f"=========== End.#1 KV Cache Hit ! / Data Corrupt (deserializing) - Net read... {item_idx} ===========" )
                     return 1, 0, 0, None, None   #  LMDB I/O FAILURE : cant deserialize data
                 else:
                     _final_results = json.loads(_v_str)        # parse JSON                   
@@ -230,17 +233,17 @@ class lmdb_io_eng:
                         kv_url_hash = _final_results['urlhash']
                     except KeyError as _f:
                         logging.info( f'%s - Data corrupt.#2 : No URL hash Key found: {_f}"...' % cmi_debug )
-                        print (f"================================ End.#2 KV Cache Hit + Data Corrupt (no URL hash) ! Net read... {item_idx} ================================" )
+                        print (f"=========== End.#2 KV Cache Hit ! / Data Corrupt (no URL hash) ! Net read... {item_idx} ===========" )
                         return 2, 0, 0, None, None   # CORRUPT data : No KEY found (URL hash of article)
                     else:
                         _total_tokens = 0
-                    
-                        # reset sent_count before we start
-                        _no_header = False
-                        global_sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class url_hash we are rehydrating
+
+                        _no_header = False          # reset sent_count before we start
+                        global_sent_ai.active_urlhash = kv_url_hash   # tell ml_sentiment class what url_hash we are rehydrating
                         # read the Deep cache entry, rehydrate the save_sentiment DF from cahed data
-                        logging.info( f'%s - Rehydrate : Sent DF metrics from Deep Cache...' % cmi_debug )
+                        logging.info( f'%s - Rehydrate : Sent DF metrics from KV Cache...' % cmi_debug )
                         #print (f"##-debug-578: pre-check FR: {sentiment_ai.sentiment_count["positive"]} / {sentiment_ai.sentiment_count["neutral"]} / {sentiment_ai.sentiment_count["negative"]}")
+ 
                         for _dc_k, _dc_v in _final_results.items():
                             if isinstance(_dc_v, dict):
                                 _total_tokens += int(_dc_v['tokenz'])
@@ -275,8 +278,8 @@ class lmdb_io_eng:
                         _sent_n = _sentiment_count["negative"]
                         
                         # must return self.sen_data, and must exec after return...
-                        #   - sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
-                        #   - self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
+                        # - sen_df_row = pd.DataFrame(self.sen_data, columns=[ 'art', 'urlhash', 'positive', 'neutral', 'negative'] )
+                        # - self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
                         self.sen_data = [[
                                 item_idx,
                                     kv_url_hash,
@@ -285,27 +288,22 @@ class lmdb_io_eng:
                                     _sent_n
                                     ]]
                         
-                        #sent_fz = _final_results["neutral_count"]
-                        #sent_fp = _final_results["positive_count"]
-                        #sent_fn = _final_results["negative_count"]
-
-                        #print (f"JSON: {_final_results}")
                         print ( f"Artc metrics:  Tokens: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
                         ##-debug print (f"Deep KV Cache: [ HIT.#0 / Deep cache hit ! Rehydrated from KVstore... ] {item_idx}" )
 
                         return 0, _total_tokens, _total_words, self.sen_data, _final_results
                         #
                         # SUCCESS !!!
-                        # ##### END of Deep Cache HIT run... prints Metrics all rehydrated from Deep Cache  
-                        # note: # "with context mgr" -> auto forces close of LMDB RO transaction
+                        # END KV Cache engine loop... prints rehydrated metrics from KV Cache
+                        # note: "with context mgr" -> auto forces close of LMDB RO transaction
             else:
                 logging.info( f'%s - Deep Cache MISS : Key not found !' % cmi_debug )
                 ##-debug print (f"KV Cache.#3:   [ Cache MISS.#3 / No LMDB entry ! Forcing article read via net... ] {item_idx}" )
                 return 3, 0, 0, None, None
                 # note: # "with context mgr" -> auto forces close of LMDB RO transaction
 
-        logging.info( f"%s - Deep Cache ERROR.#4 : ! LMDB I/O cant open RO mode" % cmi_debug )
-        print (f"================================ End.#4 KV Cache MISS ! LMDB RO open failure ! Net read... {item_idx} ================================" )
+        logging.info( f"%s - KV Cache ERROR.#4 / LMDB I/O cant open RO mode" % cmi_debug )
+        print (f"=========== End.#4 KV Cache MISS / LMDB RO open failure ! Net read... {item_idx} ===========" )
         return 4, 0, 0, None, None   # LMDB I/O FAILURE : Failed to open DB in RO mode
 
         # #########################################

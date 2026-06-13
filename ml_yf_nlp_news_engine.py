@@ -333,13 +333,13 @@ class yfnews_reader:
     def list_news_candidates_depth0(self, symbol, depth, scan_type, hash_state):
         """
         DEPTH -> 0
-        Test and report the Depth 0 News skin scan results
+        Test and report the Depth 0 Top level News Feed & skim scan results
         - URL hash exists in cache
         - This means URL opened & crawled and data extracted
         - sets GLOBALLY sets Dataset accessor -> self.extracted_articles
         - calc and set helper GLOBAL attribute: articles_found counter 
         
-        Does a  nice REPORT of the Depth 0 surface scan
+        Does a nice REPORT of the Depth 0 surface scan
         This does NOT get() or extract and data, or create ml_ingest dataset
         """
         cmi_debug = __name__+"::" + self.list_news_candidates_depth0.__name__+".#"+str(self.yti)+"_SYNC_BLK"
@@ -358,7 +358,7 @@ class yfnews_reader:
                 if isinstance(self.extracted_articles, list):       # test for list => (crawl4ai default object type)
                     article_count = len(self.extracted_articles)    # Count articles found (is actually a list of dicts)
                     logging.info(f'%s - Depth 0 Surface skim / Found News Articles: {article_count}' % cmi_debug)
-                    print(f"\n=================================== Articles found: {article_count} ========================================")
+                    print(f"\n=================== Articles found: {article_count} ===================")
                     for i, article in enumerate(self.extracted_articles):       # cycle trough articles >>dataset<<
                         if article.get('Title'):
                             safe_i = i + 1
@@ -372,19 +372,19 @@ class yfnews_reader:
                 logging.error(f'%s - ERROR URL hash not in Net cache: {hash_state}' % cmi_debug)
                 return None
         self.articles_found = article_count
-        print(f"=================================== Articles found: {article_count} ========================================\n")
+        print(f"=================== Articles found: {article_count} ===================\n")
         return self.articles_found
 
     # ################
     def eval_news_feed_stories(self, symbol):
         """
         Depth : 1
-        Scanning list of news feed stories after intiial skim from Depth 0
+        Scanning list of news feed stories after intial skim from Depth 0
         - and collect some metadata (@ depth 1)
         - data is from Crawl4ai
         - Extract data elements from crawl4ai top level skimmed info indexing @ self.extracted_articles
-        - * Build a ML ingest DB dataset of candidate articles for post ML NLP processing
-        - egenrate has or URL and Dedupe hash's across all skimmed articles
+        - Build a ML ingest DB dataset of candidate master articles for ML NLP pre-processing
+        - Does URL Dedupe hash analysis/optomization across all skimmed articles
         - No network get() requests are made here, as crawl4ai allready did this during its skim crawl
         """
         cmi_debug = __name__+"::" + self.eval_news_feed_stories.__name__+".#"+str(self.yti)
@@ -444,7 +444,6 @@ class yfnews_reader:
                 inf_type = self.yfn_uh.confidence_lvl(thint)    # list[] from global URLhinter instance
                 ml_atype = uhint
                 
-                
                 print(f"News article:  {symbol} [ {path} ]")
                 print(f"Article type:  {inf_type[0]}")
                 print(f"News agency:   {art_publisher} - {update_time}")
@@ -454,14 +453,16 @@ class yfnews_reader:
                 print(f"Long teaser:   {art_teaser}")
                 
                 # TEST #3 : deupe (check for URL dupes)
-                self.ml_brief.append(art_title)                 # WARNING: not used by anything (yet)
-                auh = hashlib.sha256(self.article_url.encode()) # Generate URL hash
+                self.ml_brief.append(art_title)                 # WARNING: List not used by anything (yet)
+                auh = hashlib.sha256(self.article_url.encode()) # Generate hash of URL
                 aurl_hash = auh.hexdigest()                     # compute hash
-                if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() )
+                if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() ) : uniqueness test
                     dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
                     logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
-                    print(f" ")
-                    # Build full AI NLP candidate dict row
+                    print(" ")
+                    
+                    ############################################
+                    # Build full AI NLP candidate Master dict row
                     nd = {
                         "symbol": symbol,
                         "urlhash": aurl_hash,

@@ -72,9 +72,10 @@ class ml_nlpreader:
 
         if _url_hash0:												# Depth: 0
             articles_found = ml_yfn_dataset.list_news_candidates_depth0(news_symbol, 0, 1, _url_hash0)
-            eval_state, bad_url_count = ml_yfn_dataset.eval_news_feed_stories(news_symbol)		# Depth: 1 - updates ml_ingest
+            # Depth: 1 - updates ml_ingest
+            eval_state, bad_url_count = ml_yfn_dataset.eval_news_feed_stories(news_symbol)
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
-            print(f" ")
+            print(" ")
             print(f"Skimmed: {articles_found} / Evaled: {len(ml_yfn_dataset.ml_ingest)} articles /(bad urls: {bad_url_count}) @ Depth: 0")
             print(f"========================================================================================")
             if self.args.get('bool_xray', False):                   # DEBUG: xray
@@ -87,10 +88,12 @@ class ml_nlpreader:
     # ##############################################################################
     def nlp_summary_report(self, yti, ml_idx):
         """
-        CRITICAL: Assumes ml_ingest has already been pre-populated
-        NOTE: Reads 1 (ONE) article ONLY from the ml_ingest{} DB and processes it...
-              Executes Dept 2 analysis via ml_yfn_dataset::interpret_page_depth2()   - no get() or BS4
-        
+        CRITICAL:
+        - Assumes ml_ingest has already been pre-populated with Master candidate article list
+        NOTE:
+        - Reads 1 (ONE) article ONLY from the ml_ingest{} DB and processes it...
+        - Executes Depth 2 analysis via ml_yfn_dataset::interpret_page_depth2() 
+        - returns the thint heuristic inferred from interpret_page_depth2()
         """
         self.yti = yti
         cmi_debug = __name__+"::" + self.nlp_summary_report.__name__+".#"+str(self.yti)

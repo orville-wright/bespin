@@ -446,13 +446,16 @@ def main():
             lmdb_dbname = "LMDB_0001"
             lmdb_env = lmdb_io_eng("GLOBAL", lmdb_dbname, args)  # create instance of LMDB
             logging.info(f'%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
-            articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  # scan_news_feed() + eval_news_feed_stories()
+            
+            # scan_news_feed() + eval_news_feed_stories()
+            articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  
 
             # Threaded optimization : Phase 2
-            # The articles_found scrape/skim takes 10 ~ 15 seconds to complete
+            # The nlp_read_one() scrape/skim takes 10 ~ 15 seconds to complete skimming 100 top level article feed
             # - This gives time for the HF Classifier pipeline preloader (Phase 1) Thread to complete heavy init work
-            # - once articles_found returns, we can instantiate an ml_sentiment class
-            # - which should be fast, if the pipeline initiatization Thread has completed its heavy init workload
+            # - once nlp_read_one() returns, we can instantiate an ml_sentiment class
+            # - which should be fast, if the pipeline initiatization Thread completed its heavy init workload
+            # - while nlp_read_one() was working
             sent_ai = ml_sentiment(1, args)
             
             _atc = 0     # article specific stats : tokenz count
