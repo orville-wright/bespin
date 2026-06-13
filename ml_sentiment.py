@@ -773,24 +773,25 @@ class ml_sentiment:
         else:
             sentiment_label = base
 
+        split_vector_model =  self.sentiment_vector_model(positive_share, negative_share, neutral_share)
 
         # SUMMARY Report
         # final analysis read-out
         print()
-        print(f"Symbol:        {symbol}")
-        print(f"Sentiment:     {sentiment_label} directional bias")
-        print(f"Base Category: {base}")
-        print(f"Band Progress: {progress_pct}%\t| through {base} band")
-        print(f"Confidence:    {confidence:.1%}")
-        print(f"Net Score:     {net_sentiment:+.3f}\t| Sentiment Oscilator Direction")
-        print(f"Signal purity: {confidence:.1%}\t| Dominant Signal Share")
+        print(f"Symbol:         {symbol}")
+        print(f"Sentiment:      {sentiment_label}\t| Directionally biased -> {split_vector_model["sentiment"]} ")
+        print(f"Base Category:  {base}")
+        print(f"Band Progress:  {progress_pct}%\t| through {base} band")
+        print(f"Signal clarity: {split_vector_model["clarity"]}")
+        print(f"Signal convctn: {split_vector_model["conviction"]}\t| {split_vector_model["sentiment"]}")
+        print(f"Net Score:      {net_sentiment:+.3f}\t| Sentiment Oscilator Direction")
+        print(f"Signal purity:  {confidence:.1%}\t| Dominant Signal Share")
         print("\nSentiment Composition:")
-        print(f"Positivity:    {positive_share:.1%}\t| (Directional signal mass:  {positive_strength:.3f})")
-        print(f"Neutrality:    {neutral_share:.1%}\t| (Non-directional ambiguity: {neutral_strength:.3f})")
-        print(f"Negativity:    {negative_share:.1%}\t| (Directional signal mass:  {negative_strength:.3f})")
+        print(f"Positivity:     {positive_share:.1%}\t| (Directional signal mass:  {positive_strength:.3f})")
+        print(f"Neutrality:     {neutral_share:.1%}\t| (Non-directional ambiguity: {neutral_strength:.3f})")
+        print(f"Negativity:     {negative_share:.1%}\t| (Directional signal mass:  {negative_strength:.3f})")
         print()
     
-        print ( f"{self.sentiment_vector_model(positive_share, negative_share, neutral_share)}" )
         
         return
 
