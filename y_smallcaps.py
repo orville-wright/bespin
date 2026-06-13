@@ -92,8 +92,9 @@ class smallcap_screen:
 # method #2
     def build_df0(self):
         """
-        Build-out a fully populated Pandas DataFrame containg all the extracted/scraped fields from the
-        html/markup table data Wrangle, clean/convert/format the data correctly.
+        Build-out a fully populated Pandas DataFrame
+        - DF contains all the extracted/scraped fields from the html/markup table data
+        - Wrangle clean/convert/format the data correctly
         """
 
         cmi_debug = __name__+"::"+self.build_df0.__name__+".#"+str(self.yti)
@@ -108,7 +109,7 @@ class smallcap_screen:
         for datarow in self.tr_rows:
 
             """
-            # >>>DEBUG<< for whedatarow.stripped_stringsn yahoo.com changes data model...
+            # >>>DEBUG<< used to anlayze breakages when yahoo.com changes data structures...
             y = 1
             print ( f"===================== Debug =========================" )
             #print ( f"Data {y}: {datarow}" )
@@ -160,16 +161,15 @@ class smallcap_screen:
                 change_val = next(extr_strs)     # 4 : Yes, advance iterator to next field (ignore dedciated sign field)
             else:
                 change_val = change_sign         # 4 : get $ change, but its possibly +/- signed
-                #if (re.search(r'\+', change_val)) or (re.search(r'\-', change_val)) is True:
                 if (re.search(r'\+', change_val)) or (re.search(r'\-', change_val)) is not None:
-                    logging.info( f"{cmi_debug} : $ CHANGE: {change_val} [+-], stripping..." )
+                    logging.info( f"{cmi_debug} : {change_val} : $ CHANGE is signed [+-], stripping..." )
                     change_cl = re.sub(r'[\+\-]', "", change_val)       # remove +/- sign
-                    logging.info( f"{cmi_debug} : $ CHANGE cleaned to: {change_cl}" )
+                    logging.info( f"%s : $ CHANGE +/- cleaned : {change_cl}" % cmi_debug )
                 else:
                     logging.info( f"{cmi_debug} : {change_val} : $ CHANGE is NOT signed [+-]" )
                     change_cl = re.sub(r'[\,]', "", change_val)       # remove
-                    logging.info( f"{cmi_debug} : $ CHANGE: {change_cl}" )
-
+                    logging.info( f"%s : $ CHANGE , cleaned : {change_cl}" % cmi_debug )
+                    
             pct_sign = next(extr_strs)              # 5 : test for dedicated column for +/- indicator
             logging.info( f"{cmi_debug} : {co_sym} : Check % CHANGE dedicated [+-] field..." )
             if pct_sign == "+" or pct_sign == "-":  # 5 : is %_change sign [+/-] a dedciated field
@@ -177,7 +177,7 @@ class smallcap_screen:
             else:
                 pct_val = pct_sign                  # 5 get % change, but its possibly +/- signed
                 if (re.search(r'\+', pct_val)) or (re.search(r'\-', pct_val)) is not None:
-                    logging.info( f"{cmi_debug} : % CHANGE {pct_val} [+-], stripping..." )
+                    logging.info( f"{cmi_debug} : {pct_val} : % CHANGE is signed [+-], stripping..." )
                     pct_cl = re.sub(r'[\+\-\%]', "", pct_val)       # remove +/-/% signs
                     logging.info( f"{cmi_debug} : % CHANGE cleaned to: {pct_cl}" )
                 else:

@@ -98,7 +98,7 @@ class y_daylosers:
         for datarow in self.tr_rows:
 
             """
-            # >>>DEBUG<< for whedatarow.stripped_stringsn yahoo.com changes data model...
+            # >>>DEBUG<< used to anlayze breakages when yahoo.com changes data structures...
             y = 1
             print ( f"===================== Debug =========================" )
             #print ( f"Data {y}: {datarow}" )
@@ -141,14 +141,14 @@ class y_daylosers:
                 if (re.search(r'\+', change_val)) or (re.search(r'\-', change_val)) is not None:
                     logging.info( f"{cmi_debug} : {change_val} : $ CHANGE is signed [+-], stripping..." )
                     change_cl = re.sub(r'[\+\-]', "", change_val)       # remove +/- sign
-                    logging.info( f"%s : $ CHANGE +/- cleaned : {change_cl}" % cmi_debug )
+                    logging.info( f"%s - $ CHANGE +/- cleaned : {change_cl}" % cmi_debug )
                 else:
                     logging.info( f"{cmi_debug} : {change_val} : $ CHANGE is NOT signed [+-]" )
                     change_cl = re.sub(r'[\,]', "", change_val)       # remove
                     logging.info( f"%s : $ CHANGE , cleaned : {change_cl}" % cmi_debug )
 
             pct_sign = next(extr_strs)              # 5 : test for dedicated column for +/- indicator
-            logging.info( f"{cmi_debug} : {co_sym} : Check dedicated [+-] field for % CHANGE" )
+            logging.info( f"{cmi_debug} : {co_sym} : Check % CHANGE dedicated [+-] field..." )
             if pct_sign == "+" or pct_sign == "-":  # 5 : is %_change sign [+/-] a dedciated field
                 pct_val = next(extr_strs)           # 5 : advance iterator to next field (ignore dedciated sign field)
             else:
@@ -169,7 +169,7 @@ class y_daylosers:
             peratio = next(extr_strs)        # 9 : PE ratio TTM (Trailing 12 months) / e.g "N/A"
             #mini_gfx = next(extr_strs)      # 10 : IGNORED = mini-canvas graphic 52-week rnage (no TXT/strings avail)
 
-            ################################ 4 ####################################
+            ############################### 4 ###################################
             # now wrangle the data...
             co_sym_lj = f"{co_sym:<6}"                                   # left justify TXT in DF & convert to raw string
             co_name_lj = np.array2string(np.char.ljust(co_name, 60) )    # left justify TXT in DF & convert to raw string
