@@ -653,7 +653,7 @@ def main():
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             
-            print ( f"DEBUG:\n{sent_ai.sen_df3}\n")
+            print ( f"DEBUG: sent_ai.sen_df3\n{sent_ai.sen_df3}\n")
 
             # ############### Done reading many articles ###################
 
