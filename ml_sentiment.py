@@ -687,18 +687,6 @@ class ml_sentiment:
         confidence = max(positive_share, neutral_share, negative_share)
 
         # -----------------------------
-        # PRINT CORE SUMMARY
-        # -----------------------------
-        print()
-        print(f"Symbol:         {symbol}")
-        print(f"Net Score:      {net_sentiment:+.3f}")
-        print(f"Signal purity:  {confidence:.1%}")
-        print()
-        print(f"Positivity:  {positive_share:.1%}  (signal mass {positive_strength:.3f})")
-        print(f"Neutrality:  {neutral_share:.1%}   (signal mass {neutral_strength:.3f})")
-        print(f"Negativity:  {negative_share:.1%}  (Signal mass {negative_strength:.3f})")
-
-        # -----------------------------
         # Direction helper
         # -----------------------------
         self.sentiment_direction(
@@ -734,11 +722,7 @@ class ml_sentiment:
             "negative_count": negative_c
         }
 
-
-    # ======================================================
-    # FIXED DIRECTION ENGINE (CORE FIX)
-    # ======================================================
-
+    # DIRECTION ENGINE
     def sentiment_direction(
             self,
             symbol,
@@ -782,22 +766,25 @@ class ml_sentiment:
 
         progress_pct = round(progress * 100, 1)
 
-        # -----------------------------
         # Correct "Approaching" logic
-        # -----------------------------
         if progress >= 0.5 and next_base:
             sentiment_label = f"Approaching {next_base}"
         else:
             sentiment_label = base
 
-        # -----------------------------
-        # OUTPUT (FINAL FORMAT)
-        # -----------------------------
+
+        # SUMMARY Report
         print()
-        print(f"Sentiment:           {sentiment_label}")
-        print(f"Base Category:       {base}")
-        print(f"Band Progress:       {progress_pct}%")
-        print(f"Confidence:          {confidence:.1%}")
+        print(f"Symbol:        {symbol}")
+        print(f"Sentiment:     {sentiment_label}")
+        print(f"Base Category: {base}")
+        print(f"Band Progress: {progress_pct}%")
+        print(f"Confidence:    {confidence:.1%}")
+        print(f"Net Score:     {net_sentiment:+.3f}\t| Sentiment Oscilator Direction")
+        print(f"Signal purity: {confidence:.1%}\t| Dominant Signal Share")
+        print(f"Positivity:    {positive_share:.1%}\t| (signal mass {positive_strength:.3f})")
+        print(f"Neutrality:    {neutral_share:.1%}\t| (signal mass {neutral_strength:.3f})")
+        print(f"Negativity:    {negative_share:.1%}\t| (Signal mass {negative_strength:.3f})")
         print()
     
         return
