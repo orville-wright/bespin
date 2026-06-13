@@ -639,6 +639,10 @@ class ml_sentiment:
         return
 
     # #################################### 6
+    # Heuristics sentiment aggregator and 2-Vector sentiment model
+    # 1. Sentiment vector : directional signal (positive vs. negative)
+    # 2. Uncertaintry vector : information / neutral mass
+    
     def sentiment_metrics(
             self,
             symbol,
@@ -723,6 +727,7 @@ class ml_sentiment:
         }
 
     # DIRECTION ENGINE
+    # Helper function
     def sentiment_direction(
             self,
             symbol,
@@ -752,15 +757,11 @@ class ml_sentiment:
         progress = 0.0
 
         for i in range(len(bands) - 1):
-
             low_score, low_label = bands[i]
             high_score, high_label = bands[i + 1]
-
             if low_score <= net_sentiment < high_score:
-
                 base = low_label
                 next_base = high_label
-
                 progress = (net_sentiment - low_score) / (high_score - low_score)
                 break
 
@@ -774,6 +775,7 @@ class ml_sentiment:
 
 
         # SUMMARY Report
+        # final analysis read-out
         print()
         print(f"Symbol:        {symbol}")
         print(f"Sentiment:     {sentiment_label} directional bias")
@@ -788,8 +790,50 @@ class ml_sentiment:
         print(f"Negativity:    {negative_share:.1%}\t| (Directional signal mass:  {negative_strength:.3f})")
         print()
     
+        print ( f"{self.sentiment_vector_model(positive_share, negative_share, neutral_share)}" )
+        
         return
-    
+
+    # ####################################    
+    # 2-vector model support function
+    def sentiment_vector_model(self, positive_share, negative_share, neutral_share):
+        direction_total = positive_share + negative_share   # Direction space (ignore neutral)
+        if direction_total == 0:
+            pos_dir = 0.5
+            neg_dir = 0.5
+        else:
+            pos_dir = positive_share / direction_total
+            neg_dir = negative_share / direction_total
+
+        direction_score = pos_dir - neg_dir     # [-1, +1]
+        clarity = 1 - neutral_share             # Uncertainty space
+        conviction = direction_score * clarity  # Final conviction signal
+
+        # Classification
+        if conviction > 0.5:
+            sentiment = "Strongly Bullish"
+        elif conviction > 0.2:
+            sentiment = "Bullish"
+        elif conviction > 0.05:
+            sentiment = "Slightly Bullish"
+        elif conviction < -0.5:
+            sentiment = "Strongly Bearish"
+        elif conviction < -0.2:
+            sentiment = "Bearish"
+        elif conviction < -0.05:
+            sentiment = "Slightly Bearish"
+        else:
+            sentiment = "Neutral"
+
+        return {
+            "sentiment": sentiment,
+            "direction_score": round(direction_score, 4),
+            "clarity": round(clarity, 4),
+            "conviction": round(conviction, 4),
+            "pos_dir": round(pos_dir, 4),
+            "neg_dir": round(neg_dir, 4),
+        }
+
     # #################################### 7
     def zstd_text_compressor(self, scentxt, _extractor):
         """
