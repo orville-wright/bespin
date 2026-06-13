@@ -604,42 +604,6 @@ class ml_sentiment:
             return 3
 
     # #################################### 5
-    def save_sentiment_df(self, item_idx, data_set):
-        """
-        Save key ML sentiment info to global sentimennt in-memory Dataframe
-        data_set = a dict
-        """
-        self.yti
-        cmi_debug = __name__+"::"+self.save_sentiment_df.__name__+".#"+str(self.yti)
-        x = self.df0_row_count      # get last row added to DF
-        x += 1
-
-        # need to add the url hash in here, otherwise I cant do useful analysis
-        sym = data_set["sym"]
-        art = data_set["article"]
-        urlhash = data_set["urlhash"]
-        chk = data_set["chunk"]
-        rnk = data_set["rank"]
-        snt = data_set["sent"]
-
-        # sen_package = dict(sym=symbol, article=item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
-        self.sen_data = [[ \
-                    x, \
-                    sym, \
-                    art, \
-                    urlhash, \
-                    chk, \
-                    rnk, \
-                    snt ]]
-        
-        self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
-        self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
-        self.df0_row_count = x
-        logging.info( f"%s - Rehydrate metrics DF @ article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
-        return
-
-    # #################################### 7
-
     def sentiment_metrics(
             self,
             symbol,
@@ -650,30 +614,24 @@ class ml_sentiment:
             negative_t,
             neutral_t):
 
-        """
-        positive_c = number of positive articles
-        negative_c = number of negative articles
-        positive_t = mean positive confidence [0-1]
-        negative_t = mean negative confidence [0-1]
-        neutral_t  = mean neutral confidence  [0-1]
-        """
-
         total_articles = positive_c + negative_c
-
         if total_articles == 0:
             return None
 
-        # Article percentages
+        # -----------------------------
+        # Article proportions
+        # -----------------------------
         positive_pct = positive_c / total_articles
         negative_pct = negative_c / total_articles
 
-        # Raw sentiment strengths
+        # -----------------------------
+        # Strength model
+        # -----------------------------
         positive_strength = positive_pct * positive_t
         negative_strength = negative_pct * negative_t
         neutral_strength = neutral_t
 
-        # Normalize strengths
-        total_strength = (positive_strength + negative_strength + neutral_strength)
+        total_strength = positive_strength + negative_strength + neutral_strength
         if total_strength == 0:
             total_strength = 1e-9
 
@@ -681,94 +639,33 @@ class ml_sentiment:
         negative_share = negative_strength / total_strength
         neutral_share = neutral_strength / total_strength
 
-        # Net sentiment score
-        # -1.0 = max bearish
-        #  0.0 = neutral
-        # +1.0 = max bullish
+        # -----------------------------
+        # Core signal (ONLY truth source)
+        # -----------------------------
+        net_sentiment = (
+            positive_strength - negative_strength
+        ) / total_strength
 
-        net_sentiment = (positive_strength - negative_strength) / total_strength
+        # -----------------------------
+        # Confidence (dominant signal share)
+        # -----------------------------
+        confidence = max(positive_share, neutral_share, negative_share)
 
-        # Classification - based on industry standard rankings
-        if neutral_share >= 0.45:
-            sentiment = "Neutral"
-
-        elif net_sentiment >= 0.75:
-            sentiment = "Extremely Bullish"
-
-        elif net_sentiment >= 0.50:
-            sentiment = "Strongly Bullish"
-
-        elif net_sentiment >= 0.25:
-            sentiment = "Bullish"
-
-        elif net_sentiment >= 0.10:
-            sentiment = "Slightly Bullish"
-
-        elif net_sentiment <= -0.75:
-            sentiment = "Extremely Bearish"
-
-        elif net_sentiment <= -0.50:
-            sentiment = "Strongly Bearish"
-
-        elif net_sentiment <= -0.25:
-            sentiment = "Bearish"
-
-        elif net_sentiment <= -0.10:
-            sentiment = "Slightly Bearish"
-
-        else:
-            sentiment = "Neutral"
-
-        # Confidence
-        confidence = max(positive_share,negative_share,neutral_share)
-
-        # Display
-        # Net score (sentiment oscialtor) is critially importnat
-        # - Industry range: -1.0  |  0.0  |  +1.0
+        # -----------------------------
+        # PRINT CORE SUMMARY
+        # -----------------------------
         print()
         print(f"Symbol:      {symbol}")
-        print(f"Sentiment:   {sentiment}\t| Overall news coverage")
-        print(f"Net Score:   {net_sentiment:+.3f}\t| Sentiment oscilator direction")
-        print(f"Confidence:  {confidence:.1%}\t| Dominant share" )
+        print(f"Net Score:   {net_sentiment:+.3f}")
+        print(f"Confidence:  {confidence:.1%}")
         print()
+        print(f"Positivity:  {positive_share:.1%}  (force {positive_strength:.3f})")
+        print(f"Neutrality:  {neutral_share:.1%}   (force {neutral_strength:.3f})")
+        print(f"Negativity:  {negative_share:.1%}  (force {negative_strength:.3f})")
 
-        print(
-            f"Positivity:\t"
-            f"{positive_share:.1%} of all sentiment evidence\t"
-            f"  (Force weight : {positive_strength:.3f})"
-        )
-
-        print(
-            f"Neutrality:\t"
-            f"{neutral_share:.1%} of all sentiment evidence\t"
-            f"  (Force weight: {neutral_strength:.3f})"
-        )
-
-        print(
-            f"Negativity:\t"
-            f"{negative_share:.1%} of all sentiment evidence\t"
-            f"  (Force weight: {negative_strength:.3f})"
-        )
-
-        results = {
-            "symbol": symbol,
-            "sentiment": sentiment,
-            "net_sentiment": round(net_sentiment, 4),
-            "confidence": round(confidence, 4),
-            "positive_share": round(positive_share, 4),
-            "neutral_share": round(neutral_share, 4),
-            "negative_share": round(negative_share, 4),
-            "positive_strength": round(positive_strength, 4),
-            "neutral_strength": round(neutral_strength, 4),
-            "negative_strength": round(negative_strength, 4),
-            "positive_mean": positive_t,
-            "neutral_mean": neutral_t,
-            "negative_mean": negative_t,
-            "positive_count": positive_c,
-            "negative_count": negative_c
-        }
-
-        print (" ")
+        # -----------------------------
+        # Direction helper
+        # -----------------------------
         self.sentiment_direction(
             symbol=symbol,
             net_sentiment=net_sentiment,
@@ -781,17 +678,44 @@ class ml_sentiment:
             negative_strength=negative_strength
         )
 
-        return results
+        return {
+            "symbol": symbol,
+            "net_sentiment": round(net_sentiment, 4),
+            "confidence": round(confidence, 4),
 
-    # #################################### 9
-    # """Helper funciton fro main sentiment metrics analysis"""
+            "positive_share": round(positive_share, 4),
+            "neutral_share": round(neutral_share, 4),
+            "negative_share": round(negative_share, 4),
 
-    def sentiment_direction(self, symbol, net_sentiment,
-                        confidence,
-                        positive_share, neutral_share, negative_share,
-                        positive_strength, neutral_strength, negative_strength):
+            "positive_strength": round(positive_strength, 4),
+            "neutral_strength": round(neutral_strength, 4),
+            "negative_strength": round(negative_strength, 4),
 
-        # Sentiment bands
+            "positive_mean": positive_t,
+            "neutral_mean": neutral_t,
+            "negative_mean": negative_t,
+
+            "positive_count": positive_c,
+            "negative_count": negative_c
+        }
+
+
+    # ======================================================
+    # FIXED DIRECTION ENGINE (CORE FIX)
+    # ======================================================
+
+    def sentiment_direction(
+            self,
+            symbol,
+            net_sentiment,
+            confidence,
+            positive_share,
+            neutral_share,
+            negative_share,
+            positive_strength,
+            neutral_strength,
+            negative_strength):
+
         bands = [
             (-1.00, "Extremely Bearish"),
             (-0.75, "Strongly Bearish"),
@@ -804,16 +728,17 @@ class ml_sentiment:
             (1.00,  "Extremely Bullish"),
         ]
 
-        # Find band
-        base = bands[0][1]
-        next_base = bands[-1][1]
+        base = "Neutral"
+        next_base = None
         progress = 0.0
 
         for i in range(len(bands) - 1):
+
             low_score, low_label = bands[i]
             high_score, high_label = bands[i + 1]
 
             if low_score <= net_sentiment < high_score:
+
                 base = low_label
                 next_base = high_label
 
@@ -822,19 +747,25 @@ class ml_sentiment:
 
         progress_pct = round(progress * 100, 1)
 
-        # Display sentiment logic
-        if progress >= 0.5 and next_base not in ["Extremely Bullish", "Extremely Bearish"]:
-            sentiment = f"Approaching {next_base}"
+        # -----------------------------
+        # Correct "Approaching" logic
+        # -----------------------------
+        if progress >= 0.5 and next_base:
+            sentiment_label = f"Approaching {next_base}"
         else:
-            sentiment = base
+            sentiment_label = base
 
-        # Output
-        print(f"Sentiment direction: {sentiment}")
-        print(f"Base Sentiment:      {base}")
-        print(f"Direction Progress:  {progress_pct}%")
+        # -----------------------------
+        # OUTPUT (FINAL FORMAT)
+        # -----------------------------
+        print()
+        print(f"Sentiment:           {sentiment_label}")
+        print(f"Base Category:       {base}")
+        print(f"Band Progress:       {progress_pct}%")
         print(f"Net Score:           {net_sentiment:+.3f}")
         print(f"Confidence:          {confidence:.1%}")
-        
+        print()
+    
         return
     
     # #################################### 8
