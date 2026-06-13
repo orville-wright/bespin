@@ -604,6 +604,41 @@ class ml_sentiment:
             return 3
 
     # #################################### 5
+    def save_sentiment_df(self, item_idx, data_set):
+        """
+        Save key ML sentiment info to global sentimennt in-memory Dataframe
+        data_set = a dict
+        """
+        self.yti
+        cmi_debug = __name__+"::"+self.save_sentiment_df.__name__+".#"+str(self.yti)
+        x = self.df0_row_count      # get last row added to DF
+        x += 1
+
+        # need to add the url hash in here, otherwise I cant do useful analysis
+        sym = data_set["sym"]
+        art = data_set["article"]
+        urlhash = data_set["urlhash"]
+        chk = data_set["chunk"]
+        rnk = data_set["rank"]
+        snt = data_set["sent"]
+
+        # sen_package = dict(sym=symbol, article=item_idx, chunk=i, sent=sen_result['label'], rank=raw_score )
+        self.sen_data = [[ \
+                    x, \
+                    sym, \
+                    art, \
+                    urlhash, \
+                    chk, \
+                    rnk, \
+                    snt ]]
+
+        self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
+        self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
+        self.df0_row_count = x
+        logging.info( f"%s - Rehydrate metrics DF @ article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
+        return
+
+    # #################################### 6
     def sentiment_metrics(
             self,
             symbol,
@@ -768,7 +803,7 @@ class ml_sentiment:
     
         return
     
-    # #################################### 8
+    # #################################### 7
     def zstd_text_compressor(self, scentxt, _extractor):
         """
         Compresses article text into a ZSTD binary blob
