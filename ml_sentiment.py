@@ -727,26 +727,26 @@ class ml_sentiment:
         # - Industry range: -1.0  |  0.0  |  +1.0
         print()
         print(f"Symbol:      {symbol}")
-        print(f"Sentiment:   {sentiment}  | Overall news coverage")
-        print(f"Net Score:   {net_sentiment:+.3f}  | Sentiment oscilator direction")
-        print(f"Confidence:  {confidence:.1%}  | Dominant share" )
+        print(f"Sentiment:   {sentiment}\t| Overall news coverage")
+        print(f"Net Score:   {net_sentiment:+.3f}\t| Sentiment oscilator direction")
+        print(f"Confidence:  {confidence:.1%}\t| Dominant share" )
         print()
 
         print(
-            f"Positivity: "
-            f"{positive_share:.1%} of all sentiment evidence"
+            f"Positivity:\t"
+            f"{positive_share:.1%} of all sentiment evidence\t"
             f"  (Force weight : {positive_strength:.3f})"
         )
 
         print(
-            f"Neutrality:  "
-            f"{neutral_share:.1%} of all sentiment evidence"
+            f"Neutrality:\t"
+            f"{neutral_share:.1%} of all sentiment evidence\t"
             f"  (Force weight: {neutral_strength:.3f})"
         )
 
         print(
-            f"Negativity: "
-            f"{negative_share:.1%} of all sentiment evidence"
+            f"Negativity:\t"
+            f"{negative_share:.1%} of all sentiment evidence\t"
             f"  (Force weight: {negative_strength:.3f})"
         )
 
@@ -768,6 +768,7 @@ class ml_sentiment:
             "negative_count": negative_c
         }
 
+        print (" ")
         self.sentiment_direction(
             symbol=symbol,
             net_sentiment=net_sentiment,
@@ -828,7 +829,6 @@ class ml_sentiment:
             sentiment = base
 
         # Output
-        print(f"Symbol:              {symbol}")
         print(f"Sentiment direction: {sentiment}")
         print(f"Base Sentiment:      {base}")
         print(f"Direction Progress:  {progress_pct}%")
