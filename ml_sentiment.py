@@ -690,13 +690,13 @@ class ml_sentiment:
         # PRINT CORE SUMMARY
         # -----------------------------
         print()
-        print(f"Symbol:      {symbol}")
-        print(f"Net Score:   {net_sentiment:+.3f}")
-        print(f"Confidence:  {confidence:.1%}")
+        print(f"Symbol:         {symbol}")
+        print(f"Net Score:      {net_sentiment:+.3f}")
+        print(f"Signal purity:  {confidence:.1%}")
         print()
-        print(f"Positivity:  {positive_share:.1%}  (force {positive_strength:.3f})")
-        print(f"Neutrality:  {neutral_share:.1%}   (force {neutral_strength:.3f})")
-        print(f"Negativity:  {negative_share:.1%}  (force {negative_strength:.3f})")
+        print(f"Positivity:  {positive_share:.1%}  (signal mass {positive_strength:.3f})")
+        print(f"Neutrality:  {neutral_share:.1%}   (signal mass {neutral_strength:.3f})")
+        print(f"Negativity:  {negative_share:.1%}  (Signal mass {negative_strength:.3f})")
 
         # -----------------------------
         # Direction helper
@@ -797,7 +797,6 @@ class ml_sentiment:
         print(f"Sentiment:           {sentiment_label}")
         print(f"Base Category:       {base}")
         print(f"Band Progress:       {progress_pct}%")
-        print(f"Net Score:           {net_sentiment:+.3f}")
         print(f"Confidence:          {confidence:.1%}")
         print()
     
