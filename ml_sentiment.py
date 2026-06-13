@@ -657,15 +657,11 @@ class ml_sentiment:
         if total_articles == 0:
             return None
 
-        # -----------------------------
         # Article proportions
-        # -----------------------------
         positive_pct = positive_c / total_articles
         negative_pct = negative_c / total_articles
 
-        # -----------------------------
         # Strength model
-        # -----------------------------
         positive_strength = positive_pct * positive_t
         negative_strength = negative_pct * negative_t
         neutral_strength = neutral_t
@@ -678,21 +674,15 @@ class ml_sentiment:
         negative_share = negative_strength / total_strength
         neutral_share = neutral_strength / total_strength
 
-        # -----------------------------
         # Core signal (ONLY truth source)
-        # -----------------------------
         net_sentiment = (
             positive_strength - negative_strength
         ) / total_strength
 
-        # -----------------------------
         # Confidence (dominant signal share)
-        # -----------------------------
         confidence = max(positive_share, neutral_share, negative_share)
 
-        # -----------------------------
-        # Direction helper
-        # -----------------------------
+        # Compute Direction via helper function
         self.sentiment_direction(
             symbol=symbol,
             net_sentiment=net_sentiment,
@@ -726,8 +716,10 @@ class ml_sentiment:
             "negative_count": negative_c
         }
 
-    # DIRECTION ENGINE
-    # Helper function
+    #######################################
+    """
+    Helper function - DIRECTION compute Engine
+    """
     def sentiment_direction(
             self,
             symbol,
@@ -775,8 +767,8 @@ class ml_sentiment:
 
         split_vector_model =  self.sentiment_vector_model(positive_share, negative_share, neutral_share)
 
-        # SUMMARY Report
-        # final analysis read-out
+        ###########################################
+        # SUMMARY Report - final analysis read-out
         print()
         print(f"Symbol:         {symbol}")
         print(f"Sentiment:      {sentiment_label}\t| Directionally biased -> {split_vector_model["sentiment"]} ")
@@ -791,12 +783,13 @@ class ml_sentiment:
         print(f"Neutrality:     {neutral_share:.1%}\t| (Non-directional ambiguity: {neutral_strength:.3f})")
         print(f"Negativity:     {negative_share:.1%}\t| (Directional signal mass:  {negative_strength:.3f})")
         print()
-    
-        
         return
 
     # ####################################    
-    # 2-vector model support function
+    """
+    Helper function
+    2-vector model support computations
+    """
     def sentiment_vector_model(self, positive_share, negative_share, neutral_share):
         direction_total = positive_share + negative_share   # Direction space (ignore neutral)
         if direction_total == 0:
