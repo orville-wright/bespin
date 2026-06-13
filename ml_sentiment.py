@@ -2,23 +2,17 @@
 
 #from requests_html import HTMLSession
 import pandas as pd
-#import modin.pandas as pd
 import numpy as np
 import re
-#import os
-#import sys
 import logging
 import threading
-#import argparse
 from rich import print
 import base64
 import zstandard as zstd
 
 from ml_cvbow import ml_cvbow
-#import nltk.data
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-#from transformers import pipeline
 
 # ML / NLP section #############################################################
 class ml_sentiment:
@@ -57,21 +51,22 @@ class ml_sentiment:
     twc = 0                 # Total cumulative Word count in this artcile being analyzed
     yti = 0
     
-    # Technical analysys lookup dict defines sentiment score to description mapping
+    # Technical analysys lookup dict defines (Net sentiment net score) to description mapping
     # each dict item is a list that contains 2 items
     # - a sentiment description
     # - a value assocaited to that description
-    # this is useful b/c we can access the list from within math/logic, e.g. s_categories[225][0]
+    # - If a net score is between 2 numbers, it's "Trending -> " if net score >  than mid point to the greater number
+    # this is useful b/c we can access the list from within math/logic, e.g. s_categories[0.75][0]
     s_categories = {
-            225: (['Bullishly positive', 225]),
-            100: (['Trending bullish', 100]),
-            50: (['Positive', 50]),
-            25: (['Trending positive', 25]),
-            0: (['Neutral', 0]),
-            -25: (['Trending negative', -25]),
-            -50: (['Negative', -50]),
-            -100: (['Somewhat Bearish', -100]),
-            -225: (['Bearishly negative', -225])
+            0.75: (['Extremley Bullish', 0.75]),
+            0.50: (['Strongly bullish', 0.50]),
+            0.25: (['Bullish', 0.25]),
+            0.125: (['Positive', 0.125]),
+            0.45: (['Neutral', 0.45]),
+            -0.125: (['Negative', -0.125]),
+            -0.25: (['Bearish', -0.25]),
+            -0.50: (['Strongly Bearish', -0.50]),
+            -0.75: (['Extremley Bearish', -0.75])
             }
         
     ######################## init ##########################################
@@ -643,136 +638,6 @@ class ml_sentiment:
         logging.info( f"%s - Rehydrate metrics DF @ article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
         return
 
-    # #################################### 6
-    def sentiment_metrics_BAD(self, symbol, df_final, positive_c, negative_c, positive_t, negative_t, neutral_t):
-        """
-        Compute precise sentiment analysis based on aggregated data from df_final
-        
-        Parameters:
-        - symbol: Stock symbol for which sentiment is being computed
-        - df_final: DF DataFrame containing aggregated all articles sentiment data (optional not used here)
-        - positive_c: Total count of positive sentiment instances
-        - negative_c: Total count of negative sentiment instances  
-        - positive_t: Mean positive sentiment score
-        - negative_t: Mean negative sentiment score
-        - neutral_t: Mean neutral sentiment score
-        - sentiment_categories: Dictionary mapping sentiment ranges to category descriptions
-        
-        Returns:
-        - Dictionary containing precise sentiment metrics
-        """
-        cmi_debug = __name__+"::"+self.sentiment_metrics.__name__
-        logging.info( f'%s - Computing precise sentiment analysis' % cmi_debug )
-
-        # Step 1: Determine overall gross sentiment
-        if positive_c > negative_c:
-            gross_sentiment = "positive"
-            posneg_ratio_pos = positive_c / negative_c if negative_c > 0 else positive_c
-            posneg_ratio_neg = 0
-            posneg_ratio = posneg_ratio_pos
-        elif negative_c > positive_c:
-            gross_sentiment = "negative" 
-            posneg_ratio_pos = 0
-            posneg_ratio_neg = negative_c / positive_c if positive_c > 0 else negative_c
-            posneg_ratio = posneg_ratio_neg
-        else:
-            gross_sentiment = "neutral"
-            posneg_ratio_pos = 1.0
-            posneg_ratio_neg = 1.0
-            posneg_ratio = 1.0
-            
-        # Step 2: Make the ratios bigger by factor of 100
-        posneg_pos_big = posneg_ratio_pos * 100 if posneg_ratio_pos > 0 else 0
-        posneg_neg_big = posneg_ratio_neg * 100 if posneg_ratio_neg > 0 else 0
-        
-        # Step 3: Compute percentage of information that is positive/negative
-        total_sentiment = positive_c + negative_c
-        if total_sentiment > 0:
-            if gross_sentiment == "positive":
-                data_pos_pct = (positive_c / total_sentiment) * 100
-                data_neg_pct = (negative_c / total_sentiment) * 100
-            else:
-                data_pos_pct = (positive_c / total_sentiment) * 100  
-                data_neg_pct = (negative_c / total_sentiment) * 100
-        else:
-            data_pos_pct = 0
-            data_neg_pct = 0
-            
-        # Step 4: Compute precise sentiment scores
-        if gross_sentiment == "positive":
-            #precise_sent_pos = (posneg_pos_big - (positive_t * 100)) * neutral_t if neutral_t > 0 else posneg_pos_big - (positive_t * 100)
-            #precise_sent_neg = (posneg_neg_big - (negative_t * 100)) * neutral_t if neutral_t > 0 else posneg_pos_big - (negative_t * 100)
-            precise_sent_pos = (posneg_pos_big - (positive_t * 100)) * neutral_t
-            precise_sent_neg = (posneg_neg_big - (negative_t * 100)) * neutral_t
-        elif gross_sentiment == "negative":
-            precise_sent_pos = ((positive_t * 100) - posneg_neg_big) * neutral_t if neutral_t > 0 else (positive_t * 100) - posneg_neg_big
-            precise_sent_neg = ((negative_t * 100) - posneg_neg_big) * neutral_t if neutral_t > 0 else (negative_t * 100) - posneg_neg_big
-        else:  # neutral
-            precise_sent_pos = 0
-            precise_sent_neg = 0
-            
-        # Round to integers
-        precise_sent_pos = round(precise_sent_pos)
-        precise_sent_neg = round(precise_sent_neg)
-        
-        # Step 5
-        # HELPER function
-        # - find the closest matching category for a given Category score       
-        def find_closest_category(score, categories):
-            """Find the closest matching category for a given score"""
-            if not categories:
-                return "Unknown"
-            closest_key = min(categories.keys(), key=lambda x: abs(x - score))
-            return categories[closest_key][0]  # Return the description string
-
-        sentcat_pos = find_closest_category(precise_sent_pos, self.s_categories)
-        sentcat_neg = find_closest_category(precise_sent_neg, self.s_categories)
-        
-        # Create results dictionary
-        results = {
-            'gross_sentiment': gross_sentiment,
-            'data_pos_pct': data_pos_pct,
-            'data_neg_pct': data_neg_pct,
-            'precise_sent_pos': precise_sent_pos,
-            'precise_sent_neg': precise_sent_neg,
-            'sentcat_pos': sentcat_pos,
-            'sentcat_neg': sentcat_neg,
-            'posneg_ratio_pos': posneg_ratio_pos,
-            'posneg_ratio_neg': posneg_ratio_neg,
-            'posneg_intensity_ratio': posneg_ratio
-        }
-        
-        if round(posneg_ratio,1) <= 1.5:
-            gross_sentiment = "NEUTRAL"
-        # Step 6: Print the precise sentiment metrics
-        print( f"Overall:    {gross_sentiment.upper()} / Intensity: ({round(posneg_ratio,1)} : 1)" )
-        print( f"Positivity: {data_pos_pct:.2f}% {sentcat_pos} @ Confidence: {(positive_t * 100):.2f}% / Cat score: {precise_sent_pos}" ) 
-        print( f"Negativity: {data_neg_pct:.2f}% {sentcat_neg} @ Confidence: {(negative_t * 100):.2f}% / Cat score: {precise_sent_neg}" ) 
-
-        sym = symbol
-        pos_pct = f"{data_pos_pct:.2f}"
-        neg_pct = f"{data_neg_pct:.2f}"
-
-        self.s_data = [[
-            sym,
-            gross_sentiment,
-            round(posneg_ratio,1),
-            pos_pct,
-            sentcat_pos,
-            precise_sent_pos,
-            neg_pct,
-            sentcat_neg,
-            precise_sent_neg,
-            positive_t,
-            negative_t,
-            neutral_t ]]
-        
-        self.df0_row = pd.DataFrame(self.s_data, columns=[ 'Symbol', 'Sentiment', 'Ratio', 'P_pct', 'P_cat', 'P_score', 'N_pct', 'N_cat', 'N_score', 'P_mean', 'N_mean', 'Z_mean' ] )
-        self.sen_df3 = pd.concat([self.sen_df3, self.df0_row])
-        logging.info( '%s - Global Sentiment DF updated...' % cmi_debug )        
-
-        return results
-
     # #################################### 7
 
     def sentiment_metrics(
@@ -788,7 +653,6 @@ class ml_sentiment:
         """
         positive_c = number of positive articles
         negative_c = number of negative articles
-
         positive_t = mean positive confidence [0-1]
         negative_t = mean negative confidence [0-1]
         neutral_t  = mean neutral confidence  [0-1]
@@ -869,19 +733,19 @@ class ml_sentiment:
         print()
 
         print(
-            f"Positive: "
+            f"Positivity: "
             f"{positive_share:.1%} of all sentiment evidence"
             f"  (Force weight : {positive_strength:.3f})"
         )
 
         print(
-            f"Neutral:  "
+            f"Neutrality:  "
             f"{neutral_share:.1%} of all sentiment evidence"
             f"  (Force weight: {neutral_strength:.3f})"
         )
 
         print(
-            f"Negative: "
+            f"Negativity: "
             f"{negative_share:.1%} of all sentiment evidence"
             f"  (Force weight: {negative_strength:.3f})"
         )
@@ -904,8 +768,75 @@ class ml_sentiment:
             "negative_count": negative_c
         }
 
+        self.sentiment_direction(
+            symbol=symbol,
+            net_sentiment=net_sentiment,
+            confidence=confidence,
+            positive_share=positive_share,
+            neutral_share=neutral_share,
+            negative_share=negative_share,
+            positive_strength=positive_strength,
+            neutral_strength=neutral_strength,
+            negative_strength=negative_strength
+        )
+
         return results
 
+    # #################################### 9
+    # """Helper funciton fro main sentiment metrics analysis"""
+
+    def sentiment_direction(self, symbol, net_sentiment,
+                        confidence,
+                        positive_share, neutral_share, negative_share,
+                        positive_strength, neutral_strength, negative_strength):
+
+        # Sentiment bands
+        bands = [
+            (-1.00, "Extremely Bearish"),
+            (-0.75, "Strongly Bearish"),
+            (-0.50, "Bearish"),
+            (-0.25, "Slightly Bearish"),
+            (0.00,  "Neutral"),
+            (0.25,  "Slightly Bullish"),
+            (0.50,  "Bullish"),
+            (0.75,  "Strongly Bullish"),
+            (1.00,  "Extremely Bullish"),
+        ]
+
+        # Find band
+        base = bands[0][1]
+        next_base = bands[-1][1]
+        progress = 0.0
+
+        for i in range(len(bands) - 1):
+            low_score, low_label = bands[i]
+            high_score, high_label = bands[i + 1]
+
+            if low_score <= net_sentiment < high_score:
+                base = low_label
+                next_base = high_label
+
+                progress = (net_sentiment - low_score) / (high_score - low_score)
+                break
+
+        progress_pct = round(progress * 100, 1)
+
+        # Display sentiment logic
+        if progress >= 0.5 and next_base not in ["Extremely Bullish", "Extremely Bearish"]:
+            sentiment = f"Approaching {next_base}"
+        else:
+            sentiment = base
+
+        # Output
+        print(f"Symbol:              {symbol}")
+        print(f"Sentiment direction: {sentiment}")
+        print(f"Base Sentiment:      {base}")
+        print(f"Direction Progress:  {progress_pct}%")
+        print(f"Net Score:           {net_sentiment:+.3f}")
+        print(f"Confidence:          {confidence:.1%}")
+        
+        return
+    
     # #################################### 8
     def zstd_text_compressor(self, scentxt, _extractor):
         """
