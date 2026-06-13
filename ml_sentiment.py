@@ -776,15 +776,16 @@ class ml_sentiment:
         # SUMMARY Report
         print()
         print(f"Symbol:        {symbol}")
-        print(f"Sentiment:     {sentiment_label}")
+        print(f"Sentiment:     {sentiment_label}\t| Directional bias")
         print(f"Base Category: {base}")
-        print(f"Band Progress: {progress_pct}%")
+        print(f"Band Progress: {progress_pct}%\t| through band: {base}")
         print(f"Confidence:    {confidence:.1%}")
         print(f"Net Score:     {net_sentiment:+.3f}\t| Sentiment Oscilator Direction")
         print(f"Signal purity: {confidence:.1%}\t| Dominant Signal Share")
-        print(f"Positivity:    {positive_share:.1%}\t| (signal mass {positive_strength:.3f})")
-        print(f"Neutrality:    {neutral_share:.1%}\t| (signal mass {neutral_strength:.3f})")
-        print(f"Negativity:    {negative_share:.1%}\t| (Signal mass {negative_strength:.3f})")
+        print("Sentiment Composition:")
+        print(f"Positivity:    {positive_share:.1%}\t| (Directional signal mass:  {positive_strength:.3f})")
+        print(f"Neutrality:    {neutral_share:.1%}\t| (Non-directional ambiguity: {neutral_strength:.3f})")
+        print(f"Negativity:    {negative_share:.1%}\t| (Directional signal mass:  {negative_strength:.3f})")
         print()
     
         return

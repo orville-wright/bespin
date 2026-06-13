@@ -639,7 +639,7 @@ def main():
             # #############################################
             # Final Summary report
             # #############################################
-            print ( f"========================= Final Sentiment Analysis for: {news_symbol.upper()} ================================" )       
+            print ( f"=================== Sentiment Profile Analysis for: {news_symbol.upper()} ===================" )
             precise_results = sent_ai.sentiment_metrics(
                 news_symbol.upper(), df_final, positive_c, negative_c, positive_t, negative_t, neutral_t
             )
