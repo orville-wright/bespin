@@ -663,7 +663,7 @@ def main():
             print ("--------------------------------")
             print ( f"DEBUG: sent_ai.sen_df3\n{sent_ai.sen_df3}\n")
             print ("--------------------------------")
-            print ( f"DEBUG: sent_ai.df-final\n{sent_ai.df_final}\n")
+            print ( f"DEBUG: sent_ai.df-final\n{df_final}\n")
             # End Su,,ary report
             # ############### Done reading many articles ###################
 
