@@ -43,9 +43,9 @@ class ml_sentiment:
     sen_df0 = None          # sentiment for this artile ONLY (gets overwritten each time per article)
     sen_df1 = None          # NUSED
     sen_df2 = None          # ? unknown
-    sen_df3 = None          # A long lasting DF to collect all sentiment data
+    sen_df3 = None          # ? unknown - A long lasting DF to collect all sentiment data
     sen_data = []           # Data to be added to the DataFrame
-    sentiment_count = None  # Sentiment counts for this article
+    sentiment_countsentiment_count = None  # Sentiment counts for this article
     tsenparas = 0           # total sentences & paragraphs
     ttc = 0                 # Total Tokens generated in the scnetcne being analyzed
     twc = 0                 # Total cumulative Word count in this artcile being analyzed
@@ -107,7 +107,7 @@ class ml_sentiment:
         """The worker method executed by the background thread."""
         try:
             from transformers import pipeline
-            print ( "Thread initalizer: worker imported HF LLM piple module..." )
+            print ( "Thread initalizer: worker imported HF LLM pipeline module..." )
             model_pipeline = pipeline(
                 task="sentiment-analysis",
                 model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
@@ -769,10 +769,9 @@ class ml_sentiment:
 
         ###########################################
         # SUMMARY Report - final analysis read-out
-        print()
         print(f"Symbol:         {symbol}")
-        print(f"Sentiment:      {sentiment_label}\t| Directionally biased -> {split_vector_model["sentiment"]} ")
-        print(f"Base Category:  {base}")
+        print(f"Sentiment:      {sentiment_label}   | Directionally biased -> {split_vector_model["sentiment"]} ")
+        print(f"Base sentiment: {base}")
         print(f"Band Progress:  {progress_pct}%\t| through {base} band")
         print(f"Signal clarity: {split_vector_model["clarity"]}")
         print(f"Signal convctn: {split_vector_model["conviction"]}\t| {split_vector_model["sentiment"]}")
