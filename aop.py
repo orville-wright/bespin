@@ -657,7 +657,7 @@ def main():
             pd.set_option('display.max_columns', None)
             print ( f"DEBUG: sent_ai.sen_df0\n{sent_ai.sen_df0}\n")
             print ("--------------------------------")
-            print ( f"DEBUG: sent_ai.sen_df1\n{sent_ai.sen_df1l}\n")
+            print ( f"DEBUG: sent_ai.sen_df1\n{sent_ai.sen_df1}\n")
             print ("--------------------------------")
             print ( f"DEBUG: sent_ai.sen_df2\n{sent_ai.sen_df2}\n")
             print ("--------------------------------")
