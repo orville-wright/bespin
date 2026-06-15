@@ -77,7 +77,7 @@ class ml_nlpreader:
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(" ")
             print(f"Skimmed: {articles_found} / Evaled: {len(ml_yfn_dataset.ml_ingest)} articles /(bad urls: {bad_url_count}) @ Depth: 0")
-            print(f"========================================================================================")
+            print("========================================================================================")
             if self.args.get('bool_xray', False):                   # DEBUG: xray
                 ml_yfn_dataset.dump_ml_ingest()
         else:
