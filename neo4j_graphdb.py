@@ -108,7 +108,7 @@ class neo4j_auradb:
             return 99
 
 # ###########################  4
-    def create_sym_node(self, ticker_symbol, sentiment_df=None):
+    def create_sym_node(self, ticker_symbol, sentiment_df):
         """
         Create a Symbol Graph NODE with enhanced sentiment data
         Assumes driver has been successfully created and saved to self.driver
@@ -156,7 +156,7 @@ class neo4j_auradb:
                 )
             else:
                 # Fallback to basic symbol node if no sentiment data
-                query = ("CREATE (s:Symbol {symbol: $symbol, id: randomUUID()}) "
+                query = ("CREATE (s:Symbol {symbol: $symbol, id: $symbol) "
                          "RETURN s.id AS node_id")
                 result = session.run(query, symbol=symbol)
             
