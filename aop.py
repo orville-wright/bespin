@@ -656,7 +656,7 @@ def main():
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             print ("--------------------------------")
-            print ( f"DEBUG: sent_ai.df-final\n{df_final}\n")
+            print ( f"DEBUG: sent_ai.df_final\n{df_final}\n")
             # End Summary report
             # ############### Done reading many articles ###################
 
@@ -679,21 +679,22 @@ def main():
                         # FIX: add unknown elments later (need to gather them from elsewhere first)
                         # Article must be created first, then related to their parent symbol node
                         case False:             # stock ticker symbol node does not exist
-                            print ( f"Symbol node [ {news_symbol} ] does NOT exist in Neo4j Graph: " )
+                            print ( f"Symbol node [ {news_symbol} ] does NOT exist in Neo4j Graph" )
                             try:
                                 kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
                                 print ( f"New Graph symbol node created: {kg_node_id}" )
+                                print ( f"DEBUG-#686: sentiment_df: {sentiment_df}")
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                                 print (f"Created article relationship.")
                                 kgraphdb.news_agency()
-                                print (f"Refreshed News Agency ownership.")
+                                print ("Refreshed News Agency ownership.")
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
                         case True:              # stock ticker symbol node exists 
                             print (f" ")
-                            print ( f"Trigger: {found_sym} {type(found_sym)} - Symbol node [ {news_symbol} ] exist: {type(found_sym)}" )
+                            print ( f"Symbol node [ {news_symbol} ] exist in Neo4j Graph" )
                             print ( f"Skipping SymbolnNode creation... merging new articles..." )
                             _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                             print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
@@ -703,7 +704,7 @@ def main():
                             print (f"Refreshed News Agency ownership.")
                         case None:              # ??? needs investigation
                             print (f" ")
-                            print ( f"Trigger: {found_sym} {type(found_sym)} - Empty Symbol node [ {news_symbol} ] discovered: " )
+                            print ( f"Empty Symbol node [ {news_symbol} ] discovered - but no articles: " )
                             _gm = kgraphdb.create_article_nodes(df_final, news_symbol)
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                             #if args['bool_verbose'] is True:
@@ -712,7 +713,7 @@ def main():
                         case 99:
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                         case _:
-                            print (f"Weird return code during GraphDB node exist check!" )  
+                            print (f"Weird return code during GraphDB node check!" )  
                             print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
                             res = kgraphdb.dump_symbols(1)
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)   
