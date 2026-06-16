@@ -655,10 +655,9 @@ def main():
             
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
-            print ( f"DEBUG: sent_ai.sen_df0\n{sent_ai.sen_df0}\n")
             print ("--------------------------------")
             print ( f"DEBUG: sent_ai.df-final\n{df_final}\n")
-            # End Su,,ary report
+            # End Summary report
             # ############### Done reading many articles ###################
 
 
@@ -680,7 +679,7 @@ def main():
                         # FIX: add unknown elments later (need to gather them from elsewhere first)
                         # Article must be created first, then related to their parent symbol node
                         case False:             # stock ticker symbol node does not exist
-                            print ( f"Trigger: {found_sym} {type(found_sym)} - Symbol node [ {news_symbol} ] does NOT exist: " )
+                            print ( f"Symbol node [ {news_symbol} ] does NOT exist in Neo4j Graph: " )
                             try:
                                 kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
                                 print ( f"New Graph symbol node created: {kg_node_id}" )

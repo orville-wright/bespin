@@ -41,7 +41,7 @@ class ml_sentiment:
     empty_vocab = 0         # tracker that LLM found empty vocab
     mlnlp_uh = None         # URL Hinter instance
     sen_df0 = None          # sentiment for this artile ONLY (gets overwritten each time per article)
-    sen_df1 = None          # NUSED
+    sen_df1 = None          # ? UNUSED
     sen_df2 = None          # ? unknown
     sen_df3 = None          # ? unknown - A long lasting DF to collect all sentiment data
     sen_data = []           # Data to be added to the DataFrame
@@ -51,24 +51,25 @@ class ml_sentiment:
     twc = 0                 # Total cumulative Word count in this artcile being analyzed
     yti = 0
     
-    # Technical analysys lookup dict defines (Net sentiment net score) to description mapping
+    # Technical analysys sentiment bands lookup dict
+    # defines (Net sentiment net score) description tag mapping
     # each dict item is a list that contains 2 items
     # - a sentiment description
     # - a value assocaited to that description
-    # - If a net score is between 2 numbers, it's "Trending -> " if net score >  than mid point to the greater number
-    # this is useful b/c we can access the list from within math/logic, e.g. s_categories[0.75][0]
+    # - If a net score is between 2 numbers, it's "Trending ->" next band
+    # Useful as we can access the internal list via math/logic, e.g. s_categories[0.75][0]
     s_categories = {
-            0.75: (['Extremley Bullish', 0.75]),
-            0.50: (['Strongly bullish', 0.50]),
-            0.25: (['Bullish', 0.25]),
+            1.0: (['Extremley Bullish', 1.0]),
+            0.75: (['Strongly bullish', 0.75]),
+            0.50: (['Bullish', 0.50]),
             0.125: (['Positive', 0.125]),
-            0.45: (['Neutral', 0.45]),
+            0.00: (['Neutral', 0.00]),
             -0.125: (['Negative', -0.125]),
-            -0.25: (['Bearish', -0.25]),
-            -0.50: (['Strongly Bearish', -0.50]),
-            -0.75: (['Extremley Bearish', -0.75])
+            -0.50: (['Bearish', -0.50]),
+            -0.75: (['Strongly Bearish', -0.75]),
+            -1.0: (['Extremley Bearish', -1.0])
             }
-        
+            
     ######################## init ##########################################
     def __init__(self, yti, global_args):
         cmi_debug = __name__+"::"+self.__init__.__name__
