@@ -656,7 +656,9 @@ def main():
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
             print ("--------------------------------")
-            print ( f"DEBUG: sent_ai.df_final\n{df_final}\n")
+            print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
+            print ("--------------------------------")
+            print ( f"DEBUG-#661:  sen_df0\n{df_0}\n")
             # End Summary report
             # ############### Done reading many articles ###################
 
@@ -681,9 +683,9 @@ def main():
                         case False:             # stock ticker symbol node does not exist
                             print ( f"Symbol node [ {news_symbol} ] does NOT exist in Neo4j Graph" )
                             try:
-                                kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
+                                kg_node_id = kgraphdb.create_sym_node(news_symbol, sent_ai.sen_df3)
                                 print ( f"New Graph symbol node created: {kg_node_id}" )
-                                print ( f"DEBUG-#686: sentiment_df: {sentiment_df}")
+                                print ( f"DEBUG-#686: sent_df3: {sent_ai.sen_df3}")
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
