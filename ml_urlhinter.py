@@ -46,7 +46,10 @@ class url_hinter:
         cmi_debug = __name__+"::uhinter.eng#"+str(self.yti)+"_cyc#"+str(hcycle)
         input_url = recvd_url
 
-        # INFO: U code only - This metainfo does NOT define locality. You cant inferr locality truth from it.
+        # INFO: uhit News Zone code lookup table
+        # - This article metainfo does NOT define locality. You cant inferr locality truth from it.
+        # - but the presence of it very likely means that this is a real + local yahoo.com hosted News article
+        # - b/c they done categorize fake/adds news articles with a real News Zone
         uhint_code = {
                     'news': ('General Local News', 0),
                     'markets': ('Categorized local News', 0),
@@ -72,10 +75,13 @@ class url_hinter:
         if t_check:
             a_url = urlparse(input_url)                 # conv url string into apparsed named tuple object
             if a_url.netloc == "finance.yahoo.com":
-                print (f"DEBUG-#74 - url: {a_url}")
+                #print (f"DEBUG-#74 - url: {a_url}")    # use when New yahoo.com News Zone (i.e. uhint lookup failure)
                 urlp_attr = a_url.path.split('/', 2)    # focus on path=object ONLY
-                print (f"DEBUG-#76 - News Zone: {urlp_attr[1]}")  # use when yahoo.com adds new "url  zone"  & we have no matching uhint code
-
+                if urlp_attr is None:
+                    logging.info ( f"%s  - Possible NEW yahoo.com News Zone - breaking uhint lookup: {type(input_url)}" % cmi_debug )
+                    print (f"DEBUG-#76 - Possible NEW Yahoo.com News Zone - breaking uhint lookup: {urlp_attr[1]}")  # use when yahoo.com adds new "url news zome"  & we have no matching uhint code
+                    sys.exit(1)
+                
                 uhint = uhint_code.get(urlp_attr[1])    # retrieve uhint code/descr tuple from url split above
                 logging.info ( f"%s  - Logic +0 Decoded url: [{a_url.netloc}] / Type: [{urlp_attr[1]}] / u:{uhint[1]} / {uhint[0]}" % cmi_debug )
                 return uhint[1], uhint[0]
