@@ -52,6 +52,7 @@ class url_hinter:
                     'markets': ('Categorized local News', 0),
                     'sectors': ('Categorized Local News', 0),
                     'economy': ('Categorized Local News', 0),
+                    'technology': ('Categorized Local News', 0),
                     'personal-finance': ('Categorized Local News', 0),
                     'm': ('Fake local micro news', 1),
                     'live': ('Fake local micro news', 1),
@@ -71,9 +72,9 @@ class url_hinter:
         if t_check:
             a_url = urlparse(input_url)                 # conv url string into apparsed named tuple object
             if a_url.netloc == "finance.yahoo.com":
-                print (f"DEBUG-#74 - Working on url: {a_url}")
+                print (f"DEBUG-#74 - url: {a_url}")
                 urlp_attr = a_url.path.split('/', 2)    # focus on path=object ONLY
-                print (f"DEBUG-#76 - url: {urlp_attr}")  # use when yahoo.com adds new "url  zone"  & we have no matching uhint code
+                print (f"DEBUG-#76 - News Zone: {urlp_attr[1]}")  # use when yahoo.com adds new "url  zone"  & we have no matching uhint code
 
                 uhint = uhint_code.get(urlp_attr[1])    # retrieve uhint code/descr tuple from url split above
                 logging.info ( f"%s  - Logic +0 Decoded url: [{a_url.netloc}] / Type: [{urlp_attr[1]}] / u:{uhint[1]} / {uhint[0]}" % cmi_debug )
