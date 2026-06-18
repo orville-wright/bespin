@@ -59,6 +59,7 @@ class url_hinter:
                     'news': ('General Local News', 0),
                     'personal-finance': ('Categorized Local News', 0),
                     'sectors': ('Categorized Local News', 0),
+                    'small-business': ('Categorized Local News', 0),
                     'technology': ('Categorized Local News', 0),
                     'm': ('Fake local micro news', 1),
                     'live': ('Fake local micro news', 1),
