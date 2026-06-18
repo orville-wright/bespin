@@ -57,7 +57,8 @@ class yfnews_reader:
     
 #    C4_kvio_eng = None
 #    BS4_kvio_eng = None
-
+    kv_created_C4 = 0       # count article KV cache data created in LMDB cache processed by C4
+    kv_created_BS4 = 0      # count article KV cache data created in LMDB cache processed by BS4
     lmdb_env = None         # Global LMBD instance, opened @ main::newsai_sent
     C4_lmdb_env = None
     BS4_lmdb_env = None
@@ -119,6 +120,8 @@ class yfnews_reader:
         self.symbol = symbol
         self.nlp_x = 0
         self.cycle = 1
+        self.kv_created_BS4 = 0
+        self.kv_created_C4 = 0
         self.sent_df0 = pd.DataFrame(columns=['Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'])
         
         # Setup crawl4ai schema path
@@ -817,8 +820,10 @@ class yfnews_reader:
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
         # empty vocabulary pretty-printer logic for eof=""
         if self.sent_ai.empty_vocab > 0:
-            print (f"\n")
+            print ("\n")
 
+        self.kv_created_BS4 += 1      # keep count of BS4 pre-processed KV cache article data created
+        
         bs4_final_results.update({
             'article': item_idx,
             'urlhash': hs,
@@ -1164,7 +1169,9 @@ class yfnews_reader:
                                 pass        # Not Fatal - faield to open LMDB. Continue with manual Network Read
                             # empty vocabulary pretty-printer logic for eof=""
                             if self.sent_ai.empty_vocab > 0:
-                                print (f"\n")
+                                print ("\n")
+                            
+                            self.kv_created_C4 += 1      # keep count of C4 pre-processed KV cache article data created
 
                             c4_final_results.update({
                                 'article': item_idx,
@@ -1249,7 +1256,7 @@ class yfnews_reader:
                     logging.info(f'%s  - crawl4ai extraction running...' % cmi_debug)
                     self.yfn_crawl_data = json.loads(result.extracted_content)
                     auh = hashlib.sha256(durl.encode())     # prep hash
-                    aurl_hash = auh.hexdigest()             # genertae hash WARN: need to do dedupe check !!
+                    aurl_hash = auh.hexdigest()             # generate hash WARN: needs dedupe checking !!
                     self.yfn_c4_result[aurl_hash] = dict(   # C4 local cache - for crawl4ai results, for post-processing
                         url = durl,
                         data = self.yfn_crawl_data,

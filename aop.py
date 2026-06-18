@@ -477,10 +477,11 @@ def main():
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # Main LOOP - all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()                    # reset DataFrame for each article
                 thint = news_ai.nlp_summary_report(3, sn_idx)       # get this TYPE of new article from ml_ingest : sn_idx = article counter loop
-                if thint == 0.0:    # only compute type 0.0 prepared and validated new articles in ML_ingest
-                    # ################################################################
-                    # Anti-bot avoidance & performance scraper load-balancer
-                    # WARN:  executes sentiment_ai.compute_sentiment()
+
+                # ######################################################
+                # Anti-bot avoidance scraping load-balancer logic
+                # WARN:  eventually calls  sentiment_ai.compute_sentiment()
+                if thint == 0.0:    # only compute type = 0.0 pre-processed + validated News articles in ML_ingest
                     if antibot_load_balancer == 0:                  # randomize  craw4ai / BS4 scrapers
                         _atc, _awc, final_results = news_ai.yfn.artdata_C4_depth3(sn_idx, sent_ai, lmdb_env)    # craw4ai engine
                     else:
@@ -659,6 +660,8 @@ def main():
             print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
             #print ( f"DEBUG-#661:  sent_ai.sen_df0\n{sent_ai.sen_df0}\n" )
+            print ( f"Total C4 processed articles:  {news_ai.yfn.kv_created_C4}")
+            print ( f"Total BS4 processed articles: {news_ai.yfn.kv_created_BS4}")
             print ( f"Total sentiment chunks: {sent_ai.df0_row_count}" )
             print ( f"Cached sentiment rows:  {sent_ai.sen_cache_eng}" )
             print ( f"LLM computed sent rows: {sent_ai.sen_llm_eng}" )

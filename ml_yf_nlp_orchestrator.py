@@ -59,14 +59,13 @@ class ml_nlpreader:
         news_symbol = str(news_symbol).upper()
         
         self.yfn = yfnews_reader(1, news_symbol, global_args )          # instantiate our own class of YFN (frm ml_yf_nlp_news_engine)
-        #ml_yfn_dataset = yfnews_reader(1, news_symbol, self.args)      # Instantiate
         ml_yfn_dataset = self.yfn     
         ml_yfn_dataset.form_endpoint(news_symbol)                       # extablish the exct news url endpoint
         logging.info(f"%s - Form NEWS endpoint for {news_symbol} + globalize url_hinter @ #1" % cmi_debug)
         self.yfn_uh = url_hinter(1, self.args)                          # instantiate URL hinter 
         ml_yfn_dataset.yfn_uh = self.yfn_uh
 
-        # 3 Main steps execuete here - Depth -> 0 + Depth -> 1
+        # 3 Main steps execuete @here : Depth -> 0 + Depth -> 1
         # print a report of the Depth 0 Top Level news skim run
         _url_hash0 = await ml_yfn_dataset.yahoofin_news_depth0(0)   # scrape NOW @ Depth 0 yahoofin_news_depth0()
 
@@ -76,7 +75,7 @@ class ml_nlpreader:
             eval_state, bad_url_count = ml_yfn_dataset.eval_news_feed_stories(news_symbol)
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(" ")
-            print(f"Skimmed: {articles_found} / Evaled: {len(ml_yfn_dataset.ml_ingest)} articles /(bad urls: {bad_url_count}) @ Depth: 0")
+            print(f"Candidates: {articles_found} / Healthy: {len(ml_yfn_dataset.ml_ingest)} / (Bad urls: {bad_url_count}) / Skimmed Depth: 0")
             print("========================================================================================")
             if self.args.get('bool_xray', False):                   # DEBUG: xray
                 ml_yfn_dataset.dump_ml_ingest()
@@ -117,7 +116,7 @@ class ml_nlpreader:
         
         # ################# 1: Real valid news article
         if sn_row['type'] == 0:  # REAL valid news article
-            print(f"Analyzing...   {sn_row['symbol']} / Valid News article: {ml_idx} / ({self.ml_yfn_dataset.articles_found})")
+            print(f"Analyzing...   {sn_row['symbol']} / Valid News article: {ml_idx} / ({self.ml_yfn_dataset.articles_found}) Candidates")
             t_url = urlparse(sn_row['url'])
             uhint, uhdescr = self.yfn_uh.uhinter(0, t_url)
             thint = sn_row['thint']
