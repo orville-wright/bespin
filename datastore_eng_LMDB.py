@@ -11,8 +11,6 @@ import string
 import sys
 from typing import Any, Dict, List, Tuple, Optional
 
-
-
 # ML / NLP section #############################################################
 class lmdb_io_eng:
     """
@@ -314,24 +312,27 @@ class lmdb_io_eng:
         print (f"=========== End.#4 KV Cache MISS / LMDB RO open failure ! Do Net read... {item_idx} ===========" )
         return 4, 0, 0, None, None   # LMDB I/O FAILURE : Failed to open DB in RO mode
 
-        # #########################################
-        # private helper function : BS4 extractor
-        def dump_kvcache_bs4(self, symbol, _urlhash):
-            with self.kvio_eng.env.begin() as txn0:
-                print(f"BS4 Dumping LMDB KV cache database...")    
-                cursor0 = txn0.cursor()
-                count = 0
-                for _key0, _value0 in cursor0:
-                    _find_me = "0001."+symbol+"."+_urlhash
-                    match _key0.decode('utf-8'):
-                        case str(_find_me):
-                            key_str = _key0.decode('utf-8')
-                            value_str = _value0.decode('utf-8')
-                            print(f"LMDB -  SEARCH: {_find_me}" )
-                            print(f"LMDB -  KEY:    {key_str} -> VALUE: {value_str}\n")
-                        case _:
-                            print(f"LMDB -  didnt find any LMBD data for: {symbol} / {_urlhash}")
-                    count += 1
-                print(f"\nBS4 Total entries in LMDB database: {count}")    
-                #self.kvio_eng.env.close()
-            return
+    # ##################################
+    # private helper function 
+    """
+    NOTE: helper to dump a record if needed
+    """
+    def dump_kvcache_bs4(self, symbol, _urlhash):
+        with self.kvio_eng.env.begin() as txn0:
+            print( "Dumping LMDB KV cache database...")
+            cursor0 = txn0.cursor()
+            count = 0
+            for _key0, _value0 in cursor0:
+                _find_me = "0001."+symbol+"."+_urlhash
+                match _key0.decode('utf-8'):
+                    case str(_find_me):
+                        key_str = _key0.decode('utf-8')
+                        value_str = _value0.decode('utf-8')
+                        print(f"LMDB -  SEARCH: {_find_me}" )
+                        print(f"LMDB -  KEY:    {key_str} -> VALUE: {value_str}\n")
+                    case _:
+                        print(f"LMDB -  didnt find any LMBD data for: {symbol} / {_urlhash}")
+                count += 1
+            print(f"\nTotal entries in LMDB database: {count}")    
+            #self.kvio_eng.env.close()
+        return
