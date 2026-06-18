@@ -53,6 +53,7 @@ class url_hinter:
         uhint_code = {
                     'economy': ('Categorized Local News', 0),
                     'energy': ('Categorized Local News', 0),
+                    'healthcare': ('Categorized Local News', 0),
                     'markets': ('Categorized local News', 0),
                     'news': ('General Local News', 0),
                     'sectors': ('Categorized Local News', 0),
