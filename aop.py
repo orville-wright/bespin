@@ -658,7 +658,11 @@ def main():
             print ("--------------------------------")
             print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
-            print ( f"DEBUG-#661:  sent_ai.sen_df0\n{sent_ai.sen_df0}\nChunked sentiment rows: {sent_ai.df0_row_count}\n" )
+            print ( f"DEBUG-#661:  sent_ai.sen_df0\n{sent_ai.sen_df0}\n" )
+            print ( f"Total sentiment chunks: {sent_ai.df0_row_count}" )
+            print ( f"Cached sentiment rows:  {sent_ai.sen_cache_eng}" )
+            print ( f"LLM computed sent rows: {sent_ai.sen_llm_eng}" )
+
             # End Summary report
             # ############### Done reading many articles ###################
 
@@ -689,33 +693,33 @@ def main():
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                                print (f"Created article relationship.")
+                                print ("Created article relationship.")
                                 kgraphdb.news_agency()
                                 print ("Refreshed News Agency ownership.")
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
                         case True:              # stock ticker symbol node exists 
-                            print (f" ")
+                            print (" ")
                             print ( f"Symbol node [ {news_symbol} ] exist in Neo4j Graph" )
-                            print ( f"Skipping SymbolnNode creation... merging new articles..." )
+                            print ( "Skipping SymbolnNode creation... merging new articles..." )
                             _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                             print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                            print (f"Created article relationship.")
+                            print ("Created article relationship.")
                             kgraphdb.news_agency()
-                            print (f"Refreshed News Agency ownership.")
+                            print ("Refreshed News Agency ownership.")
                         case None:              # ??? needs investigation
-                            print (f" ")
+                            print (" ")
                             print ( f"Empty Symbol node [ {news_symbol} ] discovered - but no articles: " )
                             _gm = kgraphdb.create_article_nodes(df_final, news_symbol)
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                             #if args['bool_verbose'] is True:
-                            print (f" ")
+                            print (" ")
                             print ( f"Merged new articles into Symbol node: {_gm}" )
                         case 99:
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                         case _:
-                            print (f"Weird return code during GraphDB node check!" )  
+                            print ("Weird return code during GraphDB node check!" )  
                             print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
                             res = kgraphdb.dump_symbols(1)
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)   
@@ -727,7 +731,7 @@ def main():
                     kgraphdb.create_article_nodes(df_final, news_symbol)
                     kgraphdb.create_sym_art_rels(news_symbol, df_final,agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                     kgraphdb.news_agency()
-                    print ( f"Error: Created Article nodes, Relationships, New Agency also !" )
+                    print ( "Error: Created Article nodes, Relationships, New Agency also !" )
                 except Exception as e:
                         logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
                         return False
@@ -788,9 +792,9 @@ def main():
             te.te_into_nquote(te_nq_quote)     # NOTE: needs to be the point to new refactored class nasdqa_wrangler::nq_wrangler qd_quote{}
         """
 
-        print ( f"===================== Nasdaq quote data =======================" )
+        print ( "===================== Nasdaq quote data =======================" )
         print ( f"                          {nq_symbol}" )
-        print ( f"===============================================================" )
+        print ( "===============================================================" )
         c = 1
         for k, v in wq.qd_quote.items():
             print ( f"{c} - {k} : {v}" )
