@@ -296,7 +296,7 @@ class lmdb_io_eng:
                         
                         print ( f"Artc metrics:  Tokens: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
                         self.rehy_count += 1        # keep count of article data rehydrated from LMDB KV Cache
-                        self.sent_ai.kv_rehydrated = self.rehy_count
+                        global_sent_ai.kv_rehydrated = self.rehy_count
                         return 0, _total_tokens, _total_words, self.sen_data, _final_results
                         # Cache ENGINE SUCCESS !!!
                         # END KV Cache engine loop... prints rehydrated metrics from KV Cache
