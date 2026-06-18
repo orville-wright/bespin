@@ -59,7 +59,7 @@ class yfnews_reader:
 #    BS4_kvio_eng = None
     kv_created_C4 = 0       # count new article data CREATED in LMDB KV cache processed by C4 engine
     kv_created_BS4 = 0      # count new article data CREATED in LMDB KV cache processed by BS4 engine
-    kv_rehydrated = 0       # count existing articles rehydrated from LMDB KV cache 
+    # kv_rehydrated = 0       # count existing articles rehydrated from LMDB KV cache 
     lmdb_env = None         # Global LMBD instance, opened @ main::newsai_sent
     C4_lmdb_env = None
     BS4_lmdb_env = None
