@@ -658,7 +658,7 @@ def main():
             print ("--------------------------------")
             print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
-            print ( f"DEBUG-#661:  sent_ai.sen_df0\n{sent_ai.sen_df0}\n Chunked sentiment rows: {sent_ai.df0_row_count}\n" )
+            print ( f"DEBUG-#661:  sent_ai.sen_df0\n{sent_ai.sen_df0}\nChunked sentiment rows: {sent_ai.df0_row_count}\n" )
             # End Summary report
             # ############### Done reading many articles ###################
 
