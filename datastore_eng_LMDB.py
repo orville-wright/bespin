@@ -169,8 +169,9 @@ class lmdb_io_eng:
             return 0
       
     ################# 6
+    def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng):
         """
-        Cache engine : using extremly fast LMDB Key Value datastore
+        LMDB KV CACHE ENGINE : using extremly fast LMDB Key Value datastore
         - Check if this article has previously been read/scraped/extracted stored in KV cache
         - are Computed sentiment metrics also cached in LMDB KV store
         - Full clean article text chunks (processed by BS4 / Crawl4ai chunker) will also be available from KV cache
@@ -178,7 +179,6 @@ class lmdb_io_eng:
         Attempt to rehydrate all metadata from Deep KV Cache if we get a cahce hit
         KV LMDB key is urlhash - Cache hit tests for presence of this key
         """
-    def kv_cache_engine(self, _yti, symbol, data_row, item_idx, global_sent_ai, _extr_eng):
         cmi_debug = __name__+"::"+self.kv_cache_engine.__name__+".#"+str(self.yti)
         logging.info( f'%s  - kv_cache_engine.#{_yti}.{_extr_eng} DB: {self.db_name}' % cmi_debug )
         #
@@ -295,10 +295,9 @@ class lmdb_io_eng:
                                     ]]
                         
                         print ( f"Artc metrics:  Tokens: {_total_tokens} / Words: {_total_words} / Chars: {_total_chars} / Postive: {_sent_p} / Neutral: {_sent_z} / Negative: {_sent_n}")
-                        # print (f"Deep KV Cache: [ HIT.#0 / Deep cache hit ! Rehydrated from KVstore... ] {item_idx}" )
-
+                        self.rehy_count += 1        # keep count of article data rehydrated from LMDB KV Cache
+                        global_sent_ai.kv_rehydrated = self.rehy_count
                         return 0, _total_tokens, _total_words, self.sen_data, _final_results
-                        #
                         # Cache ENGINE SUCCESS !!!
                         # END KV Cache engine loop... prints rehydrated metrics from KV Cache
                         # WARN: "with" context mgr -> auto forces LMDB close()

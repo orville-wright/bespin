@@ -660,11 +660,12 @@ def main():
             print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
             #print ( f"DEBUG-#661:  sent_ai.sen_df0\n{sent_ai.sen_df0}\n" )
-            print ( f"Total C4 processed articles:  {news_ai.yfn.kv_created_C4}")
-            print ( f"Total BS4 processed articles: {news_ai.yfn.kv_created_BS4}")
-            print ( f"Total sentiment chunks: {sent_ai.df0_row_count}" )
-            print ( f"Cached sentiment rows:  {sent_ai.sen_cache_eng}" )
-            print ( f"LLM computed sent rows: {sent_ai.sen_llm_eng}" )
+            print ( f"Rehydrated cache articles: {news_ai.yfn.kv_rehydrated}")
+            print ( f"C4 processed articles:     {news_ai.yfn.kv_created_C4}")
+            print ( f"BS4 processed articles:    {news_ai.yfn.kv_created_BS4}")
+            print ( f"Total sentiment chunks:    {sent_ai.df0_row_count}" )
+            print ( f"Cached sentiment chunks:   {sent_ai.sen_cache_eng}" )
+            print ( f"LLM computed sent chunks:  {sent_ai.sen_llm_eng}" )
 
             # End Summary report
             # ############### Done reading many articles ###################
