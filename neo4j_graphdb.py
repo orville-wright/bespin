@@ -117,7 +117,7 @@ class neo4j_auradb:
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.create_sym_node.__name__+".#"+str(self.yti)
         logging.info( f'%s - Creating graph node for symbol: [ {ticker_symbol} ]...' % cmi_debug )
-        print (F"DEBUG-#120: sen_df:{sentiment_df}")
+        print ( f"DEBUG-#120: sen_df:{sentiment_df}" )
         with self.driver.session() as session:
             if sentiment_df is not None and not sentiment_df.empty:
                 # Extract sentiment data from first row
@@ -156,7 +156,7 @@ class neo4j_auradb:
                 )
             else:
                 # Fallback to basic symbol node if no sentiment data
-                query = ("CREATE (s:Symbol {symbol: $symbol, id: $symbol) "
+                query = ("CREATE (s:Symbol {symbol: $symbol, id: $symbol}) "
                          "RETURN s.id AS node_id")
                 result = session.run(query, symbol=symbol)
             
