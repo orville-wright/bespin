@@ -661,8 +661,8 @@ def main():
             print ("--------------------------------")
 
             print ( f"Rehydrated cache articles: {sent_ai.kv_rehydrated}")
-            print ( f"C4 processed articles:     {news_ai.yfn.kv_created_C4}")
-            print ( f"BS4 processed articles:    {news_ai.yfn.kv_created_BS4}")
+            print ( f"C4 net scraped articles:   {news_ai.yfn.kv_created_C4}")
+            print ( f"BS4 net scraped articles:  {news_ai.yfn.kv_created_BS4}")
             print ( f"Total sentiment chunks:    {sent_ai.df0_row_count}" )
             print ( f"Cached sentiment chunks:   {sent_ai.sen_cache_eng}" )
             print ( f"LLM computed sent chunks:  {sent_ai.sen_llm_eng}" )
