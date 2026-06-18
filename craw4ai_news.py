@@ -32,7 +32,10 @@ from crawl4ai import BrowserConfig
 
 
 class craw4ai:
-    """Class to extract Top Gainer data set from finance.yahoo.com"""
+    """
+    Class to extract Top Gainer data set from finance.yahoo.com
+    WARN: The is development test code. It is not used anywhere in the project yet
+    """
 
      
 ##############################################################################
