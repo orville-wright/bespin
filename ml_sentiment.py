@@ -37,12 +37,12 @@ class ml_sentiment:
     _cp_count = 0           # paragraph count
     _cr_count = 0           # random text block count
     kv_json_dataset = None  # JSON dataset to be used for kvstore
-    df0_row_count = 0
+    df0_row_count = 0       # fullcount of all individual sentiment chunks (1 article has multple sentiment chunks)
     empty_vocab = 0         # tracker that LLM found empty vocab
     mlnlp_uh = None         # URL Hinter instance
     sen_df0 = None          # sentiment for this artile ONLY (gets overwritten each time per article)
-    sen_df1 = None          # ? UNUSED
-    sen_df2 = None          # ? unknown
+    sen_cache_eng = 0       # count of article chunks rehydrated from KV cache engine
+    sen_llm_eng = 0         # count of article chunks computed by LLM pipeline engine
     sen_df3 = None          # ? unknown - A long lasting DF to collect all sentiment data
     sen_data = []           # Data to be added to the DataFrame
     sentiment_countsentiment_count = None  # Sentiment counts for this article
@@ -70,7 +70,7 @@ class ml_sentiment:
             -1.0: (['Extremley Bearish', -1.0])
             }
             
-    ######################## init ##########################################
+    ######################## init ########################
     def __init__(self, yti, global_args):
         cmi_debug = __name__+"::"+self.__init__.__name__
         logging.info( f'%s   Instantiate.#{yti}' % cmi_debug )
@@ -89,7 +89,7 @@ class ml_sentiment:
 
         #return      # techncially as Class init does not require a return
 
-    # #################### # init class decorator #1
+    # init class @decorator #1
     @classmethod
     def preload_classifier(cls):
         """Spins up the model loading process in a background thread."""
@@ -102,7 +102,7 @@ class ml_sentiment:
                 cls._load_thread.start()
                 print ( "Main thread: New LLM INIT thread started..." )
 
-    # #################### # init class decorator #2
+    # init class @decorator #2
     @classmethod
     def _bg_load_worker(cls):
         """The worker method executed by the background thread."""
@@ -121,7 +121,7 @@ class ml_sentiment:
         except Exception as e:
             logging.error(f"bg_load_worker: worker failed to background-load HF model: {e}")
 
-    # #################### # init class decorator #3                           
+    # init class @decorator #3
     @classmethod
     def _get_classifier(cls):
         """Safely fetch HF classifier, waiting for the background thread if it's still running."""
@@ -142,7 +142,7 @@ class ml_sentiment:
                 cls._classifier = pipeline(
                     task="sentiment-analysis",
                     model="mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
-                )
+                    )
             return cls._classifier
 
 
@@ -206,13 +206,14 @@ class ml_sentiment:
         else:
             pass
         
-        #################################################
+        ####################
         # Main control logic
-        # Compute sentiment for 1 article Full TEXT block
-        #
+        # Process and compute sentiment for 1 article's Full TEXT block
+        # Intelligently pre-process uniquely strcutured raw text data packages sent in from BS4 or Craw4ai
         
-        # Crawl4ai pre-processor
-        #
+        # #############################
+        # Crawl4ai pre-processor Engine
+        # #############################
         if self.ext_type == 0:      # Craw4ai
             logging.info( f"%s - C4 Blocklet Builder engine.#1 - LLM Trnctn {self.tokenizer_mml} / rows: {len(scentxt)} input: {type(scentxt)}" % cmi_debug )
             # input MUST be a crawl4ai prepred list of full article text. 
@@ -263,8 +264,9 @@ class ml_sentiment:
             self.blocket_udid = 0   # after this entire article is processed, reset the blocklet counter
             return self.ttc, self.twc, self.cr_package
         
-        # BS4 pre-processor
-        #
+        # ########################
+        # BS4 pre-processor Engine
+        # ########################
         else:
             logging.info( f"%s - BS4 Blocklet Builder engine.#1 - LLM Trnctn @ {self.tokenizer_mml} / rows: {len(scentxt)} in: {type(scentxt)}" % cmi_debug )
             # WARN: must be a BS4 prepared list of article text
@@ -494,7 +496,7 @@ class ml_sentiment:
 
 
             ##################################################################
-            # Built a dataset as a dict to write into LMBD KV cache
+            # Build article dataset as a dict to write into LMBD KV cache
             # formated JSON dict{} package
             # subdict KEY is element_udid  (e.g. 001)
             # 
@@ -588,7 +590,8 @@ class ml_sentiment:
                                sent=sen_result['label'],
                                rank=raw_score )
             
-            self.save_sentiment_df(self.item_idx, sen_package)      # page, data
+            self.engine_id = 1      # LLM pipeline did this work !
+            self.save_sentiment_df(self.item_idx, sen_package, self.engine_id)      # page, data
             self.sentiment_count[sen_result['label']] += 1  # count sentiment type
             # INFO: sentiment_count{ 'positive': 0, 'negative': 0, 'neutral': 0 }
             # WARN: sentiment_count doesnt get computed during KV Deep Cahce REHYRATE mode b/c the LLM is not executed
@@ -605,17 +608,20 @@ class ml_sentiment:
             return 3
 
     # #################################### 5
-    def save_sentiment_df(self, item_idx, data_set):
+    def save_sentiment_df(self, item_idx, data_set, engine_id):
         """
         Save key ML sentiment info to global sentimennt in-memory Dataframe
-        data_set = a dict
+        data_set = a dict - i.e. sen_package{}
+        
+        The method can be called from...
+        - KV Cache Engine with sen_package comming from KV Cache
+        - BS4 / Crawl4ai LLM sentiment engine where sen_package is being computed from raw live data (not cached)
         """
         self.yti
         cmi_debug = __name__+"::"+self.save_sentiment_df.__name__+".#"+str(self.yti)
         x = self.df0_row_count      # get last row added to DF
         x += 1
 
-        # need to add the url hash in here, otherwise I cant do useful analysis
         sym = data_set["sym"]
         art = data_set["article"]
         urlhash = data_set["urlhash"]
@@ -633,17 +639,20 @@ class ml_sentiment:
                     rnk, \
                     snt ]]
 
+        if engine_id == 0:
+            self.sen_cache_eng += 1
+            
+        if engine_id == 1:
+            self.sen_llm_eng += 1
+            
         self.df0_row = pd.DataFrame(self.sen_data, columns=[ 'Row', 'Symbol', 'art', 'urlhash', 'chk', 'rnk', 'snt' ], index=[x] )
+        # Grow sen_df0 DF (adding to it a new row) i.e. 1 chunk data row of this article's sentiment metrics
         self.sen_df0 = pd.concat([self.sen_df0, self.df0_row])
-        self.df0_row_count = x
-        logging.info( f"%s - Rehydrate metrics DF @ article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
+        self.df0_row_count = x      # +1 more sentiment chunk row
+        logging.info( f"%s - Saved sent metrics -> DF for article: {item_idx} / chunk: {chk:03} / {snt} / score: {rnk}" % cmi_debug )
         return
 
     # #################################### 6
-    # Heuristics sentiment aggregator and 2-Vector sentiment model
-    # 1. Sentiment vector : directional signal (positive vs. negative)
-    # 2. Uncertaintry vector : information / neutral mass
-    
     def sentiment_metrics(
             self,
             symbol,
@@ -653,6 +662,14 @@ class ml_sentiment:
             positive_t,
             negative_t,
             neutral_t):
+        """
+        Main method that drives the final Sentiment SUMMARY analysis report
+        - This logic and math is Quant industry standard !
+        
+        Heuristics sentiment aggregator and 2-Vector sentiment model
+        # 1. Sentiment vector : directional signal (positive vs. negative)
+        # 2. Uncertaintry vector : information / neutral mass
+        """
 
         total_articles = positive_c + negative_c
         if total_articles == 0:
@@ -717,10 +734,7 @@ class ml_sentiment:
             "negative_count": negative_c
         }
 
-    #######################################
-    """
-    Helper function - DIRECTION compute Engine
-    """
+    ####################################### 7
     def sentiment_direction(
             self,
             symbol,
@@ -732,6 +746,13 @@ class ml_sentiment:
             positive_strength,
             neutral_strength,
             negative_strength):
+        """
+        Helper function
+        - Support method for final Sentiment SUMMARY analysis report
+        
+        Sentiment Band DIRECTION compute Engine
+        - This logic and math is Quant industry standard 
+        """
 
         bands = [
             (-1.00, "Extremely Bearish"),
@@ -760,7 +781,7 @@ class ml_sentiment:
 
         progress_pct = round(progress * 100, 1)
 
-        # Correct "Approaching" logic
+        # "Approaching" logic
         if progress >= 0.5 and next_base:
             sentiment_label = f"Approaching {next_base}"
         else:
@@ -768,8 +789,7 @@ class ml_sentiment:
 
         split_vector_model =  self.sentiment_vector_model(positive_share, negative_share, neutral_share)
 
-        ###########################################
-        # SUMMARY Report - final analysis read-out
+        # Print SUMMARY Report - final analysis read-out
         print(f"Symbol:         {symbol}")
         print(f"Sentiment:      {sentiment_label}   | Directionally biased -> {split_vector_model["sentiment"]} ")
         print(f"Base sentiment: {base}")
@@ -785,12 +805,16 @@ class ml_sentiment:
         print()
         return
 
-    # ####################################    
-    """
-    Helper function
-    2-vector model support computations
-    """
+    # #################################### 8
     def sentiment_vector_model(self, positive_share, negative_share, neutral_share):
+        """
+        Helper function
+        - Support method for final Sentiment SUMMARY analysis report
+        
+        2-VECTOR model support computation Engine
+        - This logic and math is Quant industry standard 
+        """
+        
         direction_total = positive_share + negative_share   # Direction space (ignore neutral)
         if direction_total == 0:
             pos_dir = 0.5
@@ -828,28 +852,28 @@ class ml_sentiment:
             "neg_dir": round(neg_dir, 4),
         }
 
-    # #################################### 7
+    # #################################### 9
     def zstd_text_compressor(self, scentxt, _extractor):
         """
-        Compresses article text into a ZSTD binary blob
+        Compresses raw clean article text into a ZSTD binary blob
         So we can store it in the article LMDB KV cache entry
-        - ZSTD is a fast compression algorithm, low CPU utilizaiton, good compression ratios ~50% for text data
-        - C4 sends a list of 1 big blob of htlp striped text (all <p> tags text combined into 1 big blob)
-        - BS4 sends a list of rows of individual <p> tags html element text (needs careful prep-prossing)
+        - ZSTD : fast compression algorithm, low CPU utilizaiton, good compression ratios ~50% for text data
+        - C4 sends a list of 1 big blob of http striped text (all <p> tag text combined into 1 big blob)
+        - BS4 sends a list of rows of individual <p> tags html element text (needs careful pre-processing)
         
         WARNING:
-        This is an initial template implementation...
-        - my v1 LMDB storage archietcure is inefficent and contains hidden bloat. It needs to be redesigned as per below.
+        Iitial v1.0 template implementation...
+        - v1 LMDB storage archietcure is inefficent. Ccontains hidden bloat.
         
-        TODO:
+        TODO: v2 archiettcure design
         1. Dont use Base64 JSON encoding. It adds a 33% overhead in size.
         2. Use msgpack() raw binary packing of ZSTD compressed text binary blob into LMDB
         3. Force LMBD into raw binary storage mode for the ZSTD blob data (raw=True)
         4. Use "Minified" dict key strategy in the _cr_package dict. Avoid "Key Name Tax", reduce size of JSON package
         5. Convert urlhash into 32 raw bytes <bytes.fromhex()> instead of 64-char hex string. Lean efficent storage +  faster lookups
         
-        - migrate _cr_package dict and LMDB to the above.
-          It is Lean, more efficient, faster encoding, fast lookups, more scalable.
+        migrate _cr_package dict and LMDB to the above.
+        -It is Lean, more efficient, faster encoding, fast lookups, more scalable.
         """
         cmi_debug = __name__+"::" + self.zstd_text_compressor.__name__+".#"+str(_extractor)
         logging.info( f"%s - article text compressor..." % cmi_debug )

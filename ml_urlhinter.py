@@ -1,7 +1,7 @@
 #! python3
 from urllib.parse import urlparse
 import logging
-import argparse
+import sys
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
