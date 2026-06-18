@@ -77,9 +77,9 @@ class url_hinter:
             if a_url.netloc == "finance.yahoo.com":
                 #print (f"DEBUG-#74 - url: {a_url}")    # use when New yahoo.com News Zone (i.e. uhint lookup failure)
                 urlp_attr = a_url.path.split('/', 2)    # focus on path=object ONLY
-                if urlp_attr is None:
-                    logging.info ( f"%s  - Possible NEW yahoo.com News Zone - breaking uhint lookup: {type(input_url)}" % cmi_debug )
-                    print (f"DEBUG-#76 - Possible NEW Yahoo.com News Zone - breaking uhint lookup: {urlp_attr[1]}")  # use when yahoo.com adds new "url news zome"  & we have no matching uhint code
+                if uhint_code.get(urlp_attr[1]) is None:
+                    logging.info ( f"%s  - Possible NEW yahoo.com News Zone - uhint {urlp_attr[1]} : {type(input_url)}" % cmi_debug )
+                    print (f"DEBUG-#76 - Possible NEW Yahoo.com News Zone - uhint lookup: {urlp_attr[1]}")  # use when yahoo.com adds new "url news zome"  & we have no matching uhint code
                     sys.exit(1)
                 
                 uhint = uhint_code.get(urlp_attr[1])    # retrieve uhint code/descr tuple from url split above
