@@ -39,6 +39,7 @@ class ml_sentiment:
     df0_row_count = 0       # fullcount of all individual sentiment chunks (1 article has multple sentiment chunks)
     empty_vocab = 0         # tracker that LLM found empty vocab
     kv_json_dataset = None  # JSON dataset to be used for kvstore
+    kv_rehydrated = 0       # only used when ZERO articles are cached via KV Cache engine
     mlnlp_uh = None         # URL Hinter instance
     sen_df0 = None          # sentiment for this artile ONLY (gets overwritten each time per article)
     sen_cache_eng = 0       # count of article chunks rehydrated from KV cache engine
