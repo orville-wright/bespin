@@ -667,7 +667,7 @@ def main():
             print ( f"Cached sentiment chunks:   {sent_ai.sen_cache_eng}" )
             print ( f"LLM computed sent chunks:  {sent_ai.sen_llm_eng}" )
             print ( f"Total sentiment chunks:    {sent_ai.df0_row_count}" )
-
+            print ( "\n" )
             # End Summary report
             # ############### Done reading many articles ###################
 
