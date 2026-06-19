@@ -46,7 +46,10 @@ class ml_sentiment:
     sen_llm_eng = 0         # count of article chunks computed by LLM pipeline engine
     sen_df3 = None          # ? unknown - A long lasting DF to collect all sentiment data
     sen_data = []           # Data to be added to the DataFrame
-    sentiment_countsentiment_count = None  # Sentiment counts for this article
+    sentiment_count = None  # Sentiment counts for this article
+    summary_report = {}     # summary report dict for this full stock ticker run
+    summary_metrics = {}    # sentiment metrics math results dict supporting final sentiment report
+    summary_2v_metrics = {} # 2-value metrics for summary report
     tsenparas = 0           # total sentences & paragraphs
     ttc = 0                 # Total Tokens generated in the scnetcne being analyzed
     twc = 0                 # Total cumulative Word count in this artcile being analyzed
@@ -654,6 +657,7 @@ class ml_sentiment:
         return
 
     # #################################### 6
+    # Final sentiment summary report
     def sentiment_metrics(
             self,
             symbol,
@@ -714,26 +718,24 @@ class ml_sentiment:
             negative_strength=negative_strength
         )
 
-        return {
+        self.summary_metrics = {
             "symbol": symbol,
             "net_sentiment": round(net_sentiment, 4),
             "confidence": round(confidence, 4),
-
             "positive_share": round(positive_share, 4),
             "neutral_share": round(neutral_share, 4),
             "negative_share": round(negative_share, 4),
-
             "positive_strength": round(positive_strength, 4),
             "neutral_strength": round(neutral_strength, 4),
             "negative_strength": round(negative_strength, 4),
-
             "positive_mean": positive_t,
             "neutral_mean": neutral_t,
             "negative_mean": negative_t,
-
             "positive_count": positive_c,
             "negative_count": negative_c
         }
+
+        return
 
     ####################################### 7
     def sentiment_direction(
@@ -804,7 +806,25 @@ class ml_sentiment:
         print(f"Neutrality:     {neutral_share:.1%}\t| (Non-directional ambiguity: {neutral_strength:.3f})")
         print(f"Negativity:     {negative_share:.1%}\t| (Directional signal mass:  {negative_strength:.3f})")
         print()
-        return
+ 
+        self.summary_report = {
+            "symbol": symbol,
+            "sentiment": sentiment_label,
+            "base_sentiment": base,
+            "band_progress": progress_pct,
+            "signal_clarity": split_vector_model["clarity"],
+            "signal_conviction": split_vector_model["conviction"],
+            "net_score": net_sentiment,
+            "signal_purity": confidence,
+            "positive_share": positive_share,
+            "neutral_share": neutral_share,
+            "negative_share": negative_share,
+            "positive_strength": positive_strength,
+            "neutral_strength": neutral_strength,
+            "negative_strength": negative_strength
+        }
+    
+        return self.summary_report``
 
     # #################################### 8
     def sentiment_vector_model(self, positive_share, negative_share, neutral_share):
@@ -844,7 +864,7 @@ class ml_sentiment:
         else:
             sentiment = "Neutral"
 
-        return {
+        self.summary_2v_metrics = {
             "sentiment": sentiment,
             "direction_score": round(direction_score, 4),
             "clarity": round(clarity, 4),
@@ -852,6 +872,8 @@ class ml_sentiment:
             "pos_dir": round(pos_dir, 4),
             "neg_dir": round(neg_dir, 4),
         }
+    
+        return self.summary_2v_metrics
 
     # #################################### 9
     def zstd_text_compressor(self, scentxt, _extractor):

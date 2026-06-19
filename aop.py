@@ -648,6 +648,7 @@ def main():
                 df_final, positive_c, negative_c,
                 positive_t, negative_t, neutral_t
             )
+
             print (f"=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ===================" )
             print (f"LLM Vec Tokenz:  {_ttcz} - Chars: {_tccz} / Words: {_twcz} / scent/paras: {(_tscz + _tpcz + _trcz)} | AI read time: {(ai_sent_time / 60):.2f} mins" )
             print (f"Human read time: {(hpt_mins):.1f} mins ({(hpt_hours):.1f} hours)\t| Human analyst time: {analyst_time:.1f} hours" )
@@ -659,7 +660,9 @@ def main():
             pd.set_option('display.max_columns', None)
             print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
-            print ( f"DEBUG-#662:  precise_results:\n{precise_results}\n")
+            print ( f"DEBUG-#662:  greapdb all data 1:\n{sent_ai.summary_report}\n")
+            print ( f"DEBUG-#662:  greapdb all data 2:{sent_ai.summary_metrics}\n")
+            print ( f"DEBUG-#662:  greapdb all data 3:{sent_ai.summary_2v_metrics}\n")
 
             print ( f"Total AI read articles:    {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
             print ( f"Rehydrated cache articles: {sent_ai.kv_rehydrated}")
@@ -669,6 +672,7 @@ def main():
             print ( f"LLM computed sent chunks:  {sent_ai.sen_llm_eng}" )
             print ( f"Total sentiment chunks:    {sent_ai.df0_row_count}" )
             print ( "\n" )
+
             # End Summary report
             # ############### Done reading many articles ###################
 
