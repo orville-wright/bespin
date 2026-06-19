@@ -738,7 +738,7 @@ def main():
                             try:
                                 kg_node_id = kgraphdb.create_sym_node(
                                     news_symbol,
-                                    sent_ai.df_final,
+                                    df_final,
                                     sent_ai.summary_report,
                                     sent_ai.summary_metrics,
                                     sent_ai.summary_2v_metrics
