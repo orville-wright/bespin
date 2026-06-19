@@ -745,9 +745,9 @@ def main():
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 print ( f"Created {len(_gc)} new graph article nodes" )
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                                print ("Created article relationships -> new parent Stock node [ {news_symbol} ]")
+                                print ( f"Created article relationships -> new parent Stock node [ {news_symbol} ]")
                                 kgraphdb.news_agency()
-                                print ("Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
+                                print ( f"Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
                         case True:              # stock ticker symbol node exists 
@@ -761,9 +761,9 @@ def main():
                             _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                             print ( f"Created {len(_gc)} new graph article nodes" )
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                            print ("Updated new article relationships -> existing parent Stock node [ {news_symbol} ]")
+                            print ( f"Updated new article relationships -> existing parent Stock node [ {news_symbol} ]")
                             kgraphdb.news_agency()
-                            print ("Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
+                            print ( f"Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
                         case None:              # ??? needs investigation
                             print (" ")
                             print ( f"Symbol node [ {news_symbol} ] discovered - with no articles: " )
