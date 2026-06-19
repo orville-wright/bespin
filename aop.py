@@ -660,9 +660,6 @@ def main():
             pd.set_option('display.max_columns', None)
             print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
-            print ( f"DEBUG-#662:  greapdb all data 1:\n{sent_ai.summary_report}\n")
-            print ( f"DEBUG-#662:  greapdb all data 2:{sent_ai.summary_metrics}\n")
-            print ( f"DEBUG-#662:  greapdb all data 3:{sent_ai.summary_2v_metrics}\n")
 
             print ( f"Total AI read articles:    {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
             print ( f"Rehydrated cache articles: {sent_ai.kv_rehydrated}")
@@ -680,8 +677,8 @@ def main():
 
             #################################################################
             # Neo4j Graph DATBASE build-out
-            # - Core Data structured used in the graph build-out
             """
+            # Critical Data structured used in the graph build-out
                 summary_report{}
                     "symbol": symbol,
                     "sentiment": sentiment_label,
@@ -746,27 +743,27 @@ def main():
                                 print ( f"New Graph symbol node created: {kg_node_id}" )
 
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
-                                print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
+                                print ( f"Created {len(_gc)} new graph article nodes" )
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                                print ("Created article relationship.")
+                                print ("Created article relationships -> new parent Stock node [ {news_symbol} ]")
                                 kgraphdb.news_agency()
-                                print ("Refreshed News Agency ownership.")
+                                print ("Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
                         case True:              # stock ticker symbol node exists 
                             print (" ")
                             print ( f"Symbol node [ {news_symbol} ] exist in Neo4j Graph" )
-                            print ( "Skipping Symbol Node creation... merging new articles..." )
+                            print ( "Skipping Symbol Node creation... merging new articles in" )
                             # TODO: be csrefull updating the symbol node with new sentiment metrics here ! 
                             # - We can only update sentimentc if 100% of this stock articles are analyzed.
                             # - so a full scan of atll articles for this node must be done before updating the sentiment metrics.
                             # - we should FLAG this as a post-processing step to update the sentiment metrics for this node.
                             _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
-                            print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
+                            print ( f"Created {len(_gc)} new graph article nodes" )
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                            print ("Created article relationship.")
+                            print ("Updated new article relationships -> existing parent Stock node [ {news_symbol} ]")
                             kgraphdb.news_agency()
-                            print ("Refreshed News Agency ownership.")
+                            print ("Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
                         case None:              # ??? needs investigation
                             print (" ")
                             print ( f"Symbol node [ {news_symbol} ] discovered - with no articles: " )
@@ -774,7 +771,7 @@ def main():
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                             #if args['bool_verbose'] is True:
                             print (" ")
-                            print ( f"Merged new articles into Symbol node: {_gm}" )
+                            print ( f"Merged new article relationships -> existing empty parent Stock node [ {news_symbol} ]" )
                         case 99:
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                         case _:
