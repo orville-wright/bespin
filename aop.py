@@ -661,13 +661,13 @@ def main():
             print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
 
-            print ( f"Total AI read articles:    {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
-            print ( f"Rehydrated cache articles: {sent_ai.kv_rehydrated}")
-            print ( f"C4 new scraped articles:   {news_ai.yfn.kv_created_C4}")
-            print ( f"BS4 new scraped articles:  {news_ai.yfn.kv_created_BS4}")
-            print ( f"Cached sentiment chunks:   {sent_ai.sen_cache_eng}" )
-            print ( f"LLM computed sent chunks:  {sent_ai.sen_llm_eng}" )
-            print ( f"Total sentiment chunks:    {sent_ai.df0_row_count}" )
+            print ( f"Total AI read articles:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
+            print ( f"Rehydrated cache articles:  {sent_ai.kv_rehydrated}")
+            print ( f"New C4 extracted articles:  {news_ai.yfn.kv_created_C4}")
+            print ( f"New BS4 extracted articles: {news_ai.yfn.kv_created_BS4}")
+            print ( f"Sentimnt chunks from cache: {sent_ai.sen_cache_eng}" )
+            print ( f"LLM computed sent chunks:   {sent_ai.sen_llm_eng}" )
+            print ( f"Total sentiment chunks:     {sent_ai.df0_row_count}" )
             print ( "\n" )
 
             # End Summary report
@@ -678,46 +678,47 @@ def main():
             #################################################################
             # Neo4j Graph DATBASE build-out
             """
-            # Critical Data structured used in the graph build-out
-                summary_report{}
-                    "symbol": symbol,
-                    "sentiment": sentiment_label,
-                    "base_sentiment": base,
-                    "band_progress": progress_pct,
-                    "signal_clarity": split_vector_model["clarity"],
-                    "signal_conviction": split_vector_model["conviction"],
-                    "net_score": net_sentiment,
-                    "signal_purity": confidence,
-                    "positive_share": positive_share,
-                    "neutral_share": neutral_share,
-                    "negative_share": negative_share,
-                    "positive_strength": positive_strength,
-                    "neutral_strength": neutral_strength,
-                    "negative_strength": negative_strength
+            # Critical Data structures used in the GraphDB build-out
+            # not all are used, but this is the full corpus of metrics available
+            summary_report{}
+                "symbol": symbol,
+                "sentiment": sentiment_label,
+                "base_sentiment": base,
+                "band_progress": progress_pct,
+                "signal_clarity": split_vector_model["clarity"],
+                "signal_conviction": split_vector_model["conviction"],
+                "net_score": net_sentiment,
+                "signal_purity": confidence,
+                "positive_share": positive_share,
+                "neutral_share": neutral_share,
+                "negative_share": negative_share,
+                "positive_strength": positive_strength,
+                "neutral_strength": neutral_strength,
+                "negative_strength": negative_strength
 
-                summary_2v_metrics{}
-                    "sentiment": sentiment
-                    "direction_score": round(direction_score, 4)
-                    "clarity": round(clarity, 4)
-                    "conviction": round(conviction, 4)
-                    "pos_dir": round(pos_dir, 4)
-                    "neg_dir": round(neg_dir, 4)
+            summary_2v_metrics{}
+                "sentiment": sentiment
+                "direction_score": round(direction_score, 4)
+                "clarity": round(clarity, 4)
+                "conviction": round(conviction, 4)
+                "pos_dir": round(pos_dir, 4)
+                "neg_dir": round(neg_dir, 4)
 
-                self.metrics{}
-                    "symbol": symbol
-                    "net_sentiment": round(net_sentiment, 4)
-                    "confidence": round(confidence, 4)
-                    "positive_share": round(positive_share, 4)
-                    "neutral_share": round(neutral_share, 4)
-                    "negative_share": round(negative_share, 4)
-                    "positive_strength": round(positive_strength, 4)
-                    "neutral_strength": round(neutral_strength, 4)
-                    "negative_strength": round(negative_strength, 4)
-                    "positive_mean": positive_t
-                    "neutral_mean": neutral_t
-                    "negative_mean": negative_t
-                    "positive_count": positive_c
-                    "negative_count": negative_c
+            self.metrics{}
+                "symbol": symbol
+                "net_sentiment": round(net_sentiment, 4)
+                "confidence": round(confidence, 4)
+                "positive_share": round(positive_share, 4)
+                "neutral_share": round(neutral_share, 4)
+                "negative_share": round(negative_share, 4)
+                "positive_strength": round(positive_strength, 4)
+                "neutral_strength": round(neutral_strength, 4)
+                "negative_strength": round(negative_strength, 4)
+                "positive_mean": positive_t
+                "neutral_mean": neutral_t
+                "negative_mean": negative_t
+                "positive_count": positive_c
+                "negative_count": negative_c
             """
 
             skip_kg_build = False       # switch to enable/disable Neo4j Aura operations
