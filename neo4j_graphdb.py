@@ -117,11 +117,12 @@ class neo4j_auradb:
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.create_sym_node.__name__+".#"+str(self.yti)
         logging.info( f'%s - Creating graph node for symbol: [ {ticker_symbol} ]...' % cmi_debug )
-        print ( f"DEBUG-#120: sen_df:{sentiment_df}" )
+        #print ( f"DEBUG-#120: sen_df:{sentiment_df}" )
         with self.driver.session() as session:
             if sentiment_df is not None and not sentiment_df.empty:
                 # Extract sentiment data from first row
-                row = sentiment_df.iloc[0]
+                #row = sentiment_df.iloc[0]
+                row = sentiment_df.iloc[-1]  # get the last row which contains the totals
                 query = (
                     "CREATE (s:Symbol {"
                     "symbol: $symbol, "
@@ -150,9 +151,9 @@ class neo4j_auradb:
                     n_pct=float(row['N_pct']),
                     n_cat=row['N_cat'],
                     n_score=int(row['N_score']),
-                    p_mean=float(row['P_mean']),
-                    n_mean=float(row['N_mean']),
-                    z_mean=float(row['Z_mean'])
+                    p_mean=float(row['psnt']),
+                    n_mean=float(row['nsnt']),
+                    z_mean=float(row['zsnt'])
                 )
             else:
                 # Fallback to basic symbol node if no sentiment data
