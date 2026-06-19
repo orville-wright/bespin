@@ -136,7 +136,7 @@ class neo4j_auradb:
                     "negativity: $negativity, "
                     "neutrality: $neutrality, "
                     
-                    "signal_mass_pos: $pos_signal_mass, "
+                    "signal_mass_pos: $signal_mass_pos, "
                     "signal_mass_neg: $signal_mass_neg, "
                     "signal_mass_neu: $signal_mass_neu, "
 
