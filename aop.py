@@ -665,6 +665,7 @@ def main():
             print ( f"Rehydrated cache articles:  {sent_ai.kv_rehydrated}")
             print ( f"New C4 extracted articles:  {news_ai.yfn.kv_created_C4}")
             print ( f"New BS4 extracted articles: {news_ai.yfn.kv_created_BS4}")
+            print ( f"Total new articles extrctd: {news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}")
             print ( f"Sentimnt chunks from cache: {sent_ai.sen_cache_eng}" )
             print ( f"LLM computed sent chunks:   {sent_ai.sen_llm_eng}" )
             print ( f"Total sentiment chunks:     {sent_ai.df0_row_count}" )
