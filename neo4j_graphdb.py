@@ -108,52 +108,61 @@ class neo4j_auradb:
             return 99
 
 # ###########################  4
-    def create_sym_node(self, ticker_symbol, sentiment_df):
+    def create_sym_node(self, ticker_symbol, df_final, sen_report, sen_metrics, sen_2v_metrics):
         """
-        Create a Symbol Graph NODE with enhanced sentiment data
-        Assumes driver has been successfully created and saved to self.driver
-        sentiment_df = sent_ai.sen_df3 dataframe with sentiment analysis data
+        Create a Stock Symbol Graph NODE 
+        - with enhanced computed Qunat sentiment attributes
         """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.create_sym_node.__name__+".#"+str(self.yti)
         logging.info( f'%s - Creating graph node for symbol: [ {ticker_symbol} ]...' % cmi_debug )
         #print ( f"DEBUG-#120: sen_df:{sentiment_df}" )
         with self.driver.session() as session:
-            if sentiment_df is not None and not sentiment_df.empty:
-                # Extract sentiment data from first row
-                #row = sentiment_df.iloc[0]
-                row = sentiment_df.iloc[-1]  # get the last row which contains the totals
+            if df_final and sen_report and sen_metrics and sen_2v_metrics:   # all data structs contian data
+                # Define sentiment elements we want in the NODE graph
+                df_row = df_final.iloc[-1]  # Get the last row of the DataFrame for sentiment metrics
                 query = (
                     "CREATE (s:Symbol {"
                     "symbol: $symbol, "
                     "id: $symbol, "
                     "uid: randomUUID(), "
                     "sentiment: $sentiment, "
-                    "ratio: $ratio, "
-                    "p_pct: $p_pct, "
-                    "p_cat: $p_cat, "
-                    "p_score: $p_score, "
-                    "n_pct: $n_pct, "
-                    "n_cat: $n_cat, "
-                    "n_score: $n_score, "
-                    "p_mean: $p_mean, "
-                    "n_mean: $n_mean, "
-                    "z_mean: $z_mean"
+                    "sent_bias: $sen_bias, "
+                    "sent_base: $sent_base, "
+                    "sent_progress: $sent_progress, "
+                    "conviction: $conviction, "
+                    
+                    "positivity: $positivity, "
+                    "negativity: $negativity, "
+                    "neutrality: $neutrality, "
+                    
+                    "signal_mass_pos: $pos_signal_mass, "
+                    "signal_mass_neg: $signal_mass_neg, "
+                    "signal_mass_neu: $signal_mass_neu, "
+
+                    "pos_mean: $pos_mean, "
+                    "neg_mean: $neg_mean, "
+                    "neu_mean: $neu_mean, "
+
                     "}) RETURN s.uid AS node_id"
                 )
                 result = session.run(query, 
                     symbol=symbol,
-                    sentiment=row['Sentiment'],
-                    ratio=float(row['Ratio']),
-                    p_pct=float(row['P_pct']),
-                    p_cat=row['P_cat'],
-                    p_score=int(row['P_score']),
-                    n_pct=float(row['N_pct']),
-                    n_cat=row['N_cat'],
-                    n_score=int(row['N_score']),
-                    p_mean=float(row['psnt']),
-                    n_mean=float(row['nsnt']),
-                    z_mean=float(row['zsnt'])
+                    id=symbol,
+                    sentiment=sen_report.get('sentiment'),
+                    sent_bias=sen_2v_metrics.get('sentiment'),
+                    sent_base=sen_report.get('base_sentiment'),
+                    sent_progress=sen_report.get('band_progress'),
+                    conviction=sen_2v_metrics.get('conviction'),
+                    positivity=sen_report.get('positive_share'),
+                    negativity=sen_report.get('negative_share'),
+                    neutrality=sen_report.get('neutral_share'), 
+                    signal_mass_pos=sen_metrics.get('positive_strength'),
+                    signal_mass_neg=sen_metrics.get('negative_strength'),
+                    signal_mass_neu=sen_metrics.get('neutral_strength'),
+                    pos_mean=float(df_row['psnt']),
+                    neg_mean=float(df_row['nsnt']),
+                    neu_mean=float(df_row['zsnt'])
                 )
             else:
                 # Fallback to basic symbol node if no sentiment data

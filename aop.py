@@ -679,9 +679,50 @@ def main():
 
 
             #################################################################
-            # Neo4j DATBASE FUNCTIONS
-            # KGdb stats
-            # this code is buggy. Needs to be updated and optomozied.
+            # Neo4j Graph DATBASE build-out
+            # - Core Data structured used in the graph build-out
+            """
+                summary_report{}
+                    "symbol": symbol,
+                    "sentiment": sentiment_label,
+                    "base_sentiment": base,
+                    "band_progress": progress_pct,
+                    "signal_clarity": split_vector_model["clarity"],
+                    "signal_conviction": split_vector_model["conviction"],
+                    "net_score": net_sentiment,
+                    "signal_purity": confidence,
+                    "positive_share": positive_share,
+                    "neutral_share": neutral_share,
+                    "negative_share": negative_share,
+                    "positive_strength": positive_strength,
+                    "neutral_strength": neutral_strength,
+                    "negative_strength": negative_strength
+
+                summary_2v_metrics{}
+                    "sentiment": sentiment
+                    "direction_score": round(direction_score, 4)
+                    "clarity": round(clarity, 4)
+                    "conviction": round(conviction, 4)
+                    "pos_dir": round(pos_dir, 4)
+                    "neg_dir": round(neg_dir, 4)
+
+                self.metrics{}
+                    "symbol": symbol
+                    "net_sentiment": round(net_sentiment, 4)
+                    "confidence": round(confidence, 4)
+                    "positive_share": round(positive_share, 4)
+                    "neutral_share": round(neutral_share, 4)
+                    "negative_share": round(negative_share, 4)
+                    "positive_strength": round(positive_strength, 4)
+                    "neutral_strength": round(neutral_strength, 4)
+                    "negative_strength": round(negative_strength, 4)
+                    "positive_mean": positive_t
+                    "neutral_mean": neutral_t
+                    "negative_mean": negative_t
+                    "positive_count": positive_c
+                    "negative_count": negative_c
+            """
+
             skip_kg_build = False       # switch to enable/disable Neo4j Aura operations
             
             if skip_kg_build is True:
@@ -689,17 +730,21 @@ def main():
             else:
                 kgraphdb = neo4j_auradb("AOP_AURA", args)            # create an inst of an Neo4j AURA Knowledge Graph DB
                 try:
-                    kgraphdb.con_neo4j_auradb("AOP_AURA")                # connect to our free Neo4j AURA DB 
+                    kgraphdb.con_neo4j_auradb("AOP_AURA")            # connect to our free Neo4j AURA DB 
                     found_sym = kgraphdb.check_node_exists("AOP_AURA", news_symbol)  # test if this stock ticker exists in the Graph
                     match found_sym:
-                        # FIX: add unknown elments later (need to gather them from elsewhere first)
-                        # Article must be created first, then related to their parent symbol node
-                        case False:             # stock ticker symbol node does not exist
-                            print ( f"Symbol node [ {news_symbol} ] does NOT exist in Neo4j Graph" )
+                        case False:         # stock symbol node does not exist
+                            print ( f"Stock Symbol node [ {news_symbol} ] NOT in Neo4j Graph" )
                             try:
-                                kg_node_id = kgraphdb.create_sym_node(news_symbol, df_final)
+                                kg_node_id = kgraphdb.create_sym_node(
+                                    news_symbol,
+                                    sent_ai.df_final,
+                                    sent_ai.summary_report,
+                                    sent_ai.summary_metrics,
+                                    sent_ai.summary_2v_metrics
+                                    )
                                 print ( f"New Graph symbol node created: {kg_node_id}" )
-                                #print ( f"DEBUG-#686: sent_df3: {sent_ai.sen_df3}")
+
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
@@ -711,7 +756,11 @@ def main():
                         case True:              # stock ticker symbol node exists 
                             print (" ")
                             print ( f"Symbol node [ {news_symbol} ] exist in Neo4j Graph" )
-                            print ( "Skipping SymbolnNode creation... merging new articles..." )
+                            print ( "Skipping Symbol Node creation... merging new articles..." )
+                            # TODO: be csrefull updating the symbol node with new sentiment metrics here ! 
+                            # - We can only update sentimentc if 100% of this stock articles are analyzed.
+                            # - so a full scan of atll articles for this node must be done before updating the sentiment metrics.
+                            # - we should FLAG this as a post-processing step to update the sentiment metrics for this node.
                             _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                             print ( f"Created {len(_gc)} graph article nodes: {_gc}" )
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
@@ -720,7 +769,7 @@ def main():
                             print ("Refreshed News Agency ownership.")
                         case None:              # ??? needs investigation
                             print (" ")
-                            print ( f"Empty Symbol node [ {news_symbol} ] discovered - but no articles: " )
+                            print ( f"Symbol node [ {news_symbol} ] discovered - with no articles: " )
                             _gm = kgraphdb.create_article_nodes(df_final, news_symbol)
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                             #if args['bool_verbose'] is True:

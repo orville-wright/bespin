@@ -44,7 +44,7 @@ class ml_sentiment:
     sen_df0 = None          # sentiment for this artile ONLY (gets overwritten each time per article)
     sen_cache_eng = 0       # count of article chunks rehydrated from KV cache engine
     sen_llm_eng = 0         # count of article chunks computed by LLM pipeline engine
-    sen_df3 = None          # ? unknown - A long lasting DF to collect all sentiment data
+    sen_df3 = None          # ? unknown - unused ?
     sen_data = []           # Data to be added to the DataFrame
     sentiment_count = None  # Sentiment counts for this article
     summary_report = {}     # summary report dict for this full stock ticker run
