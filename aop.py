@@ -658,7 +658,7 @@ def main():
             print ("--------------------------------")
             pd.set_option('display.max_rows', None)
             pd.set_option('display.max_columns', None)
-            print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
+            #print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
 
             print ( f"Total AI read articles:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
