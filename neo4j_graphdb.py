@@ -118,7 +118,7 @@ class neo4j_auradb:
         logging.info( f'%s - Creating graph node for symbol: [ {ticker_symbol} ]...' % cmi_debug )
         #print ( f"DEBUG-#120: sen_df:{sentiment_df}" )
         with self.driver.session() as session:
-            if df_final and sen_report and sen_metrics and sen_2v_metrics:   # all data structs contian data
+            if sen_report and sen_metrics and sen_2v_metrics and not df_final.empty:   # all data structs contian data
                 # Define sentiment elements we want in the NODE graph
                 df_row = df_final.iloc[-1]  # Get the last row of the DataFrame for sentiment metrics
                 query = (
