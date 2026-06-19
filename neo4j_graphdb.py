@@ -131,19 +131,15 @@ class neo4j_auradb:
                     "sent_base: $sent_base, "
                     "sent_progress: $sent_progress, "
                     "conviction: $conviction, "
-                    
                     "positivity: $positivity, "
                     "negativity: $negativity, "
                     "neutrality: $neutrality, "
-                    
                     "signal_mass_pos: $signal_mass_pos, "
                     "signal_mass_neg: $signal_mass_neg, "
                     "signal_mass_neu: $signal_mass_neu, "
-
                     "pos_mean: $pos_mean, "
                     "neg_mean: $neg_mean, "
-                    "neu_mean: $neu_mean, "
-
+                    "neu_mean: $neu_mean "
                     "}) RETURN s.uid AS node_id"
                 )
                 result = session.run(query, 
