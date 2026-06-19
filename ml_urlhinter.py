@@ -58,6 +58,7 @@ class url_hinter:
                     'media-advertising': ('Categorized local News', 0),
                     'news': ('General Local News', 0),
                     'personal-finance': ('Categorized Local News', 0),
+                    'real-estate': ('Categorized Local News', 0),
                     'sectors': ('Categorized Local News', 0),
                     'small-business': ('Categorized Local News', 0),
                     'technology': ('Categorized Local News', 0),
