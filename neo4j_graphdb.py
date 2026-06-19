@@ -127,7 +127,7 @@ class neo4j_auradb:
                     "id: $symbol, "
                     "uid: randomUUID(), "
                     "sentiment: $sentiment, "
-                    "sent_bias: $sen_bias, "
+                    "sent_bias: $sent_bias, "
                     "sent_base: $sent_base, "
                     "sent_progress: $sent_progress, "
                     "conviction: $conviction, "
