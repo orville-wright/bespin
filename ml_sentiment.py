@@ -824,7 +824,7 @@ class ml_sentiment:
             "negative_strength": negative_strength
         }
     
-        return self.summary_report``
+        return self.summary_report
 
     # #################################### 8
     def sentiment_vector_model(self, positive_share, negative_share, neutral_share):
