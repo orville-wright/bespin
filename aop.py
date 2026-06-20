@@ -617,7 +617,7 @@ def main():
             # ############################################################### 
             df_final = pd.concat([final_sent_df, totals_df])
             # print ( f"{df_final}")
-            print (f"\n")
+            print ( "\n")
 
             aggr_sw_factor = 1.55       # aggregate stop words fatcor (TODO: can actually compute this!)
             h_read_wpm = 175            # how many words avg human can read per/min
@@ -679,7 +679,7 @@ def main():
             #################################################################
             # Neo4j Graph DATBASE build-out
             """
-            # Critical Data structures used in the GraphDB build-out
+            # Critical Data Payloads  used in the GraphDB build-out
             # not all are used, but this is the full corpus of metrics available
             summary_report{}
                 "symbol": symbol,

@@ -441,3 +441,20 @@ class neo4j_auradb:
             "relationships_created": created_relationships,
             "relationships_skipped": skipped_relationships
         }
+
+    #############################
+    # scan all node type = Symbol
+    # list all keys
+    # checking that attributeCount = 17
+    # - we assign 17 core attibutes on a successful Symbol node creation
+    # = if Symbol node fails, a def 2 attributes are created. So any Symbol node with 2 needs to be tidied up (correctly re-generated)
+    def check_symbol_attrs(self, symbol):
+        
+        with self.driver.session() as session:
+                #
+                #create_rel_query = ("MATCH (a:Symbol) {symbol: $symbol} RETURN size(keys(a)) AS attributeCount" )
+                create_rel_query = ("MATCH (n:Symbol) where n.symbol={symbol: $symbol} RETURN size(keys(n)) AS attributeCount" )
+                check_result = session.run(create_rel_query, symbol=symbol)
+                check_record = check_result.single()
+    
+        return check_record
