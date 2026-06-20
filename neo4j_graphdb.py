@@ -486,8 +486,6 @@ class neo4j_auradb:
                 )
                
                 check_result = session.run(check_attrs_query, symbol=symbol)
-                print ( f"DEBUG-#485: result: {check_result}" )
                 check_record = check_result.single()
-                print ( f"DEBUG-#487: result: {check_record}" )
     
-        return check_record
+        return check_record["attributeCount"]

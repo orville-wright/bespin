@@ -766,7 +766,7 @@ def main():
                             if _attr_count != 17:       # a healthy node has 17 attributes
                                 # orignal node creation failed. This node has unhealthy attribute structure
                                 # rebuild all node attributes is required !
-                                print ( f"Graph symbol node has unhealthy attribute structure - rebuilding... {_attr_count}" )
+                                print ( f"Graph symbol node attribute structure is bad ({_attr_count} attrs) - rebuilding..." )
                                 try:
                                     # node attribute structural rebuild
                                     # need new kgraphdb method to add all 17 Symbol node attributes to a simple Symbol node
@@ -782,9 +782,10 @@ def main():
                                         )
                                 except Exception as _ae:
                                     logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )
-                                       
-                            _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
-                            print ( f"Created {len(_gc)} new graph article nodes" )
+                            else:
+                               _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
+                                #print ( f"Created {len(_gc)} new graph article nodes" )
+                                
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
                             print ( f"Updated new article relationships -> existing parent Stock node [ {news_symbol} ]")
                             kgraphdb.news_agency()
