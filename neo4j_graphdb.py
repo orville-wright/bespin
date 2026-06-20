@@ -477,10 +477,13 @@ class neo4j_auradb:
     def check_symbol_attrs(self, symbol):
         
         with self.driver.session() as session:
+                print ( "DEBUG-#480: Checking attribute structure..." )
                 #
                 #create_rel_query = ("MATCH (a:Symbol) {symbol: $symbol} RETURN size(keys(a)) AS attributeCount" )
-                create_rel_query = ("MATCH (n:Symbol) where n.symbol={symbol: $symbol} RETURN size(keys(n)) AS attributeCount" )
-                check_result = session.run(create_rel_query, symbol=symbol)
+                check_attrs_query = ("MATCH (n:Symbol) where n.symbol={symbol: $symbol} RETURN size(keys(n)) AS attributeCount" )
+                check_result = session.run(check_attrs_query, symbol=symbol)
+                print ( "DEBUG-#485: result: {check_result}" )
                 check_record = check_result.single()
+                print ( "DEBUG-#487: result: {check_record}" )
     
         return check_record
