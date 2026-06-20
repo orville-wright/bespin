@@ -751,7 +751,7 @@ def main():
                                 kgraphdb.news_agency()
                                 print ( f"Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
                             except Exception as _fe:
-                                logging.error ( f"%s - Exception creating new Symbol node: {_fe}" % cmi_debug )
+                                logging.error ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
                         case True:              # stock ticker symbol node exists 
                             print (" ")
                             print ( f"Symbol node [ {news_symbol} ] exist in Neo4j Graph" )
@@ -760,6 +760,26 @@ def main():
                             # - We can only update sentimentc if 100% of this stock articles are analyzed.
                             # - so a full scan of atll articles for this node must be done before updating the sentiment metrics.
                             # - we should FLAG this as a post-processing step to update the sentiment metrics for this node.
+                            
+                            _attr_count = kgraphdb.check_symbol_attrs(news_symbol)
+                            if _attr_count == 2:
+                                # bad - orignal node creation was bad and this node only has 2 default attrs
+                                # rebuild all node attributes
+                                print ( f"Existing Graph symbol node has default MIN attribute structure: {_attr_count}" )
+                                try:
+                                    # TODO: this is a template of where to do the node attribute structural rebuild work
+                                    # need new kgraphdb method to add all 17 Symbol node attributes to a simple Symbol node
+                                    # the create_sym_node() method will either fail, error or might just add the missing attributes, Dont know?
+                                    kg_node_id = kgraphdb.create_sym_node(
+                                        news_symbol,
+                                        df_final,
+                                        sent_ai.summary_report,
+                                        sent_ai.summary_metrics,
+                                        sent_ai.summary_2v_metrics
+                                        )
+                                except Exception as _ae:
+                                    logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )
+                                       
                             _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                             print ( f"Created {len(_gc)} new graph article nodes" )
                             kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
