@@ -655,9 +655,8 @@ def main():
             print (f"AI performance:  {round((hpt_mins * 60) / (ai_sent_time / 60))} X Faster than a Human\t| HUman analyst cost: ${round(analyst_cost):,}" )
             print (" ")
             
-            print ("--------------------------------")
-            pd.set_option('display.max_rows', None)
-            pd.set_option('display.max_columns', None)
+            #pd.set_option('display.max_rows', None)
+            #pd.set_option('display.max_columns', None)
             #print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
 
@@ -676,8 +675,10 @@ def main():
 
 
 
-            #################################################################
-            # Neo4j Graph DATBASE build-out
+#################################################################
+# Neo4j Graph DATBASE build-out
+# TODO: This could probably all be moved into neo4j_graphbb.py
+#################################################################
             """
             # Critical Data Payloads  used in the GraphDB build-out
             # not all are used, but this is the full corpus of metrics available
@@ -721,7 +722,8 @@ def main():
                 "positive_count": positive_c
                 "negative_count": negative_c
             """
-
+            cmi_debug = "aop.main()"+"::"+"Neo4j-Graph_LOOP"
+            
             skip_kg_build = False       # switch to enable/disable Neo4j Aura operations
             
             if skip_kg_build is True:
@@ -732,8 +734,8 @@ def main():
                     kgraphdb.con_neo4j_auradb("AOP_AURA")            # connect to our free Neo4j AURA DB 
                     found_sym = kgraphdb.check_node_exists("AOP_AURA", news_symbol)  # test if this stock ticker exists in the Graph
                     match found_sym:
-                        case False:         # stock symbol node does not exist
-                            print ( f"Stock Symbol node [ {news_symbol} ] NOT in Neo4j Graph" )
+                        case False:         # NO stock symbol node does NOT exist
+                            logging.info( f'%s - Symbol node {news_symbol} NOT in Graph: adding...' % cmi_debug )
                             try:
                                 kg_node_id = kgraphdb.create_sym_node(
                                     news_symbol,
@@ -743,35 +745,39 @@ def main():
                                     sent_ai.summary_2v_metrics,
                                     rebuild=False
                                     )
-                                print ( f"New Graph symbol node created: {kg_node_id}" )
+                                logging.info( f'%s - Created symbol node {news_symbol}' % cmi_debug )
 
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 print ( f"Created {len(_gc)} new graph article nodes" )
+                                logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
+
                                 kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                                print ( f"Created article relationships -> new parent Stock node [ {news_symbol} ]")
+                                logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
+
                                 kgraphdb.news_agency()
-                                print ( f"Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
+                                logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
+
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
-                        case True:              # stock ticker symbol node exists 
-                            print (" ")
-                            print ( f"Symbol node [ {news_symbol} ] exist in Neo4j Graph" )
-                            print ( "Skipping Symbol Node creation... merging new articles in" )
-                            # TODO: be csrefull updating the symbol node with new sentiment metrics here ! 
-                            # - We can only update sentimentc if 100% of this stock articles are analyzed.
-                            # - so a full scan of atll articles for this node must be done before updating the sentiment metrics.
-                            # - we should FLAG this as a post-processing step to update the sentiment metrics for this node.
+                        case True:              # YES stock symbol node DOES exists 
+                            logging.error ( f"%s - Symbol node exists: Merging articles -> {news_symbol}" % cmi_debug )
+                            # TODO: be carefull updating existing symbol node sentiment metrics
+                            # - We can only update sentimentc if 100% of this stock articles scraped are analyzed.
+                            # - Consider many previsouly scanned articles may be in KV Cache. Those metrics hould be analyszed also
+                            # An entire sub-system is needed to... (but not here)...
+                            # 1. Batch process all KV cache articles (full scan or individual symbol/list-of symbols scan)
+                            # 2. re-compute Symbol node arrtibutes and metrics
+                            # 3. b/c KV cache article corpus is constantly growing a random rates.
+                            # 4. b/c Each parent Symbol node holds the summarized metrics for all its associated articles
                             
                             _attr_count = kgraphdb.check_symbol_attrs(news_symbol)
-                            if _attr_count != 17:       # a healthy node has 17 attributes
-                                # orignal node creation failed. This node has unhealthy attribute structure
-                                # rebuild all node attributes is required !
-                                print ( f"Graph symbol node attribute structure is bad ({_attr_count} attrs) - rebuilding..." )
-                                try:
-                                    # node attribute structural rebuild
-                                    # need new kgraphdb method to add all 17 Symbol node attributes to a simple Symbol node
-                                    # the create_sym_node() method will either fail, error or might just add the missing attributes, Dont know?
-                                    # cypher code would do somwehting like:  "SET n.positivity = sen_report.get('negative_share')" for each attribute
+                            if _attr_count != 17:       # a healthy node has 17 populated node ATTRIBUTES
+                                # WARN: 17 is hard coded - see create_sym_node()
+                                # If orignal node creation failed, node was previosuly created with default min ATTRS = 2
+                                # Check + rebuild all node attributes is required !
+                                logging.error ( f"%s - Symbol ATTR structure bad ({_attr_count} attrs) - rebuilding..." % cmi_debug )
+                                print ( f"Symbol ATTR structure bad ({_attr_count} attrs) - rebuilding..." )
+                                try:    # rebuild + create
                                     kg_node_id = kgraphdb.create_sym_node(
                                         news_symbol,
                                         df_final,
@@ -780,40 +786,49 @@ def main():
                                         sent_ai.summary_2v_metrics,
                                         rebuild=True
                                         )
+                                    logging.error ( f"%s - Rebuilt Symbol node with current metrics" % cmi_debug )
+
+                                    _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
+                                    print ( f"Created {len(_gc)} new graph article nodes" )
+                                    logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
+
+                                    kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                                    logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
+
+                                    kgraphdb.news_agency()
+                                    logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
+
                                 except Exception as _ae:
                                     logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )
-                            else:
-                               _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
-                                #print ( f"Created {len(_gc)} new graph article nodes" )
-                                
-                            kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                            print ( f"Updated new article relationships -> existing parent Stock node [ {news_symbol} ]")
-                            kgraphdb.news_agency()
-                            print ( f"Refreshed Yahoo.com News Agency ownership for symbol node [ {news_symbol} ]")
-                        case None:              # ??? needs investigation
-                            print (" ")
-                            print ( f"Symbol node [ {news_symbol} ] discovered - with no articles: " )
-                            _gm = kgraphdb.create_article_nodes(df_final, news_symbol)
-                            kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                            #if args['bool_verbose'] is True:
-                            print (" ")
-                            print ( f"Merged new article relationships -> existing empty parent Stock node [ {news_symbol} ]" )
+                            else:       # create & do not rebuild
+                                kg_node_id = kgraphdb.create_sym_node(
+                                        news_symbol,
+                                        df_final,
+                                        sent_ai.summary_report,
+                                        sent_ai.summary_metrics,
+                                        sent_ai.summary_2v_metrics,
+                                        rebuild=False
+                                        )
+                                logging.error ( f"%s - Rebuilt Symbol node with current metrics" % cmi_debug )
+ 
+                                _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
+                                print ( f"Created {len(_gc)} new graph article nodes" )
+                                logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
+
+                                kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+                                logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
+
+                                kgraphdb.news_agency()
+                                logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
+                        case None:              # ??? needs investigation as to why this would happen
+                            print ("NONE - returned during GraphDB node check!" )
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)  
                         case 99:
+                            print ("EXCEPTION - ocurred during GraphDB node check!" )
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                         case _:
-                            print ("Weird return code during GraphDB node check!" )  
-                            print ( f"KG node exists status check: fst:{type(found_sym)} / fs:{found_sym}" )              
-                            res = kgraphdb.dump_symbols(1)
+                            print ("WEIRD return code - during GraphDB node check!" )
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)   
-                except TypeError:                             # Type:class 'NoneType' is discovered here...
-                    kg_node_id = kgraphdb.create_sym_node(news_symbol, sentiment_df=sent_ai.sen_df3)
-                    print ( f"Error: Symbol node does NOT exist - creating ! fst:{type(kg_node_id)} / fs:{kg_node_id}" )
-                    #kg_node_id = kgraphdb.create_sym_node(news_symbol)
-                    # create a neo4j nodes Relationships, Properties and Types for each article thats associated with this symbol
-                    kgraphdb.create_article_nodes(df_final, news_symbol)
-                    kgraphdb.create_sym_art_rels(news_symbol, df_final,agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                    kgraphdb.news_agency()
-                    print ( "Error: Created Article nodes, Relationships, New Agency also !" )
                 except Exception as e:
                         logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
                         return False
