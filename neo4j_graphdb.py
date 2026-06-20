@@ -477,8 +477,6 @@ class neo4j_auradb:
     def check_symbol_attrs(self, symbol):
         check_record = None
         with self.driver.session() as session:
-                print ( "DEBUG-#480: Checking attribute structure..." )
-
                 check_attrs_query = (
                     "MATCH (n:Symbol) "
                     "WHERE n.symbol = $symbol "
