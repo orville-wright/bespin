@@ -475,12 +475,16 @@ class neo4j_auradb:
     # - we assign 17 core attibutes on a successful Symbol node creation
     # = if Symbol node fails, a def 2 attributes are created. So any Symbol node with 2 needs to be tidied up (correctly re-generated)
     def check_symbol_attrs(self, symbol):
-        
+        check_record = None
         with self.driver.session() as session:
                 print ( "DEBUG-#480: Checking attribute structure..." )
-                #
-                #create_rel_query = ("MATCH (a:Symbol) {symbol: $symbol} RETURN size(keys(a)) AS attributeCount" )
-                check_attrs_query = ("MATCH (n:Symbol) where n.symbol={symbol: $symbol} RETURN size(keys(n)) AS attributeCount" )
+
+                check_attrs_query = (
+                    "MATCH (n:Symbol) "
+                    "WHERE n.symbol = $symbol "
+                    "RETURN size(keys(n)) AS attributeCount"
+                )
+               
                 check_result = session.run(check_attrs_query, symbol=symbol)
                 print ( f"DEBUG-#485: result: {check_result}" )
                 check_record = check_result.single()
