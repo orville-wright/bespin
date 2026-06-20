@@ -108,7 +108,7 @@ class neo4j_auradb:
             return 99
 
 # ###########################  4
-    def create_sym_node(self, ticker_symbol, df_final, sen_report, sen_metrics, sen_2v_metrics):
+    def create_sym_node(self, ticker_symbol, df_final, sen_report, sen_metrics, sen_2v_metrics, rebuild):
         """
         Create a Stock Symbol Graph NODE 
         - with enhanced computed Qunat sentiment attributes
@@ -121,8 +121,9 @@ class neo4j_auradb:
             if sen_report and sen_metrics and sen_2v_metrics and not df_final.empty:   # all data structs contian data
                 # Define sentiment elements we want in the NODE graph
                 df_row = df_final.iloc[-1]  # Get the last row of the DataFrame for sentiment metrics
-                query = (
-                    "CREATE (s:Symbol {"
+                if rebuild is True:
+                    query = (
+                    "SET (s:Symbol {"
                     "symbol: $symbol, "
                     "id: $symbol, "
                     "uid: randomUUID(), "
@@ -142,6 +143,29 @@ class neo4j_auradb:
                     "neu_mean: $neu_mean "
                     "}) RETURN s.uid AS node_id"
                 )
+                else:                    
+                    query = (
+                        "CREATE (s:Symbol {"
+                        "symbol: $symbol, "
+                        "id: $symbol, "
+                        "uid: randomUUID(), "
+                        "sentiment: $sentiment, "
+                        "sent_bias: $sent_bias, "
+                        "sent_base: $sent_base, "
+                        "sent_progress: $sent_progress, "
+                        "conviction: $conviction, "
+                        "positivity: $positivity, "
+                        "negativity: $negativity, "
+                        "neutrality: $neutrality, "
+                        "signal_mass_pos: $signal_mass_pos, "
+                        "signal_mass_neg: $signal_mass_neg, "
+                        "signal_mass_neu: $signal_mass_neu, "
+                        "pos_mean: $pos_mean, "
+                        "neg_mean: $neg_mean, "
+                        "neu_mean: $neu_mean "
+                        "}) RETURN s.uid AS node_id"
+                    )
+
                 result = session.run(query, 
                     symbol=symbol,
                     id=symbol,
@@ -162,6 +186,8 @@ class neo4j_auradb:
                 )
             else:
                 # Fallback to basic symbol node if no sentiment data
+                # WARN: This creates a defaul minimal symbol node, with missing attributes
+                # - must eventually rebuild with all correct attributes
                 query = ("CREATE (s:Symbol {symbol: $symbol, id: $symbol}) "
                          "RETURN s.id AS node_id")
                 result = session.run(query, symbol=symbol)

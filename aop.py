@@ -740,7 +740,8 @@ def main():
                                     df_final,
                                     sent_ai.summary_report,
                                     sent_ai.summary_metrics,
-                                    sent_ai.summary_2v_metrics
+                                    sent_ai.summary_2v_metrics,
+                                    rebuild=False
                                     )
                                 print ( f"New Graph symbol node created: {kg_node_id}" )
 
@@ -765,9 +766,9 @@ def main():
                             if _attr_count == 2:
                                 # bad - orignal node creation was bad and this node only has 2 default attrs
                                 # rebuild all node attributes
-                                print ( f"Existing Graph symbol node has default MIN attribute structure: {_attr_count}" )
+                                print ( f"Existing Graph symbol node has default MIN attribute structure - rebuilding... {_attr_count}" )
                                 try:
-                                    # TODO: this is a template of where to do the node attribute structural rebuild work
+                                    # node attribute structural rebuild
                                     # need new kgraphdb method to add all 17 Symbol node attributes to a simple Symbol node
                                     # the create_sym_node() method will either fail, error or might just add the missing attributes, Dont know?
                                     # cypher code would do somwehting like:  "SET n.positivity = sen_report.get('negative_share')" for each attribute
@@ -776,7 +777,8 @@ def main():
                                         df_final,
                                         sent_ai.summary_report,
                                         sent_ai.summary_metrics,
-                                        sent_ai.summary_2v_metrics
+                                        sent_ai.summary_2v_metrics,
+                                        rebuild=True
                                         )
                                 except Exception as _ae:
                                     logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )
