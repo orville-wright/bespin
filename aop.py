@@ -770,6 +770,7 @@ def main():
                                     # TODO: this is a template of where to do the node attribute structural rebuild work
                                     # need new kgraphdb method to add all 17 Symbol node attributes to a simple Symbol node
                                     # the create_sym_node() method will either fail, error or might just add the missing attributes, Dont know?
+                                    # cypher code would do somwehting like:  "SET n.positivity = sen_report.get('negative_share')" for each attribute
                                     kg_node_id = kgraphdb.create_sym_node(
                                         news_symbol,
                                         df_final,
