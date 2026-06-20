@@ -482,8 +482,8 @@ class neo4j_auradb:
                 #create_rel_query = ("MATCH (a:Symbol) {symbol: $symbol} RETURN size(keys(a)) AS attributeCount" )
                 check_attrs_query = ("MATCH (n:Symbol) where n.symbol={symbol: $symbol} RETURN size(keys(n)) AS attributeCount" )
                 check_result = session.run(check_attrs_query, symbol=symbol)
-                print ( "DEBUG-#485: result: {check_result}" )
+                print ( f"DEBUG-#485: result: {check_result}" )
                 check_record = check_result.single()
-                print ( "DEBUG-#487: result: {check_record}" )
+                print ( f"DEBUG-#487: result: {check_record}" )
     
         return check_record

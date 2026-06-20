@@ -763,10 +763,10 @@ def main():
                             # - we should FLAG this as a post-processing step to update the sentiment metrics for this node.
                             
                             _attr_count = kgraphdb.check_symbol_attrs(news_symbol)
-                            if _attr_count == 2:
-                                # bad - orignal node creation was bad and this node only has 2 default attrs
-                                # rebuild all node attributes
-                                print ( f"Existing Graph symbol node has default MIN attribute structure - rebuilding... {_attr_count}" )
+                            if _attr_count != 17:       # a healthy node has 17 attributes
+                                # orignal node creation failed. This node has unhealthy attribute structure
+                                # rebuild all node attributes is required !
+                                print ( f"Graph symbol node has unhealthy attribute structure - rebuilding... {_attr_count}" )
                                 try:
                                     # node attribute structural rebuild
                                     # need new kgraphdb method to add all 17 Symbol node attributes to a simple Symbol node
