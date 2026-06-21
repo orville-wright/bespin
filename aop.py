@@ -813,7 +813,7 @@ def post_symbol_worker(kgraphdb, df_final, news_symbol):
     """
     cmi_debug = "aop.post_symbol_worker()"+"::"+"Neo4j-Graph_LOOP.#2"
     _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
-    print ( f"Created {len(_gc)} new graph article nodes" )
+    print ( f"Created {len(_gc)} new graph article nodes\n{_gc}" )
     logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
     kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
     logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
