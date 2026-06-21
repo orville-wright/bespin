@@ -722,7 +722,7 @@ def main():
                 "positive_count": positive_c
                 "negative_count": negative_c
             """
-            cmi_debug = "aop.main()"+"::"+"Neo4j-Graph_LOOP"
+            cmi_debug = "aop.main()"+"::"+"Neo4j-Graph_LOOP.#1"
             
             skip_kg_build = False       # switch to enable/disable Neo4j Aura operations
             
@@ -747,6 +747,9 @@ def main():
                                     )
                                 logging.info( f'%s - Created symbol node {news_symbol}' % cmi_debug )
 
+                                post_symbol_worker(kgraphdb, df_final, news_symbol)
+
+                                """
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 print ( f"Created {len(_gc)} new graph article nodes" )
                                 logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
@@ -756,6 +759,7 @@ def main():
 
                                 kgraphdb.news_agency()
                                 logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
+                                """
 
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
@@ -788,6 +792,9 @@ def main():
                                         )
                                     logging.error ( f"%s - Rebuilt Symbol node with current metrics" % cmi_debug )
 
+                                    post_symbol_worker(kgraphdb, df_final, news_symbol)
+                                    
+                                    """
                                     _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                     print ( f"Created {len(_gc)} new graph article nodes" )
                                     logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
@@ -797,6 +804,7 @@ def main():
 
                                     kgraphdb.news_agency()
                                     logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
+                                    """
 
                                 except Exception as _ae:
                                     logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )
@@ -811,6 +819,7 @@ def main():
                                         )
                                 logging.error ( f"%s - Rebuilt Symbol node with current metrics" % cmi_debug )
  
+                                """
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
                                 print ( f"Created {len(_gc)} new graph article nodes" )
                                 logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
@@ -820,6 +829,7 @@ def main():
 
                                 kgraphdb.news_agency()
                                 logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
+                                """
                         case None:              # ??? needs investigation as to why this would happen
                             print ("NONE - returned during GraphDB node check!" )
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)  
@@ -833,6 +843,23 @@ def main():
                         logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
                         return False
 
+def post_symbol_worker(kgraphdb, df_final, news_symbol):
+    """
+    Internal Helper method
+    For common work that needs to happen once you have created a Symbol Graph node
+    """
+    cmi_debug = "aop.post_symbol_worker()"+"::"+"Neo4j-Graph_LOOP.#2"
+    _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
+    print ( f"Created {len(_gc)} new graph article nodes" )
+    logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
+
+    kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
+    logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
+
+    kgraphdb.news_agency()
+    logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
+    return
+                
 #################################################################################
 ###############                    QUOTES                            ############
 # 3 differnt methods to get a live quote
