@@ -746,34 +746,19 @@ def main():
                                     rebuild=False
                                     )
                                 logging.info( f'%s - Created symbol node {news_symbol}' % cmi_debug )
-
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
-
-                                """
-                                _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
-                                print ( f"Created {len(_gc)} new graph article nodes" )
-                                logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
-
-                                kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                                logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
-
-                                kgraphdb.news_agency()
-                                logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
-                                """
-
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
-                        case True:              # YES stock symbol node DOES exists 
+                        case True:  # YES stock symbol node DOES exists 
                             logging.error ( f"%s - Symbol node exists: Merging articles -> {news_symbol}" % cmi_debug )
                             # TODO: be carefull updating existing symbol node sentiment metrics
-                            # - We can only update sentimentc if 100% of this stock articles scraped are analyzed.
-                            # - Consider many previsouly scanned articles may be in KV Cache. Those metrics hould be analyszed also
-                            # An entire sub-system is needed to... (but not here)...
+                            # - We should only update sentiment if 100% of articles in KV Cache are analyzed !
+                            # - Many previsouly scanned articles may be in KV Cache. Those metrics should be analyszed also
+                            # An entire sub-system is needed to do this... (but not here)...
                             # 1. Batch process all KV cache articles (full scan or individual symbol/list-of symbols scan)
                             # 2. re-compute Symbol node arrtibutes and metrics
                             # 3. b/c KV cache article corpus is constantly growing a random rates.
                             # 4. b/c Each parent Symbol node holds the summarized metrics for all its associated articles
-                            
                             _attr_count = kgraphdb.check_symbol_attrs(news_symbol)
                             if _attr_count != 17:       # a healthy node has 17 populated node ATTRIBUTES
                                 # WARN: 17 is hard coded - see create_sym_node()
@@ -793,22 +778,9 @@ def main():
                                     logging.error ( f"%s - Rebuilt Symbol node with current metrics" % cmi_debug )
 
                                     post_symbol_worker(kgraphdb, df_final, news_symbol)
-                                    
-                                    """
-                                    _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
-                                    print ( f"Created {len(_gc)} new graph article nodes" )
-                                    logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
-
-                                    kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                                    logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
-
-                                    kgraphdb.news_agency()
-                                    logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
-                                    """
-
                                 except Exception as _ae:
                                     logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )
-                            else:       # create & do not rebuild
+                            else:       # create & do NOT rebuild
                                 logging.error ( f"%s - Symbol ATTR structure GOOD: ({_attr_count} attrs)" % cmi_debug )
                                 kg_node_id = kgraphdb.create_sym_node(
                                         news_symbol,
@@ -819,21 +791,8 @@ def main():
                                         rebuild=False
                                         )
                                 logging.error ( f"%s - Rebuilt Symbol node with current metrics" % cmi_debug )
-                                
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
- 
-                                """
-                                _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
-                                print ( f"Created {len(_gc)} new graph article nodes" )
-                                logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
-
-                                kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-                                logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
-
-                                kgraphdb.news_agency()
-                                logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
-                                """
-                        case None:              # ??? needs investigation as to why this would happen
+                        case None:  # ??? needs investigation as to why this corner-case would happen
                             print ("NONE - returned during GraphDB node check!" )
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)  
                         case 99:
@@ -857,10 +816,8 @@ def post_symbol_worker(kgraphdb, df_final, news_symbol):
     _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
     print ( f"Created {len(_gc)} new graph article nodes" )
     logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
-
     kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
     logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
-
     kgraphdb.news_agency()
     logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
     return
