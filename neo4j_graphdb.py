@@ -258,8 +258,7 @@ class neo4j_auradb:
                 check_result = session.run(check_query, urlhash=str(row['urlhash']))
                 existing_record = check_result.single()
                 
-                if existing_record:
-                    # Node already exists, skip creation
+                if existing_record:     # Node already exists, skip creation
                     skipped_nodes.append((existing_record["existing_id"], str(row['urlhash'])))
                     # logging.info( f'%s - Article node with label {dynamic_label} already exists, skipping creation for urlhash: {row["urlhash"]}' % cmi_debug )
                     continue
@@ -298,7 +297,11 @@ class neo4j_auradb:
                 created_nodes.append((record["node_id"]))
                 # logging.info( f'%s - Created article node with labels [Article, {dynamic_label}]: {record["node_id"]} for urlhash: {row["urlhash"]}' % cmi_debug )
         
-        logging.info( f'%s - Summary: {len(created_nodes)} nodes created, {len(skipped_nodes)} nodes skipped (already existed)' % cmi_debug )
+        logging.info( f'%s - Summary: {len(created_nodes)} nodes created, {len(skipped_nodes)} existing nodes skipped' % cmi_debug )
+        print ( f"!DEBUG-create_article_nodes()-#301 : DF df_final\n{df_final}")
+        print ( f"!DEBUG-create_article_nodes()-#301 : create_nodes[]\n{created_nodes}")
+        print ( f"!DEBUG-create_article_nodes()-#301 : skipped_nodesp[]\n{skipped_nodes}")
+        
         return created_nodes     # Returns a list of tuples (node_id, urlhash) for created nodes
 
 # ###########################  7
