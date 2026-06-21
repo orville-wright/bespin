@@ -779,7 +779,7 @@ def main():
                                 # WARN: 17 is hard coded - see create_sym_node()
                                 # If orignal node creation failed, node was previosuly created with default min ATTRS = 2
                                 # Check + rebuild all node attributes is required !
-                                logging.error ( f"%s - Symbol ATTR structure bad ({_attr_count} attrs) - rebuilding..." % cmi_debug )
+                                logging.error ( f"%s - Symbol ATTR structure BAD: ({_attr_count} attrs) - rebuilding..." % cmi_debug )
                                 print ( f"Symbol ATTR structure bad ({_attr_count} attrs) - rebuilding..." )
                                 try:    # rebuild + create
                                     kg_node_id = kgraphdb.create_sym_node(
@@ -809,6 +809,7 @@ def main():
                                 except Exception as _ae:
                                     logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )
                             else:       # create & do not rebuild
+                                logging.error ( f"%s - Symbol ATTR structure GOOD: ({_attr_count} attrs)" % cmi_debug )
                                 kg_node_id = kgraphdb.create_sym_node(
                                         news_symbol,
                                         df_final,
@@ -818,6 +819,8 @@ def main():
                                         rebuild=False
                                         )
                                 logging.error ( f"%s - Rebuilt Symbol node with current metrics" % cmi_debug )
+                                
+                                post_symbol_worker(kgraphdb, df_final, news_symbol)
  
                                 """
                                 _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
@@ -843,6 +846,8 @@ def main():
                         logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
                         return False
 
+# #############################
+# Neo4j main Loop logic workflow Helper method
 def post_symbol_worker(kgraphdb, df_final, news_symbol):
     """
     Internal Helper method
