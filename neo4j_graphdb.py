@@ -73,7 +73,7 @@ class neo4j_auradb:
         Close our connection to the Neo4j AURA KnowledgeGraph DB (Free limited web service)
         """
         cmi_debug = __name__+"::"+self.close_neo4j_auradb.__name__+".#"+str(_yti)
-        logging.info( f"%s - Working DB: {_driver} / Class DB: {self.driver}" % cmi_debug )
+        logging.info( f"%s - Closing Neo4j Network/API driver connection" % cmi_debug )
         #_driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
         #session = self.driver.session()
         self.driver.close()
@@ -298,10 +298,10 @@ class neo4j_auradb:
                 created_nodes.append((record["node_id"], str(row['urlhash'])))
                 # logging.info( f'%s - Created article node with labels [Article, {dynamic_label}]: {record["node_id"]} for urlhash: {row["urlhash"]}' % cmi_debug )
         
-        logging.info( f'%s - ART nodes / New nodes created: {len(created_nodes)} / Existing nodes skipped: {len(skipped_nodes)}' % cmi_debug )
+        logging.info( f'%s - ART nodes created: {len(created_nodes)} / Existing nodes skipped: {len(skipped_nodes)}' % cmi_debug )
         print ( f"!DEBUG-create_article_nodes()-#301 : DF df_final\n{df_final}")
-        print ( f"!DEBUG-create_article_nodes()-#301 : create_nodes[]\n{created_nodes}")
-        print ( f"!DEBUG-create_article_nodes()-#301 : skipped_nodesp[]\n{skipped_nodes}")
+        print ( f"!DEBUG-create_article_nodes()-#302 : create_nodes[]\n{created_nodes}")
+        print ( f"!DEBUG-create_article_nodes()-#303 : skipped_nodesp[]\n{skipped_nodes}")
         
         return created_nodes     # Returns a list of tuples (node_id, urlhash) for created nodes
 
@@ -399,7 +399,7 @@ class neo4j_auradb:
         Direction: YahooFinance -[STOCK_NEWS]-> Symbol
         """
         cmi_debug = __name__+"::"+self.news_agency.__name__+".#"+str(self.yti)
-        logging.info( f'%s - Creating YahooFinance NewsAgency node and STOCK_NEWS relationships...' % cmi_debug )
+        logging.info( f'%s - Check Yahoo.com/Finance News Agency node -> Symbol relationships...' % cmi_debug )
 
         created_relationships = []
         skipped_relationships = []
