@@ -725,51 +725,49 @@ def main():
             cmi_debug = "aop.main()"+"::"+"Neo4j-Graph_LOOP.#1"
             total_rehydrated = sent_ai.kv_rehydrated
             total_new_articles = news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4
-            total_articels = sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4
+            total_articles = sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4
             
             skip_kg_build = False       # switch to enable/disable Neo4j Aura operations
             
             if skip_kg_build is True:   # Feature-Flag: enable/disbale Neo4j Graph functionality
                 pass
 
-            kgraphdb = neo4j_auradb("AOP_AURA", args)            # create an inst of an Neo4j AURA Knowledge Graph DB
-            try:
-                kgraphdb.con_neo4j_auradb("AOP_AURA")            # connect to our free Neo4j AURA DB 
-                found_sym = kgraphdb.check_node_exists("AOP_AURA", news_symbol)  # test if this stock ticker exists in the Graph
-                match found_sym:
-                    case False:         # NO stock symbol node does NOT exist
-                        logging.info( f'%s - Symbol node {news_symbol} NOT in Graph: adding...' % cmi_debug )
-                        try:
-                            kg_node_id = kgraphdb.create_sym_node(
-                                news_symbol,
-                                df_final,
-                                sent_ai.summary_report,
-                                sent_ai.summary_metrics,
-                                sent_ai.summary_2v_metrics,
-                                rebuild=False
-                                )
-                            logging.info( f'%s - Created symbol node {news_symbol}' % cmi_debug )
-                            post_symbol_worker(kgraphdb, df_final, news_symbol)
-                        except Exception as _fe:
-                            logging.error ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
-                    case True:  # YES stock symbol node DOES exists 
-                        logging.error ( f"%s - Symbol node exists: Merging articles -> {news_symbol}" % cmi_debug )
-                        # TODO: be carefull updating existing symbol node sentiment metrics
-                        # - We should only update sentiment if 100% of articles in KV Cache are analyzed !
-                        # - Many previsouly scanned articles may be in KV Cache. This compliates things...!
-                        # An entire sub-system is needed to do this... (but not here)...
-                        # 1. Batch process all KV cache articles (full scan or individual symbol/list-of symbols scan)
-                        # 2. re-compute Symbol node arrtibutes and metrics
-                        # 3. b/c KV cache article corpus is constantly growing a random rates.
-                        # 4. b/c Each parent Symbol node holds the summarized metrics for all its associated articles
-                        _attr_count = kgraphdb.check_symbol_attrs(news_symbol)
-                        if _attr_count != 17:       # a healthy node has 17 populated node ATTRIBUTES
-                            # WARN: 17 is hard coded - see create_sym_node()
-                            # If orignal node creation failed, node was previosuly created with default min ATTRS = 2
-                            # Check + rebuild all node attributes is required !
-                            logging.error ( f"%s - Symbol ATTR structure BAD: ({_attr_count} attrs) - rebuilding..." % cmi_debug )
-                            print ( f"Symbol ATTR structure bad ({_attr_count} attrs) - rebuilding..." )
-                            try:    # rebuild + create
+            if total_articles > 0:    # symbol might not exist
+                kgraphdb = neo4j_auradb("AOP_AURA", args)           # create an inst of an Neo4j AURA Knowledge Graph DB
+                try:
+                    kgraphdb.con_neo4j_auradb("AOP_AURA")           # connect to free Neo4j AURA DB 
+                    found_sym = kgraphdb.check_node_exists("AOP_AURA", news_symbol)  # test - stock symbol exists ?
+                    match found_sym:
+                        case False:         # NO stock symbol node does NOT exist
+                            logging.info( f'%s - Symbol node {news_symbol} NOT in Graph: adding...' % cmi_debug )
+                            try:    # Create new via Cypher CREATE
+                                kg_node_id = kgraphdb.create_sym_node(
+                                    news_symbol,
+                                    df_final,
+                                    sent_ai.summary_report,
+                                    sent_ai.summary_metrics,
+                                    sent_ai.summary_2v_metrics,
+                                    rebuild=False
+                                    )
+                                logging.info( f'%s - Created symbol node {news_symbol}' % cmi_debug )
+                                post_symbol_worker(kgraphdb, df_final, news_symbol)
+                            except Exception as _fe:
+                                logging.error ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
+                        case True:  # YES stock symbol node DOES exists 
+                            logging.error ( f"%s - Symbol node exists: Merging articles -> {news_symbol}" % cmi_debug )
+                            # TODO: be carefull updating existing symbol node sentiment metrics
+                            # - We should only update sentiment if 100% of articles in KV Cache are analyzed !
+                            _attr_count = kgraphdb.check_symbol_attrs(news_symbol)
+                            if _attr_count != 17:       # a healthy node has 17 populated node ATTRIBUTES
+                                # WARN: 17 is hard coded - see create_sym_node()
+                                # If orignal node creation failed, it was created with default min ATTRS = 2
+                                # Check + rebuild all node attributes is required !
+                                logging.error ( f"%s - Symbol ATTR structure BAD: ({_attr_count} attrs) - rebuilding..." % cmi_debug )
+                                print ( f"Symbol ATTR structure BAD ({_attr_count} attrs) - rebuilding..." )
+                            else:       # rebuild + update via Cypher MERGE/SET  b/c symbol exists
+                                logging.error ( f"%s - Symbol ATTR structure GOOD: ({_attr_count} attrs)" % cmi_debug )
+
+                            try:    # rebuild + update via Cypher MERGE/SET  b/c symbol exists
                                 kg_node_id = kgraphdb.create_sym_node(
                                     news_symbol,
                                     df_final,
@@ -778,34 +776,23 @@ def main():
                                     sent_ai.summary_2v_metrics,
                                     rebuild=True
                                     )
-                                logging.error ( f"%s - Rebuilt Symbol node structure with metrics from this run" % cmi_debug )
+                                logging.error ( f"%s - Rebuilt Symbol node {kg_node_id} from this run" % cmi_debug )
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
                             except Exception as _ae:
-                                logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )
-                        else:       # create & do NOT rebuild
-                            logging.error ( f"%s - Symbol ATTR structure GOOD: ({_attr_count} attrs)" % cmi_debug )
-                            kg_node_id = kgraphdb.create_sym_node(
-                                    news_symbol,
-                                    df_final,
-                                    sent_ai.summary_report,
-                                    sent_ai.summary_metrics,
-                                    sent_ai.summary_2v_metrics,
-                                    rebuild=True
-                                    )
-                            logging.error ( f"%s - Updated Symbol metrics with stats from this run" % cmi_debug )
+                                logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )    
                             post_symbol_worker(kgraphdb, df_final, news_symbol)
-                    case None:  # ??? needs investigation as to why this corner-case would happen
-                        print ("NONE - returned during GraphDB node check!" )
-                        kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)  
-                    case 99:
-                        print ("EXCEPTION - ocurred during GraphDB node check!" )
-                        kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
-                    case _:
-                        print ("WEIRD return code - during GraphDB node check!" )
-                        kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)   
-            except Exception as e:
-                    logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
-                    return False
+                        case None:  # ??? needs investigation as to why this corner-case would happen
+                            print ("NONE - returned during GraphDB node check!" )
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)  
+                        case 99:
+                            print ("EXCEPTION - ocurred during GraphDB node check!" )
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
+                        case _:
+                            print ("WEIRD return code - during GraphDB node check!" )
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)   
+                except Exception as e:
+                        logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
+                        return False
 
 # #############################
 # Neo4j main Loop logic workflow Helper method
