@@ -115,13 +115,13 @@ class neo4j_auradb:
         """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.create_sym_node.__name__+".#"+str(self.yti)
-        logging.info( f'%s - Creating graph node for symbol: [ {ticker_symbol} ]...' % cmi_debug )
         #print ( f"DEBUG-#120: sen_df:{sentiment_df}" )
         with self.driver.session() as session:
             if sen_report and sen_metrics and sen_2v_metrics and not df_final.empty:   # all data structs contian data
                 # Define sentiment elements we want in the NODE graph
                 df_row = df_final.iloc[-1]  # Get the last row of the DataFrame for sentiment metrics
                 if rebuild is True:
+                    logging.info( f'%s - Merging data into symbol node [ {ticker_symbol} ]...' % cmi_debug )
                     query = (
                     "MERGE (s:Symbol {symbol: $symbol}) "
                     "SET "
@@ -143,7 +143,8 @@ class neo4j_auradb:
                     "s.neu_mean = $neu_mean "
                     "RETURN s.uid AS node_id"
                 )
-                else:                    
+                else:     
+                    logging.info( f'%s - Creating new symbol with new data [ {ticker_symbol} ]...' % cmi_debug )               
                     query = (
                         "CREATE (s:Symbol {"
                         "symbol: $symbol, "

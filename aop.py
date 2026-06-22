@@ -776,7 +776,7 @@ def main():
                                     sent_ai.summary_2v_metrics,
                                     rebuild=True
                                     )
-                                logging.error ( f"%s - Rebuilt Symbol node {kg_node_id} from this run" % cmi_debug )
+                                logging.error ( f"%s - Post-processing {kg_node_id} articles and relationships" % cmi_debug )
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
                             except Exception as _ae:
                                 logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )    
