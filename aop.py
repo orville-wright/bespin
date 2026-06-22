@@ -723,10 +723,16 @@ def main():
                 "negative_count": negative_c
             """
             cmi_debug = "aop.main()"+"::"+"Neo4j-Graph_LOOP.#1"
+            total_rehydrated = sent_ai.kv_rehydrated
+            total_new_articles = news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4
+            total_articels = sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4
             
             skip_kg_build = False       # switch to enable/disable Neo4j Aura operations
             
-            if skip_kg_build is True:
+            if skip_kg_build is True:   # Feature-Flag: enable/disbale Neo4j Graph functionality
+                pass
+            
+            if total_new_articles == 0: # nothing to do in the Graph
                 pass
             else:
                 kgraphdb = neo4j_auradb("AOP_AURA", args)            # create an inst of an Neo4j AURA Knowledge Graph DB
@@ -787,7 +793,7 @@ def main():
                                         sent_ai.summary_report,
                                         sent_ai.summary_metrics,
                                         sent_ai.summary_2v_metrics,
-                                        rebuild=False
+                                        rebuild=True
                                         )
                                 logging.error ( f"%s - Updated Symbol metrics with stats from this run" % cmi_debug )
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
