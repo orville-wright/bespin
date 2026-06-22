@@ -60,7 +60,7 @@ class neo4j_auradb:
             _driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
             _driver.verify_connectivity()
             self.driver = _driver       # cache driver object handle inside class instance
-            logging.info( f'%s - {self.driver} connection verified !' % cmi_debug )
+            logging.info( f'%s - connection verified !' % cmi_debug )
             return self.driver
         except Exception as e:
             print (f"Neo4j AURA DB connection failed: {e}")
@@ -93,7 +93,7 @@ class neo4j_auradb:
         # """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.check_node_exists.__name__+".#"+str(_yti)
-        logging.info( f'%s - Check {self.driver} for Symbol [ {symbol} ]' % cmi_debug )
+        logging.info( f'%s - Check Symbol node exists [ {symbol} ]' % cmi_debug )
         try:
             with self.driver.session() as session:
                 query = """
