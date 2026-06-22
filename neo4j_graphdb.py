@@ -299,9 +299,9 @@ class neo4j_auradb:
                 # logging.info( f'%s - Created article node with labels [Article, {dynamic_label}]: {record["node_id"]} for urlhash: {row["urlhash"]}' % cmi_debug )
         
         logging.info( f'%s - ART nodes created: {len(created_nodes)} / Existing nodes skipped: {len(skipped_nodes)}' % cmi_debug )
-        print ( f"!DEBUG-create_article_nodes()-#301 : DF df_final\n{df_final}")
-        print ( f"!DEBUG-create_article_nodes()-#302 : create_nodes[]\n{created_nodes}")
-        print ( f"!DEBUG-create_article_nodes()-#303 : skipped_nodesp[]\n{skipped_nodes}")
+        #print ( f"!DEBUG-create_article_nodes()-#301 : DF df_final\n{df_final}")
+        #print ( f"!DEBUG-create_article_nodes()-#302 : create_nodes[]\n{created_nodes}")
+        #print ( f"!DEBUG-create_article_nodes()-#303 : skipped_nodesp[]\n{skipped_nodes}")
         
         return created_nodes     # Returns a list of tuples (node_id, urlhash) for created nodes
 
