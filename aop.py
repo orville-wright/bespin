@@ -751,6 +751,7 @@ def main():
                                     )
                                 logging.info( f'%s - Created symbol node {news_symbol}' % cmi_debug )
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
+                                
                             except Exception as _fe:
                                 logging.error ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
                         case True:  # YES stock symbol node DOES exists 
@@ -776,19 +777,25 @@ def main():
                                     sent_ai.summary_2v_metrics,
                                     rebuild=True
                                     )
-                                logging.error ( f"%s - Post-processing node: {kg_node_id} / articles + relationships" % cmi_debug )
+                                logging.error ( f"%s - Post-process node: {kg_node_id} / articles + relationships" % cmi_debug )
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
+                                kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
+                                return True
+
                             except Exception as _ae:
                                 logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )    
                         case None:  # ??? needs investigation as to why this corner-case would happen
                             print ("NONE - returned during GraphDB node check!" )
-                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)  
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
+                            return False
                         case 99:
                             print ("EXCEPTION - ocurred during GraphDB node check!" )
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
+                            return False
                         case _:
                             print ("WEIRD return code - during GraphDB node check!" )
-                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)   
+                            kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
+                            return False
                 except Exception as e:
                         logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
                         return False
@@ -801,6 +808,7 @@ def post_symbol_worker(kgraphdb, df_final, news_symbol):
     For common work that needs to happen once you have created a Symbol Graph node
     """
     cmi_debug = "aop.post_symbol_worker()"+"::"+"Neo4j-Graph_LOOP.#2"
+    logging.info( '%s - Checking article nodes...' % cmi_debug )
     _gc = kgraphdb.create_article_nodes(df_final, news_symbol)
     print ( f"Created {len(_gc)} new graph article nodes\n{_gc}" )
     logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
