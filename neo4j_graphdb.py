@@ -380,15 +380,11 @@ class neo4j_auradb:
                 )
                 
                 record = result.single()
-                '''
                 if record:
                     created_relationships.append(str(row['urlhash']))
-                    logging.info( f'%s - Created HAS_ARTICLE relationship for urlhash: {row["urlhash"]}' % cmi_debug )
-                else:
-                    logging.warning( f'%s - REL Create FAIL urlhash: {row["urlhash"]}' % cmi_debug )
-                '''
+                    #logging.info( f'%s - Created relship for urlhash: {row["urlhash"]}' % cmi_debug )
                 
-        logging.info( f'%s - Summary: {len(created_relationships)} relationships created, {len(skipped_relationships)} relationships skipped (already existed)' % cmi_debug )
+        logging.info( f'%s - Relships created: {len(created_relationships)} / Relships skipped: {len(skipped_relationships)})' % cmi_debug )
         return created_relationships
 
 # ###########################  8
@@ -401,8 +397,8 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.news_agency.__name__+".#"+str(self.yti)
         logging.info( f'%s - Check Yahoo.com/Finance News Agency node -> Symbol relationships...' % cmi_debug )
 
-        created_relationships = []
-        skipped_relationships = []
+        created_relationships = int(0)
+        skipped_relationships = int(0)
         yahoo_node_created = False
         
         with self.driver.session() as session:
@@ -448,7 +444,8 @@ class neo4j_auradb:
                 existing_rel = check_rel_result.single()
                 
                 if existing_rel:            # Relationship already exists, skip creation
-                    skipped_relationships.append(symbol)
+                    skipped_relationships += 1
+                    #skipped_relationships.append(symbol)
                     # logging.info( f'%s - STOCK_NEWS rel exists for symbol: {symbol}, skipping' % cmi_debug )
                     continue
                 
@@ -463,9 +460,11 @@ class neo4j_auradb:
                 )
                 
                 rel_result = session.run(create_rel_query, symbol=symbol)
-                rel_record = rel_result.single()
+                _rel_record = rel_result.single()
+                if _rel_record:
+                    created_relationships += 1
 
-        logging.info( f'%s - YF node create: {yahoo_node_created} / Created: {len(created_relationships)} / Skipped: {len(skipped_relationships)}' % cmi_debug )
+        logging.info( f'%s - YF node create: {yahoo_node_created} / Created: {created_relationships} / Skipped: {skipped_relationships}' % cmi_debug )
         return {
             "node_created": yahoo_node_created,
             "relationships_created": created_relationships,

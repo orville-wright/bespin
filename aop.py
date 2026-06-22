@@ -740,7 +740,7 @@ def main():
                     match found_sym:
                         case False:         # NO stock symbol node does NOT exist
                             logging.info( f'%s - Symbol node {news_symbol} NOT in Graph: adding...' % cmi_debug )
-                            try:    # Create new via Cypher CREATE
+                            try:    # Create new via Cypher CREATE via rebuild=False
                                 kg_node_id = kgraphdb.create_sym_node(
                                     news_symbol,
                                     df_final,
@@ -768,7 +768,7 @@ def main():
                             else:       # rebuild + update via Cypher MERGE/SET  b/c symbol exists
                                 logging.error ( f"%s - Symbol ATTR structure GOOD: ({_attr_count} attrs)" % cmi_debug )
 
-                            try:    # rebuild + update via Cypher MERGE/SET  b/c symbol exists
+                            try:    # rebuild + update via Cypher MERGE/SET  b/c symbol exists via rebuild=True
                                 kg_node_id = kgraphdb.create_sym_node(
                                     news_symbol,
                                     df_final,
@@ -813,7 +813,7 @@ def post_symbol_worker(kgraphdb, df_final, news_symbol):
     print ( f"Created {len(_gc)} new graph article nodes\n{_gc}" )
     logging.info( f'%s - Created {len(_gc)} article nodes' % cmi_debug )
     kgraphdb.create_sym_art_rels(news_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown")
-    logging.info( f'%s - Created article relationships -> new parent Symbol node' % cmi_debug )
+    logging.info( '%s - Created article relationships -> new parent Symbol node' % cmi_debug )
     kgraphdb.news_agency()
     logging.info( f'%s - Refreshed Yahoo.com node ownership ->  symbol node [ {news_symbol} ]' % cmi_debug )
     return
