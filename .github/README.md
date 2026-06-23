@@ -1,4 +1,4 @@
-(https://github.com/orville-wright/.github/images/bespin_hero_image_1.png?raw=true)
+(.github/images/bespin_hero_image_1.png)
 
 # Bespin
 
