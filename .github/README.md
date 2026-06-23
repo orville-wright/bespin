@@ -1,4 +1,4 @@
-![Bespin - City in the clouds](.github/images/bespin_hero_image_1.png)
+![Bespin - City in the clouds](images/bespin_hero_image_1.png)
 
 # Bespin
 
