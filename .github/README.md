@@ -6,21 +6,22 @@
 
 Bespin is an Agentic AI quantitative Stock trading analysis platform that aggregates real-time market data from many financial APIs and many sources, applies ML/AI NLP sentiment analysis, and processes insights via many data / computational AI pipelines for identifying actionable trading opportunities.
 
-The unit of work is a candidate, not a signal. Each candidate has:
+Bespin's unit of work is a candidate opportunity, not a signal. not speed. Each candidate has:
 
-- Discovery metadata (when it first surfaced, what signal flagged it)
-- Evidence accumulation (every news item, filing, volume event, options flow that touches this name)
-- Thesis statement (what's the trade idea, in your own words)
-- nvalidation criteria (what would kill this thesis)
-- Aging and staleness (when does this candidate timeout if no further evidence?)
+- Discovery metadata : (when it first surfaced, what signal flagged it)
+- Evidence accumulation : (every news item, filing, volume event, options flow that touches this name)
+- Thesis statement : (what's the trade idea, in your own words)
+- Invalidation criteria : (what would kill this thesis)
+- Aging and staleness : (when does this candidate timeout if no further evidence?)
 - If acted on: entry price, position size, evolving thesis updates, exit criteria
 - Post-mortem (what happened, was the thesis right, what would you change)
 
-This is fundamentally different from a "buy signal generator." It's closer to a personal equity research desk that never sleeps and reads everything.
+This is fundamentally different from a "buy signal generator." and a market trend "trade execution iPhone" app. It's closer to a personal equity Micro-Quant research AI team that never sleeps, reads everything, searchs for structural patterns in deep datasets and computes strategies.
 
-Bespin allows Micro-Quanty Traders to operate in segments where analytical work is the binding constraint on the quality of your decisions, rather than someone else's HFT speed & infrastructure or size being the binding constraint on your opportunity set.
+Bespin allows you to become a Micro-Quant, to operate in segments where analytical work is the binding constraint on the quality of your decisions, rather than someone else's HFT speed & infrastructure or size being the binding constraint on your opportunity set.
 
-Bespin trys to "give an individual what Quants have"
+Bespin trys to "give an individual what Big Quant Firms have"
+<BR>
 - Quants don't actually have magic. They have:
 
 1. Data access — Today, feeds you can mostly approximate with scraping, public APIs, and a modest budget for paid feeds (SEC EDGAR, options data, fundamentals)
@@ -50,18 +51,18 @@ The downside scenario isn't "Bespin gave me a bad trade." It's "Bespin didn't su
 Bespin is anchored on the methodology layers of - López de Prado's Advances in Financial Machine Learning.<BR>
 — it's the most honest book about what actually goes wrong when you try to apply ML and I to finance, and the failure modes it describes (look-ahead bias, backtest overfitting, non-stationary features) are exactly what bite ML/AI Trading support tools (like Bespin) if you're not careful. It's not a how-to-make-money book; it's a how-to-not-fool-yourself book, which is more valuable.
 
-Bespin in not trying to beat sophisticated competitors and traders.<BR>
-Bespin's value is in the analytical work — finding the candidates, building the dossiers, tracking signal performance over time, capturing the post-mortems. That work is jurisdiction-agnostic.
+Bespin in not trying to beat sophisticated competitors, or other traders, or quickly snap onto a day-trend.<BR>
+Bespin's value is in the deep analytical work — Work that 99% of traders dont do, cant do, won't do, don't have the cycles/time to do. - The work of finding the candidates, building the dossiers, tracking signal performance over time, capturing the post-mortems. That work is jurisdiction-agnostic.
 - It allows you to operate in segments where sophistication isn't the binding constraint, by building the analytical capability to make good decisions in those segments.
 - The 'edge' isn't beating someone — it's being correctly equipped for the kind of work you want to focus on.
 
-Bespin is a capability system, not a competitive project:<BR>
+Bespin is a core capability system, not a competitive project, not a trade execution app:<BR>
 - The output is your analytical leverage, not your win rate against some implied opponent.
 - The right segments are where analytical work is the rate-limiting factor on decision quality.
 - The right design priorities are depth, comprehension, recall, and personal adaptation — not speed, scale, or generality.
 - The right success metric is "did I understand this situation well enough to make a decision I'm confident in" rather than "did I beat the market this quarter."
 
-Some concepts in the roadmap...
+Some concepts are in the roadmap...
 1. Convert tacit knowledge into structured features<BR>
     - What makes a candidate "ripe" or "fake" tacit knowledge converted into explicit coded logic
 2. Memory and pattern recognition across time<BR>
