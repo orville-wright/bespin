@@ -75,8 +75,10 @@ Some concepts in the roadmap...
 6. Adversarial review<BR>
     - Gnerates the Bull case for each candidate and also the explicit Bear case, including the specific evidence that would invalidate the thesis. A system that surfaces both, side by side, forces better decisions.
 7. Stop and target computation
-8. Dynamic position/trade sizing. Equal-size positions, Kelly-sized, conviction-weighted, or a structured approach. Dynamically test whether signal-strength-weighted sizing improves the risk-adjusted return.
-9. Portfolio level view for Capital recycling. Decision support for how aggressively to compound vs. take chips off the table.
+8. Dynamic position/trade sizing.<BR>
+    - Equal-size positions, Kelly-sized, conviction-weighted, or a structured approach. Dynamically test whether signal-strength-weighted sizing improves the risk-adjusted return.
+9. Portfolio level view for Capital recycling.<BR>
+    - Decision support for how aggressively to compound vs. take chips off the table.
 10. Explicit drawdown protocols<BR>
     - Predefined rules for what happens if the system underperforms by X% over Y weeks. Pre-committed rules before a drawdown happens.
 11. Judgement decision journaling<BR>
