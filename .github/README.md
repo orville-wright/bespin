@@ -96,11 +96,11 @@ Multi-domain features will requrie...
 1. Per-user configuration profiles
 2. Candidate surfacing that's user-aware / Domain aware
 3. Shared methodology, separated execution tracking
-  - The dossiers, signal definitions, and analytical work are common. The trade ledgers, P&L tracking, and post-mortems are per-user.
+    - The dossiers, signal definitions, and analytical work are common. The trade ledgers, P&L tracking, and post-mortems are per-user.
 5. Peer-to-Peer Dual-brain integrated commnication sub-system
-  - When Bespin surfaces a candidate, both USA and NZ domains see each other's reactions, decisions, and rationale. This compounds the analytical work — two brains looking at the same signal, setup will catch things one might miss.
-6. Peer-to-Peer Dual journaling reviews
-  - To compare outcomes over time. Same signal, different executions, different results — that's data ! Capturing it evolves signal calibration based on a richer picture than either domsin alone would have.
+    - When Bespin surfaces a candidate, both USA and NZ domains see each other's reactions, decisions, and rationale. This compounds the analytical work — two brains looking at the same signal, setup will catch things one might miss.
+7. Peer-to-Peer Dual journaling reviews
+    - To compare outcomes over time. Same signal, different executions, different results — that's data ! Capturing it evolves signal calibration based on a richer picture than either domsin alone would have.
 
   
   
