@@ -63,26 +63,26 @@ Bespin is a capability system, not a competitive project:<BR>
 
 Some concepts in the roadmap...
 1. Convert tacit knowledge into structured features<BR>
-- What makes a candidate "ripe" or "fake" tacit knowledge converted into explicit coded logic
+  - What makes a candidate "ripe" or "fake" tacit knowledge converted into explicit coded logic
 2. Memory and pattern recognition across time<BR>
-- Cross-time pattern recognition is computationally cheap but adds significant context. Currently, each day's analysis is somewhat independent. Besping needs to remember patterns and trigger events and correlate backward in time.
+  - Cross-time pattern recognition is computationally cheap but adds significant context. Currently, each day's analysis is somewhat independent. Besping needs to remember patterns and trigger events and correlate backward in time.
 3. Calibration tracking<BR>
-- Every signal Bespin produces should have a track record. This lets you weigh new signals by their historical base rates rather than treating each as equally promising. It signals when a previously-working signal stops working — which is the moment to stop trusting it.
+  - Every signal Bespin produces should have a track record. This lets you weigh new signals by their historical base rates rather than treating each as equally promising. It signals when a previously-working signal stops working — which is the moment to stop trusting it.
 4. A "thesis decay" detector for open positions<BR>
-- When a signal is now gone or reversed, the system should flag that even if the position is still profitable. Giving clear trigger points on when to exit a winner - whcih is "when the original thesis is no longer the reason you're holding it."
+  - When a signal is now gone or reversed, the system should flag that even if the position is still profitable. Giving clear trigger points on when to exit a winner - whcih is "when the original thesis is no longer the reason you're holding it."
 5. LLM-augmented dossier generation.<BR>
-- Proper LLM integration to provide (for any candidate), a one-page brief that captures everything material in the public record.
+  - Proper LLM integration to provide (for any candidate), a one-page brief that captures everything material in the public record.
 6. Adversarial review<BR>
-- Gnerates the Bull case for each candidate and also the explicit Bear case, including the specific evidence that would invalidate the thesis. A system that surfaces both, side by side, forces better decisions.
+  - Gnerates the Bull case for each candidate and also the explicit Bear case, including the specific evidence that would invalidate the thesis. A system that surfaces both, side by side, forces better decisions.
 7. Stop and target computation
 8. Dynamic position/trade sizing. Equal-size positions, Kelly-sized, conviction-weighted, or a structured approach. Dynamically test whether signal-strength-weighted sizing improves the risk-adjusted return.
 9. Portfolio level view for Capital recycling. Decision support for how aggressively to compound vs. take chips off the table.
 10. Explicit drawdown protocols<BR>
-— Predefined rules for what happens if the system underperforms by X% over Y weeks. Pre-committed rules before a drawdown happens.
+  - Predefined rules for what happens if the system underperforms by X% over Y weeks. Pre-committed rules before a drawdown happens.
 11. Judgement decision journaling<BR>
-- Tracked judgment calls about which trades to take from the candidates the Bespin system surfaces. A continiouslt self-generated labeled training dataset of "system surfaced these, here's which ones I rejected and why filtered Human decisons of rejected criteria.
+  - Tracked judgment calls about which trades to take from the candidates the Bespin system surfaces. A continiouslt self-generated labeled training dataset of "system surfaced these, here's which ones I rejected and why filtered Human decisons of rejected criteria.
 12. Editible Portfolio Ruleset database of core signal logic<BR>
-- Core Trading event-driven catalysts (the OGN-style situations), unusual volume + news latency, insider activity, sector rotations etc.
+  - Core Trading event-driven catalysts (the OGN-style situations), unusual volume + news latency, insider activity, sector rotations etc.
 13. Enf-to-End "frictional trade cost model" across country domains (USA and NZ).
 14. Dynamic currency computation across country domains (USA and NZ)
 15. Time-of-day awareness across country domains (USA and NZ) and next-session candidate quening workflows.
@@ -96,11 +96,11 @@ Multi-domain features will requrie...
 1. Per-user configuration profiles
 2. Candidate surfacing that's user-aware / Domain aware
 3. Shared methodology, separated execution tracking
-- The dossiers, signal definitions, and analytical work are common. The trade ledgers, P&L tracking, and post-mortems are per-user.
+  - The dossiers, signal definitions, and analytical work are common. The trade ledgers, P&L tracking, and post-mortems are per-user.
 5. Peer-to-Peer Dual-brain integrated commnication sub-system
-- When Bespin surfaces a candidate, both USA and NZ domains see each other's reactions, decisions, and rationale. This compounds the analytical work — two brains looking at the same signal, setup will catch things one might miss.
+  - When Bespin surfaces a candidate, both USA and NZ domains see each other's reactions, decisions, and rationale. This compounds the analytical work — two brains looking at the same signal, setup will catch things one might miss.
 6. Peer-to-Peer Dual journaling reviews
-- To compare outcomes over time. Same signal, different executions, different results — that's data ! Capturing it evolves signal calibration based on a richer picture than either domsin alone would have.
+  - To compare outcomes over time. Same signal, different executions, different results — that's data ! Capturing it evolves signal calibration based on a richer picture than either domsin alone would have.
 
   
   
