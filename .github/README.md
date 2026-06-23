@@ -2,7 +2,7 @@
 
 # Bespin
 
-## An Agentic AI Quant Decison-and-Support Stock Market Analyttics system
+## An Agentic AI Quant Decison-and-Support Stock Market system
 
 Bespin is an Agentic AI quantitative Stock trading analysis platform that aggregates real-time market data from many financial APIs and many sources, applies ML/AI NLP sentiment analysis, and processes insights via many data / computational AI pipelines for identifying actionable trading opportunities.
 
