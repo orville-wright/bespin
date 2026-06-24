@@ -5,7 +5,7 @@ import argparse
 import dotenv
 import os
 import pandas as pd
-#import modin.pandas as pd
+import pickle
 from rich import print
 
 from neo4j import GraphDatabase, RoutingControl
@@ -250,11 +250,10 @@ class neo4j_auradb:
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
                     continue
                 
-                # Prefix urlhash with 'Hash_' to make it a valid Neo4j label
+                # Prefix urlhash with 'Hash_' to make it a valid KV Cache label
                 dynamic_label = f"Hash_{str(row['urlhash'])}"
                 
-                # Check if article node with this urlhash already exists
-                # Simply check for Article nodes with matching urlhash property
+                # check for Article nodes with matching urlhash property
                 check_query = "MATCH (n:Article {urlhash: $urlhash}) RETURN n.id AS existing_id LIMIT 1"
                 check_result = session.run(check_query, urlhash=str(row['urlhash']))
                 existing_record = check_result.single()
@@ -265,11 +264,19 @@ class neo4j_auradb:
                     continue
                 
                 # Node doesn't exist, create it using APOC
+                # - usedby is mutable. TODO: It will eventually be updated by create_sym_art_rels() if article is shared by multiple symbols
+                # - useby set during orignal article creation, to same as origowner.
+                # - origowner is immutible. never changes once set, unlike usedby
+                used_by = list()
+                used_by.append(symbol)  # should only ever be called if article doesnt exists, the first new create
+                serialized_used_by = pickle.dumps(used_by)
+                
                 create_query = (
                     "CALL apoc.create.node([$static_label, $dynamic_label], {"
                     "urlhash: $urlhash, "
                     "id: randomUUID(), "
-                    "usedby: $usedby, "
+                    "usedby: $serialized_used_by, "
+                    "origowner: $symbol, "
                     "art: $art, "
                     "positive: $positive, "
                     "neutral: $neutral, "
@@ -285,7 +292,8 @@ class neo4j_auradb:
                     dynamic_label=dynamic_label,
                     urlhash=str(row['urlhash']),
                     art=int(row['art']),
-                    usedby=symbol,
+                    usedby=serialized_used_by,
+                    origowner=symbol,
                     positive=float(row['positive']),
                     neutral=float(row['neutral']),
                     negative=float(row['negative']),
@@ -303,7 +311,7 @@ class neo4j_auradb:
         #print ( f"!DEBUG-create_article_nodes()-#302 : create_nodes[]\n{created_nodes}")
         #print ( f"!DEBUG-create_article_nodes()-#303 : skipped_nodesp[]\n{skipped_nodes}")
         
-        return created_nodes     # Returns a list of tuples (node_id, urlhash) for created nodes
+        return created_nodes, skipped_nodes     # Returns 2 lists [(node_id, urlhash)] for created & skipp nodes
 
 # ###########################  7
     def create_sym_art_rels(self, ticker_symbol, df_final, agency="Unknown", author="Unknown", published="Unknown", article_teaser="Unknown"):
@@ -313,6 +321,8 @@ class neo4j_auradb:
         df_final = dataframe containing article data
         Relationship properties: agency, author, published, article_teaser can be provided
         Checks for existing relationships before creating to avoid duplicates
+        Checks usedby ATTR and set new useby symbol if != origowner (the symbole that orignall cretaed this article)
+        - This allows us to track the shared article lineage... if/when it starts to evolve.
         """
         symbol = ticker_symbol.upper()
         cmi_debug = __name__+"::"+self.create_sym_art_rels.__name__+".#"+str(self.yti)
