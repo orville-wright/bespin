@@ -267,15 +267,14 @@ class neo4j_auradb:
                 # - usedby is mutable. TODO: It will eventually be updated by create_sym_art_rels() if article is shared by multiple symbols
                 # - useby set during orignal article creation, to same as origowner.
                 # - origowner is immutible. never changes once set, unlike usedby
-                _used_by = list()
-                _used_by.append(symbol)  # should only ever be called if article doesnt exists, the first new create
-                serialized_used_by = pickle.dumps(_used_by)
+                _usedby_list = list()
+                _usedby_list.append(symbol)  # should only be called if article doesnt exist, the first new create
                 
                 create_query = (
                     "CALL apoc.create.node([$static_label, $dynamic_label], {"
                     "urlhash: $urlhash, "
                     "id: randomUUID(), "
-                    "usedby: $_usedby_bytes, "
+                    "usedby: $usedby_list, "
                     "origowner: $symbol, "
                     "art: $art, "
                     "positive: $positive, "
@@ -293,7 +292,7 @@ class neo4j_auradb:
                     urlhash=str(row['urlhash']),
                     art=int(row['art']),
                     origowner=symbol,
-                    usedby_bytes=serialized_used_by,
+                    usedby_list=_usedby_list,
                     positive=float(row['positive']),
                     neutral=float(row['neutral']),
                     negative=float(row['negative']),
