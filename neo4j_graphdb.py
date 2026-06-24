@@ -336,10 +336,10 @@ class neo4j_auradb:
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
                     continue
                 
-                # Prefix urlhash with 'Hash_' to match the dynamic label from create_article_nodes
+                # create key -  add "Hash_" to match the dynamic label from create_article_nodes
                 dynamic_label = f"Hash_{str(row['urlhash'])}"
                 
-                # Does THIS article (URLHASH) have an existing relationship to THIS symbol...?
+                # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
                 existing_art_sym_rel_query = (
                     "MATCH (s:Symbol {symbol: $symbol}) "
                     "MATCH (a:Article {urlhash: $urlhash}) "
@@ -352,10 +352,25 @@ class neo4j_auradb:
                     urlhash=str(row['urlhash'])
                 )
                 existing_rel = check_result.single()
-                
                 if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
                     skipped_relationships.append(str(row['urlhash']))
                     # logging.info( f'%s - REL already exists: {symbol} - {row["urlhash"]}, skipping...' % cmi_debug )
+                    # check if article has this symbol in its usedby node ATTRIBUTE
+                    set_list_query = (
+                        "MATCH (a:Article) "
+                        "WHERE (s:Symbol {symbol: $symbol}) "
+                        "AND a.url = {urlhash: $urlhash} "
+                        "SET a.usedby = a.usedby + {symbol: $symbol} "
+                        "RETURN a.urlhash "
+                    )
+                    
+                    result = session.run(set_list_query,
+                        symbol=symbol,
+                        urlhash=str(row['urlhash'])
+                    )
+                    record = result.single()
+                    if record:
+                        print ( f"#DEBUG-#373: added to ATTR_list membership" )
                     continue
                 
                 # Relationship doesn't exist, create it
