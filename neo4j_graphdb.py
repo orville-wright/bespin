@@ -339,16 +339,16 @@ class neo4j_auradb:
                 # Prefix urlhash with 'Hash_' to match the dynamic label from create_article_nodes
                 dynamic_label = f"Hash_{str(row['urlhash'])}"
                 
-                # Does article have existing relationship to this symbol...?
+                # Does article have existing relationship to THIS symbol...?
                 # WARN: If article has exisitng relationship to some other symbol... this will find a "0" result.
-                existing_art-sym_rel_query = (
+                existing_art_sym_rel_query = (
                     "MATCH (s:Symbol {symbol: $symbol}) "
                     "MATCH (a:Article {urlhash: $urlhash}) "
                     "MATCH (s)-[r:HAS_ARTICLE]->(a) "
                     "RETURN r LIMIT 1"
                 )
                 
-                check_result = session.run(existing_art-sym_rel_query,
+                check_result = session.run(existing_art_sym_rel_query,
                     symbol=symbol,
                     urlhash=str(row['urlhash'])
                 )
@@ -358,6 +358,9 @@ class neo4j_auradb:
                     skipped_relationships.append(str(row['urlhash']))
                     # logging.info( f'%s - REL already exists: {symbol} - {row["urlhash"]}, skipping...' % cmi_debug )
                     continue
+                
+                # Does article have existing relationship to some OTHER symbol...?               
+                
                 
                 # Relationship doesn't exist, create it
                 create_query = (
