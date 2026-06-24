@@ -269,13 +269,13 @@ class neo4j_auradb:
                 # - origowner is immutible. never changes once set, unlike usedby
                 _used_by = list()
                 _used_by.append(symbol)  # should only ever be called if article doesnt exists, the first new create
-                #serialized_used_by = pickle.dumps(used_by)
+                serialized_used_by = pickle.dumps(_used_by)
                 
                 create_query = (
                     "CALL apoc.create.node([$static_label, $dynamic_label], {"
                     "urlhash: $urlhash, "
                     "id: randomUUID(), "
-                    "usedby: pickle.dumps(_used_by), "
+                    "usedby: $_usedby_bytes, "
                     "origowner: $symbol, "
                     "art: $art, "
                     "positive: $positive, "
@@ -293,7 +293,7 @@ class neo4j_auradb:
                     urlhash=str(row['urlhash']),
                     art=int(row['art']),
                     origowner=symbol,
-                    usedby=pickle.dumps(_used_by),
+                    usedby_bytes=serialized_used_by,
                     positive=float(row['positive']),
                     neutral=float(row['neutral']),
                     negative=float(row['negative']),
