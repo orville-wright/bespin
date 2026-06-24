@@ -753,10 +753,10 @@ def main():
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
                                 
                             except Exception as _fe:
-                                logging.error ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
+                                logging.info ( f"%s - Exception creating new Symbol node:\n{_fe}" % cmi_debug )
                         # Logic chain structural matching control flow...
                         case True:  # YES stock symbol node DOES exists 
-                            logging.error ( f"%s - Symbol node exists: Merging articles -> {news_symbol}" % cmi_debug )
+                            logging.info ( f"%s - Symbol node exists: Merging articles -> {news_symbol}" % cmi_debug )
                             # TODO: be carefull updating existing symbol node sentiment metrics
                             # - We should only update sentiment if 100% of articles in KV Cache are analyzed !
                             _attr_count = kgraphdb.check_symbol_attrs(news_symbol)
@@ -764,10 +764,10 @@ def main():
                                 # WARN: 17 is hard coded - see create_sym_node()
                                 # If orignal node creation failed, it was created with default min ATTRS = 2
                                 # Check + rebuild all node attributes is required !
-                                logging.error ( f"%s - Symbol ATTR structure BAD: ({_attr_count} attrs) - rebuilding..." % cmi_debug )
+                                logging.info ( f"%s - Symbol ATTR structure BAD: ({_attr_count} attrs) - rebuilding..." % cmi_debug )
                                 print ( f"Symbol ATTR structure BAD ({_attr_count} attrs) - rebuilding..." )
                             else:       # rebuild + update via Cypher MERGE/SET  b/c symbol exists
-                                logging.error ( f"%s - Symbol ATTR structure GOOD: ({_attr_count} attrs)" % cmi_debug )
+                                logging.info ( f"%s - Symbol ATTR structure GOOD: ({_attr_count} attrs)" % cmi_debug )
 
                             try:    # rebuild + update via Cypher MERGE/SET  b/c symbol exists via rebuild=True
                                 kg_node_id = kgraphdb.create_sym_node(
@@ -778,13 +778,13 @@ def main():
                                     sent_ai.summary_2v_metrics,
                                     rebuild=True
                                     )
-                                logging.error ( f"%s - Post-process node: {kg_node_id} / articles + relationships" % cmi_debug )
+                                logging.info ( f"%s - Post-process node: {kg_node_id} / articles + relationships" % cmi_debug )
                                 post_symbol_worker(kgraphdb, df_final, news_symbol)
                                 kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                                 return True
 
                             except Exception as _ae:
-                                logging.error ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )    
+                                logging.errinfoor ( f"%s - Exception rebuilding existing Symbol attribute structure:\n{_ae}" % cmi_debug )    
                         case None:  # ??? needs investigation as to why this corner-case would happen
                             print ("NONE - returned during GraphDB node check!" )
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
@@ -798,7 +798,7 @@ def main():
                             kgraphdb.close_neo4j_auradb("AOP_AURA", kgraphdb.driver)
                             return False
                 except Exception as e:
-                        logging.error ( f"%s - Exception checking node entry: {e}" % cmi_debug )
+                        logging.info ( f"%s - Exception checking node entry: {e}" % cmi_debug )
                         return False
 
 # #############################
