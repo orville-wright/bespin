@@ -275,7 +275,7 @@ class neo4j_auradb:
                     "urlhash: $urlhash, "
                     "id: randomUUID(), "
                     "usedby: $usedby_list, "
-                    "origowner: $symbol, "
+                    "origowner: $origowner, "
                     "art: $art, "
                     "positive: $positive, "
                     "neutral: $neutral, "
