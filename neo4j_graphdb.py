@@ -336,6 +336,7 @@ class neo4j_auradb:
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
                     continue
                 
+                this_urlhash=str(row['urlhash'])
                 # create key -  add "Hash_" to match the dynamic label from create_article_nodes
                 dynamic_label = f"Hash_{str(row['urlhash'])}"
                 
@@ -370,10 +371,11 @@ class neo4j_auradb:
                     )
                     record = result.single()
                     if record:
-                        print ( f"#DEBUG-#373: added to ATTR_list membership" )
+                        print ( f"#DEBUG-#374: REL existing for symbol -> article: {this_urlhash}" )
                     continue
                 
                 # Relationship doesn't exist, create it
+                print ( f"#DEBUG-#378: No REL for symbol -> article: {this_urlhash}" )
                 create_query = (
                     "MATCH (s:Symbol {symbol: $symbol}) "
                     f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
@@ -405,9 +407,10 @@ class neo4j_auradb:
                 record = result.single()
                 if record:
                     created_relationships.append(str(row['urlhash']))
+                    print ( f"#DEBUG-#410: Created relship for urlhash: {this_urlhash}" )
                     #logging.info( f'%s - Created relship for urlhash: {row["urlhash"]}' % cmi_debug )
                 
-        logging.info( f'%s - Relships created: {len(created_relationships)} / Relships skipped: {len(skipped_relationships)})' % cmi_debug )
+        logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
         return created_relationships
 
 # ###########################  8
