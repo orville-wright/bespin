@@ -365,9 +365,8 @@ class neo4j_auradb:
                 
                 if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
                     skipped_relationships.append(str(row['urlhash']))
-                    print ( "#DEBUG-#368: DO NOT Create new rel but SET useby ATTR..." )
-                    # logging.info( f'%s - REL already exists: {symbol} - {row["urlhash"]}, skipping...' % cmi_debug )
-                    # check if article has this symbol in its usedby node ATTRIBUTE
+                    print ( "#DEBUG-#368: DO NOT Create new REL but... try to SET useby ATTR..." )
+
                     set_list_query = (
                         "MATCH (a:Article) "
                         "WHERE (s:Symbol {symbol: $symbol}) "
@@ -380,7 +379,9 @@ class neo4j_auradb:
                         symbol=symbol,
                         urlhash=str(row['urlhash'])
                     )
+
                     record = result.single()
+
                     print ( f"#DEBUG-#384: Trying SEL ATTR for article: {this_urlhash}\nresult: {record}" )
                     if record:
                         print ( "#DEBUG-#378: SUCCESS: Track + Skipped CREATE..." )
@@ -431,7 +432,7 @@ class neo4j_auradb:
                         print ( f"#DEBUG-#420: FAILED to create relship for urlhash: {this_urlhash}" )
                         print ( "------------------------ end loop ------------------------------")
 
-            #print ( f"#DEBUG-#417: LOOP : ART -> REL for urlhash: {this_urlhash}" )
+                print ( f"#DEBUG-#435: LOOP : ART -> REL for urlhash: {this_urlhash}" )
             
         logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
         return created_relationships
