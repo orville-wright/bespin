@@ -340,8 +340,11 @@ class neo4j_auradb:
                 #    print ( f"#DEBUG-#340: indx: {idx} END of DF" )
                 #    continue
 
-                break
+        # WTF !!
+        logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
+        return created_relationships
 
+        """
                 # WTF !!!
                 this_urlhash=str(row['urlhash'])
                 # create key -  add "Hash_" to match the dynamic label from create_article_nodes
@@ -433,9 +436,8 @@ class neo4j_auradb:
                 print ( f"#DEBUG-#435: OUTER loop for ART -> REL urlhash: {this_urlhash}\n" )
             
             print ( f"#DEBUG-#435: End MAIN loop for ART -> REL urlhash: {this_urlhash}\n" )
-            # WTF !!
-        logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
-        return created_relationships
+
+        """
 
 # ###########################  8
     def news_agency(self):
