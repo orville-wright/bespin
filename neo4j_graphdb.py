@@ -330,9 +330,11 @@ class neo4j_auradb:
         created_relationships = []
         skipped_relationships = []
         
+        print ( f"#DEBUG-#333: urlhash item in df_final: {len(df_final)}" )
         with self.driver.session() as session:
             for idx, row in df_final.iterrows():       # cycle through our candidate list of URLHASH items
                 # Skip the totals row
+                print ( f"#DEBUG-#337: working on row: {row}" )}" 
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
                     continue
 
@@ -356,7 +358,7 @@ class neo4j_auradb:
                 
                 # None = no existing relationship
                 existing_rel = check_result.single()
-                print ( f"#DEBUG-#357: Eval symbol -> article REL for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
+                print ( f"#DEBUG-#359: Eval symbol -> article REL for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
                 if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
                     skipped_relationships.append(str(row['urlhash']))
                     # logging.info( f'%s - REL already exists: {symbol} - {row["urlhash"]}, skipping...' % cmi_debug )
