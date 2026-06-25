@@ -384,11 +384,9 @@ class neo4j_auradb:
                     if _record:
                         print ( "#DEBUG-#3785: SET SUCCESS: Track + Skipped CREATE..." )
                         skipped_relationships.append(str(row['urlhash']))
-                        continue
                     else:
                         print ( "#DEBUG-#389: SET FAIL: Track + Skipped CREATE..." )
                         skipped_relationships.append(str(row['urlhash']))
-                        continue
                 else:
                     # Relationship doesn't exist, create it
                     print ( f"#DEBUG-#382: No existing REL for symbol -> article: {this_urlhash}" )
@@ -424,14 +422,16 @@ class neo4j_auradb:
                     if record:
                         created_relationships.append(str(row['urlhash']))
                         print ( f"#DEBUG-#410: Created relship for urlhash: {this_urlhash}" )
-                        print ( "------------------------ end loop ------------------------------")
+                        print ( "------------------------ inner loop ------------------------------")
                         #logging.info( f'%s - Created relship for urlhash: {row["urlhash"]}' % cmi_debug )
                     else:
                         print ( f"#DEBUG-#420: FAILED to create relship for urlhash: {this_urlhash}" )
-                        print ( "------------------------ end loop ------------------------------")
+                        print ( "------------------------ inner loop ------------------------------")
 
-                print ( f"#DEBUG-#435: End MAIN loop for ART -> REL urlhash: {this_urlhash}\n" )
+                print ( f"#DEBUG-#435: OUTER loop for ART -> REL urlhash: {this_urlhash}\n" )
             
+            print ( f"#DEBUG-#435: End MAIN loop for ART -> REL urlhash: {this_urlhash}\n" )
+            # WTF !!
         logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
         return created_relationships
 
