@@ -331,7 +331,7 @@ class neo4j_auradb:
         skipped_relationships = []
         
         print ( f"#DEBUG-#333: urlhash items in df_final: {int(len(df_final)) - 1}" )
-        print ( f"#DEBUG-#333: dump df_final: {df_final}" )
+        print ( f"#DEBUG-#333: dump df_final:\n{df_final}" )
         with self.driver.session() as session:
             for idx, row in df_final.iterrows():       # cycle through our candidate list of URLHASH items
                 # Skip the totals row
@@ -339,6 +339,8 @@ class neo4j_auradb:
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
                     print ( f"#DEBUG-#340: indx: {idx} END of DF" )
                     continue
+
+                break
 
                 # WTF !!!
                 this_urlhash=str(row['urlhash'])
