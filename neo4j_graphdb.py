@@ -340,38 +340,45 @@ class neo4j_auradb:
                     break
                 else:
                     print ( f"#DEBUG-#338: for iterrow loop on indx: {idx} / row:\n{row}" )
+                    this_urlhash=str(row['urlhash'])
+                    _status = sar_helper_1(this_urlhash, symbol)   # check for existing relationship and return 0 or 1
 
-        # WTF !!
-        logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
-        return created_relationships
+
+
+        # -------------- private helper methods -------------
+        def sar_helper_1(_x, _y):
+            print ( f"#DEBUG-#346: Cypher query 1 - exisitng symbol -> article REL: {this_urlhash}" )
+            existing_art_sym_rel_query = (
+                "MATCH (s:Symbol {symbol: $symbol}) "
+                "MATCH (a:Article {urlhash: $urlhash}) "
+                "MATCH (s)-[r:HAS_ARTICLE]->(a) "
+                "RETURN r LIMIT 1"
+            )
+            
+            check_result = session.run(existing_art_sym_rel_query,
+                symbol=_x,
+                urlhash=_y
+            )
+            
+            # None = no existing relationship
+            existing_rel = check_result.single()
+            #rint ( f"#DEBUG-#361: NO symbol -> article REL, try for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
+            # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
+            if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
+                skipped_relationships.append(str(row['urlhash']))
+                print ( f"#DEBUG-#368:Existing REL -  NOT Create new REL but... try to SET useby ATTR..." )
+                return 0
+            else:
+                print ( f"#DEBUG-#368: Existing REL found - Create new REL..." )
+                return 1
+            
 
         """
+        logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
+        return created_relationships
                 # WTF !!!
-                this_urlhash=str(row['urlhash'])
                 # create key -  add "Hash_" to match the dynamic label from create_article_nodes
                 dynamic_label = f"Hash_{str(row['urlhash'])}"
-                
-                # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
-                print ( f"#DEBUG-#346: Cypher query  exisitng symbol -> article REL: {this_urlhash}" )
-                existing_art_sym_rel_query = (
-                    "MATCH (s:Symbol {symbol: $symbol}) "
-                    "MATCH (a:Article {urlhash: $urlhash}) "
-                    "MATCH (s)-[r:HAS_ARTICLE]->(a) "
-                    "RETURN r LIMIT 1"
-                )
-                
-                check_result = session.run(existing_art_sym_rel_query,
-                    symbol=symbol,
-                    urlhash=str(row['urlhash'])
-                )
-                
-                # None = no existing relationship
-                existing_rel = check_result.single()
-                print ( f"#DEBUG-#364: Eval symbol -> article REL for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
-                
-                if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
-                    skipped_relationships.append(str(row['urlhash']))
-                    print ( f"#DEBUG-#368: DO NOT Create new REL but... try to SET useby ATTR..." )
                     print ( f"#DEBUG-#369: Cypher query SET ATTR: {this_urlhash}" )
                     set_list_query = (
                         "MATCH (a:Article) "
