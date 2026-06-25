@@ -354,8 +354,8 @@ class neo4j_auradb:
                     urlhash=str(row['urlhash'])
                 )
                 
-                print ( f"#DEBUG-#357: Eval symbol -> article REL for SET ATTR op: {this_urlhash}" )
                 existing_rel = check_result.single()
+                print ( f"#DEBUG-#357: Eval symbol -> article REL for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
                 if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
                     skipped_relationships.append(str(row['urlhash']))
                     # logging.info( f'%s - REL already exists: {symbol} - {row["urlhash"]}, skipping...' % cmi_debug )
@@ -414,7 +414,9 @@ class neo4j_auradb:
                     created_relationships.append(str(row['urlhash']))
                     print ( f"#DEBUG-#410: Created relship for urlhash: {this_urlhash}" )
                     #logging.info( f'%s - Created relship for urlhash: {row["urlhash"]}' % cmi_debug )
-                
+                    
+            print ( f"#DEBUG-#417: LOOP : ART -> REL for urlhash: {this_urlhash}" )
+            
         logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
         return created_relationships
 
