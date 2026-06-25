@@ -336,10 +336,10 @@ class neo4j_auradb:
             for idx, row in df_final.iterrows():       # cycle through our candidate list of URLHASH items
                 if idx == 'Totals':
                     # Skip & end at the totals row
-                    print ( f"#DEBUG-#340: indx: {idx} END of DF" )
+                    print ( f"#DEBUG-#339: indx: {idx} END of DF" )
                     break
                 else:
-                    print ( f"#DEBUG-#338: for iterrow loop on indx: {idx} / row:\n{row}" )
+                    print ( f"#DEBUG-#342: for iterrow loop on indx: {idx} / row:\n{row}" )
                     #this_urlhash=str(row['urlhash'])
                     _#status = sar_helper_1(this_urlhash, symbol)   # check for existing relationship and return 0 or 1
 
