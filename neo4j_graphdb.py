@@ -335,9 +335,10 @@ class neo4j_auradb:
                 # Skip the totals row
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
                     continue
-                
+
                 this_urlhash=str(row['urlhash'])
                 # create key -  add "Hash_" to match the dynamic label from create_article_nodes
+                print ( f"#DEBUG-#341: Test exisitng symbol -> article REL: {this_urlhash}" )
                 dynamic_label = f"Hash_{str(row['urlhash'])}"
                 
                 # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
@@ -352,6 +353,8 @@ class neo4j_auradb:
                     symbol=symbol,
                     urlhash=str(row['urlhash'])
                 )
+                
+                print ( f"#DEBUG-#357: Eval symbol -> article REL for SET ATTR op: {this_urlhash}" )
                 existing_rel = check_result.single()
                 if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
                     skipped_relationships.append(str(row['urlhash']))
@@ -370,12 +373,14 @@ class neo4j_auradb:
                         urlhash=str(row['urlhash'])
                     )
                     record = result.single()
+                    print ( f"#DEBUG-#376: REL existing for symbol -> article: {this_urlhash} / result: {record}" )
                     if record:
-                        print ( f"#DEBUG-#374: REL existing for symbol -> article: {this_urlhash}" )
-                    continue
+                        print ( "#DEBUG-#378: REL existing for symbol -> article: Track + Skipping..." )
+                        skipped_relationships.append(str(row['urlhash']))
+                        continue
                 
                 # Relationship doesn't exist, create it
-                print ( f"#DEBUG-#378: No REL for symbol -> article: {this_urlhash}" )
+                print ( f"#DEBUG-#382: No REL for symbol -> article: {this_urlhash}" )
                 create_query = (
                     "MATCH (s:Symbol {symbol: $symbol}) "
                     f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
