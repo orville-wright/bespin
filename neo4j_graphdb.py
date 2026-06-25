@@ -334,11 +334,12 @@ class neo4j_auradb:
         print ( f"#DEBUG-#333: dump df_final:\n{df_final}" )
         with self.driver.session() as session:
             for idx, row in df_final.iterrows():       # cycle through our candidate list of URLHASH items
-                # Skip the totals row
-                print ( f"#DEBUG-#338: for iterrow loop on indx: {idx} / row:\n{row}" )
-                #if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
-                #    print ( f"#DEBUG-#340: indx: {idx} END of DF" )
-                #    continue
+                if idx == 'Totals':
+                    # Skip & end at the totals row
+                    print ( f"#DEBUG-#340: indx: {idx} END of DF" )
+                    break
+                else:
+                    print ( f"#DEBUG-#338: for iterrow loop on indx: {idx} / row:\n{row}" )
 
         # WTF !!
         logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
