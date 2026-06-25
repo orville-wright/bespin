@@ -335,10 +335,10 @@ class neo4j_auradb:
         with self.driver.session() as session:
             for idx, row in df_final.iterrows():       # cycle through our candidate list of URLHASH items
                 # Skip the totals row
-                print ( f"#DEBUG-#338: for iterrow loop on indx: {idx} / row: {row}" )
-                if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
-                    print ( f"#DEBUG-#340: indx: {idx} END of DF" )
-                    continue
+                print ( f"#DEBUG-#338: for iterrow loop on indx: {idx} / row:\n{row}" )
+                #if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
+                #    print ( f"#DEBUG-#340: indx: {idx} END of DF" )
+                #    continue
 
                 break
 
