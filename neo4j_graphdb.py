@@ -343,10 +343,10 @@ class neo4j_auradb:
                 # WTF !!!
                 this_urlhash=str(row['urlhash'])
                 # create key -  add "Hash_" to match the dynamic label from create_article_nodes
-                print ( f"#DEBUG-#346: Test exisitng symbol -> article REL: {this_urlhash}" )
                 dynamic_label = f"Hash_{str(row['urlhash'])}"
                 
                 # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
+                print ( f"#DEBUG-#346: Cypher query  exisitng symbol -> article REL: {this_urlhash}" )
                 existing_art_sym_rel_query = (
                     "MATCH (s:Symbol {symbol: $symbol}) "
                     "MATCH (a:Article {urlhash: $urlhash}) "
@@ -365,8 +365,8 @@ class neo4j_auradb:
                 
                 if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
                     skipped_relationships.append(str(row['urlhash']))
-                    print ( "#DEBUG-#368: DO NOT Create new REL but... try to SET useby ATTR..." )
-
+                    print ( f"#DEBUG-#368: DO NOT Create new REL but... try to SET useby ATTR..." )
+                    print ( f"#DEBUG-#369: Cypher query SET ATTR: {this_urlhash}" )
                     set_list_query = (
                         "MATCH (a:Article) "
                         "WHERE (s:Symbol {symbol: $symbol}) "
@@ -380,15 +380,13 @@ class neo4j_auradb:
                         urlhash=str(row['urlhash'])
                     )
 
-                    record = result.single()
-
-                    print ( f"#DEBUG-#384: Trying SEL ATTR for article: {this_urlhash}\nresult: {record}" )
-                    if record:
-                        print ( "#DEBUG-#378: SUCCESS: Track + Skipped CREATE..." )
+                    _record = result.single()
+                    if _record:
+                        print ( "#DEBUG-#3785: SET SUCCESS: Track + Skipped CREATE..." )
                         skipped_relationships.append(str(row['urlhash']))
                         continue
                     else:
-                        print ( "#DEBUG-#378: FAIL: Track + Skipped CREATE..." )
+                        print ( "#DEBUG-#389: SET FAIL: Track + Skipped CREATE..." )
                         skipped_relationships.append(str(row['urlhash']))
                         continue
                 else:
@@ -432,7 +430,7 @@ class neo4j_auradb:
                         print ( f"#DEBUG-#420: FAILED to create relship for urlhash: {this_urlhash}" )
                         print ( "------------------------ end loop ------------------------------")
 
-                print ( f"#DEBUG-#435: LOOP : ART -> REL for urlhash: {this_urlhash}" )
+                print ( f"#DEBUG-#435: End MAIN loop for ART -> REL urlhash: {this_urlhash}\n" )
             
         logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
         return created_relationships
