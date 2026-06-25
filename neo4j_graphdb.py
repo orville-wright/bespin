@@ -343,7 +343,7 @@ class neo4j_auradb:
                 # WTF !!!
                 this_urlhash=str(row['urlhash'])
                 # create key -  add "Hash_" to match the dynamic label from create_article_nodes
-                print ( f"#DEBUG-#341: Test exisitng symbol -> article REL: {this_urlhash}" )
+                print ( f"#DEBUG-#346: Test exisitng symbol -> article REL: {this_urlhash}" )
                 dynamic_label = f"Hash_{str(row['urlhash'])}"
                 
                 # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
@@ -361,9 +361,11 @@ class neo4j_auradb:
                 
                 # None = no existing relationship
                 existing_rel = check_result.single()
-                print ( f"#DEBUG-#359: Eval symbol -> article REL for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
+                print ( f"#DEBUG-#364: Eval symbol -> article REL for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
+                
                 if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
                     skipped_relationships.append(str(row['urlhash']))
+                    print ( "#DEBUG-#368: DO NOT Create new rel but SET useby ATTR..." )
                     # logging.info( f'%s - REL already exists: {symbol} - {row["urlhash"]}, skipping...' % cmi_debug )
                     # check if article has this symbol in its usedby node ATTRIBUTE
                     set_list_query = (
@@ -379,51 +381,55 @@ class neo4j_auradb:
                         urlhash=str(row['urlhash'])
                     )
                     record = result.single()
-                    print ( f"#DEBUG-#376: REL existing for symbol -> article: {this_urlhash} / result: {record}" )
+                    print ( f"#DEBUG-#384: Trying SEL ATTR for article: {this_urlhash}\nresult: {record}" )
                     if record:
-                        print ( "#DEBUG-#378: REL existing for symbol -> article: Track + Skipping..." )
+                        print ( "#DEBUG-#378: SUCCESS: Track + Skipped CREATE..." )
                         skipped_relationships.append(str(row['urlhash']))
                         continue
-                
-                # Relationship doesn't exist, create it
-                print ( f"#DEBUG-#382: No existing REL for symbol -> article: {this_urlhash}" )
-                create_query = (
-                    "MATCH (s:Symbol {symbol: $symbol}) "
-                    f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
-                    "CREATE (s)-[r:HAS_ARTICLE {"
-                    "art: $art, "
-                    "locality: $locality, "
-                    "syndicatedby: $syndicatedby, "
-                    "news_agency: $news_agency, "
-                    "author: $author, "
-                    "published: $published, "
-                    "article_teaser: $article_teaser, "
-                    "urlhash: $urlhash"
-                    "}]->(a) "
-                    "RETURN r"
-                )
-                
-                result = session.run(create_query,
-                    symbol=symbol,
-                    urlhash=str(row['urlhash']),
-                    art=int(row['art']),
-                    locality="Local",
-                    syndicatedby=(ticker_symbol.upper()),
-                    news_agency=agency,
-                    author=author,
-                    published=published,
-                    article_teaser=article_teaser
-                )
-                
-                record = result.single()
-                if record:
-                    created_relationships.append(str(row['urlhash']))
-                    print ( f"#DEBUG-#410: Created relship for urlhash: {this_urlhash}" )
-                    print ( "------------------------ end loop ------------------------------")
-                    #logging.info( f'%s - Created relship for urlhash: {row["urlhash"]}' % cmi_debug )
+                    else:
+                        print ( "#DEBUG-#378: FAIL: Track + Skipped CREATE..." )
+                        skipped_relationships.append(str(row['urlhash']))
+                        continue
                 else:
-                    print ( f"#DEBUG-#420: FAILED to create relship for urlhash: {this_urlhash}" )
-                    print ( "------------------------ end loop ------------------------------")
+                    # Relationship doesn't exist, create it
+                    print ( f"#DEBUG-#382: No existing REL for symbol -> article: {this_urlhash}" )
+                    create_query = (
+                        "MATCH (s:Symbol {symbol: $symbol}) "
+                        f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
+                        "CREATE (s)-[r:HAS_ARTICLE {"
+                        "art: $art, "
+                        "locality: $locality, "
+                        "syndicatedby: $syndicatedby, "
+                        "news_agency: $news_agency, "
+                        "author: $author, "
+                        "published: $published, "
+                        "article_teaser: $article_teaser, "
+                        "urlhash: $urlhash"
+                        "}]->(a) "
+                        "RETURN r"
+                    )
+                    
+                    result = session.run(create_query,
+                        symbol=symbol,
+                        urlhash=str(row['urlhash']),
+                        art=int(row['art']),
+                        locality="Local",
+                        syndicatedby=(ticker_symbol.upper()),
+                        news_agency=agency,
+                        author=author,
+                        published=published,
+                        article_teaser=article_teaser
+                    )
+                    
+                    record = result.single()
+                    if record:
+                        created_relationships.append(str(row['urlhash']))
+                        print ( f"#DEBUG-#410: Created relship for urlhash: {this_urlhash}" )
+                        print ( "------------------------ end loop ------------------------------")
+                        #logging.info( f'%s - Created relship for urlhash: {row["urlhash"]}' % cmi_debug )
+                    else:
+                        print ( f"#DEBUG-#420: FAILED to create relship for urlhash: {this_urlhash}" )
+                        print ( "------------------------ end loop ------------------------------")
 
             #print ( f"#DEBUG-#417: LOOP : ART -> REL for urlhash: {this_urlhash}" )
             
