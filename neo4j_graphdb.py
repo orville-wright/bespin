@@ -354,6 +354,7 @@ class neo4j_auradb:
                     urlhash=str(row['urlhash'])
                 )
                 
+                # None = no existing relationship
                 existing_rel = check_result.single()
                 print ( f"#DEBUG-#357: Eval symbol -> article REL for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
                 if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
@@ -380,7 +381,7 @@ class neo4j_auradb:
                         continue
                 
                 # Relationship doesn't exist, create it
-                print ( f"#DEBUG-#382: No REL for symbol -> article: {this_urlhash}" )
+                print ( f"#DEBUG-#382: No existing REL for symbol -> article: {this_urlhash}" )
                 create_query = (
                     "MATCH (s:Symbol {symbol: $symbol}) "
                     f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
@@ -413,9 +414,13 @@ class neo4j_auradb:
                 if record:
                     created_relationships.append(str(row['urlhash']))
                     print ( f"#DEBUG-#410: Created relship for urlhash: {this_urlhash}" )
+                    print ( "------------------------ end loop ------------------------------")
                     #logging.info( f'%s - Created relship for urlhash: {row["urlhash"]}' % cmi_debug )
-                    
-            print ( f"#DEBUG-#417: LOOP : ART -> REL for urlhash: {this_urlhash}" )
+                else:
+                    print ( f"#DEBUG-#420: FAILED to create relship for urlhash: {this_urlhash}" )
+                    print ( "------------------------ end loop ------------------------------")
+
+            #print ( f"#DEBUG-#417: LOOP : ART -> REL for urlhash: {this_urlhash}" )
             
         logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
         return created_relationships
