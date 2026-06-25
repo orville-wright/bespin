@@ -330,14 +330,16 @@ class neo4j_auradb:
         created_relationships = []
         skipped_relationships = []
         
-        print ( f"#DEBUG-#333: urlhash item in df_final: {len(df_final)}" )
+        print ( f"#DEBUG-#333: urlhash items in df_final: {int(len(df_final)) - 1}" )
+        print ( f"#DEBUG-#333: dump df_final: {df_final}" )
         with self.driver.session() as session:
             for idx, row in df_final.iterrows():       # cycle through our candidate list of URLHASH items
                 # Skip the totals row
-                print ( f"#DEBUG-#337: working on row: {row}" )
+                print ( f"#DEBUG-#337: for iterrow loop on row: {row}" )
                 if row['art'] == 'Totals' or pd.isna(row['urlhash']) or row['urlhash'] == '':
                     continue
 
+                # WTF !!!
                 this_urlhash=str(row['urlhash'])
                 # create key -  add "Hash_" to match the dynamic label from create_article_nodes
                 print ( f"#DEBUG-#341: Test exisitng symbol -> article REL: {this_urlhash}" )
