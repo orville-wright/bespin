@@ -333,11 +333,11 @@ class neo4j_auradb:
 
         data_to_insert = df_data[['urlhash']].to_dict(orient='records')
  
-        print ( f"#DEBUG-#333: items in df_final: {int(len(df_final))}" )
+        print ( f"#DEBUG-#333: items in df_final: {int(len(df_data))}" )
         print ( f"#DEBUG-#333: DF as list-of-[]: {data_to_insert}" )        
-        print ( f"#DEBUG-#333: dump df_final:\n{df_final}" )
+        print ( f"#DEBUG-#333: dump df_final:\n{df_data}" )
         with self.driver.session() as session:
-            for idx, row in df_final.iterrows():       # cycle through our candidate list of URLHASH items
+            for idx, row in df_data.iterrows():       # cycle through our candidate list of URLHASH items
                     print ( f"#DEBUG-#338: iterrow loop -> inx: {idx} / row:\n{row}" )
                     this_urlhash=str(row['urlhash'])
                     #status = sar_helper_1(this_urlhash, symbol)   # check for existing relationship and return 0 or 1
