@@ -329,19 +329,18 @@ class neo4j_auradb:
 
         created_relationships = []
         skipped_relationships = []
-        
-        print ( f"#DEBUG-#333: urlhash items in df_final: {int(len(df_final)) - 1}" )
+        df_data = df_final.drop('Totals', errors='ignore')
+
+        data_to_insert = df_data[['urlhash']].to_dict(orient='records')
+ 
+        print ( f"#DEBUG-#333: items in df_final: {int(len(df_final))}" )
+        print ( f"#DEBUG-#333: DF as list-of-[]: {data_to_insert}" )        
         print ( f"#DEBUG-#333: dump df_final:\n{df_final}" )
         with self.driver.session() as session:
             for idx, row in df_final.iterrows():       # cycle through our candidate list of URLHASH items
-                if idx == 'Totals':
-                    # Skip & end at the totals row
-                    print ( f"#DEBUG-#339: indx: {idx} END of DF" )
-                    break
-                else:
-                    print ( f"#DEBUG-#342: for iterrow loop on indx: {idx} / row:\n{row}" )
+                    print ( f"#DEBUG-#338: iterrow loop -> inx: {idx} / row:\n{row}" )
                     this_urlhash=str(row['urlhash'])
-                    status = sar_helper_1(this_urlhash, symbol)   # check for existing relationship and return 0 or 1
+                    #status = sar_helper_1(this_urlhash, symbol)   # check for existing relationship and return 0 or 1
 
 
 
