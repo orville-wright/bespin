@@ -951,16 +951,16 @@ class yfnews_reader:
         #
         logging.info( f'%s - C4 urlhash: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
-        logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
+        logging.info( '%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
         cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)
 
         try:                                    # check for cached_state in yfn_jsdb
             self.yfn_jsdb[cached_state]         # get yfn_jsdb key: urlhash - if this doesnt error/excpe it was just read
             _built_c4_entry = 2
         except KeyError:
-            logging.info( f'%s - C4 Forcing Network page read !' % cmi_debug )
+            logging.info( '%s - C4 Forcing Network page read !' % cmi_debug )
             cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
-            logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
+            logging.info( '%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)
             
             # #######################################################
@@ -1008,14 +1008,14 @@ class yfnews_reader:
         ####################################################################
         #
         if _built_c4_entry == 1:
-            logging.info( f'%s - EVAL.#2 : C4 data entry...' % cmi_debug )
+            logging.info( '%s - EVAL.#2 : C4 data entry...' % cmi_debug )
             logging.info( f'%s - Good C4 data:  Gracefully pre-built: {cached_state}' % cmi_debug ) 
             dataset_1 = self.yfn_c4_result[cached_state]['result']
 
             result_engine = "yfn_c4_result"
             self.articles_crawled[item_idx] = result    # crawl4ai result
         elif _built_c4_entry == 2:
-            logging.info( f'%s - EVAL.#3 : C4 data entry...' % cmi_debug )
+            logging.info( '%s - EVAL.#3 : C4 data entry...' % cmi_debug )
             logging.info( f'%s - Weird C4 state:   Try cached Net data: {cached_state}' % cmi_debug )
             #print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
             dataset_1 = self.yfn_jsdb[cached_state]['result']
@@ -1023,7 +1023,7 @@ class yfnews_reader:
             self.articles_crawled[item_idx] = self.yfn_jsdb[cached_state]['result']  # future feat: parallel crawl4ai extraction
             #self.yfn_jsdb[cached_state]['result']
         else:
-            logging.info( f'%s - EVAL.#4 : C4 data entry...' % cmi_debug )
+            logging.info( '%s - EVAL.#4 : C4 data entry...' % cmi_debug )
             logging.info( f'%s - Bad C4 data:      Force crawl now: {cached_state}' % cmi_debug ) 
             result = asyncio.run(self.c4_engine_depth3(durl, item_idx))  # call the crawl4ai engine to extract 1 article's data
             self.articles_crawled[item_idx] = result  # NOTE USED: future feat: parallel crawl4ai extraction
@@ -1035,7 +1035,7 @@ class yfnews_reader:
         logging.info( f'%s - C4 Dataset     {type(dataset_1)}' % cmi_debug )
         logging.info( f'%s - In Cache URL   {self.yfn_c4_result[cached_state]['url']}' % cmi_debug )
         logging.info( f'%s - Sent URL in    {durl}' % cmi_debug )
-        logging.info( f'%s - Ready for C4 extractor and AI NLP reader...' % cmi_debug )
+        logging.info( '%s - Ready for C4 extractor and AI NLP reader...' % cmi_debug )
         # Do it this way so that...
         # - we  can spawn multiple async tasks in parallel
         # - self.yfn_jsdb() is not blocking and can handle multiple threads writing to it
@@ -1046,7 +1046,7 @@ class yfnews_reader:
         #     'data': self.yfn_crawl_data,
         #     'result': result  }
         #
-        logging.info( f'%s - Extract Article TEXT for AI NLP reading...' % (cmi_debug) )
+        logging.info( '%s - Extract Article TEXT for AI NLP reading...' % (cmi_debug) )
         if external is True:    # page is Micro stub Fake news article
             logging.info( f'%s - Skipping Micro article stub... [ {item_idx} ]' % cmi_debug )
             return 0, 0, 0
@@ -1103,7 +1103,7 @@ class yfnews_reader:
                             ####################################################################
                             #
                             hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-                            logging.info( f"%s - C4 Exec NLP sent classifier pipeline.#0..." % cmi_debug )
+                            logging.info( "%s - C4 Exec NLP sent classifier pipeline.#0..." % cmi_debug )
                             # 0 = Crawl4ai extractor, 1 = BS4 extractor
                             self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
                             #self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
@@ -1150,7 +1150,7 @@ class yfnews_reader:
                                 self.C4_lmdb_env.close_lmdb("C4")        # force close
                                 #print (f"debug-1137: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
 
-                            logging.info( f'%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
+                            logging.info( '%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
                             kv_success = self.C4_lmdb_env.open_lmdb_RW("C4")  # re-open in RW mode
                             self.C4_lmdb_env.RW_env = kv_success
                             #print (f"debug-1142: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
@@ -1165,7 +1165,7 @@ class yfnews_reader:
                                     _txn.put(c4_kvs_key, _kvs_json_dataset.encode('utf-8'))     # write data to LMDB
                                     #self.C4_lmdb_env.close_lmdb("C4")
                             else:
-                                logging.info( f'%s - C4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
+                                logging.info( '%s - C4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
                                 pass        # Not Fatal - faield to open LMDB. Continue with manual Network Read
                             # empty vocabulary pretty-printer logic for eof=""
                             if self.sent_ai.empty_vocab > 0:
@@ -1201,7 +1201,7 @@ class yfnews_reader:
                             #print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             return self.total_tokens, self.total_words, c4_final_results
 
-                    #print (f"###-debug: C4 data exttract KV en - NO Action taken !: {_total_chars}" )
+                    print (f"#debug-1204: artdata_C4_depth3 - NO Action taken !: {_total_chars}" )
                     return 0, 0, 0
 
             #print (f"##-1199: C4 data extrct KV eng - Unknown state!" )
