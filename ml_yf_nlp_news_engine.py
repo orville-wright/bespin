@@ -277,7 +277,7 @@ class yfnews_reader:
             logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_main_schema} ]' % cmi_debug)
             return None
 
-        logging.info(f'%s - INIT crawl4ai Depth0 Skimmer strategy...' % cmi_debug)
+        logging.info( '%s - INIT crawl4ai Depth0 Skimmer strategy...' % cmi_debug)
         extraction_strategy = JsonCssExtractionStrategy(schema)
         
         js_cmds = [
@@ -298,7 +298,7 @@ class yfnews_reader:
 
         try:
             async with AsyncWebCrawler() as crawler:
-                logging.info(f'%s - Run C4 async crawl NOW...' % cmi_debug)
+                logging.info( '%s - Run C4 async crawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
                 if result.success:
                     #print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
@@ -355,7 +355,7 @@ class yfnews_reader:
             logging.info(f'%s - Check Depth 0 URL cache...\n\t[ Hash: {hash_state} ]' % cmi_debug)
             try:
                 cached_data = self.yfn_jsdb[hash_state]     # test if url hash exists in cache
-                logging.info(f'%s - URL exists in Net DB cache...' % cmi_debug)
+                logging.info( '%s - URL exists in Net DB cache...' % cmi_debug)
                 
                 # CRITICIAL:  gloablly sets the extratced >>dataset<< to work on for tis article
                 self.extracted_articles = cached_data['data']       # key:'data' => crawl4ai extracted dataset for hashed URL
@@ -399,7 +399,7 @@ class yfnews_reader:
             logging.error(f'%s - No extracted articles available' % cmi_debug)
             return 1
         
-        cg = 1                  # general conter for logging and reporting
+        cg = 0                  # general conter for logging and reporting
         bad_url_count = 0       # counter for bad URLs found in the article dataset
         hcycle = 1              # uhinter counter for logging
         dedupe_set = set()      # deduplication optimization data set
@@ -419,7 +419,7 @@ class yfnews_reader:
                 art_publisher = "Err_no_publisher"
                 update_time = "Err_no_pub_time"
 
-            print(f"Eval cycle:    Depth 1 - Evaluating: {cg} of {self.articles_found} articles found in news feed skim...")
+            print(f"Eval cycle:    Depth 1 - Eval article: {cg} of {self.articles_found} News feed articles skimmed...")
             if article_url:
                 # TEST #1 : is this a healtly URL ?
                 if article_url.startswith('http') or article_url.startswith('https'):              # quick safety check that we have a real URL
@@ -1282,8 +1282,7 @@ class yfnews_reader:
         print("===== Dump: ML Ingest DB / Depth 1 / AI NLP candidates ==================")
         
         for k, d in self.ml_ingest.items():
-            pass
-            #print (f"Index: {k:03}\n{d}")
+            print ( f"Index: {k:03}\n{d}")
             '''
             print(f"{k:03} {d['symbol']:.5} / {d['urlhash']} Hints: [t:{d['type']} u:{d['uhint']} h:{d['thint']}]")
             if 'exturl' in d.keys():

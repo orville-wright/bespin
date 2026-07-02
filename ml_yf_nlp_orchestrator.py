@@ -75,12 +75,14 @@ class ml_nlpreader:
             eval_state, bad_url_count = ml_yfn_dataset.eval_news_feed_stories(news_symbol)
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(" ")
-            print(f"Candidates: {articles_found} / Healthy: {len(ml_yfn_dataset.ml_ingest)} / (Bad urls: {bad_url_count}) / Skimmed Depth: 0")
+            print(f"Candidates: {articles_found} / Evaluated: {len(ml_yfn_dataset.ml_ingest)} / (Bad urls: {bad_url_count}) / Skim Depth: 0")
             print("========================================================================================")
-            if self.args.get('bool_xray', False):                   # DEBUG: xray
+  
+            # DEBUG: xray debug
+            if self.args.get('bool_xray', False):
                 ml_yfn_dataset.dump_ml_ingest()
         else:
-            logging.error(f"%s - No Top level articles found !!" % cmi_debug)
+            logging.error( "%s - No Top level articles found !!" % cmi_debug)
         
         return articles_found
 
@@ -112,13 +114,13 @@ class ml_nlpreader:
             logging.error(f'%s - No data in ML-Ingest DB for index: {ml_idx}' % cmi_debug)
             return 9.9
 
-        sn_row = self.ml_yfn_dataset.ml_ingest[ml_idx]
+        sn_row = self.ml_yfn_dataset.ml_ingest[ml_idx]      # real a row of data
         
         # ################# 1: Real valid news article
         if sn_row['type'] == 0:  # REAL valid news article
             print(f"Analyzing...   {sn_row['symbol']} / Valid News article: {ml_idx} / ({self.ml_yfn_dataset.articles_found}) Candidates")
             t_url = urlparse(sn_row['url'])
-            uhint, uhdescr = self.yfn_uh.uhinter(0, t_url)
+            uhint, uhdescr = self.yfn_uh.uhinter("00", t_url)
             thint = sn_row['thint']
             logging.info(f"%s - Logic.#0 Hints for url: [ t:0 / u:{uhint} / h: {thint} ] / {uhdescr}" % cmi_debug)
             
@@ -130,7 +132,7 @@ class ml_nlpreader:
             print(f"Article type:  [ +{uhint} ] / {sn_row['url']}")
             ##-debug print(f"Origin URL:    [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
             ##-debug print(f"{locality_code.get(inf_type[1])}")
-            uhint, uhdescr = self.yfn_uh.uhinter(10, p_r_xturl)
+            uhint, uhdescr = self.yfn_uh.uhinter("02", p_r_xturl)
             ##-debug print(f"Target URL:    [ {p_r_xturl.netloc} ] / {uhdescr} / ", end="")
             ##-debug print(f"{locality_code.get(uhint)} [ u:{uhint} ]")
             return thint
@@ -139,7 +141,7 @@ class ml_nlpreader:
         elif sn_row['type'] == 1:
             print(f"Analyzing...   {sn_row['symbol']} / Fake Micro-ad art: {ml_idx} - AI will not eval sentiment")
             t_url = urlparse(sn_row['url'])
-            uhint, uhdescr = self.yfn_uh.uhinter(11, t_url)
+            uhint, uhdescr = self.yfn_uh.uhinter("10", t_url)
             thint = sn_row['thint']
             logging.info(f"%s       - Logic.#1 hint origin url: t:1 / u:{uhint} / h: {thint} {uhdescr}" % cmi_debug)
             
@@ -153,10 +155,10 @@ class ml_nlpreader:
                 print(f"Article type:  [ +{uhint} ] / {sn_row['url']}")
                 ##-debug print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / {uhdescr} /", end="")
                 ##-debug print(f"{locality_code.get(inf_type[1], 'in flux')}")
-                uhint, uhdescr = self.yfn_uh.uhinter(111, p_r_xturl)
+                uhint, uhdescr = self.yfn_uh.uhinter("11", p_r_xturl)
                 ##-debug print(f"Hints:         {uhdescr} / ", end="")
                 ##-debug print(f"{locality_code.get(uhint, 'in flux')} [ u:{uhint} ]")
-                logging.info(f"%s - skipping..." % cmi_debug)
+                logging.info( "%s - skipping..." % cmi_debug)
                 return thint
             except Exception as e:
                 logging.info(f"%s       - BAD artile URL {url_test} : {e}" % cmi_debug)
@@ -168,12 +170,12 @@ class ml_nlpreader:
             t_url = urlparse(sn_row['url'])
             thint = sn_row['thint']
             inf_type = self.yfn_uh.confidence_lvl(thint)
-            uhint, uhdescr = self.yfn_uh.uhinter(12, t_url)
+            uhint, uhdescr = self.yfn_uh.uhinter("20", t_url)
             print(f"Article type:  [ +{uhint} ] / Video stream cannot be processed by AI model")
             ##-debug print(f"URL:           {sn_row['url']}")
             ##-debug print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
             ##-debug print(f"{locality_code.get(inf_type[1], 'in flux')}")
-            logging.info(f"%s - skipping..." % cmi_debug)
+            logging.info( "%s - skipping..." % cmi_debug)
             return thint
         
         # ################# 3: External publication
@@ -182,12 +184,12 @@ class ml_nlpreader:
             t_url = urlparse(sn_row['url'])
             thint = sn_row['thint']
             inf_type = self.yfn_uh.confidence_lvl(thint)
-            uhint, uhdescr = self.yfn_uh.uhinter(13, t_url)
+            uhint, uhdescr = self.yfn_uh.uhinter("30", t_url)
             print(f"Article type:  [ +{uhint} ] / Unreliable external article data")
             ##-debug print(f"URL:           {sn_row['url']}")
             ##-debug print(f"Origin:        [ {t_url.netloc} ] / {inf_type[0]} / ", end="")
             ##-debug print(f"{locality_code.get(inf_type[1], 'in flux')}")
-            logging.info(f"%s - skipping..." % cmi_debug)
+            logging.info( "%s - skipping..." % cmi_debug)
             return thint
 
         # ################# 5: Yahoo Premium subscription ad
@@ -195,22 +197,22 @@ class ml_nlpreader:
             t_url = urlparse(sn_row['url'])
             thint = sn_row['thint']
             inf_type = self.yfn_uh.confidence_lvl(thint)
-            uhint, uhdescr = self.yfn_uh.uhinter(13, t_url)
+            uhint, uhdescr = self.yfn_uh.uhinter("50", t_url)
             print(f"Article: {ml_idx} - {inf_type[0]}: 5 - NOT an NLP candidate")
-            logging.info(f"%s - skipping..." % cmi_debug)
+            logging.info( "%s - skipping..." % cmi_debug)
             return thint
         
         # ################# 9: Placeholder - Not yet defined
         elif sn_row['type'] == 9:
             print(f"Article: {ml_idx} - Type 9 - NOT yet defined - NOT an NLP candidate")
-            logging.info(f"%s - skipping..." % cmi_debug)
+            logging.info( "%s - skipping..." % cmi_debug)
             thint = sn_row['thint']
             return thint
         
         # ################# + : catchall for Bad data
         else:
             print(f"Article: {ml_idx} - ERROR BAD Data | unknown article type: {sn_row['type']}")
-            logging.info(f"%s - #? skipping..." % cmi_debug)
+            logging.info( "%s - #? skipping..." % cmi_debug)
             thint = sn_row['thint']
             return thint
 

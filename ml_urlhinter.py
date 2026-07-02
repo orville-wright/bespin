@@ -102,7 +102,7 @@ class url_hinter:
                     logging.info ( f"%s - Logic +3 Decoded url: [{a_url.netloc}] / Type: [{a_url.netloc}] / u:{uhint[1]} / {uhint[0]}" % cmi_debug )
                     return uhint[1], uhint[0]
         else:     # URL recvd as <class 'urllib.parse.ParseResult'>
-            logging.info ( f"%s  - Logic +4 Recvd encoded url" % cmi_debug )
+            logging.info ( "%s  - Logic +4 Recvd encoded url" % cmi_debug )
             if input_url.netloc == "finance.yahoo.com":        # scheme='https', netloc='finance.yahoo.com', path='/m/49c60293...
                 urlp_attr = input_url.path.split('/', 2)                        # work on path=object ONLY
                 logging.info ( f"%s  - Logic +4 extracted url hint [1]: [{urlp_attr[1]}]" % cmi_debug )

@@ -411,7 +411,7 @@ def main():
         print ( f"------------------------------------------------------" )
         #
         # HACKING : show uniques from COMBO def
-        print ( f"***** Hacking ***** " )
+        print ( "***** Hacking ***** " )
         # might not be necessary now, since I've changed the logic surrounding COMBO DF dupes.
         # c_uniques = x.unique_symbols()
         c_uniques = ssot_te.combo_listall_nodupes()
@@ -442,10 +442,10 @@ def main():
             print ( " " )
             print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ]" )
             news_ai = ml_nlpreader(1, args, caller="news_ai")
-            logging.info(f'%s - Open global LMBD KV cache engine...' % cmi_debug)
+            logging.info( '%s - Open global LMBD KV cache engine...' % cmi_debug)
             lmdb_dbname = "LMDB_0001"
             lmdb_env = lmdb_io_eng("GLOBAL", lmdb_dbname, args)  # create instance of LMDB
-            logging.info(f'%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
+            logging.info( '%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
             
             # scan_news_feed() + eval_news_feed_stories()
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  
