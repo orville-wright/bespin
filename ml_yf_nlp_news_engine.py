@@ -1063,6 +1063,7 @@ class yfnews_reader:
             for i, element in enumerate(c4_dict['data']):
                     #print ( f"###-debug: C4 element {i} : {element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
                     art_all_p.append(element.get('Content'))            # get craw4al elements (crawl4 dict key='content')
+                    print (f"#debug-1066: artdata_C4_depth3 - thinking...: {i}" )
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
                     except TypeError:   # catch None
