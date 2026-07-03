@@ -1070,7 +1070,8 @@ class yfnews_reader:
             # print the keys of the C4 result dict
             art_all_p = list()                                          # ensure temp list is empty
             for i, element in enumerate(c4_dict['data']):
-                    print ( f"#debug-1073: C4 element {i} :\n{element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
+                    print ( f"#debug-1073: C4 element {i} :\n{element.get('Content')}..." )   # print the first 100 chars of the element content
+                    #print ( f"#debug-1073: C4 element {i} :\n{element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
                     art_all_p.append(element.get('Content'))            # get craw4al elements (crawl4 dict key='content')
                     print (f"#debug-1075: artdata_C4_depth3 - thinking...: {i}" )
                     try:
