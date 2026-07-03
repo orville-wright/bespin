@@ -1265,6 +1265,12 @@ class yfnews_reader:
         try:
             async with AsyncWebCrawler() as crawler:
                 result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
+                print (f'{cmi_debug} - REQ url:        {durl}')
+                print (f'{cmi_debug} - FINAL url:      {result.url}')                    # after redirects
+                print (f'{cmi_debug} - status:         {result.status_code}')
+                print (f'{cmi_debug} - redirected:     {getattr(result, "redirected_status_code", None)}')
+                print (f'{cmi_debug} - resp headers:   {getattr(result, "response_headers", {})}')
+
                 if result.success:
                     logging.info( '%s  - crawl4ai extraction running...' % cmi_debug)
                     # ---- structured extraction channel (schema-driven) ----
@@ -1316,6 +1322,8 @@ class yfnews_reader:
 
         
         """
+        # DELETE me when the FIX 1 is tagged as reliable.
+        
         logging.info(f'%s  - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
         try:
             async with AsyncWebCrawler() as crawler:
