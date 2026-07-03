@@ -854,7 +854,7 @@ class yfnews_reader:
         
 # #####################################################################################
     # WARNING:
-    # sync crawl4 implementation of artdata_BS4_depth3()
+    # Async crawl4 implementation of artdata_BS4_depth3()
     # HEAVY network data extractor
     # Reads each URL, and crawls that page, extracting key elements
     
@@ -872,7 +872,7 @@ class yfnews_reader:
         Calls sentiment computation for 1 article
         Only do this once the article has been evaluated and we know exactly where/what each article is
         Any article we read, should have its resp & crawl4 objects cached in yfn_jsdb{}
-        CSS HTML selectors defined in YF_sym_srticle_schema.json
+        CSS HTML selectors defined in YF_sym_article_schema.json
         Extract all of the full article raw text via crawl4ai selectors
         Store it in a Database
         Associate it to the metadata info for this article
@@ -893,19 +893,28 @@ class yfnews_reader:
         self.sent_ai.empty_vocab = 0
         
         # #########################################
+        # Fix #1
+        if 'exturl' in data_row.keys():
+            logging.info( '%s - Ext url in ML-Ingest / (micro stub) - skipping article [ %s ]' % (cmi_debug, item_idx) )
+            return 0, 0, 0
+        durl = data_row['url']
+        external = False
+        cached_state = data_row['urlhash']
+        symbol = symbol.upper()
+        _extr_eng="C4"
 
+        # #########################################
+        """
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
-            logging.info( f'%s - Ext url found in ML-Ingest DB - skipping...' % cmi_debug )
+            logging.info( '%s - Ext url found in ML-Ingest DB - skipping...' % cmi_debug )
         else:
-            durl = data_row['url']
+        #    durl = data_row['url']
             external = False               # this is a local yahoo.com hosted article
-            logging.info( f'%s - No exturl in ML-Ingest DB' % cmi_debug )
+            logging.info( '%s - No exturl in ML-Ingest DB' % cmi_debug )
             cached_state = data_row['urlhash']
-        
-        symbol = symbol.upper()
-        _extr_eng="C4"
+        """
         
         # ###########################################################
         # KV Cache Engine - activated
@@ -917,7 +926,7 @@ class yfnews_reader:
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
-                logging.info( f'%s - C4 Deep cache hit / Rehydrated data from KVstore...' % cmi_debug )
+                logging.info( '%s - C4 Deep cache hit / Rehydrated data from KVstore...' % cmi_debug )
                 # rehydrate class sentiment count dict from Deep Cache dataset
                 self.sent_ai.sentiment_count['positive'] = _fr["positive_count"]
                 self.sent_ai.sentiment_count['neutral'] = _fr["neutral_count"]
@@ -930,19 +939,19 @@ class yfnews_reader:
                 print ( f"=========== C4 End.#0 KV Cache HIT ! / Rehydrated sentiment Metrics: {item_idx} ===========" )
                 return _ttk, _ttw, _fr                        
             case 1:  # C4 KVstore cache miss
-                logging.info( f'%s - C4 KVstore ERROR.#1 Deserialization failure !force Net read...' % cmi_debug )
+                logging.info( '%s - C4 KVstore ERROR.#1 Deserialization failure !force Net read...' % cmi_debug )
                 pass
             case 2:
-                logging.info( f'%s - C4 KVstore ERROR.#2 No URL Hash KEY found !force Net read...' % cmi_debug )
+                logging.info( '%s - C4 KVstore ERROR.#2 No URL Hash KEY found !force Net read...' % cmi_debug )
                 pass
             case 3:
-                logging.info( f'%s - C4 KVstore ERROR.#3 No LMDB cache entry...' % cmi_debug )
+                logging.info( '%s - C4 KVstore ERROR.#3 No LMDB cache entry...' % cmi_debug )
                 pass
             case 4:
-                logging.info( f'%s - C4 LMDB I/O FAILURE ERROR.#4 : Failed to open DB in RO mode !' % cmi_debug )
+                logging.info( '%s - C4 LMDB I/O FAILURE ERROR.#4 : Failed to open DB in RO mode !' % cmi_debug )
                 pass
             case _:
-                logging.info( f'%s - C4 KVstore ERROR.#Unknown error code: {_ec} ! force Net read...' % cmi_debug )
+                logging.info( '%s - C4 KVstore ERROR.#Unknown error code: {_ec} ! force Net read...' % cmi_debug )
                 pass
 
         #####################################################
@@ -1227,9 +1236,9 @@ class yfnews_reader:
         if os.path.exists(schema_file_path):
             with open(schema_file_path, "r") as f:
                 schema = json.load(f)
-                logging.info(f'%s  - crawl4ai schema loaded' % cmi_debug)
+                logging.info( '%s  - crawl4ai schema loaded' % cmi_debug)
                 #self.YF_sym_article_schema = schema
-                logging.info(f'%s  - INIT extraction strategy...' % cmi_debug)
+                logging.info( '%s  - INIT extraction strategy...' % cmi_debug)
                 extraction_strategy = JsonCssExtractionStrategy(schema, verbose=True)
                 js_cmds = [
                     "window.scrollTo(0, document.body.scrollHeight);",
@@ -1254,7 +1263,7 @@ class yfnews_reader:
             async with AsyncWebCrawler() as crawler:
                 result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
                 if result.success:
-                    logging.info(f'%s  - crawl4ai extraction running...' % cmi_debug)
+                    logging.info( '%s  - crawl4ai extraction running...' % cmi_debug)
                     self.yfn_crawl_data = json.loads(result.extracted_content)
                     auh = hashlib.sha256(durl.encode())     # prep hash
                     aurl_hash = auh.hexdigest()             # generate hash WARN: needs dedupe checking !!
