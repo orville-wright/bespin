@@ -1067,12 +1067,15 @@ class yfnews_reader:
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
                     except TypeError:   # catch None
+                        logging.info( f'%s - C4 Exception: TypeError [ {item_idx} ]' % cmi_debug )
                         _total_chars = 7    # force analysis, possible PREMIUM paywall block page
                     match _total_chars:
                         case 0:
                             print ( f"================ C4 End.#0 No data: {item_idx} ================")
+                            logging.info( f'%s - C4 Case Matched 0 [ {item_idx} ]' % cmi_debug )
                             return 0, 0, 0
                         case 7:
+                            logging.info( f'%s - C4 Case Matched 7 [ {item_idx} ]' % cmi_debug )
                             yfn_prem_paywall = element.get('Premium_paywall')
                             if yfn_prem_paywall.upper() == "PREMIUM":
                                 _final_data_dict = dict()
@@ -1094,6 +1097,7 @@ class yfnews_reader:
                                 #return 0, 0, _final_data_dict
                                 return 0, 0, None
                             else:
+                                logging.info( f'%s - C4 Case Matched 7-unknown [ {item_idx} ]' % cmi_debug )
                                 print ("Unknown article type. Skipping...")
                                 print ( f"================ C4 End.#2 Unknown type: {item_idx} ================")
                                 return 0, 0, 0
@@ -1149,7 +1153,6 @@ class yfnews_reader:
                             #print (f"debug-1134: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             if self.C4_lmdb_env.RO_env is not None:      # explicit reliable singleton None test
                                 self.C4_lmdb_env.close_lmdb("C4")        # force close
-                                #print (f"debug-1137: C4 DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
 
                             logging.info( '%s - C4 Open LMDB in READ-WRITE mode...' % cmi_debug )
                             kv_success = self.C4_lmdb_env.open_lmdb_RW("C4")  # re-open in RW mode
@@ -1195,17 +1198,14 @@ class yfnews_reader:
                                     f"Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}"
                                     )
                             print (f"{footer}")
-                            print (f"================ C4 End.#2 / KV Cache miss ! New cache entry created: {item_idx} ================" )
-
-                            #print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
+                            print (f"================ C4 End.#3 / KV Cache miss ! New cache entry created: {item_idx} ================" )
                             self.C4_lmdb_env.close_lmdb("C4")
-                            #print (f"debug-1136: DB open state: {type(self.C4_lmdb_env.db_open_state.get(self.C4_lmdb_env.db_name))} / RO: {self.C4_lmdb_env.RO_env} / RW: {self.C4_lmdb_env.RW_env}")
                             return self.total_tokens, self.total_words, c4_final_results
 
                     print (f"#debug-1204: artdata_C4_depth3 - NO Action taken !: {_total_chars}" )
                     return 0, 0, 0
 
-            #print (f"##-1199: C4 data extrct KV eng - Unknown state!" )
+            print ( "#debug-1207: C4 data extrct KV eng - Unknown state!" )
         return 0, 0, None
     
     # ################ 7
