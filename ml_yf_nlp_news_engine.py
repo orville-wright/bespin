@@ -4,6 +4,7 @@ os.environ["CRAWL4AI_LOG_LEVEL"] = "ERROR"
 
 import argparse
 import asyncio
+import re
 #import nest_asyncio
 #nest_asyncio.apply()
 
@@ -1265,11 +1266,20 @@ class yfnews_reader:
         try:
             async with AsyncWebCrawler() as crawler:
                 result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
+
+                _html = result.html or ""
+                print ( "############################ ############################## ###############################" )
+                print (f'{cmi_debug} - html length:   {len(_html)}')
+                print (f'{cmi_debug} - title:         {(re.search(r"<title[^>]*>(.*?)</title>", _html, re.I|re.S) or [None,"NONE"])[1].strip()[:120]}')
+                # does a distinctive phrase from the headline appear anywhere in the raw doc?
+                print (f'{cmi_debug} - body present?: {"analyst upgrade" in _html.lower()} / {"profits have soared" in _html.lower()}')
+                print ( "############################ ############################## ###############################" )
                 print (f'{cmi_debug} - REQ url:        {durl}')
                 print (f'{cmi_debug} - FINAL url:      {result.url}')                    # after redirects
                 print (f'{cmi_debug} - status:         {result.status_code}')
                 print (f'{cmi_debug} - redirected:     {getattr(result, "redirected_status_code", None)}')
                 print (f'{cmi_debug} - resp headers:   {getattr(result, "response_headers", {})}')
+                print ( "############################ ############################## ###############################" )
 
                 if result.success:
                     logging.info( '%s  - crawl4ai extraction running...' % cmi_debug)
