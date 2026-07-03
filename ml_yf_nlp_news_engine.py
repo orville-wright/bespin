@@ -1268,18 +1268,23 @@ class yfnews_reader:
                 result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
 
                 _html = result.html or ""
-                print ( "############################ ############################## ###############################" )
-                print (f'{cmi_debug} - html length:   {len(_html)}')
-                print (f'{cmi_debug} - title:         {(re.search(r"<title[^>]*>(.*?)</title>", _html, re.I|re.S) or [None,"NONE"])[1].strip()[:120]}')
-                # does a distinctive phrase from the headline appear anywhere in the raw doc?
-                print (f'{cmi_debug} - body present?: {"analyst upgrade" in _html.lower()} / {"profits have soared" in _html.lower()}')
-                print ( "############################ ############################## ###############################" )
-                print (f'{cmi_debug} - REQ url:        {durl}')
-                print (f'{cmi_debug} - FINAL url:      {result.url}')                    # after redirects
-                print (f'{cmi_debug} - status:         {result.status_code}')
-                print (f'{cmi_debug} - redirected:     {getattr(result, "redirected_status_code", None)}')
-                print (f'{cmi_debug} - resp headers:   {getattr(result, "response_headers", {})}')
-                print ( "############################ ############################## ###############################" )
+                _idx = _html.lower().find("legalzoom")
+                if _idx != -1:
+                    _start = max(0, _idx - 1500)          # 1500 chars BEFORE the first body mention
+                    print(f'{cmi_debug} - BODY CONTEXT:\n{_html[_start:_idx + 500]}')
+                else:
+                    print(f'{cmi_debug} - anchor phrase not found in cleaned_html')
+
+                # 2. Enumerate every wrapper-ish class on the page so we can see the yf-* hashes in play.
+                import re
+                _divs = re.findall(r'<div[^>]+class=["\']([^"\']*)["\']', _html)
+                # collapse to unique class-tokens that look like body/content wrappers
+                _interesting = sorted({
+                    c for cls in _divs for c in cls.split()
+                    if any(k in c.lower() for k in ("body", "content", "article", "caas", "atoms", "morpheus"))
+                })
+                print(f'{cmi_debug} - candidate wrapper classes:\n' + "\n".join(_interesting))
+
 
                 if result.success:
                     logging.info( '%s  - crawl4ai extraction running...' % cmi_debug)
