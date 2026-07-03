@@ -1341,30 +1341,30 @@ class yfnews_reader:
         """ 
 
     # ######################
-        def _c4_raw_text(self, result):
-            # FIX #2.1 - Claude Code recomendation
-            #
-            """
-            Normalize crawl4ai's markdown into a plain str, defensively.
-            result.markdown is Optional[Union[str, MarkdownGenerationResult]]:
-            - None                     -> ""
-            - str (older/simple path)  -> the string itself
-            - MarkdownGenerationResult -> prefer .fit_markdown (clean, needs a
-                                            content filter), else .raw_markdown
-            Falls back to cleaned_html only if markdown is entirely absent.
-            """
-            md = getattr(result, 'markdown', None)
-            if md is None:
-                # last-ditch: cleaned_html is a plain str on all versions
-                return (getattr(result, 'cleaned_html', '') or '').strip()
-            if isinstance(md, str):
-                return md.strip()
-            # MarkdownGenerationResult object
-            fit = getattr(md, 'fit_markdown', None)      # None unless a content filter is set
-            if fit:
-                return fit.strip()
-            raw = getattr(md, 'raw_markdown', None)
-            return (raw or '').strip()
+    def _c4_raw_text(self, result):
+        # FIX #2.1 - Claude Code recomendation
+        #
+        """
+        Normalize crawl4ai's markdown into a plain str, defensively.
+        result.markdown is Optional[Union[str, MarkdownGenerationResult]]:
+        - None                     -> ""
+        - str (older/simple path)  -> the string itself
+        - MarkdownGenerationResult -> prefer .fit_markdown (clean, needs a
+                                        content filter), else .raw_markdown
+        Falls back to cleaned_html only if markdown is entirely absent.
+        """
+        md = getattr(result, 'markdown', None)
+        if md is None:
+            # last-ditch: cleaned_html is a plain str on all versions
+            return (getattr(result, 'cleaned_html', '') or '').strip()
+        if isinstance(md, str):
+            return md.strip()
+        # MarkdownGenerationResult object
+        fit = getattr(md, 'fit_markdown', None)      # None unless a content filter is set
+        if fit:
+            return fit.strip()
+        raw = getattr(md, 'raw_markdown', None)
+        return (raw or '').strip()
 
  
     # ###############
