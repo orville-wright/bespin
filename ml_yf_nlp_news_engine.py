@@ -1070,9 +1070,9 @@ class yfnews_reader:
             # print the keys of the C4 result dict
             art_all_p = list()                                          # ensure temp list is empty
             for i, element in enumerate(c4_dict['data']):
-                    #print ( f"###-debug: C4 element {i} : {element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
+                    print ( f"#debug-1073: C4 element {i} :\n{element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
                     art_all_p.append(element.get('Content'))            # get craw4al elements (crawl4 dict key='content')
-                    print (f"#debug-1066: artdata_C4_depth3 - thinking...: {i}" )
+                    print (f"#debug-1075: artdata_C4_depth3 - thinking...: {i}" )
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
                     except TypeError:   # catch None
@@ -1278,7 +1278,7 @@ class yfnews_reader:
                         
                     # ---- detect the silent template-miss: schema ran, matched nothing ----
                     if not _structured:
-                        logging.warning( f'%s - C4 schema matched 0 nodes (template miss?) [ {item_idx} ] URL: {durl}' % cmi_debug )
+                        logging.warning( f'%s - C4 schema matched 0 nodes (template miss?) [ {item_idx} ]' % cmi_debug )
                         _raw_text = self._c4_raw_text(result)   # normalize markdown -> str (helper below)
                         if _raw_text:
                             # synthesize a single content block so the downstream
