@@ -1258,6 +1258,63 @@ class yfnews_reader:
             logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_article_schema} ]' % cmi_debug)
             return None
 
+        # FIX #2 - Claude Code recomendation
+        #
+        logging.info(f'%s  - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
+        try:
+            async with AsyncWebCrawler() as crawler:
+                result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
+                if result.success:
+                    logging.info( '%s  - crawl4ai extraction running...' % cmi_debug)
+                    # ---- structured extraction channel (schema-driven) ----
+                    # extracted_content is a JSON *string*; can be None, "", or "[]"
+                    # when the schema's baseSelector matched zero nodes.
+                    _raw_extracted = result.extracted_content
+                    try:
+                        _structured = json.loads(_raw_extracted) if _raw_extracted else []
+                    except (json.JSONDecodeError, TypeError) as _je:
+                        logging.warning(f'%s - C4 extracted_content not JSON-parseable: {_je}' % cmi_debug)
+                        _structured = []
+                        
+                    # ---- detect the silent template-miss: schema ran, matched nothing ----
+                    if not _structured:
+                        logging.warning( f'%s - C4 schema matched 0 nodes (template miss?) [ {item_idx} ] URL: {durl}' % cmi_debug )
+                        _raw_text = self._c4_raw_text(result)   # normalize markdown -> str (helper below)
+                        if _raw_text:
+                            # synthesize a single content block so the downstream
+                            # sentiment path sees the same shape it always sees:
+                            # a list of dicts each carrying a 'Content' key.
+                            _structured = [{
+                                'Content': _raw_text,
+                                'Premium_paywall': '',          # unknown from raw fallback
+                                '_fallback': 'raw_markdown'     # provenance marker (see note)
+                            }]
+                            logging.info( f'%s - C4 raw-markdown fallback engaged: {len(_raw_text)} chars [ {item_idx} ]' % cmi_debug )
+                        else:
+                            # genuinely nothing on the page — neither schema nor raw text
+                            logging.error( f'%s - C4 NO structured data AND NO raw text [ {item_idx} ] URL: {durl}' % cmi_debug )
+                            # leave _structured as [] and let the caller's empty-data
+                            # guard handle it (rather than caching a hollow entry)
+
+                    self.yfn_crawl_data = _structured           # the 'data' channel the caller reads
+                    auh = hashlib.sha256(durl.encode())         # prep hash
+                    aurl_hash = auh.hexdigest()                 # WARN: needs dedupe checking !!
+                    self.yfn_c4_result[aurl_hash] = dict(
+                        url    = durl,
+                        data   = self.yfn_crawl_data,
+                        result = result
+                    )
+                    logging.info(f'%s  - Created C4 result cache entry: {aurl_hash}' % cmi_debug)
+                    return result
+                else:
+                    logging.error(f'%s - crawl4ai extraction failed: {result.error_message}' % cmi_debug)
+                    return None
+        except Exception as e:
+            logging.error(f'{cmi_debug} - Error during crawl4ai extraction: {e}')
+            return None
+
+        
+        """
         logging.info(f'%s  - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
         try:
             async with AsyncWebCrawler() as crawler:
@@ -1281,7 +1338,35 @@ class yfnews_reader:
         except Exception as e:
             logging.error(f'{cmi_debug} - Error during crawl4ai extraction: {e}')
             return None
-             
+        """ 
+
+    # ######################
+        def _c4_raw_text(self, result):
+            # FIX #2.1 - Claude Code recomendation
+            #
+            """
+            Normalize crawl4ai's markdown into a plain str, defensively.
+            result.markdown is Optional[Union[str, MarkdownGenerationResult]]:
+            - None                     -> ""
+            - str (older/simple path)  -> the string itself
+            - MarkdownGenerationResult -> prefer .fit_markdown (clean, needs a
+                                            content filter), else .raw_markdown
+            Falls back to cleaned_html only if markdown is entirely absent.
+            """
+            md = getattr(result, 'markdown', None)
+            if md is None:
+                # last-ditch: cleaned_html is a plain str on all versions
+                return (getattr(result, 'cleaned_html', '') or '').strip()
+            if isinstance(md, str):
+                return md.strip()
+            # MarkdownGenerationResult object
+            fit = getattr(md, 'fit_markdown', None)      # None unless a content filter is set
+            if fit:
+                return fit.strip()
+            raw = getattr(md, 'raw_markdown', None)
+            return (raw or '').strip()
+
+ 
     # ###############
     def dump_ml_ingest(self):
         """
