@@ -338,15 +338,16 @@ class neo4j_auradb:
         print ( f"#DEBUG-#338: dump df_final:\n{df_data}" )
         with self.driver.session() as session:
             for idx, row in df_data.iterrows():       # cycle through our candidate list of URLHASH items
-                    print ( f"#DEBUG-#338: iterrow loop -> inx: {idx} / row:\n{row}" )
+                    #print ( f"#DEBUG-#338: iterrow loop -> inx: {idx} / row:\n{row}" )
                     this_urlhash=str(row['urlhash'])
-                    #status = sar_helper_1(this_urlhash, symbol)   # check for existing relationship and return 0 or 1
+                    this_article=str(row['art'])
+                    status = sar_helper_1(this_urlhash, symbol, this_article)   # check for existing relationship and return 0 or 1
 
 
 
         # -------------- private helper methods -------------
-        def sar_helper_1(_x, _y):
-            print ( f"#DEBUG-#346: Cypher query 1 - exisitng symbol -> article REL: {this_urlhash}" )
+        def sar_helper_1(_x, _y, _a):
+            print ( f"#DEBUG-#346: Cypher query 1 - exisitng symbol -> article REL {_a}: {this_urlhash}" )
             existing_art_sym_rel_query = (
                 "MATCH (s:Symbol {symbol: $symbol}) "
                 "MATCH (a:Article {urlhash: $urlhash}) "
@@ -365,10 +366,10 @@ class neo4j_auradb:
             # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
             if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
                 skipped_relationships.append(str(row['urlhash']))
-                print ( f"#DEBUG-#368:Existing REL -  NOT Create new REL but... try to SET useby ATTR..." )
+                print ( f"#DEBUG-#369:Symbol {_x} has existing REL to Article {_a} !" )
                 return 0
             else:
-                print ( f"#DEBUG-#368: Existing REL found - Create new REL..." )
+                print ( f"#DEBUG-#372: Symbol {_X} has NO Rel to article {_a}... Create + Set useby ATTR !" )
                 return 1
             
 
