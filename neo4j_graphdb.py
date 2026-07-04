@@ -338,11 +338,10 @@ class neo4j_auradb:
         print ( f"#DEBUG-#338: dump df_final:\n{df_data}" )
         with self.driver.session() as session:
             for idx, row in df_data.iterrows():       # cycle through our candidate list of URLHASH items
-                    #print ( f"#DEBUG-#338: iterrow loop -> inx: {idx} / row:\n{row}" )
+                    print ( f"#DEBUG-#341: iterrow loop -> idx: {idx} / row:\n{row}" )
                     this_urlhash=str(row['urlhash'])
                     this_article=str(row['art'])
                     status = sar_helper_1(this_urlhash, symbol, this_article)   # check for existing relationship and return 0 or 1
-
 
 
         # -------------- private helper methods -------------
