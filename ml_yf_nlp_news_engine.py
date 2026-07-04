@@ -1267,6 +1267,7 @@ class yfnews_reader:
             async with AsyncWebCrawler() as crawler:
                 result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
 
+                """
                 _html = result.html or ""
                 _idx = _html.lower().find("legalzoom")
                 if _idx != -1:
@@ -1284,7 +1285,7 @@ class yfnews_reader:
                     if any(k in c.lower() for k in ("body", "content", "article", "caas", "atoms", "morpheus"))
                 })
                 print(f'{cmi_debug} - candidate wrapper classes:\n' + "\n".join(_interesting))
-
+                """
 
                 if result.success:
                     logging.info( '%s  - crawl4ai extraction running...' % cmi_debug)

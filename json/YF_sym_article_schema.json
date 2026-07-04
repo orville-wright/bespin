@@ -1,10 +1,10 @@
 {
   "name": "YF_symbol_art_Selector",
-  "baseSelector": "div.body.yf-v6n2s3",
+  "baseSelector": "article",
   "fields": [
     {
       "name": "Content",
-      "selector": "div.bodyItems-wrapper",
+      "selector": "div.body-wrap, div.body, div.bodyItems-wrapper, div.component-body",
       "type": "text"
     },
     {
