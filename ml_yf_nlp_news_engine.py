@@ -1226,6 +1226,7 @@ class yfnews_reader:
         <article> node. Cut at the earliest known body->promo boundary marker.
         Ordered by reliability; we cut at the earliest match found.
         """
+        cmi_debug = __name__+"::"+self._trim_promotional_tail.__name__
         _tail_markers = (
             "ONE MORE THING:",
             "ALSO WORTH WATCHING:",
@@ -1241,7 +1242,7 @@ class yfnews_reader:
                 _cut = min(_cut, _i)
         _trimmed = text[:_cut].rstrip()
         if _cut < len(text):
-            logging.info(f'{self._cmi} - trimmed promo tail: {len(text)-_cut} chars removed')
+            logging.info(f'{cmi_debug} - trimmed promo tail: {len(text)-_cut} chars removed')
         return _trimmed
 
 
