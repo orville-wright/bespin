@@ -338,7 +338,7 @@ class neo4j_auradb:
         print ( f"#DEBUG-#338: dump df_final:\n{df_data}" )
         with self.driver.session() as session:
             for idx, row in df_data.iterrows():       # cycle through our candidate list of URLHASH items
-                    print ( f"#DEBUG-#341: iterrow loop -> index: {idx}" )
+                    print ( f"#DEBUG-#341: iterrow loop -> index: {idx}" )  # debug
                     _urlhash=str(row['urlhash'])
                     _article=str(row['art'])
                     print ( f"DEBUG-#344: Cypher helper for urlhash: {_urlhash} \nArtile: {_article}")
