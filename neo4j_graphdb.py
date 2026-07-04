@@ -327,14 +327,14 @@ class neo4j_auradb:
         cmi_debug = __name__+"::"+self.create_sym_art_rels.__name__+".#"+str(self.yti)
         # logging.info( f'%s - Creating HAS_ARTICLE relationships for symbol: [ {symbol} ]...' % cmi_debug )
 
-        created_relationships = []
-        skipped_relationships = []
+        self.created_relationships = []
+        self.skipped_relationships = []
         df_data = df_final.drop('Totals', errors='ignore')
 
         data_to_insert = df_data[['urlhash']].to_dict(orient='records')
  
         print ( f"#DEBUG-#336: items in df_final: {int(len(df_data))}" )
-        print ( f"#DEBUG-#337: DF as list-of-[]\n{data_to_insert}" )        
+        print ( f"#DEBUG-#337: DF as list[]\n{data_to_insert}" )        
         print ( f"#DEBUG-#338: dump df_final:\n{df_data}" )
         with self.driver.session() as session:
             for idx, row in df_data.iterrows():       # cycle through our candidate list of URLHASH items
@@ -342,11 +342,11 @@ class neo4j_auradb:
                     _urlhash=str(row['urlhash'])
                     _article=str(row['art'])
                     print ( f"DEBUG-#344: Cypher helper for urlhash: {_urlhash} \nArtile: {_article}")
-                    self.sar_helper_1(_urlhash, symbol, _article, session)   # check for existing relationship and return 0 or 1
+                    self.sar_helper_1(symbol, _urlhash, _article, session)   # check for existing relationship and return 0 or 1
 
     # -------------- private helper methods -------------
     def sar_helper_1(self, _symbol, _u, _a, session):
-        print ( "#DEBUG-#346: Cypher query 1 - check exisitng symbol -> article REL..." )
+        print ( "#DEBUG-#349: Cypher query 1 - check exisitng symbol -> article REL..." )
         existing_art_sym_rel_query = (
             "MATCH (s:Symbol {symbol: $symbol}) "
             "MATCH (a:Article {urlhash: $urlhash}) "
@@ -364,11 +364,11 @@ class neo4j_auradb:
         #rint ( f"#DEBUG-#361: NO symbol -> article REL, try for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
         # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
         if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
-            skipped_relationships.append(_u)
-            print ( f"#DEBUG-#369:Symbol {_symbol} has existing REL -> Article {_a} !\nCypher result: {existing_rel}" )
+            self.skipped_relationships.append(_u)
+            print ( f"#DEBUG-#368:Symbol {_symbol} has existing REL -> Article {_a} !\nCypher result: {existing_rel}" )
             return 0
         else:
-            print ( f"#DEBUG-#372: Symbol {_symbol} has NO Rel -> Article {_a}... Create + Set useby ATTR !\Cypher result: {existing_rel}" )
+            print ( f"#DEBUG-#371: Symbol {_symbol} has NO Rel -> Article {_a} / Create + Set useby ATTR / Cypher result: {existing_rel}" )
             return 1
 
 
