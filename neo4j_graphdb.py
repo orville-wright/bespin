@@ -346,7 +346,7 @@ class neo4j_auradb:
 
     # -------------- private helper methods -------------
     def sar_helper_1(self, _symbol, _u, _a, session):
-        print ( "#DEBUG-#349: Cypher query 1 - check exisitng symbol -> article REL..." )
+        print ( "#DEBUG-#349: Cypher query #1 - check exisitng symbol -> article REL..." )
         existing_art_sym_rel_query = (
             "MATCH (s:Symbol {symbol: $symbol}) "
             "MATCH (a:Article {urlhash: $urlhash}) "
@@ -361,76 +361,80 @@ class neo4j_auradb:
         
         # None = no existing relationship
         existing_rel = check_result.single()
+        print ( f"#debug-364 check_result: {check_result}" )
+        
         #rint ( f"#DEBUG-#361: NO symbol -> article REL, try for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
         # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
-        if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
-            self.skipped_relationships.append(_u)
-            print ( f"#DEBUG-#368:Symbol {_symbol} has existing REL -> Article {_a} !\nCypher result: {existing_rel}" )
-            return 0
+        match existing_rel:
+            case None:
+                self.skipped_relationships.append(_u)
+                print ( f"#DEBUG-#368:Symbol {_symbol} has existing REL -> Article {_a} / Cypher result: {existing_rel}" )
+                return 0
+            case _:
+                print ( f"#DEBUG-#371: Symbol {_symbol} NO Rel -> Article {_a} / Create+Set-useby ATTR / Cypher result: {existing_rel}" )
+                dynamic_label = f"Hash_{_u}"
+                print ( f"#DEBUG-#373: Cypher query #2 - SET ATTR: {_u}" )
+                set_list_query = (
+                    "MATCH (a:Article) "
+                    "WHERE (s:Symbol {symbol: $symbol}) "
+                    "AND a.url = {urlhash: $urlhash} "
+                    "SET a.usedby = a.usedby + {symbol: $symbol} "
+                    "RETURN a.urlhash "
+                )
+                
+                result = session.run(set_list_query, symbol=_symbol, urlhash=_u )
+                _record = result.single()
+                if _record:     # none
+                    print ( "#DEBUG-#389: SET SUCCESS: Track + Skipped CREATE / result:{_record}" )
+                    #skipped_relationships.append(str(row['urlhash']))
+                    return 1
+                else:
+                    print ( "#DEBUG-#388: SET FAIL: Track + Skipped CREATE / result:{_record}" )
+                    #skipped_relationships.append(str(row['urlhash']))
+                    return 2
+        """
+                            
         else:
-            print ( f"#DEBUG-#371: Symbol {_symbol} has NO Rel -> Article {_a} / Create + Set useby ATTR / Cypher result: {existing_rel}" )
-            return 1
+            # Relationship doesn't exist, create it
+            print ( f"#DEBUG-#382: No existing REL for symbol -> article: {this_urlhash}" )
+            create_query = (
+                "MATCH (s:Symbol {symbol: $symbol}) "
+                f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
+                "CREATE (s)-[r:HAS_ARTICLE {"
+                "art: $art, "
+                "locality: $locality, "
+                "syndicatedby: $syndicatedby, "
+                "news_agency: $news_agency, "
+                "author: $author, "
+                "published: $published, "
+                "article_teaser: $article_teaser, "
+                "urlhash: $urlhash"
+                "}]->(a) "
+                "RETURN r"
+            )
+            
+            result = session.run(create_query,
+                symbol=symbol,
+                urlhash=str(row['urlhash']),
+                art=int(row['art']),
+                locality="Local",
+                syndicatedby=(ticker_symbol.upper()),
+                news_agency=agency,
+                author=author,
+                published=published,
+                article_teaser=article_teaser
+            )
+            
+        # create key -  add "Hash_" to match the dynamic label from create_article_nodes
+            record = result.single()
+        return 1
+        """
 
 
         """
         logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
         return created_relationships
                 # WTF !!!
-                # create key -  add "Hash_" to match the dynamic label from create_article_nodes
-                dynamic_label = f"Hash_{str(row['urlhash'])}"
-                    print ( f"#DEBUG-#369: Cypher query SET ATTR: {this_urlhash}" )
-                    set_list_query = (
-                        "MATCH (a:Article) "
-                        "WHERE (s:Symbol {symbol: $symbol}) "
-                        "AND a.url = {urlhash: $urlhash} "
-                        "SET a.usedby = a.usedby + {symbol: $symbol} "
-                        "RETURN a.urlhash "
-                    )
-                    
-                    result = session.run(set_list_query,
-                        symbol=symbol,
-                        urlhash=str(row['urlhash'])
-                    )
-
-                    _record = result.single()
-                    if _record:
-                        print ( "#DEBUG-#3785: SET SUCCESS: Track + Skipped CREATE..." )
-                        skipped_relationships.append(str(row['urlhash']))
-                    else:
-                        print ( "#DEBUG-#389: SET FAIL: Track + Skipped CREATE..." )
-                        skipped_relationships.append(str(row['urlhash']))
-                else:
-                    # Relationship doesn't exist, create it
-                    print ( f"#DEBUG-#382: No existing REL for symbol -> article: {this_urlhash}" )
-                    create_query = (
-                        "MATCH (s:Symbol {symbol: $symbol}) "
-                        f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
-                        "CREATE (s)-[r:HAS_ARTICLE {"
-                        "art: $art, "
-                        "locality: $locality, "
-                        "syndicatedby: $syndicatedby, "
-                        "news_agency: $news_agency, "
-                        "author: $author, "
-                        "published: $published, "
-                        "article_teaser: $article_teaser, "
-                        "urlhash: $urlhash"
-                        "}]->(a) "
-                        "RETURN r"
-                    )
-                    
-                    result = session.run(create_query,
-                        symbol=symbol,
-                        urlhash=str(row['urlhash']),
-                        art=int(row['art']),
-                        locality="Local",
-                        syndicatedby=(ticker_symbol.upper()),
-                        news_agency=agency,
-                        author=author,
-                        published=published,
-                        article_teaser=article_teaser
-                    )
-                    
-                    record = result.single()
                     if record:
                         created_relationships.append(str(row['urlhash']))
                         print ( f"#DEBUG-#410: Created relship for urlhash: {this_urlhash}" )
