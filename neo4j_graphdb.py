@@ -333,9 +333,9 @@ class neo4j_auradb:
 
         data_to_insert = df_data[['urlhash']].to_dict(orient='records')
  
-        print ( f"#DEBUG-#333: items in df_final: {int(len(df_data))}" )
-        print ( f"#DEBUG-#333: DF as list-of-[]: {data_to_insert}" )        
-        print ( f"#DEBUG-#333: dump df_final:\n{df_data}" )
+        print ( f"#DEBUG-#336: items in df_final: {int(len(df_data))}" )
+        print ( f"#DEBUG-#337: DF as list-of-[]\n{data_to_insert}" )        
+        print ( f"#DEBUG-#338: dump df_final:\n{df_data}" )
         with self.driver.session() as session:
             for idx, row in df_data.iterrows():       # cycle through our candidate list of URLHASH items
                     print ( f"#DEBUG-#338: iterrow loop -> inx: {idx} / row:\n{row}" )
