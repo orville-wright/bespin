@@ -864,11 +864,9 @@ class yfnews_reader:
         Extractor:  CRAWL4AI -  (engine decidcated to BS4 only)
         - Build the Text corpus for 1 (one) article only
         - Calls sentiment computation for 1 article
-        
         Depth : 3
-        TODO: rename this function to ext_artdata_C4
         This function is controlled from main()
-        Extractor:  crawl4
+        Extractor:  crawl4ai
         Build the Text corpus for 1 article
         Calls sentiment computation for 1 article
         Only do this once the article has been evaluated and we know exactly where/what each article is
