@@ -660,7 +660,7 @@ def main():
             #print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
 
-            print ( f"Total AI read articles:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
+            print ( f"Valid AI articles read:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
             print ( f"Rehydrated cache articles:  {sent_ai.kv_rehydrated}")
             print ( f"New C4 extracted articles:  {news_ai.yfn.kv_created_C4}")
             print ( f"New BS4 extracted articles: {news_ai.yfn.kv_created_BS4}")
