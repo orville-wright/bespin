@@ -121,8 +121,8 @@ class yfnews_reader:
         self.symbol = symbol
         self.nlp_x = 0
         self.cycle = 1
-        self.kv_created_BS4 = 0
-        self.kv_created_C4 = 0
+        self.kv_created_BS4 = int(0)
+        self.kv_created_C4 = int(0)
         self.sent_df0 = pd.DataFrame(columns=['Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'])
         
         # Setup crawl4ai schema path
@@ -847,7 +847,7 @@ class yfnews_reader:
                   f"BS4 ptags: {bs4_p_tag_count}"
                 )
         print ( f"{footer}")
-        print ( f"================ BS4 End.#2 / KV Cache miss ! New cache entry created: {item_idx} ================" )
+        print ( f"================ BS4 End.#2 / KV Cache miss ! New cache entry built: {self.kv_created_BS4} ================" )
         #print (f"debug-833: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         self.BS4_lmdb_env.close_lmdb("BS4")
         #print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
@@ -1227,7 +1227,7 @@ class yfnews_reader:
                                     f"Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}"
                                     )
                             print (f"{footer}")
-                            print (f"================ C4 End.#3 / KV Cache miss ! New cache entry created: {item_idx} ================" )
+                            print (f"================ C4 End.#3 / Cache miss ! New cache entry built: {self.kv_created_C4} ================" )
                             self.C4_lmdb_env.close_lmdb("C4")
                             return self.total_tokens, self.total_words, c4_final_results
                         case _:
