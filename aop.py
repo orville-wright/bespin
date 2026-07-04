@@ -538,19 +538,19 @@ def main():
                     try:
                         px = aggregate_mean.loc['positive']
                     except KeyError:
-                        logging.info( f'%s - Positive sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
+                        logging.info( '%s - Positive sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
                         aggregate_mean.loc['positive'] = 0.0
 
                     try:
                         nx = aggregate_mean.loc['negative']
                     except KeyError:
                         aggregate_mean.loc['negative'] = 0.0
-                        logging.info( f'%s - Negative sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
+                        logging.info( '%s - Negative sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
 
                     try:
                         zx = aggregate_mean.loc['neutral']
                     except KeyError:
-                        logging.info( f'%s - Neutral sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
+                        logging.info( '%s - Neutral sentiment DF key missing / Create + Set: 0.0' % cmi_debug )
                         aggregate_mean.loc['neutral'] = 0.0
 
                     #print ( f"\n\n### DEBUG: Article Dataframe 3 ####" )
@@ -567,14 +567,14 @@ def main():
                     merge_row = pd.merge(news_ai.yfn.sen_stats_df, aggmean_sent_df, on=['art', 'urlhash'])
                     final_sent_df = pd.concat([final_sent_df, merge_row], ignore_index=True)
                     
-                    ai_nlp_cycle += 1
                     if ai_nlp_cycle < arg_cycle:        # only counting real articles, not junk, fake, adds etc
+                        ai_nlp_cycle += 1
                         pass
                     else:
-                        print (f"Exiting AI NLP cycle @ article: {ai_nlp_cycle}...")
+                        print (f"\n** Exiting cycle @ article: {ai_nlp_cycle}...")
                         break                    
                 else:
-                    print (f"Skipping:      [ UNREADABLE / Article not valid Sentiment analysis] {sn_idx}")
+                    print (f"Skipping:      [ UNREADABLE / Not a candidate for Sentiment analysis] {sn_idx}")
                     print (f"================ End.0 Skipping / No action taken ! {bad_articles} / {sn_idx} ================" )
                     ai_nlp_cycle += 1
                     bad_articles += 1
