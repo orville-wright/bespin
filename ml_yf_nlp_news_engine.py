@@ -596,11 +596,11 @@ class yfnews_reader:
         if 'exturl' in data_row.keys():
             durl = data_row['exturl']
             external = True                 # not a local yahoo.com hosted article
-            logging.info( f'%s - Found exturl in ml_ingest DB' % cmi_debug )
+            logging.info( '%s - Found exturl in ml_ingest DB' % cmi_debug )
         else:
             durl = data_row['url']
             external = False               # this is a local yahoo.com hosted article
-            logging.info( f'%s - No exturl in ml_ingest DB' % cmi_debug )
+            logging.info( '%s - No exturl in ml_ingest DB' % cmi_debug )
 
         symbol = symbol.upper()
         _extr_eng="BS4"
@@ -609,7 +609,7 @@ class yfnews_reader:
         
         match _ec:
             case 0:  # BS4 KVstore cache hit
-                logging.info( f'%s - BS4 Deep cache hit / Rehydrated data from KVstore...' % cmi_debug )
+                logging.info( '%s - BS4 Deep cache hit / Rehydrated data from KVstore...' % cmi_debug )
                 # rehydrate class sentiment count dict from Deep Cache dataset
                 self.sent_ai.sentiment_count['positive'] = _fr["positive_count"]
                 self.sent_ai.sentiment_count['neutral'] = _fr["neutral_count"]
@@ -622,16 +622,16 @@ class yfnews_reader:
                 print ( f"============ BS4 End.#0 KV Cache HIT ! / Rehydrated sentiment Metrics: {item_idx} ==========" )
                 return _ttk, _ttw, _fr                        
             case 1:  # BS4 KVstore cache miss
-                logging.info( f'%s - BS4 KVstore ERROR.#1 Deserialization failure !force Net read...' % cmi_debug )
+                logging.info( '%s - BS4 KVstore ERROR.#1 Deserialization failure !force Net read...' % cmi_debug )
                 pass
             case 2:
-                logging.info( f'%s - BS4 KVstore ERROR.#2 No URL Hash KEY found !force Net read...' % cmi_debug )
+                logging.info( '%s - BS4 KVstore ERROR.#2 No URL Hash KEY found !force Net read...' % cmi_debug )
                 pass
             case 3:
-                logging.info( f'%s - BS4 KVstore MISS.#3 No cache entry !force Net read...' % cmi_debug )
+                logging.info( '%s - BS4 KVstore MISS.#3 No cache entry !force Net read...' % cmi_debug )
                 pass
             case 4:
-                logging.info( f'%s - BS4 LMDB I/O FAILURE.#4 : Failed to open DB in RO mode !' % cmi_debug )
+                logging.info( '%s - BS4 LMDB I/O FAILURE.#4 : Failed to open DB in RO mode !' % cmi_debug )
                 pass
             case _:
                 logging.info( f'%s - BS4 KVstore ERROR.#def Unknown error code: {_ec} !force Net read...' % cmi_debug )
@@ -644,7 +644,7 @@ class yfnews_reader:
         # logging fixe: f-string errors when URLs have a "%" - breaks logging module (NO KNOWN FIX)
         logging.info( f'%s  - BS4 urlhash Net cache lookup: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
-        logging.info( f'%s' % cmi_debug )
+        logging.info( '%s' % cmi_debug )
         cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(item_idx)
 
         if external is True:    # page is Micro stub Fake news article
@@ -655,9 +655,9 @@ class yfnews_reader:
             self.yfn_jsdb[cached_state]     # fast logic test for None (bad scan result)
             _built_bs4_entry = 2
         except KeyError:
-            logging.info( f'%s - BS4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
+            logging.info( '%s - BS4 MISSING from Net Cache / Force Network page read !' % cmi_debug )
             cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
-            logging.info( f'%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
+            logging.info( '%s' % cmi_debug )     # hack fix for urls containg "%" break logging module (NO FIX
             cmi_debug = __name__+"::"+self.artdata_BS4_depth3.__name__+".#"+str(item_idx)
             self.yfqnews_url = durl
             ip_urlp = urlparse(durl)
@@ -673,7 +673,7 @@ class yfnews_reader:
                             print (f"================ BS4 Net read FAILURE / Cannot read article URL: {item_idx} ================" )
                             return 0, 0, None                  
                         case 0:  # BS4 KVstore cache miss
-                            logging.info( f'%s - BS4 prep simple Net get() success ! continue forcing Net read...' % cmi_debug )
+                            logging.info( '%s - BS4 prep simple Net get() success ! continue forcing Net read...' % cmi_debug )
                             pass
                         case _:
                             logging.info( f'%s - BS4 prep simple Net get() unknown error: {_ec} ! Abandon Net URL read' % cmi_debug )
@@ -698,14 +698,14 @@ class yfnews_reader:
                 self.result_engine = "yfn_jsdb.#1"
                 _built_bs4_entry = 1
             else:
-                logging.info( f'%s - BS4 FAILED to set data !' % cmi_debug )
+                logging.info( '%s - BS4 FAILED to set data !' % cmi_debug )
                 return 0, 0, None
         else:       # try, expect, ends here !
             ###################################
             # BS4 Extract Article text data NOW
             # prepare dataset for BS4
             if _built_bs4_entry == 2:
-                logging.info( f'%s - EVAL.#2 :      BS4 data entry...' % cmi_debug )
+                logging.info( '%s - EVAL.#2 :      BS4 data entry...' % cmi_debug )
                 logging.info( f'%s - Weird Net cache state: Try cached net data: {cached_state}' % cmi_debug )
                 #print (f"###-debug: jsdb:\n{self.yfn_jsdb[cached_state]} \nresult:\n{self.yfn_jsdb[cached_state]['result']}")
                 _dataset_1 = self.yfn_jsdata.text
@@ -714,7 +714,7 @@ class yfnews_reader:
                 self.articles_crawled[item_idx] = self.yfn_jsdb[cached_state]['result']  # future feat: parallel crawl4ai extraction
                 self.result_engine = "yfn_jsdb.#2"
             else:
-                logging.info( f'%s - EVAL.#3 :      BS4 data entry...' % cmi_debug )
+                logging.info( '%s - EVAL.#3 :      BS4 data entry...' % cmi_debug )
                 logging.info( f'%s - Bad BS4 data: Force extract now: {cached_state}' % cmi_debug ) 
                 _dataset_1 = self.yfn_jsdata.text
                 #self.nsoup = BeautifulSoup(escape(_dataset_1), "html.parser")        # BS4 read() <- replace with crawl4ai
@@ -722,13 +722,13 @@ class yfnews_reader:
                 self.articles_crawled[item_idx] = self.nsoup     # NOTE USED: future feat: parallel crawl4ai extraction
                 self.result_engine = "yfn_jsdb.#3"
 
-        logging.info( f'%s - BS4 EVAL.#4:       Read Net Cahce entry...' % cmi_debug )
+        logging.info( '%s - BS4 EVAL.#4:       Read Net Cahce entry...' % cmi_debug )
         logging.info( f'%s - Cached hash:       {cached_state}' % cmi_debug )
         logging.info( f'%s - Cache engine:      {self.result_engine}' % cmi_debug )
         logging.info( f'%s - Cache Dataset:     {type(_dataset_1)}' % cmi_debug )
         logging.info( f'%s - In Cache URL:      {self.yfn_jsdb[cached_state]['url']}' % cmi_debug )
         logging.info( f'%s - Sent in URL:       {durl}' % cmi_debug )
-        logging.info( f'%s - Ready to exec BS4 extractor - get Article TEXT for AI NLP reader...' % cmi_debug )
+        logging.info( '%s - Ready to exec BS4 extractor - get Article TEXT for AI NLP reader...' % cmi_debug )
     
         logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
         # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})                # full news article - locally hosted
@@ -740,7 +740,7 @@ class yfnews_reader:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
         except AttributeError as _ae:
             logging.info( f'%s - BS4 Error FAILED to find_all TEXT <p_tags>: {_ae}"...' % cmi_debug )
-            print ( f"================ BS4 End.#9 KV Cache miss ! Reading article over net: {item_idx} ================" )
+            print ( f"================ BS4 End.#9 KV Cache miss ! Read article via net: {item_idx} ================" )
             return 0, 0, None   # This is likely a YF Advertising redirect to non-Yahoo webpage
         else:
             pass
@@ -751,7 +751,7 @@ class yfnews_reader:
         ####################################################################
         #
         hs = cached_state    # the URL hash (passing it to sentiment_ai for us in DF)
-        logging.info( f'%s - BS4 Exec NLP sent classifier pipeline.#0...' % cmi_debug )
+        logging.info( '%s - BS4 Exec NLP sent classifier pipeline.#0...' % cmi_debug )
         # WARN: trigger var for compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
         # 0 = Crawl4ai extractor, 1 = BS4 extractor
         self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
@@ -801,7 +801,7 @@ class yfnews_reader:
             self.BS4_lmdb_env.close_lmdb("BS4")       # force close
             #print (f"debug-789: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
 
-        logging.info( f'%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
+        logging.info( '%s - BS4 Open LMDB in READ-WRITE mode...' % cmi_debug )
         #print (f"debug-792: BS4 DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         kv_success = self.BS4_lmdb_env.open_lmdb_RW("BS4")  # re-open in RW mode
         self.BS4_lmdb_env.RW_env = kv_success
@@ -816,7 +816,7 @@ class yfnews_reader:
                 _txn.put(bs4_kvs_key, _kvs_json_dataset.encode('utf-8'))   # write data to LMDB                
 
         else:
-            logging.info( f'%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
+            logging.info( '%s - BS4 FAILED to access KVstore / not writing cache entry !' % cmi_debug )
             self.BS4_lmdb_env.close_lmdb("BS4")  # force close
             pass    # Not Fatal - faield to open LMDB. Continue with manual Network Read
         # empty vocabulary pretty-printer logic for eof=""
@@ -1062,44 +1062,79 @@ class yfnews_reader:
                     _neutralized_text = _trimmed_text.replace("Story Continues", " ")   # or "\n" if NLP is line-aware
                     art_all_p.append(_neutralized_text)                                 # get craw4al elements (crawl4 dict key='content')
                     # DEBUG # print ( f"#debug-1077: C4 TEXT element {i} :\n{art_all_p}" )        # print the first 100 chars of the element content
+
+                    _content_unreadable = False
                     try:
-                        _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
-                    except TypeError:   # catch None
+                        _total_chars = sum(len(_s) for _s in art_all_p)
+                    except TypeError:   # len(None) -> content block came back None (unreadable page)
                         logging.info( f'%s - C4 Exception: TypeError [ {item_idx} ]' % cmi_debug )
-                        _total_chars = 7    # force analysis, possible PREMIUM paywall block page
-                    match _total_chars:
-                        case 0:
+                        _content_unreadable = True
+                        _total_chars = 0                 # honest count, NOT a magic number
+
+                    _pw_raw = element.get('Premium_paywall')
+                    logging.info( f'%s - C4 PayWall trigger: {_pw_raw!r} / body_chars: {_total_chars} [ {item_idx} ]' % cmi_debug )
+                    if _content_unreadable:
+                        _state = "UNREADABLE"     # None content -> test for paywall
+                    elif _total_chars == 0:
+                        _state = "EMPTY"          # genuinely no text
+                    else:
+                        _state = "PROCESS"        # real content -> NLP
+
+                    match _state:
+                        case "EMPTY":
                             print ( f"================ C4 End.#0 No data: {item_idx} ================")
-                            logging.info( f'%s - C4 Case Matched 0 [ {item_idx} ]' % cmi_debug )
+                            logging.info( f'%s - C4 empty content [ {item_idx} ]' % cmi_debug )
                             return 0, 0, 0
-                        case 7:
-                            logging.info( f'%s - C4 Case Matched 7 [ {item_idx} ]' % cmi_debug )
-                            yfn_prem_paywall = element.get('Premium_paywall')
-                            if yfn_prem_paywall.upper() == "PREMIUM":
-                                _final_data_dict = dict()
-                                _final_data_dict.update({
-                                'article': item_idx,
-                                'urlhash': "0123456789-0000000000-9876543210",
-                                'total_tokens': 0,
-                                'chars_count': 0,
-                                'total_words': 0,
-                                'scentence': 0,
-                                'paragraph': 0,
-                                'random': 0,
-                                'positive_count': 0,
-                                'neutral_count': 0,
-                                'negative_count': 0
-                            })
-                                print ("Premium Paywalled article. Skipping...")
+
+                        case "UNREADABLE":
+                            logging.info( f'%s - C4 unreadable (None content block) [ {item_idx} ]' % cmi_debug )
+                            # GUARDED: _pw_raw may be None if a.topic-link didn't match -> no crash
+                            if _pw_raw and _pw_raw.upper() == "PREMIUM":
+                                # A paywall is a DURABLE property of the article, so cache a
+                                # skip-marker -> future runs hit the cache instead of re-crawling.
+                                _url_hash = data_row['urlhash']
+                                _paywall_marker = {
+                                    'article':        item_idx,
+                                    'urlhash':        _url_hash,      # REAL hash (was placeholder junk)
+                                    'status':         'paywalled',    # explicit marker for future reads
+                                    'total_tokens':   0,
+                                    'chars_count':    0,
+                                    'total_words':    0,
+                                    'scentence':      0,              # kept misspelling: live LMDB key
+                                    'paragraph':      0,
+                                    'random':         0,
+                                    'positive_count': 0,
+                                    'neutral_count':  0,
+                                    'negative_count': 0,
+                                }
+                                # --- LMDB write (mirrors the case "process" write; see note below) ---
+                                if self.C4_lmdb_env.RO_env is not None:
+                                    self.C4_lmdb_env.close_lmdb("C4")
+                                kv_success = self.C4_lmdb_env.open_lmdb_RW("C4")
+                                self.C4_lmdb_env.RW_env = kv_success
+                                if kv_success is not None:
+                                    _key = "0001"+"."+symbol+"."+_url_hash
+                                    c4_kvs_key = _key.encode('utf-8')
+                                    logging.info( f'%s - C4 WRITE paywall-marker @ KVstore: {_key}' % cmi_debug )
+                                    with self.C4_lmdb_env.RW_env.begin(write=True) as _txn:
+                                        _txn.put(c4_kvs_key,
+                                                 json.dumps(_paywall_marker, default=str).encode('utf-8'))
+                                else:
+                                    logging.info( '%s - C4 FAILED to open KVstore / paywall-marker NOT cached' % cmi_debug )
+                                self.C4_lmdb_env.close_lmdb("C4")
+
+                                print ("Premium Paywalled article. Caching skip-marker...")
                                 print ( f"================ C4 End.#1 YF Premium paywall: {item_idx} ================")
-                                #return 0, 0, _final_data_dict
-                                return 0, 0, None
+                                return 0, 0, _paywall_marker     # <-- RETURN the dict (was: None)
                             else:
-                                logging.info( f'%s - C4 Case Matched 7-unknown [ {item_idx} ]' % cmi_debug )
-                                print ("Unknown article type. Skipping...")
+                                # Unknown/unreadable but NOT confirmed paywall. Could be a
+                                # transient render failure -> do NOT cache, so a retry can succeed.
+                                logging.info( f'%s - C4 unreadable, not PREMIUM [ {item_idx} ]' % cmi_debug )
+                                print ("Unknown/unreadable article. Skipping (not cached)...")
                                 print ( f"================ C4 End.#2 Unknown type: {item_idx} ================")
                                 return 0, 0, 0
-                        case _:
+
+                        case "PROCESS":
                             ####################################################################
                             ##### AI M/L Gen AI NLP starts here !!!                      #######
                             ##### Heavy CPU utilization / local LLM Model & no GPU       #######
@@ -1197,11 +1232,21 @@ class yfnews_reader:
                             print (f"================ C4 End.#3 / KV Cache miss ! New cache entry created: {item_idx} ================" )
                             self.C4_lmdb_env.close_lmdb("C4")
                             return self.total_tokens, self.total_words, c4_final_results
-
-                    print (f"#debug-1204: artdata_C4_depth3 - NO Action taken !: {_total_chars}" )
+                        case _:
+                            # Reaching here means an upstream edit added
+                            # a new _state value without a matching case -> a bug, not a data
+                            # condition. Fail LOUD, return the safe no-op shape, cache nothing.
+                            logging.error(
+                                f'%s - C4 UNHANDLED _state={_state!r} [ {item_idx} ] '
+                                f'chars={_total_chars} unreadable={_content_unreadable} '
+                                f'- classifier/match desync, investigate!' % cmi_debug
+                            )
+                            print ( f"================ C4 End.#4 UNHANDLED state {_state!r}: {item_idx} ================" )
+                            return 0, 0, 0
+                    print (f"#debug-1246: artdata_C4_depth3 - NO Action taken !: {_total_chars}" )
                     return 0, 0, 0
 
-            print ( "#debug-1207: C4 data extrct KV eng - Unknown state!" )
+            print ( "#debug-1249: C4 data extrct KV eng - Unknown state!" )
         return 0, 0, None
 
     # ############### Helper method
