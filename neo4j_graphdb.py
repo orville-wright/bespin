@@ -338,16 +338,15 @@ class neo4j_auradb:
         print ( f"#DEBUG-#338: dump df_final:\n{df_data}" )
         with self.driver.session() as session:
             for idx, row in df_data.iterrows():       # cycle through our candidate list of URLHASH items
-                    print ( f"#DEBUG-#341: iterrow loop -> idx: {idx} / row:\n{row}" )
+                    print ( f"#DEBUG-#341: iterrow loop -> index: {idx}" )
                     _urlhash=str(row['urlhash'])
                     _article=str(row['art'])
-                    print ( f"DEBUG-#344: do Cypher helper now ! urlhash: {_urlhash} \n{_article}")
+                    print ( f"DEBUG-#344: Cypher helper for urlhash: {_urlhash} \nArtile: {_article}")
                     self.sar_helper_1(_urlhash, symbol, _article, session)   # check for existing relationship and return 0 or 1
 
-
-        # -------------- private helper methods -------------
+    # -------------- private helper methods -------------
     def sar_helper_1(self, _symbol, _u, _a, session):
-        print ( f"#DEBUG-#346: Cypher query 1 - exisitng symbol -> article REL {_a}: {_u}" )
+        print ( "#DEBUG-#346: Cypher query 1 - check exisitng symbol -> article REL..." )
         existing_art_sym_rel_query = (
             "MATCH (s:Symbol {symbol: $symbol}) "
             "MATCH (a:Article {urlhash: $urlhash}) "
@@ -366,10 +365,10 @@ class neo4j_auradb:
         # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
         if existing_rel:    # Relationship already exists, for this article/symbol ! - skip creation
             skipped_relationships.append(_u)
-            print ( f"#DEBUG-#369:Symbol {_symbol} has existing REL to Article {_a} !" )
+            print ( f"#DEBUG-#369:Symbol {_symbol} has existing REL -> Article {_a} !\nCypher result: {existing_rel}" )
             return 0
         else:
-            print ( f"#DEBUG-#372: Symbol {_symbol} has NO Rel to article {_a}... Create + Set useby ATTR !" )
+            print ( f"#DEBUG-#372: Symbol {_symbol} has NO Rel -> Article {_a}... Create + Set useby ATTR !\Cypher result: {existing_rel}" )
             return 1
 
 
