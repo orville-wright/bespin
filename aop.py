@@ -574,8 +574,8 @@ def main():
                         print (f"\n** Exiting cycle @ article: {ai_nlp_cycle}...")
                         break                    
                 else:
-                    print (f"Skipping:      [ UNREADABLE / Not a candidate for Sentiment analysis] {sn_idx}")
-                    print (f"================ End.0 Skipping / No action taken ! {bad_articles} / {sn_idx} ================" )
+                    print (f"Skipping:      [ UNREADABLE / Not a candidate for Sentiment analysis] {bad_articles}")
+                    print (f"================ End.0 Skipping / No action for article: {sn_idx} ================" )
                     ai_nlp_cycle += 1
                     bad_articles += 1
                     
