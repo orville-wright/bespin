@@ -733,7 +733,7 @@ class yfnews_reader:
         logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
         # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})                # full news article - locally hosted
         
-        local_news = self.nsoup.find(attrs={"class": "body yf-v6n2s3"})                # full news article - locally hosted        
+        local_news = self.nsoup.find(attrs={"class": "body yf-14ssz7z"})                # full news article - locally hosted        
         local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})            # comes above/before article
         local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
         try:
