@@ -341,6 +341,7 @@ class neo4j_auradb:
                     print ( f"#DEBUG-#341: iterrow loop -> idx: {idx} / row:\n{row}" )
                     this_urlhash=str(row['urlhash'])
                     this_article=str(row['art'])
+                    print ( "#DEBUG-#344: do Cypher helper now !" )
                     status = sar_helper_1(this_urlhash, symbol, this_article)   # check for existing relationship and return 0 or 1
 
 
@@ -370,7 +371,7 @@ class neo4j_auradb:
             else:
                 print ( f"#DEBUG-#372: Symbol {_X} has NO Rel to article {_a}... Create + Set useby ATTR !" )
                 return 1
-            
+
 
         """
         logging.info( f'%s - New RELs created: {len(created_relationships)} / Existing RELs skipped: {len(skipped_relationships)})' % cmi_debug )
