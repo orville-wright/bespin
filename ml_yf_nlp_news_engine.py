@@ -1073,8 +1073,8 @@ class yfnews_reader:
             for i, element in enumerate(c4_dict['data']):
                     _trimmed_text = self._trim_promotional_tail(element.get('Content'))
                     _neutralized_text = _trimmed_text.replace("Story Continues", " ")       # or "\n" if NLP is line-aware
-                    art_all_p.append(element.get(_neutralized_text))                        # get craw4al elements (crawl4 dict key='content')
-                    print ( f"#debug-1077: C4 TEXT element {i} :\n{_neutralized_text}" )    # print the first 100 chars of the element content
+                    art_all_p.append(_neutralized_text)                              get craw4al elements (crawl4 dict key='content')
+                    print ( f"#debug-1077: C4 TEXT element {i} :\n{art_all_p}" )    # print the first 100 chars of the element content
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
                     except TypeError:   # catch None
@@ -1234,6 +1234,8 @@ class yfnews_reader:
             "Find your next big winner with StockStory",
             "Get Our Top 6 Stocks",
             "Claim The Stock Ticker Here",
+            "Free Stock Analysis Report",
+            "This article originally published",
         )
         _cut = len(text)
         for _m in _tail_markers:
