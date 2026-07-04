@@ -904,19 +904,6 @@ class yfnews_reader:
         symbol = symbol.upper()
         _extr_eng="C4"
 
-        # #########################################
-        """
-        if 'exturl' in data_row.keys():
-            durl = data_row['exturl']
-            external = True                 # not a local yahoo.com hosted article
-            logging.info( '%s - Ext url found in ML-Ingest DB - skipping...' % cmi_debug )
-        else:
-        #    durl = data_row['url']
-            external = False               # this is a local yahoo.com hosted article
-            logging.info( '%s - No exturl in ML-Ingest DB' % cmi_debug )
-            cached_state = data_row['urlhash']
-        """
-        
         # ###########################################################
         # KV Cache Engine - activated
         # check to see if weve previous read/processed this article
@@ -1074,7 +1061,7 @@ class yfnews_reader:
                     _trimmed_text = self._trim_promotional_tail(element.get('Content'))
                     _neutralized_text = _trimmed_text.replace("Story Continues", " ")   # or "\n" if NLP is line-aware
                     art_all_p.append(_neutralized_text)                                 # get craw4al elements (crawl4 dict key='content')
-                    print ( f"#debug-1077: C4 TEXT element {i} :\n{art_all_p}" )        # print the first 100 chars of the element content
+                    # DEBUG # print ( f"#debug-1077: C4 TEXT element {i} :\n{art_all_p}" )        # print the first 100 chars of the element content
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
                     except TypeError:   # catch None
@@ -1228,6 +1215,7 @@ class yfnews_reader:
         """
         cmi_debug = __name__+"::"+self._trim_promotional_tail.__name__
         _tail_markers = (
+            "Quick Read"
             "ONE MORE THING:",
             "ALSO WORTH WATCHING:",
             "View Comments",                    # Yahoo hard end-of-body marker
