@@ -1069,12 +1069,12 @@ class yfnews_reader:
             #print ( f"###-debug: C4 c4_dict data:     {c4_dict['data']}" )  # should be refined results of crawl
             
             # print the keys of the C4 result dict
-            art_all_p = list()                                          # ensure temp list is empty
+            art_all_p = list()                                              # ensure temp list is empty
             for i, element in enumerate(c4_dict['data']):
-                    print ( f"#debug-1073: C4 element {i} :\n{element.get('Content')}..." )   # print the first 100 chars of the element content
-                    #print ( f"#debug-1073: C4 element {i} :\n{element.get('Content')[:100]}..." )   # print the first 100 chars of the element content
-                    art_all_p.append(element.get('Content'))            # get craw4al elements (crawl4 dict key='content')
-                    print (f"#debug-1075: artdata_C4_depth3 - thinking...: {i}" )
+                    _trimmed_text = self._trim_promotional_tail(element.get('Content'))
+                    _neutralized_text = _trimmed_text.replace("Story Continues", " ")       # or "\n" if NLP is line-aware
+                    art_all_p.append(element.get(_neutralized_text))                        # get craw4al elements (crawl4 dict key='content')
+                    print ( f"#debug-1077: C4 TEXT element {i} :\n{_neutralized_text}" )    # print the first 100 chars of the element content
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)     # compute total len of all chars in extracted data 
                     except TypeError:   # catch None
@@ -1122,8 +1122,6 @@ class yfnews_reader:
                             logging.info( "%s - C4 Exec NLP sent classifier pipeline.#0..." % cmi_debug )
                             # 0 = Crawl4ai extractor, 1 = BS4 extractor
                             self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, art_all_p, hs, 0)
-                            #self.total_tokens, self.total_words, _final_data_dict = self.sent_ai.compute_sentiment(symbol, item_idx, local_stub_news_p, hs, 1)
-
                             self.sent_ai.cr_package.update({ 'chars_count': int(_total_chars) })
                             self.sent_ai.cr_package.update({ 'total_words': int(self.total_words) })
 
@@ -1218,8 +1216,37 @@ class yfnews_reader:
 
             print ( "#debug-1207: C4 data extrct KV eng - Unknown state!" )
         return 0, 0, None
-    
+
+    # ############### Helper method
+    # Helper method for -> artdata_C4_depth3
+    #
+    def _trim_promotional_tail(self, text):
+        """
+        StockStory-syndicated YF articles append bullish ad copy inside the
+        <article> node. Cut at the earliest known body->promo boundary marker.
+        Ordered by reliability; we cut at the earliest match found.
+        """
+        _tail_markers = (
+            "ONE MORE THING:",
+            "ALSO WORTH WATCHING:",
+            "View Comments",                    # Yahoo hard end-of-body marker
+            "Find your next big winner with StockStory",
+            "Get Our Top 6 Stocks",
+            "Claim The Stock Ticker Here",
+        )
+        _cut = len(text)
+        for _m in _tail_markers:
+            _i = text.find(_m)
+            if _i != -1:
+                _cut = min(_cut, _i)
+        _trimmed = text[:_cut].rstrip()
+        if _cut < len(text):
+            logging.info(f'{self._cmi} - trimmed promo tail: {len(text)-_cut} chars removed')
+        return _trimmed
+
+
     # ################ 7
+    # Craw4ai Scraping engine
     async def c4_engine_depth3(self, durl, item_idx):
         """
         Helper function for artdata_C4_depth3() ONLY - not a public API
@@ -1260,33 +1287,10 @@ class yfnews_reader:
             logging.error(f'%s - FAILED to load schema file: [ {self.YF_sym_article_schema} ]' % cmi_debug)
             return None
 
-        # FIX #2 - Claude Code recomendation
-        #
         logging.info(f'%s  - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
         try:
             async with AsyncWebCrawler() as crawler:
                 result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
-
-                """
-                _html = result.html or ""
-                _idx = _html.lower().find("legalzoom")
-                if _idx != -1:
-                    _start = max(0, _idx - 1500)          # 1500 chars BEFORE the first body mention
-                    print(f'{cmi_debug} - BODY CONTEXT:\n{_html[_start:_idx + 500]}')
-                else:
-                    print(f'{cmi_debug} - anchor phrase not found in cleaned_html')
-
-                # 2. Enumerate every wrapper-ish class on the page so we can see the yf-* hashes in play.
-                import re
-                _divs = re.findall(r'<div[^>]+class=["\']([^"\']*)["\']', _html)
-                # collapse to unique class-tokens that look like body/content wrappers
-                _interesting = sorted({
-                    c for cls in _divs for c in cls.split()
-                    if any(k in c.lower() for k in ("body", "content", "article", "caas", "atoms", "morpheus"))
-                })
-                print(f'{cmi_debug} - candidate wrapper classes:\n' + "\n".join(_interesting))
-                """
-
                 if result.success:
                     logging.info( '%s  - crawl4ai extraction running...' % cmi_debug)
                     # ---- structured extraction channel (schema-driven) ----
@@ -1336,39 +1340,9 @@ class yfnews_reader:
             logging.error(f'{cmi_debug} - Error during crawl4ai extraction: {e}')
             return None
 
-        
-        """
-        # DELETE me when the FIX 1 is tagged as reliable.
-        
-        logging.info(f'%s  - Crawl article [ {item_idx} ] NOW...' % cmi_debug)
-        try:
-            async with AsyncWebCrawler() as crawler:
-                result = await crawler.arun(durl, config=config)        # exec the craw HERE !!!!
-                if result.success:
-                    logging.info( '%s  - crawl4ai extraction running...' % cmi_debug)
-                    self.yfn_crawl_data = json.loads(result.extracted_content)
-                    auh = hashlib.sha256(durl.encode())     # prep hash
-                    aurl_hash = auh.hexdigest()             # generate hash WARN: needs dedupe checking !!
-                    self.yfn_c4_result[aurl_hash] = dict(   # C4 local cache - for crawl4ai results, for post-processing
-                        url = durl,
-                        data = self.yfn_crawl_data,
-                        result = result
-                    )
-                    logging.info(f'%s  - Created C4 result cache entry: {aurl_hash}' % cmi_debug)
-                    #print (f"###-debug: yfn_c4_result type: {type(self.yfn_c4_result)} / keys: {self.yfn_c4_result.keys()}" )
-                    return result
-                else:
-                    logging.error(f'%s - crawl4ai extraction failed: {result.error}' % cmi_debug)
-                    return None                    
-        except Exception as e:
-            logging.error(f'{cmi_debug} - Error during crawl4ai extraction: {e}')
-            return None
-        """ 
-
-    # ######################
+    # ###################### Helper Method
+    # Helper method -> c4_engine_depth3
     def _c4_raw_text(self, result):
-        # FIX #2.1 - Claude Code recomendation
-        #
         """
         Normalize crawl4ai's markdown into a plain str, defensively.
         result.markdown is Optional[Union[str, MarkdownGenerationResult]]:
