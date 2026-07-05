@@ -362,6 +362,7 @@ class neo4j_auradb:
         # None = no existing relationship
         existing_rel = check_result.single()
         print ( f"#debug-364 check_result: {check_result}" )
+        print ( f"#debug-365 existing_rel: {existing_rel}" )
         
         #rint ( f"#DEBUG-#361: NO symbol -> article REL, try for SET ATTR op: {this_urlhash}\n CHK: {check_result}\n RES: {existing_rel}" )
         # Does THIS article node (URLHASH) have an existing relationship to THIS symbol...?
@@ -370,8 +371,8 @@ class neo4j_auradb:
                 self.skipped_relationships.append(_u)
                 print ( f"#DEBUG-#368:Symbol {_symbol} has existing REL -> Article {_a} / Cypher result: {existing_rel}" )
                 return 0
-            case _:
-                print ( f"#DEBUG-#371: Symbol {_symbol} NO Rel -> Article {_a} / Create+Set-useby ATTR / Cypher result: {existing_rel}" )
+            case "HAS_ARTICLE":
+                print ( f"#DEBUG-#371: Symbol {_symbol} has Rel -> Article {_a} / Create+Set-useby ATTR / Cypher result: {existing_rel}" )
                 dynamic_label = f"Hash_{_u}"
                 print ( f"#DEBUG-#373: Cypher query #2 - SET ATTR: {_u}" )
                 set_list_query = (
@@ -392,43 +393,40 @@ class neo4j_auradb:
                     print ( "#DEBUG-#388: SET FAIL: Track + Skipped CREATE / result:{_record}" )
                     #skipped_relationships.append(str(row['urlhash']))
                     return 2
-        """
-                            
-        else:
-            # Relationship doesn't exist, create it
-            print ( f"#DEBUG-#382: No existing REL for symbol -> article: {this_urlhash}" )
-            create_query = (
-                "MATCH (s:Symbol {symbol: $symbol}) "
-                f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
-                "CREATE (s)-[r:HAS_ARTICLE {"
-                "art: $art, "
-                "locality: $locality, "
-                "syndicatedby: $syndicatedby, "
-                "news_agency: $news_agency, "
-                "author: $author, "
-                "published: $published, "
-                "article_teaser: $article_teaser, "
-                "urlhash: $urlhash"
-                "}]->(a) "
-                "RETURN r"
-            )
-            
-            result = session.run(create_query,
-                symbol=symbol,
-                urlhash=str(row['urlhash']),
-                art=int(row['art']),
-                locality="Local",
-                syndicatedby=(ticker_symbol.upper()),
-                news_agency=agency,
-                author=author,
-                published=published,
-                article_teaser=article_teaser
-            )
-            
-        # create key -  add "Hash_" to match the dynamic label from create_article_nodes
-            record = result.single()
-        return 1
-        """
+            case _:
+                # Relationship doesn't exist, create it
+                print ( f"#DEBUG-#382: Unkown default case: {existing_rel}" )
+                create_query = (
+                    "MATCH (s:Symbol {symbol: $symbol}) "
+                    f"MATCH (a:{dynamic_label} {{urlhash: $urlhash}}) "
+                    "CREATE (s)-[r:HAS_ARTICLE {"
+                    "art: $art, "
+                    "locality: $locality, "
+                    "syndicatedby: $syndicatedby, "
+                    "news_agency: $news_agency, "
+                    "author: $author, "
+                    "published: $published, "
+                    "article_teaser: $article_teaser, "
+                    "urlhash: $urlhash"
+                    "}]->(a) "
+                    "RETURN r"
+                )
+                
+                result = session.run(create_query,
+                    symbol=symbol,
+                    urlhash=str(row['urlhash']),
+                    art=int(row['art']),
+                    locality="Local",
+                    syndicatedby=(ticker_symbol.upper()),
+                    news_agency=agency,
+                    author=author,
+                    published=published,
+                    article_teaser=article_teaser
+                )
+                
+                # create key -  add "Hash_" to match the dynamic label from create_article_nodes
+                record = result.single()
+                return 1
 
 
         """
