@@ -740,7 +740,7 @@ class yfnews_reader:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
         except AttributeError as _ae:
             logging.info( f'%s - BS4 Error FAILED to find_all TEXT <p_tags>: {_ae}"...' % cmi_debug )
-            print ( f"================ BS4 End.#9 KV Cache miss ! Read article via net: {item_idx} ================" )
+            print ( f"============== BS4 End.#9 Cache miss / Net read article  / New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
             return 0, 0, None   # This is likely a YF Advertising redirect to non-Yahoo webpage
         else:
             pass
@@ -1227,7 +1227,7 @@ class yfnews_reader:
                                     f"Postive: {sent_p} / Neutral: {sent_z} / Negative: {sent_n}"
                                     )
                             print (f"{footer}")
-                            print (f"================ C4 End.#3 / Cache miss ! New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
+                            print (f"============== C4 End.#3 / Cache miss / Net read article  / New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
                             self.C4_lmdb_env.close_lmdb("C4")
                             return self.total_tokens, self.total_words, c4_final_results
                         case _:
