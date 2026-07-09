@@ -733,14 +733,14 @@ class yfnews_reader:
         logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
         # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})                # full news article - locally hosted
         
-        local_news = self.nsoup.find(attrs={"class": "body yf-14ssz7z"})                # full news article - locally hosted        
-        local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})            # comes above/before article
-        local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
+        local_news = self.nsoup.find(attrs={"class": "body yf-v6n2s3"})                # full news article - locally hosted        
+        #local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})            # comes above/before article
+        #local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
         try:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
         except AttributeError as _ae:
             logging.info( f'%s - BS4 Error FAILED to find_all TEXT <p_tags>: {_ae}"...' % cmi_debug )
-            print ( f"============== BS4 End.#9 Cache miss / Net read article  / New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
+            print ( "============== BS4 End.#9 BS4 Error / Find_all <p> failure / Possible new CSS hash object ================" )
             return 0, 0, None   # This is likely a YF Advertising redirect to non-Yahoo webpage
         else:
             pass
