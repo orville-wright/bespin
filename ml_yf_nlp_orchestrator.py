@@ -55,7 +55,7 @@ class ml_nlpreader:
         print(f"ML (NLP) AI / News Sentiment for 1 symbol [ {news_symbol} ]")
         self.args = global_args
         cmi_debug = __name__+"::" + self.nlp_read_one.__name__
-        logging.info(f'%s   - IN.#{self.yti}' % cmi_debug)
+        logging.info(f'%s   - ENTRY.#{self.yti}' % cmi_debug)
         news_symbol = str(news_symbol).upper()
         
         self.yfn = yfnews_reader(1, news_symbol, global_args )          # instantiate our own class of YFN (frm ml_yf_nlp_news_engine)

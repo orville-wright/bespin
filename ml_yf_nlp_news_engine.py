@@ -266,9 +266,9 @@ class yfnews_reader:
             logging.error(f'{cmi_debug} - Invalid URL: {self.yfqnews_url}')
             return None
 
-# hack this to test crawl4 ai <li.p.text>
+        # hack this to test crawl4 ai <li.p.text>
 
-        logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x}+"_ASYNC" - %s', self.yfqnews_url)
+        logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x}+_ASYNC - %s', self.yfqnews_url)
         logging.info(f'%s - Load C4 Depth0 Skimmer schema: \n\t[ {self.YF_sym_main_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.YF_sym_main_schema}"        
         if os.path.exists(listall_schema_file_path):
@@ -299,13 +299,13 @@ class yfnews_reader:
 
         try:
             async with AsyncWebCrawler() as crawler:
-                logging.info( '%s - Run C4 async crawl NOW...' % cmi_debug)
+                logging.info( '%s - Run C4 async Depth0 skim crawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
                 if result.success:
-                    #print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
+                    print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
                     self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
-                    aurl_hash = auh.hexdigest()                     # this cache entry is dept0 @ finaince.yahoo.com
+                    aurl_hash = auh.hexdigest()                     # this cache entry is a depth0 @ news artile url;
                     self.yfn_jsdb[aurl_hash] = dict(                # global cache within yfn instance
                         url = self.yfqnews_url,
                         data = self.yfn_crawl_data,
@@ -314,7 +314,7 @@ class yfnews_reader:
                     
                     # print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb[aurl_hash]}" )
                     #print ( f"DEBUG: C4_Data dump 2: {self.yfn_crawl_data}" )
-                    logging.info(f'%s - Depth 0 Net DB url HASH: \n\t[ Hash: {aurl_hash} ]' % cmi_debug)
+                    logging.info(f'%s - Add Depth 0 url HASH to cache: \n\t[ Hash: {aurl_hash} ]' % cmi_debug)
                     return aurl_hash    # success
                 else:
                     logging.error(f'%s - crawl4ai Depth0 extract failure: {result.error}' % cmi_debug)
