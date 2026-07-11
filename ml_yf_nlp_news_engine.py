@@ -306,6 +306,7 @@ class yfnews_reader:
                     return None
                 else:
                     logging.error(f'%s - crawl4ai Depth0 skim extracted something...\n{result.extracted_content}' % cmi_debug)
+                    logging.error(f'%s - Data list: {result.extracted_content}\nType: {type(result.extracted_content)}\nLength: {len(result.extracted_content)}' % cmi_debug)
                     pass
 
                 if result.success:
