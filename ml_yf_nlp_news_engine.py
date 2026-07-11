@@ -301,10 +301,10 @@ class yfnews_reader:
             async with AsyncWebCrawler() as crawler:
                 logging.info( '%s - Run C4 async Depth0 skim crawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
+                if not result.extracted_content:
+                    logging.error(f'%s - crawl4ai Depth0 skim failure: No articles extracted' % cmi_debug)
+                    return None
                 if result.success:
-                    if not result.extracted_content:
-                        logging.error(f'%s - crawl4ai Depth0 skim failure: No articles extracted' % cmi_debug)
-                        return None
                     #print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
                     self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
                     auh = hashlib.sha256(self.yfqnews_url.encode()) # prep hash
