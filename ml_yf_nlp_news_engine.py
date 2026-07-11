@@ -304,6 +304,10 @@ class yfnews_reader:
                 if not result.extracted_content:
                     logging.error(f'%s - crawl4ai Depth0 skim failure: No articles extracted' % cmi_debug)
                     return None
+                else:
+                    logging.error(f'%s - crawl4ai Depth0 skim extracted something...\n{result.extracted_content}' % cmi_debug)
+                    pass
+
                 if result.success:
                     #print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
                     self.yfn_crawl_data = json.loads(result.extracted_content)  # schema is failing. FIX ME !!
