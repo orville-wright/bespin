@@ -301,7 +301,7 @@ class yfnews_reader:
             async with AsyncWebCrawler() as crawler:
                 logging.info( '%s - Run C4 async Depth0 skim crawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
-                if not result.extracted_content:
+                if result.extracted_content == "[]":
                     logging.error(f'%s - crawl4ai Depth0 skim failure: No articles extracted' % cmi_debug)
                     return None
                 else:
