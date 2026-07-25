@@ -63,7 +63,7 @@ class ml_nlpreader:
         ml_yfn_dataset.form_endpoint(news_symbol)                       # extablish the exct news url endpoint
         logging.info(f"%s - Form NEWS endpoint for {news_symbol} + globalize url_hinter @ #1" % cmi_debug)
         self.yfn_uh = url_hinter(1, self.args)                          # instantiate URL hinter 
-        ml_yfn_dataset.yfn_uh = self.yfn_uh
+        ml_yfn_dataset.yfn_uh = self.yfn_uh                     # give UFN reader access to the URL hinter instance
 
         # 3 Main steps execuete @here : Depth -> 0 + Depth -> 1
         # print a report of the Depth 0 Top Level news skim run
@@ -81,10 +81,10 @@ class ml_nlpreader:
             # DEBUG: xray debug
             if self.args.get('bool_xray', False):
                 ml_yfn_dataset.dump_ml_ingest()
+                return articles_found
         else:
-            logging.error( "%s - No Top level articles found !!" % cmi_debug)
-        
-        return articles_found
+            logging.error( "%s - No Top level NEWS articles found to skim !!" % cmi_debug)    
+            return 0
 
     # ##############################################################################
     def nlp_summary_report(self, yti, ml_idx):
