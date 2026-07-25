@@ -449,6 +449,9 @@ def main():
             
             # scan_news_feed() + eval_news_feed_stories()
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  
+            if articles_found == 0:
+                print ( f"AI news reader found NO articles for Stock [ {news_symbol} ]" )
+                exit(1)
 
             # Threaded optimization : Phase 2
             # The nlp_read_one() scrape/skim takes 10 ~ 15 seconds to complete skimming 100 top level article feed
