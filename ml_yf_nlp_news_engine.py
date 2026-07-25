@@ -406,7 +406,7 @@ class yfnews_reader:
         symbol = symbol.upper()
         if not self.extracted_articles:         # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
             logging.error(f'%s - No extracted articles available' % cmi_debug)
-            return 1
+            return 1, 0
         
         cg = 0                  # general conter for logging and reporting
         bad_url_count = 0       # counter for bad URLs found in the article dataset
