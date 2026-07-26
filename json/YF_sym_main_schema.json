@@ -1,6 +1,7 @@
 {
   "name": "YahooFinanceNewsSelector",
-  "baseSelector": "section.container.yf-1m8w4l1 ul.stream-items.yf-ydpc1 li",
+  "baseSelector": "section.mainContent section.container div.news-stream ul.stream-items li",
+
   "fields": [
     {
       "name": "Title",
