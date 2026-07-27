@@ -268,7 +268,7 @@ class yfnews_reader:
 
         # hack this to test crawl4 ai <li.p.text>
 
-        #logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} _ASYNC - %s', self.yfqnews_url)
+        logging.info( f"{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} ASYNC - %s", self.yfqnews_url)
         logging.info(f'%s - Load C4 Depth0 Skimmer schema: \n\t[ {self.YF_sym_main_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.YF_sym_main_schema}"        
         if os.path.exists(listall_schema_file_path):
@@ -301,6 +301,7 @@ class yfnews_reader:
             async with AsyncWebCrawler() as crawler:
                 logging.info( '%s - Run C4 async Depth0 skim crawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)                
+                cmi_debug = __name__+"::" + self.yahoofin_news_depth0.__name__+".#"+str(self.yti)+"."+str(idx_x)+"_ASYNC"
                 if result.extracted_content == "[]":
                     logging.error(f'%s - crawl4ai Depth0 skim failure: No articles extracted' % cmi_debug)
                     return None
