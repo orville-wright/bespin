@@ -23,7 +23,7 @@
     },
     {
       "name": "Publisher",
-      "selector": "div section.container div div div",
+      "selector": "div section.container div div div.publishing",
       "type": "text"
     },
     {
