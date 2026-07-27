@@ -401,6 +401,31 @@ class yfnews_reader:
         """
         cmi_debug = __name__+"::" + self.eval_news_feed_stories.__name__+".#"+str(self.yti)
         logging.info('%s - IN ' % cmi_debug)
+
+        # ################ Private helper Method
+        """
+        Convert 1h, 1w, 1y into an exact math number
+        h => converts to hours
+        w, m, y => convertsa to days
+        """
+        def parse_relative_time(time_str: str) -> tuple[float, str]:
+            match = re.match(r'^(\d+)([hwmy])\s*ago$', time_str.strip())
+            if not match:
+                raise ValueError(f"Invalid format: '{time_str}'")
+
+            value, unit = match.groups()
+            num = float(value)
+            # Conversion multipliers (h stays as hours, others convert to days)
+            unit_map = {
+                'h': (1, 'hours'),
+                'w': (7, 'days'),
+                'm': (30, 'days'),
+                'y': (365, 'days'),
+            }
+            multiplier, label = unit_map[unit]
+            return num * multiplier, label 
+        # ################ END - Private helper Method
+
         time_now = time.strftime("%H:%M:%S", time.localtime())
         symbol = symbol.upper()
         if not self.extracted_articles:         # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
@@ -455,10 +480,13 @@ class yfnews_reader:
                 
                 inf_type = self.yfn_uh.confidence_lvl(thint)    # list[] from global URLhinter instance
                 ml_atype = uhint
-                
+
+                # quickly convert publisher release update time to an exact math number
+                amount, unit_name = parse_relative_time(update_time)
+    
                 print(f"News article:  {symbol} [ {path} ]")
                 print(f"Article type:  {inf_type[0]}")
-                print(f"Agency info:   {art_publisher} / Release date: {update_time}")
+                print(f"Agency info:   {art_publisher} - Release date: {amount:.0f} {unit_name} ago")
                 print(f"URL origin:    {self.url_netloc} - conf: [ t:{ml_atype} u:{uhint} h:{thint} ]")
                 print(f"Full URL:      {self.article_url}")
                 print(f"Short title:   {art_title:.50}")
