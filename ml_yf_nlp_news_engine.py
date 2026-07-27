@@ -418,6 +418,12 @@ class yfnews_reader:
 
             value, unit = match.groups()
             num = float(value)
+            # Special logic for 'd' (days) and 1 day = 24 hours
+            if unit == 'd':
+                if num == 1:
+                    return 24.0, "hours"
+                return num, "days"
+            
             # Conversion multipliers (h stays as hours, others convert to days)
             unit_map = {
                 'h': (1, 'hours'),
