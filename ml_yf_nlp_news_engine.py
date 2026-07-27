@@ -419,6 +419,7 @@ class yfnews_reader:
             art_publisher = article.get('Publisher', 'No_publisher • No_pub_time')  # extracted craw4al element
             art_teaser = article.get('Teaser', 'ERROR_no_teaser')                   # extracted craw4al element
             try:
+                print (f"#DEBUG-422: PUBLISHER-DATE: {art_publisher}")
                 _ap_sl = art_publisher.split('•')
                 art_publisher =_ap_sl[0]
                 update_time = _ap_sl[1]
