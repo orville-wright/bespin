@@ -268,7 +268,7 @@ class yfnews_reader:
 
         # hack this to test crawl4 ai <li.p.text>
 
-        logging.info( f"{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} ASYNC - %s", self.yfqnews_url)
+        logging.info( f"{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} - %s", self.yfqnews_url)
         logging.info(f'%s - Load C4 Depth0 Skimmer schema: \n\t[ {self.YF_sym_main_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.YF_sym_main_schema}"        
         if os.path.exists(listall_schema_file_path):
@@ -303,14 +303,9 @@ class yfnews_reader:
                 logging.info( '%s - Run C4 async Depth0 skim crawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.yfqnews_url, config=config)
                 if result.extracted_content == "[]":
-                    #logging.error(f'%s - crawl4ai Depth0 skim failure: No articles extracted' % cmi_debug)
-                    logging.error( f'FUCK-1 - crawl4ai Depth0 skim failure: No articles extracted')
+                    logging.error( f'{cmi_debug} - crawl4ai Depth0 News skim fail: No articles found')
                     return None
                 else:
-                    logging.error( f'{cmi_debug} - crawl4ai Depth0 skim extracted something...\n{result.extracted_content}' )
-                    #logging.error(f'%s - crawl4ai Depth0 skim extracted something...\n{result.extracted_content}' % cmi_debug)
-                    #logging.error(f'%s - Result type: Type: {type(result)}' % cmi_debug)
-                    #logging.error(f'%s - Data list: {result.extracted_content}\nContent Type: {type(result.extracted_content)}\nLength: {len(result.extracted_content)}' % cmi_debug)
                     pass
 
                 if result.success:
