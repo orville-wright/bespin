@@ -412,25 +412,44 @@ class yfnews_reader:
             cleaned_str = time_str.strip()
             if cleaned_str == "No_pub_time":
                 return 0.0, "hours"
-            
-            match = re.match(r'^(\d+)([dhwmy])\s*ago$', cleaned_str)
+
+            # Matches numbers followed by unit strings like h/hr/hour, d/day, w/wk/week, m/mo/month, y/yr/year
+            pattern = r'^(\d+)\s*(h|hr|hours?|d|days?|w|wk|weeks?|m|mo|months?|y|yr|years?)\s*ago$'
+            match = re.match(pattern, cleaned_str, re.IGNORECASE)
             if not match:
                 raise ValueError(f"Invalid format: '{time_str}'")
 
             value, unit = match.groups()
             num = float(value)
+            unit = unit.lower()
             # Special logic for 'd' (days) and 1 day = 24 hours
-            if unit == 'd':
+            if unit in ('d', 'day', 'days'):
                 if num == 1:
                     return 24.0, "hours"
                 return num, "days"
             
-            # Conversion multipliers (h stays as hours, others convert to days)
+            # Standard conversion multipliers
             unit_map = {
                 'h': (1, 'hours'),
+                'hr': (1, 'hours'),
+                'hour': (1, 'hours'),
+                'hours': (1, 'hours'),
+                
                 'w': (7, 'days'),
+                'wk': (7, 'days'),
+                'week': (7, 'days'),
+                'weeks': (7, 'days'),
+                
+                # Month aliases ('m', 'mo', 'month', 'months')
                 'm': (30, 'days'),
+                'mo': (30, 'days'),
+                'month': (30, 'days'),
+                'months': (30, 'days'),
+                
                 'y': (365, 'days'),
+                'yr': (365, 'days'),
+                'year': (365, 'days'),
+                'years': (365, 'days'),
             }
             multiplier, label = unit_map[unit]
             return num * multiplier, label 
