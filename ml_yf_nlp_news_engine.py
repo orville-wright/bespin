@@ -412,7 +412,8 @@ class yfnews_reader:
             cleaned_str = time_str.strip()
             if cleaned_str == "No_pub_time":
                 return 0.0, "hours"
-            match = re.match(r'^(\d+)([hwmy])\s*ago$', time_str.strip())
+            
+            match = re.match(r'^(\d+)([dhwmy])\s*ago$', cleaned_str)
             if not match:
                 raise ValueError(f"Invalid format: '{time_str}'")
 
