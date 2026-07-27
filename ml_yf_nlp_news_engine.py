@@ -419,7 +419,6 @@ class yfnews_reader:
             art_publisher = article.get('Publisher', 'No_publisher • No_pub_time')  # extracted craw4al element
             art_teaser = article.get('Teaser', 'ERROR_no_teaser')                   # extracted craw4al element
             try:
-                print (f"#DEBUG-422: PUBLISHER-DATE: {art_publisher}")
                 _ap_sl = art_publisher.split('•')
                 art_publisher =_ap_sl[0]
                 update_time = _ap_sl[1]
@@ -459,10 +458,10 @@ class yfnews_reader:
                 
                 print(f"News article:  {symbol} [ {path} ]")
                 print(f"Article type:  {inf_type[0]}")
-                print(f"News agency:   {art_publisher} - {update_time}")
-                print(f"origin:        {self.url_netloc} - conf: [ t:{ml_atype} u:{uhint} h:{thint} ]")
+                print(f"Agency info:   {art_publisher} / Release date: {update_time}")
+                print(f"URL origin:    {self.url_netloc} - conf: [ t:{ml_atype} u:{uhint} h:{thint} ]")
                 print(f"Full URL:      {self.article_url}")
-                print(f"Short title:   {art_title}")
+                print(f"Short title:   {art_title:.50}")
                 print(f"Long teaser:   {art_teaser}")
                 
                 # TEST #3 : deupe (check for URL dupes)
