@@ -28,7 +28,7 @@
     },
     {
       "name": "Date",
-      "selector": "div section div div div",
+      "selector": "div section.container div div div",
       "type": "text"
     }
   ]
