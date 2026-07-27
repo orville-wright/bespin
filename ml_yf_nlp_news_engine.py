@@ -268,7 +268,7 @@ class yfnews_reader:
 
         # hack this to test crawl4 ai <li.p.text>
 
-        logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} _ASYNC - %s', self.yfqnews_url)
+        #logging.info(f'{__name__}::yahoofin_news_depth0.#{self.yti}.{idx_x} _ASYNC - %s', self.yfqnews_url)
         logging.info(f'%s - Load C4 Depth0 Skimmer schema: \n\t[ {self.YF_sym_main_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.YF_sym_main_schema}"        
         if os.path.exists(listall_schema_file_path):
