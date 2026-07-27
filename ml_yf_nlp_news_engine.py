@@ -303,12 +303,13 @@ class yfnews_reader:
                 result = await crawler.arun(self.yfqnews_url, config=config)
                 if result.extracted_content == "[]":
                     #logging.error(f'%s - crawl4ai Depth0 skim failure: No articles extracted' % cmi_debug)
-                    logging.error(f'FUCK- crawl4ai Depth0 skim failure: No articles extracted')
+                    logging.error( f'FUCK-1 - crawl4ai Depth0 skim failure: No articles extracted')
                     return None
                 else:
-                    logging.error(f'%s - crawl4ai Depth0 skim extracted something...\n{result.extracted_content}' % cmi_debug)
-                    logging.error(f'%s - Result type: Type: {type(result)}' % cmi_debug)
-                    logging.error(f'%s - Data list: {result.extracted_content}\nContent Type: {type(result.extracted_content)}\nLength: {len(result.extracted_content)}' % cmi_debug)
+                    logging.error( f'FUCK-2 - crawl4ai Depth0 skim extracted something...\n{result.extracted_content}')
+                    #logging.error(f'%s - crawl4ai Depth0 skim extracted something...\n{result.extracted_content}' % cmi_debug)
+                    #logging.error(f'%s - Result type: Type: {type(result)}' % cmi_debug)
+                    #logging.error(f'%s - Data list: {result.extracted_content}\nContent Type: {type(result.extracted_content)}\nLength: {len(result.extracted_content)}' % cmi_debug)
                     pass
 
                 if result.success:
