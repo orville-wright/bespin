@@ -25,6 +25,11 @@
       "name": "Publisher",
       "selector": "div div div div",
       "type": "text"
+    },
+    {
+      "name": "Date",
+      "selector": "div section div div div",
+      "type": "text"
     }
   ]
 }
