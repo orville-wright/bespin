@@ -410,7 +410,7 @@ class yfnews_reader:
         """
         def parse_relative_time(time_str: str) -> tuple[float, str]:
             cleaned_str = time_str.strip()
-            if cleaned_str == "no_pub_time":
+            if cleaned_str == "No_pub_time":
                 return 0.0, "hours"
             match = re.match(r'^(\d+)([hwmy])\s*ago$', time_str.strip())
             if not match:
