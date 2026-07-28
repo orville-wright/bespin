@@ -378,7 +378,7 @@ class yfnews_reader:
                         else:
                             print(f"Item: {i+1:003}: Empty no article data")
                 else:
-                    logging.info(f'%s - No articles found in extraction' % cmi_debug)
+                    logging.info('%s - No articles found in extraction' % cmi_debug)
                     
             except KeyError:
                 logging.error(f'%s - ERROR URL hash not in Net cache: {hash_state}' % cmi_debug)
@@ -458,14 +458,14 @@ class yfnews_reader:
         time_now = time.strftime("%H:%M:%S", time.localtime())
         symbol = symbol.upper()
         if not self.extracted_articles:         # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
-            logging.error(f'%s - No extracted articles available' % cmi_debug)
+            logging.error('%s - No extracted articles available' % cmi_debug)
             return 1, 0
         
         cg = 0                  # general conter for logging and reporting
         bad_url_count = 0       # counter for bad URLs found in the article dataset
         hcycle = 1              # uhinter counter for logging
         dedupe_set = set()      # deduplication optimization data set
-        logging.info(f'%s - Article Zone scanning / ml_ingest population loop...' % cmi_debug)
+        logging.info('%s - Article Zone scanning / ml_ingest population loop...' % cmi_debug)
         for article in self.extracted_articles: # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
             self.nlp_x += 1
             art_title = article.get('Title', 'ERROR_no_title')                      # extracted craw4al element
@@ -487,7 +487,7 @@ class yfnews_reader:
                 if article_url.startswith('http') or article_url.startswith('https'):              # quick safety check that we have a real URL
                     self.article_url = article_url
                     self.a_urlp = urlparse(self.article_url)    # split the URL into components
-                    schmeme = self.a_urlp.scheme                # http or https
+                    scheme = self.a_urlp.scheme                 # http or https
                     self.url_netloc = self.a_urlp.netloc        # e.g. finaince.yahoo.com
                     path = self.a_urlp.path                     # /path/to/article
                 else:
@@ -549,7 +549,7 @@ class yfnews_reader:
                 else:
                     logging.info(f'%s - Duplicate URL found / Skipping... {aurl_hash[:30]}...' % cmi_debug)
                     print(f"Duplicate:   URL duplicate found / Skipping... {aurl_hash[:30]}...")
-                    print (f" ")
+                    print (" ")
                     cg += 1
                     hcycle += 1
                     continue  # Skip to next article if duplicate URL hash found
@@ -620,7 +620,6 @@ class yfnews_reader:
     # WARN: Heavy network data extractor. 
     #       Does full get() request for every viable news article found
     # Reads each URL, and crawls that page, extracting key elements e.g. <p>.text
-    # Trying to refactor to craw4al, but currently uses BS4
     def artdata_BS4_depth3(self, item_idx, sentiment_ai, lmdb_inst):
         """
         Depth: 3
@@ -917,17 +916,10 @@ class yfnews_reader:
         #print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         return self.total_tokens, self.total_words, bs4_final_results
         
-# #####################################################################################
-    # WARNING:
-    # Async crawl4 implementation of artdata_BS4_depth3()
-    # HEAVY network data extractor
-    # Reads each URL, and crawls that page, extracting key elements
-    
+# #################################################
     def artdata_C4_depth3(self, item_idx, sentiment_ai, lmdb_inst):
         """
-        Extractor:  CRAWL4AI -  (engine decidcated to BS4 only)
-        - Build the Text corpus for 1 (one) article only
-        - Calls sentiment computation for 1 article
+        Extractor:  CRAWL4AI -  (engine decidcated to C4 only)
         Depth : 3
         This function is controlled from main()
         Extractor:  crawl4ai
@@ -1006,7 +998,7 @@ class yfnews_reader:
 
         #####################################################
         # C4
-        # For a network gt() read of this article / text
+        # For a network get() read of this article / text
         #
         logging.info( f'%s - C4 urlhash: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
@@ -1308,7 +1300,7 @@ class yfnews_reader:
                     print (f"#debug-1246: artdata_C4_depth3 - NO Action taken !: {_total_chars}" )
                     return 0, 0, 0
 
-            print ( "#debug-1249: C4 data extrct KV eng - Unknown state!" )
+            print ( "#debug-1303: C4 data extrct KV eng - Unknown state!" )
         return 0, 0, None
 
     # ############### Helper method
