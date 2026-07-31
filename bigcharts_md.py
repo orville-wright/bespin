@@ -1,8 +1,14 @@
 #! python3
+import asyncio
 from bs4 import BeautifulSoup
+from crawl4ai import LLMConfig
+from crawl4ai import BrowserConfig
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
+from crawl4ai import JsonCssExtractionStrategy
 import urllib
 import re
 import logging
+from pathlib import Path
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +27,8 @@ class bc_quote:
     symbol = ""         # Unique company symbol
     prev_symbol = ""    # NOT USED - the ticker previously looked at
     quote = {}          # the final quote data dict
+    mwquote_crawl_data = None
+    MW_quote_schema = None
 
     # DICT qlabels
     # STRING labels to find + test against when populating main data DICT
@@ -44,10 +52,15 @@ class bc_quote:
         self.inst_uid = i
         self.symbol = 'NONE'
         self.prev_symbol = 'NONE'
+        
+        # Setup crawl4ai schema path
+        __cur_dir__ = Path(__file__).parent
+        self.cur_dir = __cur_dir__
+        self.MW_quote_schema = f"{self.cur_dir}/json/MW_quote_schema.json"
 
         return
 
-# method 1
+# ########################### method 1
     def get_basicquote(self, ticker):
         """
         NOTE: This method is slower than method get_quickquote()
@@ -146,7 +159,7 @@ class bc_quote:
         logging.info('%s - basic_quote() DONE' % cmi_debug )
         return
 
-# method 2
+##################### method 2
     def get_quickquote(self, ticker):
         """
         NOTE: This method is much faster that get_basicquote()
@@ -203,7 +216,7 @@ class bc_quote:
                     self.quote[self.qlabels[k]] = clean2        # add to quote DICT
         return
 
-# method 3
+############################ method 3
     def q_polish(self):
         """
         Curate & polish data elements in the quote DICT that need wrangeling/cleaning after data extraction.
@@ -304,3 +317,84 @@ class bc_quote:
         self.quote['avg200d_v'] = int(at2)         # make vol num real int
 
         return
+
+# ############################ method 4
+
+    async def c4ai_mwquote(self, ticker):
+        """
+
+        logging.info('%s - IN' % cmi_debug )
+        ticker = ticker
+        self.symbol = ticker
+        #url_endpoint = "https://bigcharts.marketwatch.com/quickchart/quickchart.asp?symb="
+        url_endpoint = "https://www.marketwatch.com/investing/stock/"
+        
+        """       
+        cmi_debug = __name__+"::"+self.c4ai_mwquote.__name__+".#"+str(ticker)
+        self.url_endpoint = "https://www.marketwatch.com/investing/stock/"
+        self.url = "f{self.url_endpoint}{ticker}"
+        
+        logging.info( f"{__name__}::c4ai_mwquote.#{self.inst_uid} {self.url}" % cmi_debug)
+        logging.info( f'%s - Load C4 Marketwatch quote schema: \n\t[ {self.MW_quote_schema} ]' % cmi_debug)
+        listall_schema_file_path = f"{self.MW_quote_schema}"        
+        if os.path.exists(listall_schema_file_path):
+            with open(listall_schema_file_path, "r") as f:
+                schema = json.load(f) 
+        else:
+            logging.error(f'%s - FAILED to load schema file: [ {self.MW_quote_schema} ]' % cmi_debug)
+            return None
+
+        logging.info( '%s - Setup crawl4ai scrape strategy...' % cmi_debug)
+        extraction_strategy = JsonCssExtractionStrategy(schema)
+        
+        js_cmds = [
+            "window.scrollTo(0, document.body.scrollHeight);",
+            "await new Promise(resolve => setTimeout(resolve, 1000));"
+        ]
+        
+        config = CrawlerRunConfig(
+            excluded_tags=["script", "style", "noscript", "template"],
+            extraction_strategy=extraction_strategy,
+            scan_full_page=True,
+            verbose=False,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
+            log_console=False,
+            stream=True,
+            js_code=js_cmds,
+            cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
+        )
+
+        try:
+            async with AsyncWebCrawler() as crawler:
+                cmi_debug = __name__+"::" + self.c4ai_mwquote.__name__+".#"+str(self.inst_uid)+"."+str(ticker)+"_crawler"
+                logging.info( '%s - Run C4 async MW quote crawl NOW...' % cmi_debug)
+                result = await crawler.arun(self.url, config=config)
+                if result.extracted_content == "[]":
+                    logging.error( f'{cmi_debug} - crawl4ai quote scrape fail')
+                    return None
+                else:
+                    pass
+
+                if result.success:
+                    #print (f"DEBUG: C4_Data dump 0: {result.extracted_content}" )
+                    self.mwquote_crawl_data = json.loads(result.extracted_content)  # save dataset in class structure
+                    
+                    # print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb[aurl_hash]}" )
+                    #print ( f"DEBUG: C4_Data dump 2: {self.yfn_crawl_data}" )
+                    return 0    # success
+                else:
+                    logging.error(f'%s - crawl4ai MW quote extract failure: {result.error}' % cmi_debug)
+                    return None                    
+        except Exception as e:
+            logging.error(f'{cmi_debug} - ERROR crawl4ai extract: {e}')
+            #print ( f"DEBUG: C4_Data dump 3: {escape(result.extracted_content)}" )
+            e_string = str(e)
+            e_pos_error = e_string.split(' ')
+            #print ( f"DEBUG:Except @ pos: {e_pos_error[5]}" )
+            e_html = result.html
+            e_start = int(e_pos_error[5]) - 200
+            e_end = int(e_pos_error[5]) + 200 
+            print ( "==================================== Craw4ai ERROR ====================================")
+            print ( repr(e_html[e_start:e_end]) )
+            print ( "==================================== Craw4ai ERROR ====================================")
+            logging.error(f'{cmi_debug} - ERROR @ Depth0: {e.args}')
+            return None

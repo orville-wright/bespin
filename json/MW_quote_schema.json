@@ -1,0 +1,42 @@
+{
+  "name": "MarketWatchQuoteSelector",
+  "baseSelector": "#maincontent",
+
+  "fields": [
+    {
+      "name": "co_name",
+      "selector": "h1.company__name",
+      "type": "text"
+    },
+    {
+      "name": "intraday_price",
+      "selector": "div.region.region--intraday div.intraday__data h2 bg-quote",
+      "type": "text"
+    },
+    {
+      "name": "intraday_change",
+      "selector": "div.region.region--intraday div.intraday__data bg-quote span.change--point--q bg-quote",
+      "type": "text"
+    },
+    {
+      "name": "intraday_pctg",
+      "selector": "div.region.region--intraday div.intraday__data > bg-quote > span.change--percent--q bg-quote",
+      "type": "text"
+    },
+    {
+      "name": "close_price",
+      "selector": "div.region.region--intraday div.column.column--aside div.intraday__close table tbody tr td[0]",
+      "type": "text"
+    },
+    {
+      "name": "close_change",
+      "selector": "div.region.region--intraday div.column.column--aside div.intraday__close table tbody tr td[1]",
+      "type": "text"
+    },
+    {
+      "name": "close_pctg",
+      "selector": "div.region.region--intraday div.column.column--aside div.intraday__close table tbody tr td[2]",
+      "type": "text"
+    }
+]
+}

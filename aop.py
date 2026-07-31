@@ -908,7 +908,8 @@ def quoute_examples():
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#2"
         bc = bc_quote(5, args)                  # setup an emphemerial dict
         bc_symbol = args['qsymbol'].upper()     # what symbol are we getting a quote for?
-        bc.get_basicquote(bc_symbol)            # get the quote
+        #bc.get_basicquote(bc_symbol)            # get the quote
+        bc.c4ai_mwquote(bc_symbol)              # new Crawl4ai scraper
         print ( " " )
         print ( f"Get BIGCharts.com BasicQuote for: {bc_symbol}" )
         print ( "================= basicquote data =======================" )
