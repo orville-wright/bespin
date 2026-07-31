@@ -842,6 +842,7 @@ quote price data is 5 mins delayed
 """
 def quoute_examples():
     if args['qsymbol'] is not False:
+        cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#1"
         nq = nquote(1, args)                          # Nasdqa quote instance from nasdqa_quotes.py
         nq.init_dummy_session()                       # note: this will set nasdaq magic cookie
         nq_symbol = args['qsymbol'].upper()
@@ -906,6 +907,7 @@ def quoute_examples():
     10 data fields provided
     """
     if args['qsymbol'] is not False:
+        cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#2"
         bc = bc_quote(5, args)                  # setup an emphemerial dict
         bc_symbol = args['qsymbol'].upper()     # what symbol are we getting a quote for?
         bc.get_basicquote(bc_symbol)            # get the quote
@@ -926,6 +928,7 @@ def quoute_examples():
     40 data fields provided
     """
     if args['qsymbol'] is not False:
+        cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#3"
         bc = bc_quote(5, args)                  # setup an emphemerial dict
         bc_symbol = args['qsymbol'].upper()     # what symbol are we getting a quote for?
         bc.get_quickquote(bc_symbol)            # get the quote
