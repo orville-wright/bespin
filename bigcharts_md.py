@@ -334,7 +334,7 @@ class bc_quote:
         self.url_endpoint = "https://www.marketwatch.com/investing/stock/"
         self.url = "f{self.url_endpoint}{ticker}"
         
-        logging.info( f"{__name__}::c4ai_mwquote.#{self.inst_uid} {self.url}" % cmi_debug)
+        logging.info( f"%s - {__name__}::c4ai_mwquote.#{self.inst_uid} {self.url}" % cmi_debug)
         logging.info( f'%s - Load C4 Marketwatch quote schema: \n\t[ {self.MW_quote_schema} ]' % cmi_debug)
         listall_schema_file_path = f"{self.MW_quote_schema}"        
         if os.path.exists(listall_schema_file_path):
