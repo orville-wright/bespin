@@ -836,6 +836,29 @@ class ml_sentiment:
         - This logic and math is Quant industry standard 
         """
         
+        ############### private helper ##############
+        def classify_conviction(conviction):
+            # Classification threshold matrix
+            SENTIMENT_BANDS = [
+                ( 0.45,  1.00, "Strongly Bullish"),
+                ( 0.19,  0.45, "Bullish"),
+                ( 0.045, 0.19, "Slightly Bullish"),
+                (-0.045, 0.045, "Neutral"),
+                (-0.20, -0.045, "Slightly Bearish"),
+                (-0.50, -0.20, "Bearish"),
+                (-1.00, -0.50, "Strongly Bearish"),
+            ]
+
+            for low, high, label in SENTIMENT_BANDS:
+                if low <= conviction < high:
+                    return label
+
+            if conviction >= 1.0:
+                return "Strongly Bullish"
+
+            return "Strongly Bearish"
+        ############ End private helpder method ############
+
         direction_total = positive_share + negative_share   # Direction space (ignore neutral)
         if direction_total == 0:
             pos_dir = 0.5
@@ -848,21 +871,7 @@ class ml_sentiment:
         clarity = 1 - neutral_share             # Uncertainty space
         conviction = direction_score * clarity  # Final conviction signal
 
-        # Classification
-        if conviction > 0.45:
-            sentiment = "Strongly Bullish"
-        elif conviction > 0.19:
-            sentiment = "Bullish"
-        elif conviction > 0.045:
-            sentiment = "Slightly Bullish"
-        elif conviction < -0.045:
-            sentiment = "Slightly Bearish"
-        elif conviction < -0.2:
-            sentiment = "Bearish"
-        elif conviction < -0.5:
-            sentiment = "Strongly Bearish"
-        else:
-            sentiment = "Neutral"
+        sentiment = classify_conviction(conviction)
 
         self.summary_2v_metrics = {
             "sentiment": sentiment,
