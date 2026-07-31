@@ -7,6 +7,7 @@ from crawl4ai import BrowserConfig
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode, CrawlResult
 from crawl4ai import JsonCssExtractionStrategy
 import urllib
+import json
 import re
 import logging
 from pathlib import Path
