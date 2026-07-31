@@ -381,7 +381,7 @@ class bc_quote:
                     self.mwquote_crawl_data = json.loads(result.extracted_content)  # save dataset in class structure
                     
                     # print ( f"DEBUG: C4_Data dump 1: {self.yfn_jsdb[aurl_hash]}" )
-                    #print ( f"DEBUG: C4_Data dump 2: {self.yfn_crawl_data}" )
+                    print ( f"#DEBUG-384: C4_Data dump 2: {self.mwquote_crawl_data}" )
                     return 0    # success
                 else:
                     logging.error(f'%s - crawl4ai MW quote extract failure: {result.error}' % cmi_debug)
