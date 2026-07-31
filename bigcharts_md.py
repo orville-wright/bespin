@@ -361,6 +361,11 @@ class bc_quote:
             verbose=True,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
             log_console=False,
             stream=True,
+            headless=False,
+            enable_stealth=True,
+            user_agent_mode="random",
+            wait_time=3.0,
+            delay_before_return_html=2.0,
             cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
         )
 
