@@ -1,7 +1,6 @@
 {
   "name": "MarketWatchQuoteSelector",
-  "baseSelector": "#maincontent",
-
+  "baseSelector": "#maincontent.container.container--body",
   "fields": [
     {
       "name": "co_name",
