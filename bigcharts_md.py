@@ -355,7 +355,7 @@ class bc_quote:
         ]
 
         browser_cfg = BrowserConfig(
-            headless=False,
+            headless=True,
             enable_stealth=True,
             user_agent_mode="random"
         )
