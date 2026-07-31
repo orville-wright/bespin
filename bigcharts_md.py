@@ -1,4 +1,5 @@
 #! python3
+import os
 import asyncio
 from bs4 import BeautifulSoup
 from crawl4ai import LLMConfig
