@@ -136,7 +136,6 @@ def main():
 ########## 0 Basic Quotes #################3
     if args['qsymbol'] is not False:
         quoute_examples()
-    return
 
 ########### 1 - TOP GAINERS ################
     if args['bool_tops'] is True:
@@ -898,21 +897,20 @@ def quoute_examples():
         print ( f"===============================================================" )
         """
 
+
     """
     EXAMPLE #2
-    bigcharts.marketwatch.com - data via BS4 scraping
+    marketwatch.com - data via Craw4ai scraper
     quote price data is 15 mins delayed
-    10 data fields provided
     """
     if args['qsymbol'] is not False:
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#2"
-        bc = bc_quote(5, args)                  # setup an emphemerial dict
+        bc = bc_quote(2, args)                  # create an instance
         bc_symbol = args['qsymbol'].upper()     # what symbol are we getting a quote for?
-        #bc.get_basicquote(bc_symbol)            # get the quote
-        bc.c4ai_mwquote(bc_symbol)              # new Crawl4ai scraper
+        asyncio.run(bc.c4ai_mwquote(bc_symbol))             # new Crawl4ai scraper
         print ( " " )
-        print ( f"Get BIGCharts.com BasicQuote for: {bc_symbol}" )
-        print ( "================= basicquote data =======================" )
+        print ( f"Get MarketWatch.com Detailed Quote data for: {bc_symbol}" )
+        print ( "================= MarketWatch Quote  data =======================" )
         c = 1
         for k, v in bc.quote.items():
             print ( f"{c} - {k} : {v}" )
