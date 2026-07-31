@@ -68,7 +68,7 @@ class bc_quote:
         #url_queryopts = "&insttype=Stock&freq=9&show=True&time=1"
         url_queryopts = "?mod=mw_quote_tab"
 
-        logging.info('%s - Read request : Basic quote URL endpoint' % cmi_debug )
+        logging.info( f'%s - Read request : URL endpoint {url_endpoint}{ticker}' % cmi_debug )
         # with urllib.request.urlopen( f"{url_endpoint}{ticker}{url_queryopts}" ) as url:
         with urllib.request.urlopen( f"{url_endpoint}{ticker}" ) as url:
             s = url.read()

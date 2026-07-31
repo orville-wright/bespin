@@ -886,8 +886,6 @@ def quoute_examples():
         """
 
         print ( "===================== Nasdaq quote data =======================" )
-        print ( f"                          {nq_symbol}" )
-        print ( "===============================================================" )
         c = 1
         for k, v in wq.qd_quote.items():
             print ( f"{c} - {k} : {v}" )
