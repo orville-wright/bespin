@@ -353,7 +353,13 @@ class bc_quote:
             "window.scrollTo(0, document.body.scrollHeight);",
             "await new Promise(resolve => setTimeout(resolve, 1000));"
         ]
-        
+
+        browser_cfg = BrowserConfig(
+            headless=False,
+            enable_stealth=True,
+            user_agent_mode="random"
+        )
+
         config = CrawlerRunConfig(
             excluded_tags=["script", "style", "noscript", "template"],
             extraction_strategy=extraction_strategy,
@@ -361,16 +367,13 @@ class bc_quote:
             verbose=True,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
             log_console=False,
             stream=True,
-            headless=False,
-            enable_stealth=True,
-            user_agent_mode="random",
             wait_time=3.0,
             delay_before_return_html=2.0,
             cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
         )
 
         try:
-            async with AsyncWebCrawler() as crawler:
+            async with AsyncWebCrawler(config=browser_cfg) as crawler:
                 cmi_debug = __name__+"::" + self.c4ai_mwquote.__name__+".#"+str(self.inst_uid)+"."+str(ticker)+"_crawler"
                 logging.info( '%s - Run C4 async MW quote crawl NOW...' % cmi_debug)
                 result = await crawler.arun(self.url, config=config)
