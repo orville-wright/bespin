@@ -334,8 +334,9 @@ class neo4j_auradb:
         data_to_insert = df_data[['urlhash']].to_dict(orient='records')
  
         print ( f"#DEBUG-#336: items in df_final: {int(len(df_data))}" )
-        print ( f"#DEBUG-#337: DF as list[]\n{data_to_insert}" )        
-        print ( f"#DEBUG-#338: dump df_final:\n{df_data}" )
+        #print ( f"#DEBUG-#337: DF as list[]\n{data_to_insert}" )        
+        #print ( f"#DEBUG-#338: dump df_final:\n{df_data}" )
+        """
         with self.driver.session() as session:
             for idx, row in df_data.iterrows():       # cycle through our candidate list of URLHASH items
                     print ( f"#DEBUG-#341: iterrow loop -> index: {idx}" )  # debug
@@ -343,6 +344,7 @@ class neo4j_auradb:
                     _article=str(row['art'])
                     print ( f"DEBUG-#344: Cypher helper for urlhash: {_urlhash} \nArtile: {_article}")
                     self.sar_helper_1(symbol, _urlhash, _article, session)   # check for existing relationship and return 0 or 1
+        """
 
     # -------------- private helper methods -------------
     def sar_helper_1(self, _symbol, _u, _a, session):

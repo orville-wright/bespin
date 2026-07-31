@@ -849,18 +849,18 @@ class ml_sentiment:
         conviction = direction_score * clarity  # Final conviction signal
 
         # Classification
-        if conviction > 0.5:
+        if conviction > 0.45:
             sentiment = "Strongly Bullish"
-        elif conviction > 0.2:
+        elif conviction > 0.19:
             sentiment = "Bullish"
-        elif conviction > 0.05:
+        elif conviction > 0.045:
             sentiment = "Slightly Bullish"
-        elif conviction < -0.5:
-            sentiment = "Strongly Bearish"
+        elif conviction < -0.045:
+            sentiment = "Slightly Bearish"
         elif conviction < -0.2:
             sentiment = "Bearish"
-        elif conviction < -0.05:
-            sentiment = "Slightly Bearish"
+        elif conviction < -0.5:
+            sentiment = "Strongly Bearish"
         else:
             sentiment = "Neutral"
 
