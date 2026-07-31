@@ -372,6 +372,7 @@ class bc_quote:
                 result = await crawler.arun(self.url, config=config)
                 if result.extracted_content == "[]":
                     logging.error( f'{cmi_debug} - crawl4ai quote scrape fail')
+                    print ( f"{result.extracted_content}" )
                     return None
                 else:
                     pass
