@@ -842,9 +842,9 @@ class ml_sentiment:
             SENTIMENT_BANDS = [
                 ( 0.45,  1.00, "Strongly Bullish"),
                 ( 0.19,  0.45, "Bullish"),
-                ( 0.045, 0.19, "Slightly Bullish"),
-                (-0.045, 0.045, "Neutral"),
-                (-0.20, -0.045, "Slightly Bearish"),
+                ( 0.04, 0.19, "Slightly Bullish"),
+                (-0.04, 0.04, "Neutral"),
+                (-0.20, -0.04, "Slightly Bearish"),
                 (-0.50, -0.20, "Bearish"),
                 (-1.00, -0.50, "Strongly Bearish"),
             ]
