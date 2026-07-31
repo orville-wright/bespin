@@ -132,6 +132,12 @@ def main():
     print ( " " )
     recommended = {}        # dict of recomendations
 
+
+########## 0 Basic Quotes #################3
+    if args['qsymbol'] is not False:
+        quoute_examples()
+    return
+
 ########### 1 - TOP GAINERS ################
     if args['bool_tops'] is True:
         print ( "========== Large Cap / Top Mover by % change ===============================" )
@@ -905,12 +911,12 @@ def quoute_examples():
         bc.get_basicquote(bc_symbol)            # get the quote
         print ( " " )
         print ( f"Get BIGCharts.com BasicQuote for: {bc_symbol}" )
-        print ( f"================= basicquote data =======================" )
+        print ( "================= basicquote data =======================" )
         c = 1
         for k, v in bc.quote.items():
             print ( f"{c} - {k} : {v}" )
             c += 1
-        print ( f"========================================================" )
+        print ( "========================================================" )
         print ( " " )
 
     """
@@ -926,16 +932,15 @@ def quoute_examples():
         bc.q_polish()                           # wrangel the data elements
         print ( " " )
         print ( f"Get BIGCharts.com QuickQuote for: {bc_symbol}" )
-        print ( f"================= quickquote data =======================" )
+        print ( "================= quickquote data =======================" )
         c = 1
         for k, v in bc.quote.items():
             print ( f"{c} - {k} : {v}" )
             c += 1
-        print ( f"========================================================" )
+        print ( "========================================================" )
         print ( " " )
 
     return
-
 
 if __name__ == '__main__':
     main()
