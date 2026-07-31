@@ -358,10 +358,9 @@ class bc_quote:
             excluded_tags=["script", "style", "noscript", "template"],
             extraction_strategy=extraction_strategy,
             scan_full_page=True,
-            verbose=False,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
+            verbose=True,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
             log_console=False,
             stream=True,
-            js_code=js_cmds,
             cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
         )
 
