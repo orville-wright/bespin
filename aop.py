@@ -683,8 +683,8 @@ def main():
 
             for k, v in news_ai.yfn.news_heatmap.items():
                 #_ks = str(k)
-                for i in range(2):
-                    print ( f"{i}\tArticle: {k:.10}\tHeat: {v}", end="" )
+                for i in range(3):
+                    print ( f"{k:.10}\tTemperature: {v}", end="" )
                 print ("")
 
 #################################################################
