@@ -436,18 +436,14 @@ class yfnews_reader:
                 'hr': (1, 'hours'),
                 'hour': (1, 'hours'),
                 'hours': (1, 'hours'),
-                
                 'w': (7, 'days'),
                 'wk': (7, 'days'),
                 'week': (7, 'days'),
                 'weeks': (7, 'days'),
-                
-                # Month aliases ('m', 'mo', 'month', 'months')
                 'm': (30, 'days'),
                 'mo': (30, 'days'),
                 'month': (30, 'days'),
                 'months': (30, 'days'),
-                
                 'y': (365, 'days'),
                 'yr': (365, 'days'),
                 'year': (365, 'days'),
@@ -484,8 +480,7 @@ class yfnews_reader:
                 update_time = "Err_no_pub_time"
 
             print(f"Eval cycle:    Depth 1 - Eval article: {cg} of {self.articles_found} News feed articles skimmed...")
-            if article_url:
-                # TEST #1 : is this a healtly URL ?
+            if article_url:                                     # TEST #1 : is this a healtly URL ?
                 if article_url.startswith('http') or article_url.startswith('https'):              # quick safety check that we have a real URL
                     self.article_url = article_url
                     self.a_urlp = urlparse(self.article_url)    # split the URL into components
@@ -557,8 +552,8 @@ class yfnews_reader:
                     hcycle += 1
                     continue  # Skip to next article if duplicate URL hash found
             else:
-                logging.info(f'%s - No URL found for article: {art_title[:45]}...' % cmi_debug)
-                print(f"Missing URL:   data unusable No URL found / Skipping... {aurl_hash[:30]}...")
+                logging.info(f'%s - No URL extracted for article: {art_title[:45]}...' % cmi_debug)
+                print( f"Missing URL:   data unusable No URL extracted / Skipping: {aurl_hash[:30]}...\n" )
                 bad_url_count += 1
 
         return 0, bad_url_count
