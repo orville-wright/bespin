@@ -26,6 +26,16 @@ from y_smallcaps import smallcap_screen
 from y_techevents import y_techevents
 from y_topgainers import y_topgainers
 
+# NEWS Data Extractor engines
+from data_engines_fundamentals.polygon_md import polygon_md
+from data_engines_news.barrons_news import barrons_news
+from data_engines_news.benzinga_news import benzinga_news
+from data_engines_news.forbes_news import forbes_news
+from data_engines_news.fxstreet_news import fxstreet_news
+from data_engines_news.investing_news import investing_news
+from data_engines_news.hedgeweek_news import hedgeweek_news
+#from data_engines_news.gurufocus_news import gurufocus_news
+
 """
 Disbaled for now
 Market DATA Extractor engines
@@ -41,15 +51,6 @@ from data_engines_fundamentals.stooq_md import stooq_md
 from data_engines_fundamentals.tiingo_md import tiingo_md
 from data_engines_fundamentals.twelvedata_md import twelvedata_md
 
-# NEWS Data Extractor engines
-from data_engines_fundamentals.polygon_md import polygon_md
-from data_engines_news.barrons_news import barrons_news
-from data_engines_news.benzinga_news import benzinga_news
-from data_engines_news.forbes_news import forbes_news
-from data_engines_news.fxstreet_news import fxstreet_news
-from data_engines_news.investing_news import investing_news
-from data_engines_news.hedgeweek_news import hedgeweek_news
-from data_engines_news.gurufocus_news import gurufocus_news
 """
 
 # Main() Global attributes
@@ -340,12 +341,6 @@ def quoute_examples():
         print ( "========================================================" )
         print ( " " )
 
-    return
-
-if __name__ == '__main__':
-    main()
-
-"""
     #################################################################################
     # ALPACA API Integration - Live quotes and bars ################################
     #################################################################################
@@ -416,6 +411,10 @@ if __name__ == '__main__':
         
         print(" ")
 
+if __name__ == '__main__':
+    main()
+
+"""
 #################################################################################
 # NEW DATA SOURCES - SEC, FRED, Polygon.io Integration ########################
 #################################################################################
