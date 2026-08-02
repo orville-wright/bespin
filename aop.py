@@ -681,7 +681,11 @@ def main():
             # End Summary report
             # ############### Done reading many articles ###################
 
-            print ( f"#-debug-684: HEAT MAP:\n {news_ai.yfn.news_heatmap}" )
+            for k, v in news_ai.yfn.news_heatmap.items():
+                #_ks = str(k)
+                for i in range(2):
+                    print ( f"{i}\tArticle: {k:.10}\tHeat: {v}", end="" )
+                print ("")
 
 #################################################################
 # Neo4j Graph DATBASE build-out
