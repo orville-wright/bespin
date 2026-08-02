@@ -37,7 +37,8 @@ class barrons_news:
         self.inst_id = inst_id
         __cur_dir__ = Path(__file__).parent
         self.cur_dir = __cur_dir__
-        self.json_file = f"{self.cur_dir}/json/BARRONS_crawl4ai_schema.json"
+        #self.json_file = f"{self.cur_dir}/json/BARRONS_crawl4ai_schema.json"
+        self.json_file = f"json/BARRONS_crawl4ai_schema.json"
 
     # ###################### method : 1
     async def craw4ai_str_schema_extr(self):
