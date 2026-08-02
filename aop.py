@@ -681,7 +681,7 @@ def main():
             # End Summary report
             # ############### Done reading many articles ###################
 
-
+            print ( f"#-debug-684: HEAT MAP:\n {news_ai.yfn.news_heatmap}" )
 
 #################################################################
 # Neo4j Graph DATBASE build-out

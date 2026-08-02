@@ -66,7 +66,8 @@ class yfnews_reader:
 
     li_superclass = None    # all possible News articles
     live_resp0 = None
-    ml_brief = []           # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
+    ml_brief = None         # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
+    news_heatmap = None
     ml_ingest = {}          # ML ingested NLP candidate articles
     ml_sent = None
     nlp_x = 0
@@ -121,6 +122,7 @@ class yfnews_reader:
         self.symbol = symbol
         self.nlp_x = 0
         self.cycle = 1
+        self.news_heatmap = dict()
         self.kv_created_BS4 = int(0)
         self.kv_created_C4 = int(0)
         self.sent_df0 = pd.DataFrame(columns=['Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'])
@@ -515,18 +517,20 @@ class yfnews_reader:
     
                 print(f"News article:  {symbol} [ {path} ]")
                 print(f"Article type:  {inf_type[0]}")
-                print(f"Agency info:   {art_publisher} - Release date: {amount:.0f} {unit_name} ago")
+                print(f"Agency info:   {art_publisher} - Age: {amount:.0f} {unit_name} ago")
                 print(f"URL origin:    {self.url_netloc} - conf: [ t:{ml_atype} u:{uhint} h:{thint} ]")
                 print(f"Full URL:      {self.article_url}")
                 print(f"Short title:   {art_title:.50}")
                 print(f"Long teaser:   {art_teaser}")
                 
                 # TEST #3 : deupe (check for URL dupes)
-                self.ml_brief.append(art_title)                 # WARNING: List not used by anything (yet)
                 auh = hashlib.sha256(self.article_url.encode()) # Generate hash of URL
                 aurl_hash = auh.hexdigest()                     # compute hash
                 if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() ) : uniqueness test
                     dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
+                    self._d = f"{amount:.0f}"
+                    self._u = f"{unit_name}"
+                    self.news_heatmap.update({aurl_hash: 'self._d self._u ago'})      # build unique new age heatmap
                     logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
                     print(" ")
                     
