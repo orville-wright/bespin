@@ -686,7 +686,7 @@ def main():
             for k, v in news_ai.yfn.news_heatmap.items():
                 #_ks = str(k)
                 for i in range(3):
-                    print ( f"{k:.10}\tAge: {v}\t", end="" )
+                    print ( f"{k:.10}  Age: {v:.10}\t", end="" )
                 print ("")
 
 #################################################################
