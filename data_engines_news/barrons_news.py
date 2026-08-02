@@ -120,4 +120,5 @@ class barrons_news:
             
         logging.info(f"%s - complete Barrons data craw/scrap..." % cmi_debug )
         print (f"[Complete] + Barrons News Data Extractor | Rows: {len(self.DB_insert_data)}" )
+        print ( f"##-debug-123: DUMP news\n{self.DB_insert_data}" )
         return int(len(self.DB_insert_data))
