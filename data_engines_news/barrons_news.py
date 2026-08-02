@@ -119,6 +119,13 @@ class barrons_news:
         #    print (f"{json.dumps(self.DB_insert_data, indent=2)}" )
             
         logging.info(f"%s - complete Barrons data craw/scrap..." % cmi_debug )
-        print (f"[Complete] + Barrons News Data Extractor | Rows: {len(self.DB_insert_data)}" )
-        print ( f"##-debug-123: DUMP news\n{self.DB_insert_data}" )
+
+        print ("BARRONS news metrics")
+        print (f"News data rows: {len(self.DB_insert_data)}" )
+        print ("======================================================================================")
+        i = int(0)
+        for k, v in self.DB_insert_data.items():
+            print ( f"{k:12.10}\t{k['Title']}" )
+        
+        #print ( f"##-debug-123: DUMP news\n{self.DB_insert_data}" )
         return int(len(self.DB_insert_data))
