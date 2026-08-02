@@ -528,8 +528,7 @@ class yfnews_reader:
                 aurl_hash = auh.hexdigest()                     # compute hash
                 if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() ) : uniqueness test
                     dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
-                    _d = f"{amount:.0f}"
-                    _u = f"{unit_name}"
+                    _d = f"{amount:.0f} {unit_name} ago"
                     self.news_heatmap.update({aurl_hash: _d})      # build unique new age heatmap
                     logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
                     print(" ")
