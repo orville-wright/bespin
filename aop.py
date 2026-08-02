@@ -683,11 +683,15 @@ def main():
 
             print ("Article news Age HEAT MAP")
             print ("======================================================================================")
+            i = int(0)
             for k, v in news_ai.yfn.news_heatmap.items():
-                #_ks = str(k)
-                for i in range(3):
+                if i < 3:
                     print ( f"{k:12.10}  Age: {v:15}\t", end="" )
-                print ("")
+                    i += 1
+                    continue
+                else:
+                    i = int(0)
+                    print ("")
 
 #################################################################
 # Neo4j Graph DATBASE build-out
