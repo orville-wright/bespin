@@ -555,6 +555,8 @@ class yfnews_reader:
                 logging.info(f'%s - No URL extracted for article: {art_title[:45]}...' % cmi_debug)
                 print( f"Missing URL:   data unusable No URL extracted / Skipping: {aurl_hash[:30]}...\n" )
                 bad_url_count += 1
+                cg += 1
+                hcycle += 1
 
         return 0, bad_url_count
 
