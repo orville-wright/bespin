@@ -693,6 +693,9 @@ def main():
                     i = int(0)
                     print ("")
 
+
+            print ("\n\n")
+
 #################################################################
 # Neo4j Graph DATBASE build-out
 # TODO: This could probably all be moved into neo4j_graphbb.py
