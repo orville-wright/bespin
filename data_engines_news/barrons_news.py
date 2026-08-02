@@ -57,7 +57,17 @@ class barrons_news:
         logging.info( f'%s - INIT craw4ai extraction strategy...' % cmi_debug )
         extraction_strategy = JsonCssExtractionStrategy(schema)
         logging.info( f'%s - INIT craw4ai Crawler RunConfig()...' % cmi_debug )
-        config = CrawlerRunConfig(extraction_strategy=extraction_strategy)
+        
+        #config = CrawlerRunConfig(extraction_strategy=extraction_strategy)
+        config = CrawlerRunConfig(
+                    excluded_tags=["script", "style", "noscript", "template"],
+                    extraction_strategy=extraction_strategy,
+                    scan_full_page=True,
+                    verbose=False,               # disable crawl4ai verbose browser loging e.g. [FETCH], [EXTRACT], [SCRAPE], [EXTRACT], [COMPLETE]
+                    log_console=False,
+                    stream=True,
+                    cache_mode=CacheMode.BYPASS  # force Bypass cache. ALlways read fresh data
+                )
 
         # This is where we defin the extenal data sources that this scraper will scrape
         # the crawler will calculate the number of urls, so just add them to this is
@@ -79,6 +89,7 @@ class barrons_news:
         # - crawler.arun_many() with CrawlerRunConfig(extraction_strategy=extraction_strategy)
         # - The results: List[CrawlResult] object seems to not like a url [list]
         # for now, I am looping async with AsyncWebCrawler() as crawler:
+
         
         count = 0
         for i in range(len(urls)):
@@ -87,7 +98,7 @@ class barrons_news:
                 results: List[CrawlResult] = await crawler.arun(
                         urls[i], config=config)
 
-                logging.info(f'%s- Data wrangeling' % cmi_debug )
+                logging.info( '%s - Data wrangeling' % cmi_debug )
                 for result in results:
                     if result.success:
                         data = json.loads(result.extracted_content)
@@ -98,10 +109,10 @@ class barrons_news:
                                 self.DF_data.append(t)      # append to working list
                                 count += 1
                             except IndexError:
-                                logging.info(f'%s - Failed to unwind JSON Dict package' % cmi_debug )
+                                logging.info( '%s - Failed to unwind JSON Dict package' % cmi_debug )
 
         self.DB_insert_data = {} 
-        logging.info(f'%s - Build final DB insertion dict...' % cmi_debug )
+        logging.info( '%s - Build final DB insertion dict...' % cmi_debug )
         for dict in self.DF_data:                   # this is where the final dataset can be accessed
             v = dict[0]                             # tupple elelemt 0
             w = dict[1]                             # tupple elelemt 1
