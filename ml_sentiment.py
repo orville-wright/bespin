@@ -253,8 +253,8 @@ class ml_sentiment:
                     self.cr_package.update(_tr_final_results)  # merge the final results into the cr_package
                     continue
                 else:
-                    truncated = "Clean"
-                    _dpro_eng = 4   # C4 + Clean (not truncated)
+                    truncated = "Clean"     # no need to for unified chunker
+                    _dpro_eng = 4           # C4 + Clean (not truncated)
                     logging.info( f"%s - {truncated} Short text blocklet / No truncation" % cmi_debug )
                     blocklet_d = dict()
                     blocklet_d.update({self.chunk_udid: scentxt[i]})    # create 1 row dict for dict_processor() for NATURAL short/clean text blocklet
@@ -308,8 +308,8 @@ class ml_sentiment:
                     self.cr_package.update(_tr_final_results)  # merge the final results into the cr_package
                     continue
                 else:
-                    truncated = "Clean"
-                    _dpro_eng = 2   # BS4 + Clean (not truncated)
+                    truncated = "Clean"     # no need for unified chunker
+                    _dpro_eng = 2           # BS4 + Clean (not truncated)
                     logging.info( f"%s - {truncated} Short text blocklet / No truncation" % cmi_debug )
                     blocklet_d = dict()
                     blocklet_d.update({self.chunk_udid: scentxt[i].text}) # create 1 row dict for dict_processor() (ths is a short/clean <p>) text blocklet
@@ -328,26 +328,30 @@ class ml_sentiment:
     def unified_chunker(self, st_list, tokenizer_mml, _ext_type, _curr_chunk_udid):
         """
         Unified chunker
-        Chunks a frame of article text data into smaller blocklets to fit within LLM tokenizer max length
-        which is fixed when the LLM is built and trained.
+        Only do this is your article text is longer than tokenizer_mml
+        Chunks a frame of article text data into small blocklets that fit within LLM tokenizer max length window (tokenizer_mml)
+        - tokenizer_mml is hard-coded / fixed when the LLM is built and trained. NOT dynamically tunable.
 
         INFO:
-        - input **must** be a list[ ]
+        - input **must** be a list [ ]
         - lists provide O(1) indexed access, which are 2-3x more memory efficent than a dict{}
         - lists optomize for index/slice lookups, dicts{} optomize for key lookups
 
         Avoids truncation of text and enbales full text sentiment analysis (no loss of words)
         Honnors word boundaries on chunking logic (doesnt split a word)
-        Leverages list[] slicing, b/c dicts dont provide slices
+        Leverages list [ ] slicing, b/c dicts dont provide slices
 
         WARN:
-        input -> list [ ] and resulting ouput .> dict{ }
-        - For a C4 input list of text (i.e. a single element list of and a very long bloob of text)...
+        Input MUST be a list [ ]
+        Ouput IS a dict { }
+        A C4 input list of text is a single element list of 1 very long blob/row of text...
+        A BS4 input list is a multi-element list of pure <p> tag html text code
 
         RESULT:
         - a dict{} of beautifully chunked "blocklets" shorter than tokenizer_mml
-        - could easily be a multi element {} if input is a long text string
+        - could easily be a multi element {} if input list [ ] contains  a long text string
         """        
+
         cmi_debug = __name__+"::"+self.unified_chunker.__name__+".#"+str(self.yti)
         logging.info( f"%s   - Unified chunking engine @ truncation: {self.tokenizer_mml}" % cmi_debug )
 
@@ -361,7 +365,7 @@ class ml_sentiment:
 
         abs_tchars = sum(len(s) for s in st_list)   # total of all chars in all rows
         logging.info( f"%s   - Start {ext_type_decode.get(_ext_type, 'Unknown')} chunker - chars: {abs_tchars} @ trctn: {tokenizer_mml}" % cmi_debug )
-        chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of text > tokenizer_mml"
+        chunks = {}         # dict holds the final output. Key=0...n, value="blocklet of text < tokenizer_mml"
         self.chunk_index = _curr_chunk_udid     # sub-dict key
         end = start = 0     # text blocklet positional indexers
         run_total = 0       # cumulative total
@@ -373,8 +377,8 @@ class ml_sentiment:
                 if blocklet:                    # only work on non-empty chunks
                     _b = len(blocklet)          # get len of this chunk (allways at live loc list[0])
                     end = start + _b            # compute end index point of this short-tail blocklet (should = abs_tchars)
-                    #print (f"###debug-314: Blocklet tail overrun - {start:04} / len: {_b} / end: {end} / max: {abs_tchars}")
-                    #print (f"{blocklet}")
+                    #print (f"#-debug-379: Blocklet tail overrun - {start:04} / len: {_b} / end: {end} / max: {abs_tchars}")
+                    #print (f"#-debug-380: {blocklet}")
                     chunks[self.chunk_index] = blocklet      # add to final trail output to dict DATA PACKAGE
                     run_total += _b
                     _remaining = abs_tchars - run_total
@@ -384,14 +388,14 @@ class ml_sentiment:
 
             st_string = f"{st_list[0]}"                     # convert list[0] to string for rfind()
             last_space = st_string.rfind(' ', start, end)   # Find last space in chunk avoid breaking words
-            #print (f"##-@251: lspace:{last_space} / len:{len(st_list[0])}")
+            #print (f"#-debug-390: lspace:{last_space} / len:{len(st_list[0])}")
             if last_space == -1 or last_space <= start:     # If no space (-1), break at chunk_size
                 chunk_end = end
-                #print (f"##-@254: at the end!")
+                #print (f"#-debug-393: at the end!")
             else:
                 chunk_end = last_space
                 blocklet = st_list[0][start:chunk_end]      # Extract the chunk and add to a holding list
-                #print (f"##-@258: blocklet:{blocklet} / end:{chunk_end} / last:{last_space}")
+                #print (f"#-debug-397: blocklet:{blocklet} / end:{chunk_end} / last:{last_space}")
                 
             if blocklet:                                    # only add non-empty chunks
                 chunks[self.chunk_index] = blocklet         # add to final output dict DATA PACKAGE
@@ -399,8 +403,8 @@ class ml_sentiment:
                 _b = len(blocklet)
                 run_total += _b
                 #run_total += int(len(blocklet[0]))
-                #print (f"##-@267: runtot:{run_total} / chunk:{self.chunk_index}")
-                #print (f"##-@267: runtot:{run_total} / chunk:{self.chunk_index}")
+                #print (f"#-debug-405: runtot:{run_total} / chunk:{self.chunk_index}")
+                #print (f"#-debug-406: runtot:{run_total} / chunk:{self.chunk_index}")
                 _remaining = abs_tchars - run_total
                 logging.info( f"%s - Eng.#2 Blocklet: {self.chunk_index:03} Contains:  {len(blocklet):03} chars @ index [ {start:04} -> {run_total:04} ] / remaining [ {_remaining:04} ] chars" % cmi_debug )
                 start = chunk_end + (1 if chunk_end < len(st_list) and st_list[chunk_end] == ' ' else 0)
@@ -412,15 +416,15 @@ class ml_sentiment:
     # LLM Helper function
     def dict_processor(self, symbol, _text_dict, _dpro_eng, _blocklet_udid):
         '''
-        This engine processes a dict{} of text blocklets (scentences/paragraphs)
+        This engine processes a dict {} of text blocklets (scentences/paragraphs)
         - for 1 article ONLY
         - 1 set of blocklets could be either truncated or clean
-        - truncated due to being longer than the LLMN truncation limit
-        -  clean... shorter than the LLM truncation limit
+        - truncated due to being longer than the hard-coded LLM truncation limit window
+        -  clean... shorter than the LLM truncation limit window
         - It executes the LLM NLP Classifier pipeline on each blocklet within the full input dict
         
-        WARN: can only intake a dict{} of text blocklets
-        - The UNIFEID_CHUNKER prepares chunks into a nice dict{} of blocklets
+        WARN: can only intake a dict {} of text blocklets
+        - The UNIFEID_CHUNKER prepares chunks into a nice dict {} of blocklets
         - Heavy CPU / GPU utilization will be triggered NOW !
         '''
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
@@ -443,7 +447,7 @@ class ml_sentiment:
 
         _x_cr_package = dict()      # ensure cr_packge is local and empty dict !
         cmi_debug = __name__+"::"+self.dict_processor.__name__+".#"+str(self.yti)
-        logging.info( f"%s - Start DICT processor engine:  {dpro_eng_decode.get(_dpro_eng, 'Unknown')}" % cmi_debug )
+        logging.info( f"%s - Start chunked DICT blocklet processor engine:  {dpro_eng_decode.get(_dpro_eng, 'Unknown')}" % cmi_debug )
         
         # main control loop
         for _chunk_udid, chunk in _text_dict.items():     # cycle through all scentenses/paragraphs sent to us
@@ -468,7 +472,7 @@ class ml_sentiment:
             _truncate_state = dpro_eng_decode.get(_dpro_eng, 'Unknown')  # decode the _dpro_eng var
 
             logging.info( f"%s - ======== LLM Classifying Blocklet: {_chunk_udid:03} via: {_truncate_state} ========" % cmi_debug)
-            logging.info( f"%s - ======== Exec LLM Sentiment classifier/vectorizor  ==================" % cmi_debug )
+            logging.info( "%s - ======== Exec LLM Sentiment classifier/vectorizor  ==================" % cmi_debug )
             
             ####################### LLM NLP #######################
             # THIS IS THE HEAVY LIFTING - LLM CLASSIFIER PIPELINE #
@@ -531,7 +535,7 @@ class ml_sentiment:
                     self.element_udid += 1    # ensure we're adding a new subdict to the JSON dataset
                     continue
                 case 1:
-                    print (f"LLM exception")
+                    print ( "LLM exception" )
                     continue
                 case 2:
                     print ( f"chunk: {self.empty_vocab} / empty vocab @:{_chunk_udid:03} ", end="" )
