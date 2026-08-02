@@ -681,10 +681,12 @@ def main():
             # End Summary report
             # ############### Done reading many articles ###################
 
+            print ("Article news Age HEAT MAP")
+            print ("===========================================================")
             for k, v in news_ai.yfn.news_heatmap.items():
                 #_ks = str(k)
                 for i in range(3):
-                    print ( f"{k:.10}\tTemperature: {v}", end="" )
+                    print ( f"{k:.10}\tAge: {v}\t", end="" )
                 print ("")
 
 #################################################################
