@@ -69,6 +69,8 @@ parser.add_argument('-t','--tops', help='show top ganers/losers', action='store_
 parser.add_argument('-u','--unusual', help='unusual up & down volume', action='store_true', dest='bool_uvol', required=False, default=False)
 parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
+parser.add_argument('--news-cycle', help='Full news cycle extract from every new data engine', action='store_true', dest='news_cycle', required=False, default=False)
+
 #
 """
 parser.add_argument('--alpaca', help='Get Alpaca live quotes for symbol', action='store', dest='alpaca_symbol', required=False, default=False)
@@ -149,33 +151,6 @@ def main():
         mlx_loser_dataset.print_top10()          # print it
         print ( " " )
 
-########### 3 Generla News Reader ################
-# DEV: Adding and testing all the new Market Data enbgines / extractors here
-# Notes for: AI coding assistance @claude
-
-    if args['news_cycle'] is True:
-        #'''
-        ext_count = 0
-        barrons_news_reader = barrons_news(1)
-        ext_count += asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
-        benzinga_news_reader = benzinga_news(1)
-        ext_count += asyncio.run(benzinga_news_reader.craw4ai_str_schema_extr())
-        forbes_news_reader = forbes_news(1)
-        ext_count += asyncio.run(forbes_news_reader.craw4ai_str_schema_extr())
-        fxstreet_news_reader = fxstreet_news(1)
-        ext_count += asyncio.run(fxstreet_news_reader.craw4ai_str_schema_extr())
-        investing_news_reader = investing_news(1)
-        ext_count += asyncio.run(investing_news_reader.craw4ai_str_schema_extr())
-        hedgeweek_news_reader = hedgeweek_news(1)
-        ext_count += asyncio.run(hedgeweek_news_reader.craw4ai_str_schema_extr())
-        #'''
-            
-        #gurufocus_news_reader = gurufocus_news(1)
-        #asyncio.run(gurufocus_news_reader.craw4ai_str_schema_extr())
-        
-        print (f"Total News articles extracted: {ext_count}" )
-        print ( " " )
-
 ########### Small Cap gainers & loosers ################
 # small caps are isolated outside the regular dataset by yahoo.com
     if args['bool_scr'] is True:
@@ -225,6 +200,32 @@ def main():
         #recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(un_vol_activity.up_df0.loc[uminv, ['Pct_change']][0]) )
         recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(upct) )
 
+########### 3 Generla News Reader ################
+# DEV: Adding and testing all the new Market Data enbgines / extractors here
+# Notes for: AI coding assistance @claude
+
+    if args['news_cycle'] is True:
+        #'''
+        ext_count = 0
+        barrons_news_reader = barrons_news(1)
+        ext_count += asyncio.run(barrons_news_reader.craw4ai_str_schema_extr())
+        benzinga_news_reader = benzinga_news(1)
+        ext_count += asyncio.run(benzinga_news_reader.craw4ai_str_schema_extr())
+        forbes_news_reader = forbes_news(1)
+        ext_count += asyncio.run(forbes_news_reader.craw4ai_str_schema_extr())
+        fxstreet_news_reader = fxstreet_news(1)
+        ext_count += asyncio.run(fxstreet_news_reader.craw4ai_str_schema_extr())
+        investing_news_reader = investing_news(1)
+        ext_count += asyncio.run(investing_news_reader.craw4ai_str_schema_extr())
+        hedgeweek_news_reader = hedgeweek_news(1)
+        ext_count += asyncio.run(hedgeweek_news_reader.craw4ai_str_schema_extr())
+        #'''
+            
+        #gurufocus_news_reader = gurufocus_news(1)
+        #asyncio.run(gurufocus_news_reader.craw4ai_str_schema_extr())
+        
+        print (f"Total News articles extracted: {ext_count}" )
+        print ( " " )
    
 #################################################################################
 ###############                    QUOTES                            ############
