@@ -546,7 +546,7 @@ class yfnews_reader:
                     hcycle += 1
                 else:
                     logging.info(f'%s - Duplicate URL found / Skipping... {aurl_hash[:30]}...' % cmi_debug)
-                    print(f"Duplicate:   URL duplicate found / Skipping... {aurl_hash[:30]}...")
+                    print(f"Duplicate:     URL duplicate found / Skipping: {aurl_hash[:30]}...")
                     print (" ")
                     cg += 1
                     hcycle += 1
