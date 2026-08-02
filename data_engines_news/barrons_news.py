@@ -125,7 +125,7 @@ class barrons_news:
         print ("======================================================================================")
         i = int(0)
         for k, v in self.DB_insert_data.items():
-            print ( f"{k:12.10}\t{k['Title']}" )
+            print ( f"{k['urlhash']:12.10}\t{k['Title']}" )
         
         #print ( f"##-debug-123: DUMP news\n{self.DB_insert_data}" )
         return int(len(self.DB_insert_data))
