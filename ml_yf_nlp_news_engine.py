@@ -459,7 +459,7 @@ class yfnews_reader:
             logging.error('%s - No extracted articles available' % cmi_debug)
             return 1, 0
         
-        cg = 0                  # general conter for logging and reporting
+        cg = 1                  # general conter for logging and reporting
         bad_url_count = 0       # counter for bad URLs found in the article dataset
         hcycle = 1              # uhinter counter for logging
         dedupe_set = set()      # deduplication optimization data set
