@@ -91,6 +91,7 @@ class barrons_news:
         # for now, I am looping async with AsyncWebCrawler() as crawler:
 
         
+        print ("General news from BARRONS - Metrics")
         count = 0
         for i in range(len(urls)):
             async with AsyncWebCrawler() as crawler:
@@ -129,10 +130,9 @@ class barrons_news:
         # if you want to dump the dict...
         #    print (f"{json.dumps(self.DB_insert_data, indent=2)}" )
             
-        logging.info(f"%s - complete Barrons data craw/scrap..." % cmi_debug )
+        logging.info( "%s - complete Barrons data craw/scrap..." % cmi_debug )
 
-        print ("BARRONS news metrics")
-        print (f"News data rows: {len(self.DB_insert_data)}" )
+        print (f"Rows of news data: {len(self.DB_insert_data)}" )
         print ("======================================================================================")
         i = int(0)
         for k, v in self.DB_insert_data.items():
