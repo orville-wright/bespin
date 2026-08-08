@@ -740,8 +740,84 @@ class ml_sentiment:
         }
 
         return
+    
+    # ##################################### 7.1
+    # Helper Function
+    def _compute_band(self, net_sentiment):
+        """
+        Helper function
+        - Symmetric sentiment band resolver
+ 
+        Maps a net sentiment score in [-1.0, +1.0] to a labelled band,
+        working on |magnitude| + sign so bullish and bearish sides are
+        exact mirrors of each other.
+ 
+        Guarantees:
+        - +x and -x always land in the same-rank band ("Slightly",
+          "Bearish/Bullish", "Strongly", "Extremely")
+        - "Approaching X" always means INTENSIFYING toward the next
+          more-extreme band, on both sides of zero
+        - Exact +/-1.0 resolves into the top band (no silent fall-through
+          to "Neutral")
+        - Out-of-range inputs are clamped to [-1.0, +1.0] rather than
+          silently defaulting
+ 
+        Returns:
+            (base, next_base, sentiment_label, progress_pct)
+              base            : label of the band the score sits in
+              next_base       : label of the next more-extreme band,
+                                or None at the top band / exact zero
+              sentiment_label : base, or "Approaching {next_base}" once
+                                progress through the band reaches 50%
+              progress_pct    : % progress through the current band,
+                                rounded to 1 dp
+        """
+        # Clamp: upstream float error must never escape the label space
+        net = max(-1.0, min(1.0, net_sentiment))
 
-    ####################################### 7
+        mag = abs(net)
+        if net > 0:
+            side = "Bullish"
+        elif net < 0:
+            side = "Bearish"
+        else:
+            side = None  # exact zero
+ 
+        # Band ladder by |magnitude|; {s} is filled with Bullish/Bearish
+        ladder = [
+            "Neutral",          # [0.00, 0.25)
+            "Slightly {s}",     # [0.25, 0.50)
+            "{s}",              # [0.50, 0.75)
+            "Strongly {s}",     # [0.75, 1.00)
+            "Extremely {s}",    # cap label (reached via "Approaching")
+        ]
+        band_width = 0.25
+ 
+        # Band index from magnitude; min() folds mag == 1.0 into the
+        # top computable band instead of indexing out of range
+        i = min(int(mag / band_width), 3)
+ 
+        low_edge = i * band_width
+        progress = (mag - low_edge) / band_width
+ 
+        if side is None:
+            base = "Neutral"
+            next_base = None
+        else:
+            base = ladder[i].format(s=side)
+            next_base = ladder[i + 1].format(s=side)
+ 
+        # "Approaching" logic - fires past the midpoint of the band,
+        # always pointing toward the MORE extreme adjacent band
+        if next_base and progress >= 0.5:
+            sentiment_label = f"Approaching {next_base}"
+        else:
+            sentiment_label = base
+ 
+        return base, next_base, sentiment_label, round(progress * 100, 1)
+
+    ####################################### 7.2
+    # Helper Function
     def sentiment_direction(
             self,
             symbol,
@@ -756,53 +832,28 @@ class ml_sentiment:
         """
         Helper function
         - Support method for final Sentiment SUMMARY analysis report
-        
+
         Sentiment Band DIRECTION compute Engine
-        - This logic and math is Quant industry standard 
+        - Symmetric magnitude+sign banding (see _compute_band)
+        - Band edges are provisional: recalibrate against the empirical
+          distribution of net_sentiment once telemetry accumulates
         """
+        base, next_base, sentiment_label, progress_pct = \
+            self._compute_band(net_sentiment)
 
-        bands = [
-            (-1.00, "Extremely Bearish"),
-            (-0.75, "Strongly Bearish"),
-            (-0.50, "Bearish"),
-            (-0.25, "Slightly Bearish"),
-            (0.00,  "Neutral"),
-            (0.25,  "Slightly Bullish"),
-            (0.50,  "Bullish"),
-            (0.75,  "Strongly Bullish"),
-            (1.00,  "Extremely Bullish"),
-        ]
+        split_vector_model = self.sentiment_vector_model(
+            positive_share, negative_share, neutral_share)
 
-        base = "Neutral"
-        next_base = None
-        progress = 0.0
-
-        for i in range(len(bands) - 1):
-            low_score, low_label = bands[i]
-            high_score, high_label = bands[i + 1]
-            if low_score <= net_sentiment < high_score:
-                base = low_label
-                next_base = high_label
-                progress = (net_sentiment - low_score) / (high_score - low_score)
-                break
-
-        progress_pct = round(progress * 100, 1)
-
-        # "Approaching" logic
-        if progress >= 0.5 and next_base:
-            sentiment_label = f"Approaching {next_base}"
-        else:
-            sentiment_label = base
-
-        split_vector_model =  self.sentiment_vector_model(positive_share, negative_share, neutral_share)
+        # NOTE: single quotes inside f-strings -> parses on Python < 3.12
+        # (same-quote nesting is a SyntaxError before 3.12)
 
         # Print SUMMARY Report - final analysis read-out
         print(f"Symbol:         {symbol}")
-        print(f"Sentiment:      {sentiment_label}   | Directionally biased -> {split_vector_model["sentiment"]} ")
+        print(f"Sentiment:      {sentiment_label}   | Directionally biased -> {split_vector_model['sentiment']} ")
         print(f"Base sentiment: {base}")
         print(f"Band Progress:  {progress_pct}%\t| through {base} band")
-        print(f"Signal clarity: {split_vector_model["clarity"]}")
-        print(f"Signal convctn: {split_vector_model["conviction"]}\t| {split_vector_model["sentiment"]}")
+        print(f"Signal clarity: {split_vector_model['clarity']}")
+        print(f"Signal convctn: {split_vector_model['conviction']}\t| {split_vector_model['sentiment']}")
         print(f"Net Score:      {net_sentiment:+.3f}\t| Sentiment Oscilator Direction")
         print(f"Signal purity:  {confidence:.1%}\t| Dominant Signal Share")
         print("\nSentiment Composition:")
@@ -810,7 +861,7 @@ class ml_sentiment:
         print(f"Neutrality:     {neutral_share:.1%}\t| (Non-directional ambiguity: {neutral_strength:.3f})")
         print(f"Negativity:     {negative_share:.1%}\t| (Directional signal mass:  {negative_strength:.3f})")
         print()
- 
+
         self.summary_report = {
             "symbol": symbol,
             "sentiment": sentiment_label,
@@ -827,7 +878,7 @@ class ml_sentiment:
             "neutral_strength": neutral_strength,
             "negative_strength": negative_strength
         }
-    
+
         return self.summary_report
 
     # #################################### 8
