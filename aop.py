@@ -686,7 +686,7 @@ def main():
             i = int(0)
             for k, v in news_ai.yfn.news_heatmap.items():
                 if i < 3:
-                    print ( f"{k:12.10}  Age: {v[0]:14}\n{}", end="" )
+                    print ( f"{k:12.10}  Age: {v[0]:14}", end="" )
                     i += 1
                     continue
                 else:
