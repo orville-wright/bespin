@@ -68,12 +68,11 @@ class yfnews_reader:
     cur_dir = None
     cycle = 0               # class thread loop counter
     cx = None
+    dateageresolver = None  # singleton class of News Article Age date Resolver()
     dummy_resp0 = None
     ext_req = None          # HTMLSession request handle
     extracted_articles = None  # crawl4ai extracted articles
     
-#    C4_kvio_eng = None
-#    BS4_kvio_eng = None
     kv_created_C4 = 0       # count new article data CREATED in LMDB KV cache processed by C4 engine
     kv_created_BS4 = 0      # count new article data CREATED in LMDB KV cache processed by BS4 engine
     lmdb_env = None         # Global LMBD instance, opened @ main::newsai_sent
@@ -534,13 +533,20 @@ class yfnews_reader:
                 print(f"Short title:   {art_title:.50}")
                 print(f"Long teaser:   {art_teaser}")
                 
-                # TEST #3 : deupe (check for URL dupes)
+                # TEST #3 : dedupe (check for URL dupes)
+                # build list of URL hashes for the ML ingest candidate dataset
+                # build list of URL hashes with Article age for Age Heat Map and LMDB Age entry
                 if amount != 0:
                     auh = hashlib.sha256(self.article_url.encode()) # Generate hash of URL
                     aurl_hash = auh.hexdigest()                     # compute hash
                     if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() ) : uniqueness test
                         dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
                         _d = f"{amount:.0f} {unit_name} ago"
+
+                        self.dateageresolver.mark_skim_fetch()      # create date/time anchor for this article
+                        result = self.dateageresolver.resolve_skim_age(_d)
+                        print (f"#-DEBUG-548! Age resolved:\n{result[0]}\n{result[1]}\n{result[2]}\n{result[3]}\n{result[4]}\n{result[5]}\n{result[6]}")
+
                         _dl = list((_d, self.article_url))
                         self.news_heatmap.update({aurl_hash: _dl})      # build unique new age heatmap
                         logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )

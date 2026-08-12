@@ -447,12 +447,18 @@ def main():
             print ( " " )
             print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ]" )
             news_ai = ml_nlpreader(1, args, caller="news_ai")
+            news_date_resolver = news_ai.NewsAgeResolver()  # Singleton class for News age date analytics
+            news_ai.dateageresolver = news_date_resolver  # assign singleton instance to the news_ai class
+            news_ai.share_ageresolver()
+
             logging.info( '%s - Open global LMBD KV cache engine...' % cmi_debug)
             lmdb_dbname = "LMDB_0001"
             lmdb_env = lmdb_io_eng("GLOBAL", lmdb_dbname, args)  # create instance of LMDB
+
             logging.info( '%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
             
             # scan_news_feed() + eval_news_feed_stories()
+
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  
             if articles_found == 0:
                 print ( f"AI news reader found NO articles for Stock [ {news_symbol} ]" )

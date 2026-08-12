@@ -25,6 +25,7 @@ class ml_nlpreader:
 
     # global accessors
     args = []               # class dict to hold global args being passed in from main() methods
+    dateageresolver = None  # singleton class of News Article Age date Resolver() 
     cycle = 0               # class thread loop counter
     ml_yfn_dataset = None   # Yahoo Finance News reader instance
     yfn = None              # class of @ml_yahoofinews_crawl4ai.py/yfnews_reader
@@ -40,6 +41,14 @@ class ml_nlpreader:
         self.yti = yti
         return
 
+    def share_ageresolver(self):
+        """
+        Share the singleton class of News Article Age date Resolver()  with the YFN reader instance
+        Must instantiate the NewsAgeResolver() class in the main() method before calling this method
+        """
+        self.yfn.dateageresolver = self.dateageresolver
+        return
+    
     # ##############################################################################
     async def nlp_read_one(self, news_symbol, global_args):
         """
