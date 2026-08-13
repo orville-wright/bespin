@@ -527,12 +527,11 @@ class yfnews_reader:
                         _d = f"{amount:.0f} {unit_name} ago"
 
                         self.dateageresolver.mark_skim_fetch()      # create date/time anchor for this article
-                        result = self.dateageresolver.resolve_skim_age(_d)
-                        print ( f"#-DEBUG-548! Age resolved:\n{result}" )
-
-                        _dl = list((_d, self.article_url))
+                        res_agedate = self.dateageresolver.resolve_skim_age(_d)     # returns a rich dict of age/date data/state/metrics
+                        _dl = list((_d, res_agedate, self.article_url))
+                        print ( f"#-DEBUG-548! Age resolved:\n{_dl}" )
                         self.news_heatmap.update({aurl_hash: _dl})      # build unique new age heatmap
-                        logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
+                        logging.info( f'{cmi_debug}   - Saved Age Heat-Map entry for urlhash {cg:02}: {aurl_hash[:30]}...' )
                         print(" ")
                         
                     ############################################
@@ -549,6 +548,7 @@ class yfnews_reader:
                         "url": self.article_url
                     }
                     self.ml_ingest.update({self.nlp_x: nd})
+                    logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
                     cg += 1
                     hcycle += 1
                 else:
