@@ -528,7 +528,7 @@ class yfnews_reader:
 
                         self.dateageresolver.mark_skim_fetch()      # create date/time anchor for this article
                         result = self.dateageresolver.resolve_skim_age(_d)
-                        print (f"#-DEBUG-548! Age resolved:\n{result[0]}\n{result[1]}\n{result[2]}\n{result[3]}\n{result[4]}\n{result[5]}\n{result[6]}")
+                        print ( f"#-DEBUG-548! Age resolved:\n{result}" )
 
                         _dl = list((_d, self.article_url))
                         self.news_heatmap.update({aurl_hash: _dl})      # build unique new age heatmap
