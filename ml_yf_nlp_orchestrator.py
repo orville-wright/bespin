@@ -64,6 +64,7 @@ class ml_nlpreader:
 
     def share_ageresolver(self):
         """
+        DELETE ME... we're doing this in nlp_read_one() now
         Share the singleton class of News Article Age date Resolver()  with the YFN reader instance
         Must instantiate the NewsAgeResolver() class before calling this method
         """
@@ -89,7 +90,9 @@ class ml_nlpreader:
         news_symbol = str(news_symbol).upper()
         
         self.yfn = yfnews_reader(1, news_symbol, global_args )          # instantiate our own class of YFN (frm ml_yf_nlp_news_engine)
-        ml_yfn_dataset = self.yfn     
+        ml_yfn_dataset = self.yfn    
+        self.yfn.dateageresolver = self.dateageresolver                 # Share singleton class of News Article Age date Resolver() with this YFN instance
+
         ml_yfn_dataset.form_endpoint(news_symbol)                       # extablish the exct news url endpoint
         logging.info(f"%s - Form NEWS endpoint for {news_symbol} + globalize url_hinter @ #1" % cmi_debug)
         self.yfn_uh = url_hinter(1, self.args)                          # instantiate URL hinter 
