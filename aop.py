@@ -449,7 +449,7 @@ def main():
             news_ai = ml_nlpreader(1, args, caller="news_ai")
             news_date_resolver = NewsAgeResolver()  # Singleton class for News age date analytics
             news_ai.dateageresolver = news_date_resolver  # assign singleton instance to the news_ai class
-            news_ai.share_ageresolver()
+            #news_ai.share_ageresolver()
 
             logging.info( '%s - Open global LMBD KV cache engine...' % cmi_debug)
             lmdb_dbname = "LMDB_0001"
