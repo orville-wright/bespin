@@ -1,8 +1,12 @@
 #! python3
 
-import argparse
-import asyncio
-from datetime import datetime, date
+# import argparse
+# import asyncio
+
+import re
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
 import logging
 from urllib.parse import urlparse
 from rich import print
@@ -14,6 +18,23 @@ from ml_yf_nlp_news_engine import yfnews_reader
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
+
+# Gobals for NewsAgeResolver class
+#
+# Compiled regular expression once at module level
+# - matches "3 hours ago", "1 day ago", "45 minutes ago", "2 weeks ago", "3 months ago", "1 year ago" etc.
+# Case-insensitive, tolerant of surrounding whitespace.
+_SKIM_AGE_PATTERN = re.compile(
+    r"^\s*(\d+)\s+(minute|hour|day|week|month|year)s?\s+ago\s*$",
+    re.IGNORECASE,
+)
+
+# Approximate day-counts for calendar-fuzzy units. These are estimates
+# by nature ("1 month ago" on Yahoo is already a heavy quantization),
+# so fixed approximations are appropriate here.
+_DAYS_PER_MONTH = 30.44
+_DAYS_PER_YEAR = 365.25
+
 
 # ML / NLP section #############################################################
 class ml_nlpreader:
@@ -44,7 +65,7 @@ class ml_nlpreader:
     def share_ageresolver(self):
         """
         Share the singleton class of News Article Age date Resolver()  with the YFN reader instance
-        Must instantiate the NewsAgeResolver() class in the main() method before calling this method
+        Must instantiate the NewsAgeResolver() class before calling this method
         """
         self.yfn.dateageresolver = self.dateageresolver
         return
@@ -225,3 +246,221 @@ class ml_nlpreader:
             thint = sn_row['thint']
             return thint
 
+# ################## Class #2
+# A critical helper class for...
+# - handleing article dates at the Depth-0 and Depth-1 levels
+#
+class NewsAgeResolver:
+ 
+    def mark_skim_fetch(self):
+        """
+        Stamp the anchor timestamp for a skim-page fetch.
+ 
+        Call this at the MOMENT the skim page is fetched - NOT at
+        LMDB-write time. All relative ages on that page are relative
+        to when Yahoo rendered it; resolving against a later "now"
+        introduces silent drift equal to the fetch->write gap.
+ 
+        Returns the anchor so it can also be carried explicitly
+        alongside the skim results if preferred.
+        """
+        self.skim_anchor_utc = datetime.now(timezone.utc)
+        return self.skim_anchor_utc
+ 
+    def resolve_skim_age(self, age_text, anchor_utc=None):
+        """
+        Convert a Level-zero skim age string ("3 hours ago") into an
+        estimated absolute publish timestamp, anchored at skim fetch time.
+ 
+        Parameters
+        ----------
+        age_text   : raw age string from the skim headline list
+        anchor_utc : timezone-aware datetime of the skim fetch.
+                     Defaults to self.skim_anchor_utc (set by
+                     mark_skim_fetch). Passing it explicitly is
+                     preferred when resolving in a later pipeline stage.
+ 
+        Returns
+        -------
+        dict with explicit string state (matches Bespin state style):
+          state              : "resolved" | "empty" | "unreadable" | "junk"
+                               ("junk" = zero-quantity age, e.g.
+                               "0 days ago" - the empirical signature
+                               of ad/firewall stub rows in the skim list)
+          published_utc      : ISO-8601 UTC estimate  (None if not resolved)
+          published_epoch    : float epoch seconds    (None if not resolved)
+          age_seconds        : seconds before anchor  (None if not resolved)
+          precision          : quantization unit of the estimate
+                               ("minute"|"hour"|"day"|"week"|"month"|"year")
+          provenance         : "skim_estimate"  - ALWAYS this value here.
+                               The Level-1 empirical date parser writes
+                               "article_empirical" and overwrites this
+                               record's timestamp fields when available.
+          raw_age_text       : the original input, preserved for telemetry
+ 
+        Precision semantics
+        -------------------
+        Yahoo floors relative ages: "3 hours ago" means the true publish
+        time lies in [anchor - 4h, anchor - 3h]. The estimate returned
+        is the FLOOR interpretation (anchor - 3h), i.e. the youngest
+        time consistent with the text. Expect the Level-1 empirical
+        date to be equal-or-older than this estimate by up to one
+        `precision` unit. Log (estimate - empirical) deltas as telemetry
+        to confirm the flooring assumption against real data.
+        """
+        anchor = anchor_utc if anchor_utc is not None else getattr(
+            self, "skim_anchor_utc", None)
+        if anchor is None:
+            raise ValueError(
+                "No anchor timestamp. Call mark_skim_fetch() at skim "
+                "fetch time, or pass anchor_utc explicitly.")
+        if anchor.tzinfo is None:
+            raise ValueError(
+                "anchor_utc must be timezone-aware (naive datetimes "
+                "invite silent local-vs-UTC bugs).")
+ 
+        # ---- classify the input into an explicit string state ----
+        if age_text is None or not str(age_text).strip():
+            state = "empty"
+            m = None
+        else:
+            m = _SKIM_AGE_PATTERN.match(str(age_text))
+            if m is None:
+                state = "unreadable"
+            elif int(m.group(1)) == 0:
+                # Empirical Bespin finding: junk skim rows (clickbait
+                # ads, firewall stubs) always carry a zero age
+                # ("0 days ago"). Zero-quantity ages are therefore a
+                # junk marker, NOT a fresh article. Without this state,
+                # "0 days ago" would resolve to published == anchor,
+                # i.e. junk timestamped as maximally fresh - the worst
+                # possible input to recency-decay weighting.
+                state = "junk"
+            else:
+                state = "process"
+ 
+        match state:
+            case "empty":
+                return self._unresolved("empty", age_text)
+ 
+            case "unreadable":
+                # Malformed / non-age text (some ad rows carry no age
+                # string at all) - a secondary junk-filter signal.
+                return self._unresolved("unreadable", age_text)
+ 
+            case "junk":
+                # Zero-quantity age: known junk-row signature.
+                # Deliberately NEVER produces a timestamp.
+                return self._unresolved("junk", age_text)
+ 
+            case "process":
+                quantity = int(m.group(1))
+                unit = m.group(2).lower()
+ 
+                match unit:
+                    case "minute":
+                        delta = timedelta(minutes=quantity)
+                    case "hour":
+                        delta = timedelta(hours=quantity)
+                    case "day":
+                        delta = timedelta(days=quantity)
+                    case "week":
+                        delta = timedelta(weeks=quantity)
+                    case "month":
+                        delta = timedelta(days=quantity * _DAYS_PER_MONTH)
+                    case "year":
+                        delta = timedelta(days=quantity * _DAYS_PER_YEAR)
+                    case _:
+                        # Regex guarantees a known unit; defensive only.
+                        return self._unresolved("unreadable", age_text)
+ 
+                published = anchor - delta
+                return {
+                    "state": "resolved",
+                    "published_utc": published.isoformat(),
+                    "published_epoch": published.timestamp(),
+                    "age_seconds": delta.total_seconds(),
+                    "precision": unit,
+                    "provenance": "skim_estimate",
+                    "raw_age_text": age_text,
+                }
+ 
+            case _:
+                return self._unresolved("unreadable", age_text)
+ 
+    @staticmethod
+    def _unresolved(state, age_text):
+        """Uniform shape for non-resolved outcomes - same keys, None values."""
+        return {
+            "state": state,
+            "published_utc": None,
+            "published_epoch": None,
+            "age_seconds": None,
+            "precision": None,
+            "provenance": "skim_estimate",
+            "raw_age_text": age_text,
+        }
+ 
+    def parse_empirical_published(self, date_text):
+        """
+        Parse the Level-1 in-article date, e.g.
+        "Tue, August 11, 2026 at 1:51 PM PDT", into the SAME record
+        shape as resolve_skim_age, with provenance "article_empirical".
+ 
+        When this succeeds for an article, its timestamp fields should
+        OVERWRITE the skim estimate in LMDB (keep raw_age_text from the
+        skim record for telemetry comparison).
+ 
+        Note on timezone abbreviations: %Z parsing of "PDT"/"PST" is
+        unreliable across platforms, so the abbreviation is mapped
+        explicitly and the datetime is built in America/Los_Angeles,
+        then converted to UTC.
+        """
+        if date_text is None or not str(date_text).strip():
+            return self._unresolved_empirical("empty", date_text)
+ 
+        text = str(date_text).strip()
+ 
+        # Split off the trailing timezone abbreviation explicitly.
+        tz_map = {
+            "PDT": ZoneInfo("America/Los_Angeles"),
+            "PST": ZoneInfo("America/Los_Angeles"),
+            "EDT": ZoneInfo("America/New_York"),
+            "EST": ZoneInfo("America/New_York"),
+            "UTC": timezone.utc,
+            "GMT": timezone.utc,
+        }
+        parts = text.rsplit(" ", 1)
+        if len(parts) == 2 and parts[1].upper() in tz_map:
+            body, tz = parts[0], tz_map[parts[1].upper()]
+        else:
+            body, tz = text, ZoneInfo("America/Los_Angeles")  # Yahoo default
+ 
+        try:
+            naive = datetime.strptime(body, "%a, %B %d, %Y at %I:%M %p")
+        except ValueError:
+            return self._unresolved_empirical("unreadable", date_text)
+ 
+        aware = naive.replace(tzinfo=tz)
+        published = aware.astimezone(timezone.utc)
+        return {
+            "state": "resolved",
+            "published_utc": published.isoformat(),
+            "published_epoch": published.timestamp(),
+            "age_seconds": None,   # empirical dates are absolute, not relative
+            "precision": "minute",
+            "provenance": "article_empirical",
+            "raw_age_text": date_text,
+        }
+ 
+    @staticmethod
+    def _unresolved_empirical(state, date_text):
+        return {
+            "state": state,
+            "published_utc": None,
+            "published_epoch": None,
+            "age_seconds": None,
+            "precision": None,
+            "provenance": "article_empirical",
+            "raw_age_text": date_text,
+        }
