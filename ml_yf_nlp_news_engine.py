@@ -403,18 +403,17 @@ class yfnews_reader:
         logging.info('%s - IN ' % cmi_debug)
 
         # ################ Private helper Method
-        """
-        Convert 1h, 1w, 1y into an exact math number
-        h => converts to hours
-        w, m, y => convertsa to days
-        """
         def parse_relative_time(time_str: str) -> tuple[float, str]:
+            """
+            Convert 15m, 1h, 1w, 1y into an exact math number.
+            Returns (numeric_value, unit_string)
+            """
             cleaned_str = time_str.strip()
             if cleaned_str == "No_pub_time":
                 return 0.0, "hours"
 
-            # Matches numbers followed by unit strings like h/hr/hour, d/day, w/wk/week, m/mo/month, y/yr/year
-            pattern = r'^(\d+)\s*(h|hr|hours?|d|days?|w|wk|weeks?|m|mo|months?|y|yr|years?)\s*ago$'
+            # Added min|mins|minutes? for minutes, restricted 'm' to minutes, and kept 'mo' for months
+            pattern = r'^(\d+)\s*(m|min|mins|minutes?|h|hr|hours?|d|days?|w|wk|weeks?|mo|months?|y|yr|years?)\s*ago$'
             match = re.match(pattern, cleaned_str, re.IGNORECASE)
             if not match:
                 raise ValueError(f"Invalid format: '{time_str}'")
@@ -422,33 +421,49 @@ class yfnews_reader:
             value, unit = match.groups()
             num = float(value)
             unit = unit.lower()
-            # Special logic for 'd' (days) and 1 day = 24 hours
+
+            # Special logic for 'd' (days): 1 day = 24 hours
             if unit in ('d', 'day', 'days'):
                 if num == 1:
                     return 24.0, "hours"
                 return num, "days"
-            
+
             # Standard conversion multipliers
             unit_map = {
+                # Minutes
+                'm': (1, 'minutes'),
+                'min': (1, 'minutes'),
+                'mins': (1, 'minutes'),
+                'minute': (1, 'minutes'),
+                'minutes': (1, 'minutes'),
+                
+                # Hours
                 'h': (1, 'hours'),
                 'hr': (1, 'hours'),
                 'hour': (1, 'hours'),
                 'hours': (1, 'hours'),
+                
+                # Weeks
                 'w': (7, 'days'),
                 'wk': (7, 'days'),
                 'week': (7, 'days'),
                 'weeks': (7, 'days'),
-                'm': (30, 'days'),
+                
+                # Months (Use 'mo', 'month', 'months')
                 'mo': (30, 'days'),
                 'month': (30, 'days'),
                 'months': (30, 'days'),
+                
+                # Years
                 'y': (365, 'days'),
                 'yr': (365, 'days'),
                 'year': (365, 'days'),
                 'years': (365, 'days'),
             }
+
             multiplier, label = unit_map[unit]
-            return num * multiplier, label 
+            return num * multiplier, label
+
         # ################ END - Private helper Method
 
         time_now = time.strftime("%H:%M:%S", time.localtime())
