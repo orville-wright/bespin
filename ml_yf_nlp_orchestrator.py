@@ -272,7 +272,7 @@ class NewsAgeResolver:
  
     def resolve_skim_age(self, age_text, anchor_utc=None):
         """
-        Convert a Level-zero skim age string ("3 hours ago") into an
+        Convert a Depth--zero skim age string ("3 hours ago") into an
         estimated absolute publish timestamp, anchored at skim fetch time.
  
         Parameters
@@ -296,7 +296,7 @@ class NewsAgeResolver:
           precision          : quantization unit of the estimate
                                ("minute"|"hour"|"day"|"week"|"month"|"year")
           provenance         : "skim_estimate"  - ALWAYS this value here.
-                               The Level-1 empirical date parser writes
+                               The Depth-1 empirical date parser writes
                                "article_empirical" and overwrites this
                                record's timestamp fields when available.
           raw_age_text       : the original input, preserved for telemetry
@@ -306,7 +306,7 @@ class NewsAgeResolver:
         Yahoo floors relative ages: "3 hours ago" means the true publish
         time lies in [anchor - 4h, anchor - 3h]. The estimate returned
         is the FLOOR interpretation (anchor - 3h), i.e. the youngest
-        time consistent with the text. Expect the Level-1 empirical
+        time consistent with the text. Expect the Depth-1 empirical
         date to be equal-or-older than this estimate by up to one
         `precision` unit. Log (estimate - empirical) deltas as telemetry
         to confirm the flooring assumption against real data.
@@ -406,7 +406,7 @@ class NewsAgeResolver:
  
     def parse_empirical_published(self, date_text):
         """
-        Parse the Level-1 in-article date, e.g.
+        Parse the Depth-1 in-article date, e.g.
         "Tue, August 11, 2026 at 1:51 PM PDT", into the SAME record
         shape as resolve_skim_age, with provenance "article_empirical".
  
