@@ -447,7 +447,7 @@ def main():
             print ( " " )
             print ( f"AI news reader sentimennt analysis for Stock [ {news_symbol} ]" )
             news_ai = ml_nlpreader(1, args, caller="news_ai")
-            news_date_resolver = news_ai.NewsAgeResolver()  # Singleton class for News age date analytics
+            news_date_resolver = NewsAgeResolver()  # Singleton class for News age date analytics
             news_ai.dateageresolver = news_date_resolver  # assign singleton instance to the news_ai class
             news_ai.share_ageresolver()
 
