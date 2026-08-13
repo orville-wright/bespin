@@ -18,7 +18,7 @@ import pprint
 # my private classes & methods
 from data_engines_fundamentals.alpaca_md import alpaca_md
 from bigcharts_md import bc_quote
-from ml_yf_nlp_orchestrator import ml_nlpreader
+from ml_yf_nlp_orchestrator import ml_nlpreader, NewsAgeResolver
 from ml_sentiment import ml_sentiment
 from ml_urlhinter import url_hinter
 from nasdaq_uvoljs import un_volumes
