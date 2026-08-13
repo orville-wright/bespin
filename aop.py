@@ -694,7 +694,8 @@ def main():
                 if i < 3:
                     _ad = v[1]   # agedate dict
                     #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t", end="" )
-                    print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t{v[2]}" )
+                    #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t{v[2]}" )
+                    print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}" )
                     i += 1
                     continue
                 else:
@@ -702,7 +703,7 @@ def main():
                     print ("")
 
             print ("\n\n")
-            
+
             print ("Dumping ML ingest items for debug...")
             print ("======================================================================================")
             print ( f"{news_ai.yfn.ml_ingest}")
