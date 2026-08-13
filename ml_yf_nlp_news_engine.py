@@ -542,15 +542,25 @@ class yfnews_reader:
                         _d = f"{amount:.0f} {unit_name} ago"
 
                         self.dateageresolver.mark_skim_fetch()      # create date/time anchor for this article
-                        res_agedate = self.dateageresolver.resolve_skim_age(_d)     # returns a rich dict of age/date data/state/metrics
+                        res_agedate = self.dateageresolver.resolve_skim_age(_d)     # returns a dict{} of age/date data/state/metrics
                         _dl = list((_d, res_agedate, self.article_url))
-                        print ( f"#-DEBUG-548! Age resolved:\n{_dl}" )
+                        #print ( f"#-DEBUG-548! Age resolved:\n{_dl}" )
                         self.news_heatmap.update({aurl_hash: _dl})      # build unique new age heatmap
                         logging.info( f'{cmi_debug}   - Saved Age Heat-Map entry for urlhash {cg:02}: {aurl_hash[:30]}...' )
                         print(" ")
                         
                     ############################################
                     # Build full AI NLP candidate Master dict row
+                    # ml_ingest is VERY important master dataset for all candidate articles to be processed by ML NLP
+                    # It will can hold 100+ candidate articles for any single stock symbol news scan
+                    # Its structure starts as ...
+                    #    a dict of dicts
+                    #    with the outer key being the unique URL hash
+                    #    and the inner dict containing all relevant candidate article metadata
+                    #
+                    # other modules can dynamically add more metadata/structure to the inner dict as needed
+                    # so the final structure of the inner dict is not fixed, and can be extended as needed
+
                     nd = {
                         "symbol": symbol,
                         "urlhash": aurl_hash,
@@ -560,10 +570,11 @@ class yfnews_reader:
                         "publisher": art_publisher,
                         "title": art_title,
                         "teaser": art_teaser,
-                        "url": self.article_url
+                        "url": self.article_url,
+                        "age0": res_agedate["published_utc"]
                     }
                     self.ml_ingest.update({self.nlp_x: nd})
-                    logging.info( f'{cmi_debug}   - Add unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
+                    logging.info( f'{cmi_debug}   - Added unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
                     cg += 1
                     hcycle += 1
                 else:
@@ -602,6 +613,9 @@ class yfnews_reader:
         logging.info(f'%s - Processing article type: {ttype} / uhint: {uhint} / thint: {thint}' % cmi_debug)
         
         # Determine viability based on article type
+        # WARN: This logic dynamically extends the ml_ingest dict{} structure dataset
+        #    with a new key "viable"
+        #    to indicate if the article is suitable for further processing
         if uhint == 0:  # Local full article
             logging.info(f"%s - Depth: 2.0 / Local Full article / [ u: {uhint} h: {thint} ]" % cmi_debug)
             data_row.update({"viable": 1})
@@ -651,7 +665,7 @@ class yfnews_reader:
         
         WARN: 
         Only do this once the article has been evaluated and we know where/what article TEXT is
-        -  article must have its get() resp & BS4 objects cached in yfn_jsdb{}
+        - article must have its get() resp & BS4 objects cached in yfn_jsdb{}
         - Sets the Body Data zone, the <p> TAG zone
         - Extracts all of the full article raw text from <p> tags
         - Stores it in a Database
@@ -1484,7 +1498,7 @@ class yfnews_reader:
         """
         cmi_debug = __name__+"::" + self.dump_ml_ingest.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug)
-        print("===== Dump: ML Ingest DB / Depth 1 / AI NLP candidates ==================")
+        print("===== Dump: ML Ingest DB / AI NLP candidates ==================")
         
         for k, d in self.ml_ingest.items():
             print ( f"Index: {k:03}\n{d}")
