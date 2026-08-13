@@ -837,7 +837,7 @@ class yfnews_reader:
         # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})               # full news article - locally hosted
         
         local_news = self.nsoup.find(attrs={"class": "body yf-v6n2s3"})                  # full news article - locally hosted        
-        pub_timestamp = self.nsoup.find(attrs={"class": "byline-attr-time-style time"})  # emperical publish timestamp
+        pub_timestamp = self.nsoup.find(attrs={"class": "byline-attr-time-style"})  # emperical publish timestamp
         #local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
         try:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
