@@ -839,6 +839,18 @@ class yfnews_reader:
         local_news = self.nsoup.find(attrs={"class": "body yf-v6n2s3"})                  # full news article - locally hosted        
         #pub_timestamp = self.nsoup.find(attrs={"class": "byline-attr-time-style"})      # emperical publish timestamp
         pub_timestamp = self.nsoup.find("div", attrs={"class": "byline-attr-time-style"} )     # emperical publish timestamp
+
+        # Extract inner text of the <time> tag
+        # pub_HUMANdatets} / {pub_ISOdatets
+        pub_ISOdatets = re.search(r'datetime="([^"]+)"', pub_timestamp).group(1)
+        _HUMAN_date = re.search(r'<time[^>]*>(.*?)</time>', pub_timestamp)
+        if _HUMAN_date:
+            pub_HUMANdatets = _HUMAN_date.group(1)       # e.g. Mon, August 10, 2026 at 10:03 PM PDT
+        else:
+            pub_HUMANdatets = "No publish date"
+
+
+
         #local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
         try:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
@@ -953,7 +965,7 @@ class yfnews_reader:
                 )
         print ( f"{footer}")
         print ( f"============== BS4 End.#2 / Cache miss / Net read article / New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
-        print ( f"#-Debug-955#:  emperical publish date: {pub_timestamp}" )
+        print ( f"#-Debug-955#:  emperical publish date: {pub_HUMANdatets} / {pub_ISOdatets}" )
         self.BS4_lmdb_env.close_lmdb("BS4")
         #print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         return self.total_tokens, self.total_words, bs4_final_results
