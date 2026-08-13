@@ -840,16 +840,23 @@ class yfnews_reader:
         #pub_timestamp = self.nsoup.find(attrs={"class": "byline-attr-time-style"})      # emperical publish timestamp
         pub_timestamp = self.nsoup.find("div", attrs={"class": "byline-attr-time-style"} )     # emperical publish timestamp
 
-        # Extract inner text of the <time> tag
-        # pub_HUMANdatets} / {pub_ISOdatets
-        pub_ISOdatets = re.search(r'datetime="([^"]+)"', pub_timestamp).group(1)
-        _HUMAN_date = re.search(r'<time[^>]*>(.*?)</time>', pub_timestamp)
-        if _HUMAN_date:
-            pub_HUMANdatets = _HUMAN_date.group(1)       # e.g. Mon, August 10, 2026 at 10:03 PM PDT
+        # post process BS4 time html tag that contians all the date/time data
+        if pub_timestamp:
+            # 1. Find the <time> tag inside the div
+            time_tag = pub_timestamp.find("time")
+            
+            if time_tag:
+                # 2. Extract attribute: <time datetime="...">
+                pub_ISOdatets = time_tag.get("datetime")
+                
+                # 3. Extract text inside <time>...</time>
+                pub_HUMANdatets = time_tag.get_text(strip=True)
+            else:
+                pub_ISOdatets = None
+                pub_HUMANdatets = "No publish date"
         else:
-            pub_HUMANdatets = "No publish date"
-
-
+                pub_ISOdatets = None
+                pub_HUMANdatets = "No publish date"
 
         #local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
         try:
