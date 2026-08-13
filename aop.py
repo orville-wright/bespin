@@ -703,10 +703,7 @@ def main():
                     print ("")
 
             print ("\n\n")
-
-            print ("Dumping ML ingest items for debug...")
-            print ("======================================================================================")
-            print ( f"{news_ai.yfn.ml_ingest}")
+            #print ( f"{news_ai.yfn.ml_ingest}")
 
 
             print ("\n\n")
