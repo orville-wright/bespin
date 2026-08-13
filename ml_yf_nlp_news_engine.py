@@ -684,6 +684,7 @@ class yfnews_reader:
         data_row = self.ml_ingest[item_idx]
         symbol = data_row['symbol']
         cached_state = data_row['urlhash']      # eval  DB[] @ item=item_idx, and pull out article urlhash
+        d0_age = data_row['age0']               # UTC converted article age from Depth 0 crawl4ai skim extraction
         self.sent_ai = sentiment_ai
         self.BS4_lmdb_env = lmdb_inst
         
@@ -704,6 +705,9 @@ class yfnews_reader:
         symbol = symbol.upper()
         _extr_eng="BS4"
 
+        # CACHE CHECK now !
+        # Check if this article has already been processed and cached in the LMDB
+        #
         _ec, _ttk, _ttw, _sen_data, _fr = self.BS4_lmdb_env.kv_cache_engine("BS4", symbol, data_row, item_idx, self.sent_ai, _extr_eng)
         
         match _ec:
@@ -886,6 +890,7 @@ class yfnews_reader:
         self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
         
         _final_data_dict.update({
+            'skim_age': d0_age,
             'positive_count': sent_p,
             'neutral_count': sent_z,
             'negative_count': sent_n,
@@ -988,6 +993,7 @@ class yfnews_reader:
         durl = data_row['url']
         external = False
         cached_state = data_row['urlhash']
+        d0_age = data_row['age0']               # UTC converted article age from Depth 0 crawl4ai skim extraction
         symbol = symbol.upper()
         _extr_eng="C4"
 
@@ -1259,6 +1265,7 @@ class yfnews_reader:
                             self.sen_stats_df = pd.concat([self.sen_stats_df, sen_df_row])
 
                             _final_data_dict.update({
+                                'skim_age': d0_age,
                                 'positive_count': sent_p,
                                 'neutral_count': sent_z,
                                 'negative_count': sent_n,
