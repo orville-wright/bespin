@@ -834,10 +834,10 @@ class yfnews_reader:
         logging.info( '%s - Ready to exec BS4 extractor - get Article TEXT for AI NLP reader...' % cmi_debug )
     
         logging.info( f'%s - BS4 set Article data zones: [ {item_idx} ]' % cmi_debug )
-        # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})                # full news article - locally hosted
+        # local_news = self.nsoup.find(attrs={"class": "body yf-1ir6o1g"})               # full news article - locally hosted
         
-        local_news = self.nsoup.find(attrs={"class": "body yf-v6n2s3"})                # full news article - locally hosted        
-        #local_news_meta = self.nsoup.find(attrs={"class": "main yf-cfn520"})            # comes above/before article
+        local_news = self.nsoup.find(attrs={"class": "body yf-v6n2s3"})                  # full news article - locally hosted        
+        pub_timestamp = self.nsoup.find(attrs={"class": "byline-attr-time-style time"})  # emperical publish timestamp
         #local_stub_news = self.nsoup.find_all(attrs={"class": "body yf-3qln1o"})        # full news article - locally hosted
         try:
             local_stub_news_p = local_news.find_all("p")    # BS4 all <p> zones (not just 1)
@@ -952,7 +952,7 @@ class yfnews_reader:
                 )
         print ( f"{footer}")
         print ( f"============== BS4 End.#2 / Cache miss / Net read article / New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
-        #print (f"debug-833: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        print ( f"#-Debug-955#:  emperical publish date: {pub_timestamp}" )
         self.BS4_lmdb_env.close_lmdb("BS4")
         #print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         return self.total_tokens, self.total_words, bs4_final_results
