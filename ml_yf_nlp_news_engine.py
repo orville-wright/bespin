@@ -1210,7 +1210,7 @@ class yfnews_reader:
                                 _url_hash = data_row['urlhash']
                                 _paywall_marker = {
                                     'article':        item_idx,
-                                    'iso_age':        None
+                                    'iso_age':        'None',
                                     'urlhash':        _url_hash,      # REAL hash (was placeholder junk)
                                     'status':         'paywalled',    # explicit marker for future reads
                                     'total_tokens':   0,
