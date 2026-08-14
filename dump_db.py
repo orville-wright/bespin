@@ -101,13 +101,13 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                     print ( f"LMDB entry has no ZSTD compressed article entry." )
 
                 print ( f"Text metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
-                print ( f"Chunk analytics")
+                print ( f"\nChunk sub-dict data")
 
                 _v_key = 0  # chunk sub dict allways starts at 000 - ensure reset for each run
 
                 for key, sub_dict in _v_dict.items():
                     if isinstance(sub_dict, dict):
-                        print(f"=== Sub-dict Key: {key} ===")
+                        print(f"=== Chunk sub-dict key: {key}")
                         # Iterate through the key-value pairs of the sub-dict
                         cycle = int(0)
                         for k, v in sub_dict.items():
