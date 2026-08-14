@@ -84,15 +84,15 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 _v_dict = json.loads(value.decode('utf-8'))
                 working_article = _v_dict["article"]        # article number
                 print ( f"LMBD Database: {db_id} / Ticker: {ticker} / Filtering by:{matched_on}" ) 
-                print ( f"============================ News article:  {working_article} ====================================" )
+                print ( f"============================ Begin News article:  {working_article} ====================================" )
                 print(json.dumps(_v_dict, indent=4))
-                print ( f"============================ News article:  {working_article} ====================================" )
+                print ( f"============================ End News article:  {working_article} ====================================" )
 
-                print( f"URL hash:  {_v_dict["urlhash"]}" )
+                #print( f"URL hash:  {_v_dict["urlhash"]}" )
                 #print( f"Skimmed date :  {_v_dict["skim_age"]}" )
                 #print( f"Published date ISO:  {_v_dict["iso_age"]}" )
-                print( f"Sentences: {_v_dict["scentence"]} / Paragraphs: {_v_dict["paragraph"]} / Randoms: {_v_dict["random"]}" )
-                print ( f"Chunk blocklets: {_v_dict["chunk_count"]} / Positive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
+                #print( f"Sentences: {_v_dict["scentence"]} / Paragraphs: {_v_dict["paragraph"]} / Randoms: {_v_dict["random"]}" )
+                #print ( f"Chunk blocklets: {_v_dict["chunk_count"]} / Positive: {_v_dict["positive_count"]} Neutral: {_v_dict["neutral_count"]} Negative: {_v_dict["negative_count"]}")
 
                 try:
                     _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
