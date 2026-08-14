@@ -111,7 +111,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                         print(f"=== Sub-dict Key: {key} ===")
                         # Iterate through the key-value pairs of the sub-dict
                         for k, v in sub_dict.items():
-                            if cycle == 3:
+                            if cycle < 3:
                                 print(f"  {k}: {v}\t", end="")
                                 cycle += 1
                             else:
