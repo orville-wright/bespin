@@ -693,9 +693,9 @@ def main():
             for k, v in news_ai.yfn.news_heatmap.items():
                 if i < 3:
                     _ad = v[1]   # agedate dict
-                    #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t", end="" )
+                    print ( f"Art: {k:12.10}  Age: {v[0]:18}{v[2]}\t", end="" )
                     #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t{v[2]}" )
-                    print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}" )
+                    #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}" )
                     i += 1
                     continue
                 else:
