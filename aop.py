@@ -692,9 +692,10 @@ def main():
             _i = int(1)
             _a = int(1)
             for k, v in news_ai.yfn.news_heatmap.items():
+                print ( f"Art: {_a:3} {k:12.10}  Age: {v[0]:18}" )
+                """
                 if _i < 4:
                     _ad = v[1]   # agedate dict
-                    print ( f"Art: {_a:3} {k:12.10}  Age: {v[0]:18}\t", end="" )
                     #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t{v[2]}" )
                     #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}" )
                     _i += 1
@@ -704,6 +705,7 @@ def main():
                     print ( f"\nArt: {_a:3} {k:12.10}  Age: {v[0]:18}\t", end="" )
                     _i = int(1)
                     _a += 1
+                """
 
             print ("\n\n")
             #print ( f"{news_ai.yfn.ml_ingest}")
