@@ -65,7 +65,25 @@ class yfnews_reader:
     li_superclass = None    # all possible News articles
     live_resp0 = None
     ml_brief = None         # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
-    news_heatmap = None
+    
+    news_heatmap = None     # dict{} - Age/Date metrics for each article (see complex nested dict structure)
+    # key: urlhash
+	# value: [ list ]
+    #       List[] contains 3 data elements...
+    #       :0 human releative time string "xx m/h/d/w/mo ago" - from depth-0 skim
+	#       :1 age_dict{} from resolve_skim_age() - rich age/date metrics from depth-0 skim
+	#       :2 full article.url string
+    #
+    # List[] element :1 is a simple flat dict populated from resolve_skim_age()...
+    # age_dict{} Key/Value pairs...
+    #       state: "resolved|empty|unreadable|junk"
+    #       published_utc: published.isoformat()
+    #       published_epoch: published.timestamp()
+    #       age_seconds: delta.total_seconds()
+    #       precision: "minute|hour|day|week|month|year"
+    #       provenance: skim_estimate (when emperical date is extracted at depth-2, overwrite with "article_empirical")
+    #       raw_age_text: age_text
+    
     ml_ingest = {}          # ML ingested NLP candidate articles
     ml_sent = None
     nlp_x = 0
@@ -86,10 +104,11 @@ class yfnews_reader:
     yti = 0                 # Unique instance identifier
 
     yfn_c4_result = {}      # Crawl4ai extracted data net cache from crawl
-    #                       { aurl_hash: = {
-    #                               url: durl,
-    #                               data: self.yfn_crawl_data,
-    #                               result: result  }
+    # key: urlhash
+    # value: a nexted sub dict{} with the following keys...
+    #       url: durl
+    #       data: self.yfn_crawl_data
+    #       result: result
                     
     yfn_jsdb = {}           # database to hold response handle from multiple crawl operations    
     # dict structure...
@@ -539,7 +558,7 @@ class yfnews_reader:
                     aurl_hash = auh.hexdigest()                     # compute hash
                     if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() ) : uniqueness test
                         dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
-                        _d = f"{amount:.0f} {unit_name} ago"
+                        _d = f"{amount:.0f} {unit_name} ago"        # Human readable publish age relative time as minutes/hours/days/months ago
 
                         self.dateageresolver.mark_skim_fetch()      # create date/time anchor for this article
                         res_agedate = self.dateageresolver.resolve_skim_age(_d)     # returns a dict{} of age/date data/state/metrics
