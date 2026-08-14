@@ -105,7 +105,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
 
                 _v_key = 0  # chunk sub dict allways starts at 000 - ensure reset for each run
 
-                for key, sub_dict in data.items():
+                for key, sub_dict in _v_dict.items():
                     if isinstance(sub_dict, dict):
                         print(f"=== Sub-dict Key: {key} ===")
                         
