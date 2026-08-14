@@ -699,8 +699,9 @@ def main():
                     i += 1
                     continue
                 else:
-                    i = int(0)
+                    i = int(1)
                     print ("")
+                    print ( f"Art: {k:12.10}  Age: {v[0]:18}\t", end="" 
 
             print ("\n\n")
             #print ( f"{news_ai.yfn.ml_ingest}")
