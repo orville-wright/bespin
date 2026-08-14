@@ -558,7 +558,8 @@ class yfnews_reader:
                     #    with the outer key being the unique URL hash
                     #    and the inner dict containing all relevant candidate article metadata
                     #
-                    # other modules can dynamically add more metadata/structure to the inner dict as needed
+                    # WARNING:
+                    # other modules can dynamically add more metadata/structure to the dict as needed
                     # so the final structure of the inner dict is not fixed, and can be extended as needed
 
                     nd = {
@@ -910,6 +911,7 @@ class yfnews_reader:
         
         _final_data_dict.update({
             'skim_age': d0_age,
+            'iso_age': pub_ISOdatets,
             'positive_count': sent_p,
             'neutral_count': sent_z,
             'negative_count': sent_n,
@@ -948,6 +950,7 @@ class yfnews_reader:
 
         self.kv_created_BS4 += 1      # keep count of BS4 pre-processed KV cache article data created
         
+        # consider adding pub_ISOdatets to this dict{} since we now know it
         bs4_final_results.update({
             'article': item_idx,
             'urlhash': hs,
@@ -971,9 +974,9 @@ class yfnews_reader:
                 )
         print ( f"{footer}")
         print ( f"============== BS4 End.#2 / Cache miss / Net read article / New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
-        print ( f"#-Debug-955#:  emperical publish date: {pub_HUMANdatets} / {pub_ISOdatets}" )
         self.BS4_lmdb_env.close_lmdb("BS4")
-        #print (f"debug-835: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
+        #print ( f"#-Debug-978#:  emperical publish date: {pub_HUMANdatets} / {pub_ISOdatets}" )
+        #print ( f"#-Debug-979#: DB open state: {type(self.BS4_lmdb_env.db_open_state.get(self.BS4_lmdb_env.db_name))} / RO: {self.BS4_lmdb_env.RO_env} / RW: {self.BS4_lmdb_env.RW_env}")
         return self.total_tokens, self.total_words, bs4_final_results
         
 # #################################################
