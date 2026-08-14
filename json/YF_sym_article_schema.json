@@ -11,6 +11,11 @@
       "name": "Premium_paywall",
       "selector": "a.topic-link",
       "type": "text"
+    },
+    {
+      "name": "iso_date",
+      "selector": ".byline-attr-meta-time",
+      "type": "text"
     }
   ]
 }

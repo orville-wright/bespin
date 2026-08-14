@@ -1059,7 +1059,7 @@ class yfnews_reader:
 
         #####################################################
         # C4
-        # For a network get() read of this article / text
+        # Network get() read of this article's text
         #
         logging.info( f'%s - C4 urlhash: {cached_state}' % cmi_debug )
         cmi_debug = __name__+"::"+self.artdata_C4_depth3.__name__+".#"+str(item_idx)+" - URL: "+durl
@@ -1167,7 +1167,7 @@ class yfnews_reader:
             
             c4_dict = self.yfn_c4_result[cached_state]
             #print ( f"###-debug: C4 c4_dict keys:     {c4_dict.keys()}" ) 
-            #print ( f"###-debug: C4 dataset_1:        {dataset_1}" )       # rentore raw html page
+            #print ( f"###-debug: C4 dataset_1:        {dataset_1}" )        # raw html page
             #print ( f"###-debug: C4 c4_dict data:     {c4_dict['data']}" )  # should be refined results of crawl
             
             # print the keys of the C4 result dict
@@ -1177,7 +1177,7 @@ class yfnews_reader:
                     _neutralized_text = _trimmed_text.replace("Story Continues", " ")   # or "\n" if NLP is line-aware
                     art_all_p.append(_neutralized_text)                                 # get craw4al elements (crawl4 dict key='content')
                     # DEBUG # print ( f"#debug-1077: C4 TEXT element {i} :\n{art_all_p}" )        # print the first 100 chars of the element content
-
+                    _iso_date = element.get("iso_date")
                     _content_unreadable = False
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)
@@ -1347,6 +1347,7 @@ class yfnews_reader:
                             print (f"{footer}")
                             print (f"============== C4 End.#3 / Cache miss / Net read article / New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
                             self.C4_lmdb_env.close_lmdb("C4")
+                            print (f"#-Debug-1350# ISO-date: {_iso_date}" )
                             return self.total_tokens, self.total_words, c4_final_results
                         case _:
                             # Reaching here means an upstream edit added
@@ -1398,10 +1399,11 @@ class yfnews_reader:
 
 
     # ################ 7
-    # Craw4ai Scraping engine
+    # Craw4ai article Scraping engine
+    # 
     async def c4_engine_depth3(self, durl, item_idx):
         """
-        Helper function for artdata_C4_depth3() ONLY - not a public API
+        Provate Helper function for artdata_C4_depth3() ONLY - not a public API
         Just the crawl4ai engine for Depth 3
         Dont do anyting else
         """
