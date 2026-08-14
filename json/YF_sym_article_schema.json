@@ -16,7 +16,7 @@
       "name": "iso_date",
       "selector": ".byline-attr-meta-time",
       "type": "attribute",
-      "attribute": "dateime"
+      "attribute": "datetime"
     }
   ]
 }
