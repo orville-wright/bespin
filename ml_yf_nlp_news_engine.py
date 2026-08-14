@@ -1177,7 +1177,7 @@ class yfnews_reader:
                     _neutralized_text = _trimmed_text.replace("Story Continues", " ")   # or "\n" if NLP is line-aware
                     art_all_p.append(_neutralized_text)                                 # get craw4al elements (crawl4 dict key='content')
                     # DEBUG # print ( f"#debug-1077: C4 TEXT element {i} :\n{art_all_p}" )        # print the first 100 chars of the element content
-                    _iso_date = element.get("iso_date")
+                    pub_ISOdatets = element.get("iso_date")         # selector in schema file: YF_sym_main_schema.json
                     _content_unreadable = False
                     try:
                         _total_chars = sum(len(_s) for _s in art_all_p)
@@ -1210,6 +1210,7 @@ class yfnews_reader:
                                 _url_hash = data_row['urlhash']
                                 _paywall_marker = {
                                     'article':        item_idx,
+                                    'iso_age':        None
                                     'urlhash':        _url_hash,      # REAL hash (was placeholder junk)
                                     'status':         'paywalled',    # explicit marker for future reads
                                     'total_tokens':   0,
@@ -1288,6 +1289,7 @@ class yfnews_reader:
 
                             _final_data_dict.update({
                                 'skim_age': d0_age,
+                                'iso_age': pub_ISOdatets,
                                 'positive_count': sent_p,
                                 'neutral_count': sent_z,
                                 'negative_count': sent_n,
@@ -1347,7 +1349,7 @@ class yfnews_reader:
                             print (f"{footer}")
                             print (f"============== C4 End.#3 / Cache miss / Net read article / New cache entry built: {self.kv_created_C4 + self.kv_created_BS4} ================" )
                             self.C4_lmdb_env.close_lmdb("C4")
-                            print (f"#-Debug-1350# ISO-date: {_iso_date}" )
+
                             return self.total_tokens, self.total_words, c4_final_results
                         case _:
                             # Reaching here means an upstream edit added
