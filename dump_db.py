@@ -104,7 +104,18 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 print ( f"Chunk analytics")
 
                 _v_key = 0  # chunk sub dict allways starts at 000 - ensure reset for each run
-                for _v_chunk_dict in range(int(_v_dict["chunk_count"])+1):  # chunk count is 0 indexed, so add 1 to include the last chunk
+
+                for key, sub_dict in data.items():
+                    if isinstance(sub_dict, dict):
+                        print(f"=== Sub-dict Key: {key} ===")
+                        
+                        # Iterate through the key-value pairs of the sub-dict
+                        for k, v in sub_dict.items():
+                            print(f"  {k}: {v}")
+                        print()  # Empty line for spacing
+
+                """
+                for _v_chunk_dict in range(int(_v_dict["chunk_count"])):  # silent ERRIR here. Inconsistently counts from 0 & 1 for diff extractors
                     _v_key = f"{_v_chunk_dict:03}"
                     try: 
                         _v_sub_dict = (_v_dict[_v_key])
@@ -119,7 +130,8 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                         matches += 1
                         _v_key = 0
                         _v_chunk_dict = 0
-
+                """
+                
                 print (" ")
             print(f"\nKey filter '{key_filter}': {matches} match(es) from {total} total entries")
     except lmdb.Error as e:
