@@ -105,13 +105,18 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
 
                 _v_key = 0  # chunk sub dict allways starts at 000 - ensure reset for each run
 
+                cycle = int(0)
                 for key, sub_dict in _v_dict.items():
                     if isinstance(sub_dict, dict):
                         print(f"=== Sub-dict Key: {key} ===")
-                        
                         # Iterate through the key-value pairs of the sub-dict
                         for k, v in sub_dict.items():
-                            print(f"  {k}: {v}")
+                            if cycle < 3:
+                                print(f"  {k}: {v}\t", end="")
+                                cycle += 1
+                            else:
+                                cycle = int(0)
+                                print ("")
                         print()  # Empty line for spacing
 
                 """
