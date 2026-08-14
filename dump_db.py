@@ -98,13 +98,13 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                     _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
                     print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
                 except KeyError:
-                    print ( f"LMDB entry has not ZSTD compressed article entry." )
+                    print ( f"LMDB entry has no ZSTD compressed article entry." )
 
                 print ( f"Text metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
                 print ( f"Chunk analytics")
 
-                _v_key = 0  # chunk dict allways starts at 000 - ensure reset for each run
-                for _v_chunk_dict in range(int(_v_dict["chunk_count"])):  # chunk count is 0 indexed, so add 1 to include the last chunk
+                _v_key = 0  # chunk sub dict allways starts at 000 - ensure reset for each run
+                for _v_chunk_dict in range(int(_v_dict["chunk_count"])+1):  # chunk count is 0 indexed, so add 1 to include the last chunk
                     _v_key = f"{_v_chunk_dict:03}"
                     try: 
                         _v_sub_dict = (_v_dict[_v_key])
