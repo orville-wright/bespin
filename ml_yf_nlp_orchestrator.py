@@ -108,7 +108,7 @@ class ml_nlpreader:
             eval_state, bad_url_count = ml_yfn_dataset.eval_news_feed_stories(news_symbol)
             self.ml_yfn_dataset = ml_yfn_dataset                    # set global dataset -> ml_yfn_dataset            
             print(" ")
-            print(f"Candidates: {articles_found} / Evaluated: {len(ml_yfn_dataset.ml_ingest)} / (Bad urls: {bad_url_count}) / Skim Depth: 0")
+            print(f"Skim Depth: 0 - Candidates: {articles_found} / Maybe good: {len(ml_yfn_dataset.ml_ingest)} / (Bad urls: {bad_url_count})")
             print("========================================================================================")
   
             # DEBUG: xray debug
