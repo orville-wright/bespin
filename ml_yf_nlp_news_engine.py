@@ -86,7 +86,7 @@ class yfnews_reader:
     
     ml_ingest = {}          # ML ingested NLP candidate articles
     ml_sent = None
-    nlp_x = 0
+    nlp_x = 1
     result_engine = "unknown"  # engine used to extract article data
     sent_ai = None          # GLOBALLY shared handle = prob a very bad idea to do it this way
     sen_stats_df = None     # Aggregated sentiment stats for this 1 article
@@ -137,8 +137,8 @@ class yfnews_reader:
         # init empty DataFrame with preset column names
         self.args = global_args
         self.symbol = symbol
-        self.nlp_x = 0
-        self.cycle = 1
+        self.nlp_x = int(1)
+        self.cycle = int(1)
         self.news_heatmap = dict()
         self.kv_created_BS4 = int(0)
         self.kv_created_C4 = int(0)
@@ -496,8 +496,7 @@ class yfnews_reader:
         hcycle = 1              # uhinter counter for logging
         dedupe_set = set()      # deduplication optimization data set
         logging.info('%s - Article Zone scanning / ml_ingest population loop...' % cmi_debug)
-        for article in self.extracted_articles: # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
-            self.nlp_x += 1
+        for article in self.extracted_articles:         # GLOBAL class accessor : article >>dataset<< extracted by crawl4ai
             art_title = article.get('Title', 'ERROR_no_title')                      # extracted craw4al element
             article_url = article.get('Ext_url', '')                                # extracted craw4al element
             art_publisher = article.get('Publisher', 'No_publisher • No_pub_time')  # extracted craw4al element
@@ -539,7 +538,7 @@ class yfnews_reader:
                 inf_type = self.yfn_uh.confidence_lvl(thint)    # list[] from global URLhinter instance
                 ml_atype = uhint
 
-                # quickly convert publisher release update time to an exact math number
+                # convert depth-0 article published time to an exact math number
                 amount, unit_name = parse_relative_time(update_time)
     
                 print(f"News article:  {symbol} [ {path} ]")
@@ -550,24 +549,24 @@ class yfnews_reader:
                 print(f"Short title:   {art_title:.50}")
                 print(f"Long teaser:   {art_teaser}")
                 
-                # TEST #3 : dedupe (check for URL dupes)
-                # build list of URL hashes for the ML ingest candidate dataset
-                # build list of URL hashes with Article age for Age Heat Map and LMDB Age entry
-                if amount != 0:
-                    auh = hashlib.sha256(self.article_url.encode()) # Generate hash of URL
-                    aurl_hash = auh.hexdigest()                     # compute hash
-                    if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() ) : uniqueness test
-                        dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
-                        _d = f"{amount:.0f} {unit_name} ago"        # Human readable publish age relative time as minutes/hours/days/months ago
+                # TEST #3 : Uniqueness - Depupe this URL (have we seen it before?)
+                auh = hashlib.sha256(self.article_url.encode()) # Generate hash of URL
+                aurl_hash = auh.hexdigest()                     # compute hash
+                if aurl_hash not in dedupe_set:                 # dedupe membership test (deupe_set => set() ) : uniqueness test
+                    dedupe_set.add(aurl_hash)                   # add aurl_hash to dupe_set for next membership test
 
+                    # TEST #4 : build the Age heatmap for this depth-0 skim run
+                    # build list of URL hashes with Article Age Heat Map and later LMDB Age use
+                    if amount != 0:
+                        _d = f"{amount:.0f} {unit_name} ago"        # Human readable publish age relative time as minutes/hours/days/months ago
                         self.dateageresolver.mark_skim_fetch()      # create date/time anchor for this article
                         res_agedate = self.dateageresolver.resolve_skim_age(_d)     # returns a dict{} of age/date data/state/metrics
                         _dl = list((_d, res_agedate, self.article_url))
                         #print ( f"#-DEBUG-548! Age resolved:\n{_dl}" )
                         self.news_heatmap.update({aurl_hash: _dl})      # build unique new age heatmap
                         logging.info( f'{cmi_debug}   - Saved Age Heat-Map entry for urlhash {cg:02}: {aurl_hash[:30]}...' )
-                        print(" ")
-                        
+                        print("#-debug-570 !")
+
                     ############################################
                     # Build full AI NLP candidate Master dict row
                     # ml_ingest is VERY important master dataset for all candidate articles to be processed by ML NLP
@@ -580,7 +579,6 @@ class yfnews_reader:
                     # WARNING:
                     # other modules can dynamically add more metadata/structure to the dict as needed
                     # so the final structure of the inner dict is not fixed, and can be extended as needed
-
                     nd = {
                         "symbol": symbol,
                         "urlhash": aurl_hash,
@@ -593,8 +591,9 @@ class yfnews_reader:
                         "url": self.article_url,
                         "age0": res_agedate["published_utc"]
                     }
-                    self.ml_ingest.update({self.nlp_x: nd})
+                    self.ml_ingest.update({self.nlp_x: nd})     # add this as a POSSIBLE news candidate article
                     logging.info( f'{cmi_debug}   - Added unique url hash to ML Ingest DB @ {cg:02}: {aurl_hash[:30]}...' )
+                    self.nlp_x += 1
                     cg += 1
                     hcycle += 1
                 else:
