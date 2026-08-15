@@ -66,8 +66,9 @@ class yfnews_reader:
     live_resp0 = None
     ml_brief = None         # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
     
-    news_heatmap = None     # dict{} - Age/Date metrics for each article (see complex nested dict structure)
     heatmap_c = 0
+    heatmap_x = 0
+    news_heatmap = None     # dict{} - Age/Date metrics for each article (see complex nested dict structure)
     # key: urlhash
 	# value: [ list ]
     #       List[] contains 3 data elements...
@@ -569,6 +570,7 @@ class yfnews_reader:
                         print(" ")
                     else:
                         logging.info( f'{cmi_debug}   - JUNK excluded from Age Heat-Map {cg:02}: {aurl_hash[:30]}...' )
+                        self.heatmap_x += 1
 
                     ############################################
                     # Build full AI NLP candidate Master dict row
@@ -613,7 +615,7 @@ class yfnews_reader:
                 cg += 1
                 hcycle += 1
 
-        print ( f"#-debug-615 Heatmap  counter: {self.heatmap_c}" )
+        print ( f"#-debug-615 Heatmap  counters: +{self.heatmap_c} / -{self.heatmap_x}" )
         return 0, bad_url_count
 
     # ################
