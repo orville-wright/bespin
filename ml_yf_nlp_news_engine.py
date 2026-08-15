@@ -67,6 +67,7 @@ class yfnews_reader:
     ml_brief = None         # ML TXT matrix for Naive Bayes Classifier pre Count Vectorizer
     
     news_heatmap = None     # dict{} - Age/Date metrics for each article (see complex nested dict structure)
+    heatmap_c = 0
     # key: urlhash
 	# value: [ list ]
     #       List[] contains 3 data elements...
@@ -562,10 +563,12 @@ class yfnews_reader:
                         self.dateageresolver.mark_skim_fetch()      # create date/time anchor for this article
                         res_agedate = self.dateageresolver.resolve_skim_age(_d)     # returns a dict{} of age/date data/state/metrics
                         _dl = list((_d, res_agedate, self.article_url))
-                        #print ( f"#-DEBUG-548! Age resolved:\n{_dl}" )
+                        self.heatmap_c += 1                             # temp debug counter
                         self.news_heatmap.update({aurl_hash: _dl})      # build unique new age heatmap
                         logging.info( f'{cmi_debug}   - Saved Age Heat-Map entry for urlhash {cg:02}: {aurl_hash[:30]}...' )
-                        print("#-debug-570 !")
+                        print(" ")
+                    else:
+                        logging.info( f'{cmi_debug}   - JUNK excluded from Age Heat-Map {cg:02}: {aurl_hash[:30]}...' )
 
                     ############################################
                     # Build full AI NLP candidate Master dict row
@@ -610,6 +613,7 @@ class yfnews_reader:
                 cg += 1
                 hcycle += 1
 
+        print ( f"#-debug-615 Heatmap  counter: {self.heatmap_c}" )
         return 0, bad_url_count
 
     # ################
