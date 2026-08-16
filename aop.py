@@ -700,12 +700,12 @@ def main():
                 if _i < 4:
                     _ad = v[1]   # agedate dict
                     #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t{v[2]}" )
-                    print ( f"{k:12.10}  Age: {v[0]:18}\t", end="" )
+                    print ( f"Art: {k:12.10}  Age: {v[0]:17}  ", end="" )
                     _i += 1
                     _a += 1
                     continue
                 else:
-                    print ( f"\nArt: {_a:3} {k:12.10}  Age: {v[0]:18}\t", end="" )
+                    print ( f"\nArt: {_a:3} {k:12.10}  Age: {v[0]:17}  ", end="" )
                     _i = int(1)
 
             print ("\n\n")
