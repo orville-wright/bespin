@@ -292,7 +292,7 @@ class CompositeScorer:
         logging.info(f"%s          - Normalize input article structure for record: {self.processing_record}..." % cmi_debug )
 
         _urlhash = article.get("urlhash", "UNKNOWN")
-        logging.info(f"%s           - Working on article: {_urlhash}" % cmi_debug )
+        logging.info(f"%s          - Working on article: {_urlhash}" % cmi_debug )
 
         published_epoch = self.resolve_published_epoch(article)
 
@@ -440,7 +440,7 @@ class CompositeScorer:
 
 # ############################# Method #9
     def params(self) -> dict[str, float]:
-        cmi_debug = __name__+"::"+self.params.__name__
+        cmi_debug = __name__+"::"+self.params+".#static_variable_loader".__name__
         logging.info(f"%s    - Load 4 critical static Weighting PARAMS" % cmi_debug )
         return {
             "half_life_hours": self.half_life_hours,
