@@ -169,7 +169,7 @@ class CompositeScorer:
 
             age_hours = age_seconds / SECONDS_PER_HOUR
             weight = 0.5 ** (age_hours / self.half_life_hours)
-            logging.info(f"%s    - Article age set to: {age_hours:.2f} hours, weight: {weight:.4f}" % cmi_debug)
+            logging.info(f"%s    - Article age id: {age_hours:.2f} hours / Weight computed as: {weight:.4f}" % cmi_debug)
             logging.info(f"%s    - computing weighted scores : Pos/Neg/Neu..." % cmi_debug)
              
             weighted_positive += weight * float(normalized["positive_strength"])
@@ -221,7 +221,7 @@ class CompositeScorer:
         else:
             state = "scored"
 
-        logging.info(f"%s    - Computed HEALTY score: {score:.4f}" % cmi_debug)
+        logging.info(f"%s    - Computed viable composite score: {score:.4f}" % cmi_debug)
         logging.info(f"%s    - Build final composite_score data dict" % cmi_debug)
         self.composite_report = {
             "symbol": symbol,
