@@ -60,6 +60,7 @@ class CompositeScorer:
     """
 
     lmdb_record_count = 0       # counter for reading LMDB records
+    processing_record = 0       # counter for processing articles
 
 
     def __init__(
@@ -268,7 +269,8 @@ class CompositeScorer:
         If no chunks are available, it falls back to root-level counts.
         """
         cmi_debug = __name__+"::"+self.normalize_article.__name__
-        logging.info(f"%s    - Normalize input article structure..." % cmi_debug )
+        self.processing_record += 1
+        logging.info(f"%s          - Normalize input article structure for record: {self.processing_record}..." % cmi_debug )
 
         published_epoch = self.resolve_published_epoch(article)
 
@@ -308,12 +310,14 @@ class CompositeScorer:
             "negative_strength": negative_strength,
         }
 
+# ############################# Method
     def iter_lmdb_chunks(self, article: Mapping[str, Any]) -> Iterable[Mapping[str, Any]]:
         """Yield chunk sub-dicts from a Bespin LMDB article package."""
         for key, value in article.items():
             if isinstance(value, Mapping) and self._is_chunk_key(key):
                 yield value
 
+# ############################# Method
     def resolve_published_epoch(self, article: Mapping[str, Any]) -> float | None:
         """
         Resolve article time from known Bespin/template fields.
@@ -374,7 +378,7 @@ class CompositeScorer:
             raise RuntimeError("lmdb is not installed; install requirements before reading LMDB.")
 
         cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__
-        logging.info(f"%s    - Compute LMDB data composite score..." % cmi_debug )
+        logging.info(f"%s    - Load {symbol} article data from LMDB..." % cmi_debug )
 
         symbol = symbol.upper()
         db_path = Path(db_path)
@@ -408,7 +412,7 @@ class CompositeScorer:
                             yield record
         finally:
             cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__
-            logging.info(f"%s    - Close LMDB database" % cmi_debug )
+            logging.info(f"%s    - Close LMDB database / Populated {self.lmdb_record_count} records" % cmi_debug )
             env.close()
 
 # #############################
@@ -466,18 +470,21 @@ class CompositeScorer:
 # ############################# Decorfator #3
     @staticmethod
     def _has_explicit_strengths(article: Mapping[str, Any]) -> bool:
+        cmi_debug = __name__+"::"+CompositeScorer._has_explicit_strengths.__name__
         keys = {"positive_strength", "neutral_strength", "negative_strength"}
         return any(key in article for key in keys)
 
 # ############################# Decorfator #4
     @staticmethod
     def _to_float(value: Any) -> float:
+        cmi_debug = __name__+"::"+CompositeScorer._to_float.__name__
         parsed = CompositeScorer._to_float_or_none(value)
         return 0.0 if parsed is None or math.isnan(parsed) else parsed
 
 # ############################# Decorfator #5
     @staticmethod
     def _to_float_or_none(value: Any) -> float | None:
+        cmi_debug = __name__+"::"+CompositeScorer._to_float_or_none.__name__
         if value is None:
             return None
         try:
@@ -488,6 +495,7 @@ class CompositeScorer:
 # ############################# Decorfator #6
     @staticmethod
     def _parse_datetime_epoch(value: Any) -> float | None:
+        cmi_debug = __name__+"::"+CompositeScorer._parse_datetime_epoch.__name__
         if value is None:
             return None
         if isinstance(value, (int, float)):
