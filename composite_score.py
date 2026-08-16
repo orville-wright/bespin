@@ -440,8 +440,8 @@ class CompositeScorer:
 
 # ############################# Method #9
     def params(self) -> dict[str, float]:
-        cmi_debug = __name__+"::params.#static_variable_loader"
-        logging.info(f"%s    - Load 4 critical static Weighting PARAMS" % cmi_debug )
+        cmi_debug = __name__+"::params.#_loader"
+        logging.info(f"%s    - Load 4 critical CONSTANT Weighting VARS" % cmi_debug )
         return {
             "half_life_hours": self.half_life_hours,
             "volume_shrinkage_k": self.volume_shrinkage_k,
