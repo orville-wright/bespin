@@ -657,6 +657,9 @@ def main():
             # #############################################
             # Final Summary report
             print ( f"=================== Sentiment Profile Analysis for: {news_symbol.upper()} ===================" )
+            # note - df_final is a jumbo DataFrame that holds all sentimnent metrics for this run
+            # but it is not used in the final summary report, but it is available for debugging and analysis
+            # 
             precise_results = sent_ai.sentiment_metrics(
                 news_symbol.upper(),
                 df_final, positive_c, negative_c,
@@ -692,20 +695,18 @@ def main():
             _i = int(1)
             _a = int(1)
             for k, v in news_ai.yfn.news_heatmap.items():
-                print ( f"Art: {_a:3} {k:12.10}  Age: {v[0]:18}" )
+                #print ( f"Art: {_a:3} {k:12.10}  Age: {v[0]:18}" )
                 _a += 1
-                """
                 if _i < 4:
                     _ad = v[1]   # agedate dict
                     #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t{v[2]}" )
-                    #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}" )
+                    print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}", end="" )
                     _i += 1
                     _a += 1
                     continue
                 else:
                     print ( f"\nArt: {_a:3} {k:12.10}  Age: {v[0]:18}\t", end="" )
                     _i = int(1)
-                """
 
             print ("\n\n")
             #print ( f"{news_ai.yfn.ml_ingest}")
