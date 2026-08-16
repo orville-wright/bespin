@@ -96,7 +96,7 @@ class CompositeScorer:
         if run_epoch is None:
             run_epoch = time.time()
 
-        cmi_debug = __name__+"::"+self.score_symbol.__name__+"
+        cmi_debug = __name__+"::"+self.score_symbol.__name__
         logging.info(f"%s    - Compute a Ticker composite score @ time window: {run_epoch}." % cmi_debug )
 
         articles = list(self.iter_scoreable_articles(source))
