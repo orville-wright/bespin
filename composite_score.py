@@ -156,6 +156,9 @@ class CompositeScorer:
             articles_total += 1
 
             normalized = self.normalize_article(article)
+            urlhash = article.get("urlhash", "UNKNOWN")
+            logging.info(f"%s    - Working on article: {urlhash}" % cmi_debug )
+            
             published_epoch = normalized.get("published_epoch")
             if published_epoch is None:
                 articles_skipped_no_timestamp += 1
@@ -276,7 +279,7 @@ class CompositeScorer:
 # ############################# Method #5
     def normalize_article(self, article: Mapping[str, Any]) -> dict[str, float | None]:
         """
-        Convert a template-style or Bespin-style article record to strengths.
+        Convert Bespin article record to strengths.
 
         If explicit strengths are present, they win. Otherwise the method
         derives strengths from LMDB chunk sub-dicts:
@@ -306,14 +309,15 @@ class CompositeScorer:
         chunk_count = 0
 
         for chunk in self.iter_lmdb_chunks(article):
-            sent_type = str(chunk.get("sent_type", chunk.get("sent", ""))).lower()
-            sent_score = self._to_float(chunk.get("sent_score", chunk.get("rank", 1.0)))
+            sent_type = str(chunk.get("sent_type", chunk.get("sent", ""))).lower()          # read LMDB sent_type field
+            sent_score = self._to_float(chunk.get("sent_score", chunk.get("rank", 1.0)))    # read LMDB sent_score field & convert to float
+
             if sent_type == "positive":
-                positive_strength += sent_score
+                positive_strength += sent_score     # add real LMDB sent_score to positive_strength
             elif sent_type == "neutral":
-                neutral_strength += sent_score
+                neutral_strength += sent_score      # add real LMDB sent_score to neutral_strength
             elif sent_type == "negative":
-                negative_strength += sent_score
+                negative_strength += sent_score     # add real LMDB sent_score to negative_strength
             chunk_count += 1
 
         if chunk_count == 0:
@@ -446,6 +450,8 @@ class CompositeScorer:
 
 # ############################# Method #10
     def _dataframe_to_articles(self, dataframe: Any) -> Iterable[dict[str, Any]]:
+        cmi_debug = __name__+"::"+self._dataframe_to_articles.__name__
+        logging.info(f"%s    - Read data from DataFrame" % cmi_debug )
         records = dataframe.to_dict(orient="records")
         if "urlhash" not in getattr(dataframe, "columns", []):
             yield from records
