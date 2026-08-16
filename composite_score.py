@@ -119,7 +119,7 @@ class CompositeScorer:
         if run_epoch is None:
             run_epoch = time.time()
 
-        cmi_debug = __name__+"::"+self.score_symbol_from_lmdb.__name__+"
+        cmi_debug = __name__+"::"+self.score_symbol_from_lmdb.__name__
         logging.info(f"%s    - Compute LMDB data composite score @ time window: {run_epoch}." % cmi_debug )
 
         records = list(self.load_symbol_articles_from_lmdb(symbol, db_path, db_id))
@@ -135,7 +135,7 @@ class CompositeScorer:
         per-article records adapted from live Bespin data.
         """
 
-        cmi_debug = __name__+"::"+self.composite_score.__name__+"
+        cmi_debug = __name__+"::"+self.composite_score.__name__
         logging.info(f"%s    - Compute {symbol} composite ranking metrics @ window: {run_epoch}." % cmi_debug )
         logging.info(f"%s    - Processing articles: {len(articles)}." % cmi_debug )
 
@@ -225,7 +225,7 @@ class CompositeScorer:
     def iter_scoreable_articles(self, source: Any) -> Iterable[Mapping[str, Any]]:
         """Yield article-like dicts from Bespin dict/list/DataFrame sources."""
 
-        cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__+"
+        cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__
         logging.info(f"%s    - identify input data source" % cmi_debug ) 
 
         if source is None:
@@ -233,18 +233,18 @@ class CompositeScorer:
 
         if self._looks_like_dataframe(source):
             yield from self._dataframe_to_articles(source)
-            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__+"
+            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__
             logging.info(f"%s    - Pandas DataFrame" % cmi_debug ) 
             return
 
         if isinstance(source, Mapping):
             yield source
-            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__+"
+            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__
             logging.info(f"%s    - Mapping" % cmi_debug )
             return
 
         if isinstance(source, Iterable) and not isinstance(source, (str, bytes)):
-            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__+"
+            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__
             logging.info(f"%s    - Iterable entity: {type(source)}" % cmi_debug ) 
             for item in source:
                 if isinstance(item, Mapping):
@@ -267,7 +267,7 @@ class CompositeScorer:
 
         If no chunks are available, it falls back to root-level counts.
         """
-        cmi_debug = __name__+"::"+self.normalize_article.__name__+"
+        cmi_debug = __name__+"::"+self.normalize_article.__name__
         logging.info(f"%s    - Normalize input article structure..." % cmi_debug )
 
         published_epoch = self.resolve_published_epoch(article)
@@ -324,7 +324,7 @@ class CompositeScorer:
           3. ISO timestamp strings: iso_age, published_utc, published_at, skim_age
         """
 
-        cmi_debug = __name__+"::"+self.resolve_published_epoch.__name__+"
+        cmi_debug = __name__+"::"+self.resolve_published_epoch.__name__
         logging.info(f"%s    - Resolving published epoch data..." % cmi_debug )
 
         direct_epoch = self._to_float_or_none(article.get("published_epoch"))
@@ -373,14 +373,14 @@ class CompositeScorer:
         if lmdb is None:
             raise RuntimeError("lmdb is not installed; install requirements before reading LMDB.")
 
-        cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__+"
+        cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__
         logging.info(f"%s    - Compute LMDB data composite score..." % cmi_debug )
 
         symbol = symbol.upper()
         db_path = Path(db_path)
         prefix = f"{db_id}.{symbol}.".encode("utf-8")
 
-        cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__+"
+        cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__
         logging.info(f"%s    - Scaning for LMDB data pattern: {prefix}" % cmi_debug )
 
         env = lmdb.open(
@@ -394,7 +394,7 @@ class CompositeScorer:
             with env.begin() as txn:
                 cursor = txn.cursor()
                 if cursor.set_range(prefix):
-                    cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__+"
+                    cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__
                     logging.info(f"%s    - Opened LMDB database for READ-ONLY Txn..." % cmi_debug )
                     for key, value in cursor:
                         if not key.startswith(prefix):
@@ -407,7 +407,7 @@ class CompositeScorer:
                             self.lmdb_record_count += 1
                             yield record
         finally:
-            cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__+"
+            cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__
             logging.info(f"%s    - Close LMDB database" % cmi_debug )
             env.close()
 
