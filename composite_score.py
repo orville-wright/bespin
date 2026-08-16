@@ -48,7 +48,7 @@ SECONDS_PER_HOUR = 3600.0
 DEFAULT_DB_ID = "0001"
 DEFAULT_LMDB_PATH = Path("datastore") / "LMDB_0001"
 
-
+# ############################# MAIN CLASS
 class CompositeScorer:
     """
     Compute a single composite sentiment score for one stock ticker.
@@ -77,6 +77,7 @@ class CompositeScorer:
         cmi_debug = __name__+"::" + self.__init__.__name__
         logging.info(f'%s Instantiate' % cmi_debug)
 
+# ############################# Method #1
     def score_symbol(
             self,
             symbol: str,
@@ -103,6 +104,7 @@ class CompositeScorer:
         articles = list(self.iter_scoreable_articles(source))
         return self.composite_score(symbol.upper(), articles, run_epoch)
 
+# ############################# Method #2
     def score_symbol_from_lmdb(
             self,
             symbol: str,
@@ -126,6 +128,7 @@ class CompositeScorer:
         records = list(self.load_symbol_articles_from_lmdb(symbol, db_path, db_id))
         return self.composite_score(symbol.upper(), records, run_epoch)
 
+# ############################# Method #3
     def composite_score(
             self,
             symbol: str,
@@ -210,12 +213,12 @@ class CompositeScorer:
         density = 0.0 if total_mass == 0.0 else directional_mass / total_mass
         volume_factor = n_eff / (n_eff + self.volume_shrinkage_k)
         score = polarity * (density ** self.density_exponent) * volume_factor
-        logging.info(f"%s    - Insufficient Fresh Article coverage !" % cmi_debug)
-        state = (
-            "insufficient_fresh_coverage"
-            if n_eff < self.min_effective_volume
-            else "scored"
-        )
+
+        if n_eff < self.min_effective_volume:
+            state = "insufficient_fresh_coverage"
+            logging.info(f"%s    - Insufficient Fresh Article coverage !" % cmi_debug)
+        else:
+            state = "scored"
 
         logging.info(f"%s    - Computed HEALTY score: {score:.4f}" % cmi_debug)
         logging.info(f"%s    - Build final composite_score data dict" % cmi_debug)
@@ -235,7 +238,7 @@ class CompositeScorer:
         }
         return self.composite_report
 
-# ############################# Method
+# ############################# Method #4
     def iter_scoreable_articles(self, source: Any) -> Iterable[Mapping[str, Any]]:
         """Yield article-like dicts from Bespin dict/list/DataFrame sources."""
 
@@ -269,7 +272,7 @@ class CompositeScorer:
 
         raise TypeError(f"Unsupported composite score source: {type(source)!r}")
 
-# ############################# Method
+# ############################# Method #5
     def normalize_article(self, article: Mapping[str, Any]) -> dict[str, float | None]:
         """
         Convert a template-style or Bespin-style article record to strengths.
@@ -324,14 +327,14 @@ class CompositeScorer:
             "negative_strength": negative_strength,
         }
 
-# ############################# Method
+# ############################# Method #6
     def iter_lmdb_chunks(self, article: Mapping[str, Any]) -> Iterable[Mapping[str, Any]]:
         """Yield chunk sub-dicts from a Bespin LMDB article package."""
         for key, value in article.items():
             if isinstance(value, Mapping) and self._is_chunk_key(key):
                 yield value
 
-# ############################# Method
+# ############################# Method #7
     def resolve_published_epoch(self, article: Mapping[str, Any]) -> float | None:
         """
         Resolve article time from known Bespin/template fields.
@@ -379,7 +382,7 @@ class CompositeScorer:
         return None
 
 
-# ############################# Method
+# ############################# Method #8   
     def load_symbol_articles_from_lmdb(
             self,
             symbol: str,
@@ -429,7 +432,7 @@ class CompositeScorer:
             logging.info(f"%s    - Close LMDB database / Populated {self.lmdb_record_count} records" % cmi_debug )
             env.close()
 
-# #############################
+# ############################# Method #9
     def params(self) -> dict[str, float]:
         cmi_debug = __name__+"::"+self.params.__name__
         logging.info(f"%s    - Load 4 critical static Weighting PARAMS" % cmi_debug )
@@ -440,7 +443,7 @@ class CompositeScorer:
             "min_effective_volume": self.min_effective_volume,
         }
 
-# #############################
+# ############################# Method #10
     def _dataframe_to_articles(self, dataframe: Any) -> Iterable[dict[str, Any]]:
         records = dataframe.to_dict(orient="records")
         if "urlhash" not in getattr(dataframe, "columns", []):
@@ -472,32 +475,32 @@ class CompositeScorer:
 
         yield from grouped.values()
 
-# ############################# Decorfator #1
+# ############################# Decorator #1
     @staticmethod
     def _looks_like_dataframe(source: Any) -> bool:
         return hasattr(source, "to_dict") and hasattr(source, "columns")
 
-# ############################# Decorfator #2
+# ############################# Decorator #2
     @staticmethod
     def _is_chunk_key(key: Any) -> bool:
         key_text = str(key)
         return key_text.isdigit() and len(key_text) == 3
 
-# ############################# Decorfator #3
+# ############################# Decorator #3
     @staticmethod
     def _has_explicit_strengths(article: Mapping[str, Any]) -> bool:
         cmi_debug = __name__+"::"+CompositeScorer._has_explicit_strengths.__name__
         keys = {"positive_strength", "neutral_strength", "negative_strength"}
         return any(key in article for key in keys)
 
-# ############################# Decorfator #4
+# ############################# Decorator #4
     @staticmethod
     def _to_float(value: Any) -> float:
         cmi_debug = __name__+"::"+CompositeScorer._to_float.__name__
         parsed = CompositeScorer._to_float_or_none(value)
         return 0.0 if parsed is None or math.isnan(parsed) else parsed
 
-# ############################# Decorfator #5
+# ############################# Decorator #5
     @staticmethod
     def _to_float_or_none(value: Any) -> float | None:
         cmi_debug = __name__+"::"+CompositeScorer._to_float_or_none.__name__
@@ -508,7 +511,7 @@ class CompositeScorer:
         except (TypeError, ValueError):
             return None
 
-# ############################# Decorfator #6
+# ############################# Decorator #6
     @staticmethod
     def _parse_datetime_epoch(value: Any) -> float | None:
         cmi_debug = __name__+"::"+CompositeScorer._parse_datetime_epoch.__name__
@@ -551,7 +554,16 @@ def main() -> int:
         default=None,
         help="UTC epoch seconds anchor for this scoring run. Defaults to now.",
     )
+
+    parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
+
     args = parser.parse_args()
+
+    if args['bool_verbose'] is True:        # Logging level
+        print ( "Enabeling verbose info logging..." )
+        logging.disable(0)                  # Log level = OFF
+    else:
+        logging.disable(20)                 # Log lvel = INFO
 
     scorer = CompositeScorer()
     report = scorer.score_symbol_from_lmdb(args.symbol, args.db_path, args.run_epoch)
