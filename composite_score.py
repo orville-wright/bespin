@@ -156,8 +156,6 @@ class CompositeScorer:
             articles_total += 1
 
             normalized = self.normalize_article(article)
-            _urlhash = article.get("urlhash", "UNKNOWN")
-            logging.info(f"%s    - Working on article: {_urlhash}" % cmi_debug )
 
             published_epoch = normalized.get("published_epoch")
             if published_epoch is None:
@@ -294,7 +292,7 @@ class CompositeScorer:
         logging.info(f"%s          - Normalize input article structure for record: {self.processing_record}..." % cmi_debug )
 
         _urlhash = article.get("urlhash", "UNKNOWN")
-        logging.info(f"%s    - Working on article: {_urlhash}" % cmi_debug )
+        logging.info(f"%s           - Working on article: {_urlhash}" % cmi_debug )
 
         published_epoch = self.resolve_published_epoch(article)
 
