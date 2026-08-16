@@ -692,11 +692,11 @@ def main():
 
             print ("Article news Age HEAT MAP")
             print ("======================================================================================")
-            _i = int(1)
+            _i = int(0)
             _a = int(0)
             for k, v in news_ai.yfn.news_heatmap.items():
                 if _i < 3:
-                    _ad = v[1]   # agedate dict
+                    #_ad = v[1]   # agedate dict
                     #print ( f"{k:12.10}  Age: {v[0]:18}{_ad["published_utc"]}\t{v[2]}" )
                     print ( f"Art: {_a:3} {k:12.10}  Age: {v[0]:17}  ", end="" )
                     _i += 1
