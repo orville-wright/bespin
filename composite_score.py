@@ -156,9 +156,9 @@ class CompositeScorer:
             articles_total += 1
 
             normalized = self.normalize_article(article)
-            urlhash = article.get("urlhash", "UNKNOWN")
-            logging.info(f"%s    - Working on article: {urlhash}" % cmi_debug )
-            
+            _urlhash = article.get("urlhash", "UNKNOWN")
+            logging.info(f"%s    - Working on article: {_urlhash}" % cmi_debug )
+
             published_epoch = normalized.get("published_epoch")
             if published_epoch is None:
                 articles_skipped_no_timestamp += 1
@@ -172,7 +172,7 @@ class CompositeScorer:
 
             age_hours = age_seconds / SECONDS_PER_HOUR
             weight = 0.5 ** (age_hours / self.half_life_hours)
-            logging.info(f"%s    - Article age id: {age_hours:.2f} hours / Weight computed as: {weight:.4f}" % cmi_debug)
+            logging.info(f"%s    - Article age is: {age_hours:.2f} hours / Age Weight computed as: {weight:.4f}" % cmi_debug)
             logging.info(f"%s    - computing weighted scores : Pos/Neg/Neu..." % cmi_debug)
              
             weighted_positive += weight * float(normalized["positive_strength"])
@@ -292,6 +292,9 @@ class CompositeScorer:
         cmi_debug = __name__+"::"+self.normalize_article.__name__
         self.processing_record += 1
         logging.info(f"%s          - Normalize input article structure for record: {self.processing_record}..." % cmi_debug )
+
+        _urlhash = article.get("urlhash", "UNKNOWN")
+        logging.info(f"%s    - Working on article: {_urlhash}" % cmi_debug )
 
         published_epoch = self.resolve_published_epoch(article)
 
