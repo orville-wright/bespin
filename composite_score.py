@@ -12,12 +12,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import math
 import time
 from collections.abc import Iterable, Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+# logging setup
+logging.basicConfig(level=logging.INFO)
 
 try:
     import lmdb
@@ -55,6 +59,9 @@ class CompositeScorer:
       - score_symbol_from_lmdb(symbol, db_path=DEFAULT_LMDB_PATH, ...)
     """
 
+    lmdb_record_count = 0       # counter for reading LMDB records
+
+
     def __init__(
             self,
             half_life_hours: float = HALF_LIFE_HOURS,
@@ -66,6 +73,8 @@ class CompositeScorer:
         self.density_exponent = density_exponent
         self.min_effective_volume = min_effective_volume
         self.composite_report: dict[str, Any] | None = None
+        cmi_debug = __name__+"::" + self.__init__.__name__
+        logging.info(f'%s Instantiate' % cmi_debug)
 
     def score_symbol(
             self,
@@ -87,6 +96,9 @@ class CompositeScorer:
         if run_epoch is None:
             run_epoch = time.time()
 
+        cmi_debug = __name__+"::"+self.score_symbol.__name__+"
+        logging.info(f"%s    - Compute a Ticker composite score @ time window: {run_epoch}." % cmi_debug )
+
         articles = list(self.iter_scoreable_articles(source))
         return self.composite_score(symbol.upper(), articles, run_epoch)
 
@@ -107,6 +119,9 @@ class CompositeScorer:
         if run_epoch is None:
             run_epoch = time.time()
 
+        cmi_debug = __name__+"::"+self.score_symbol_from_lmdb.__name__+"
+        logging.info(f"%s    - Compute LMDB data composite score @ time window: {run_epoch}." % cmi_debug )
+
         records = list(self.load_symbol_articles_from_lmdb(symbol, db_path, db_id))
         return self.composite_score(symbol.upper(), records, run_epoch)
 
@@ -119,6 +134,11 @@ class CompositeScorer:
         Compute the single composite ranking score for one symbol from
         per-article records adapted from live Bespin data.
         """
+
+        cmi_debug = __name__+"::"+self.composite_score.__name__+"
+        logging.info(f"%s    - Compute {symbol} composite ranking metrics @ window: {run_epoch}." % cmi_debug )
+        logging.info(f"%s    - Processing articles: {len(articles)}." % cmi_debug )
+
         weighted_positive = 0.0
         weighted_negative = 0.0
         weighted_neutral = 0.0
@@ -204,18 +224,28 @@ class CompositeScorer:
 
     def iter_scoreable_articles(self, source: Any) -> Iterable[Mapping[str, Any]]:
         """Yield article-like dicts from Bespin dict/list/DataFrame sources."""
+
+        cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__+"
+        logging.info(f"%s    - identify input data source" % cmi_debug ) 
+
         if source is None:
             return
 
         if self._looks_like_dataframe(source):
             yield from self._dataframe_to_articles(source)
+            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__+"
+            logging.info(f"%s    - Pandas DataFrame" % cmi_debug ) 
             return
 
         if isinstance(source, Mapping):
             yield source
+            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__+"
+            logging.info(f"%s    - Mapping" % cmi_debug )
             return
 
         if isinstance(source, Iterable) and not isinstance(source, (str, bytes)):
+            cmi_debug = __name__+"::"+self.iter_scoreable_articles.__name__+"
+            logging.info(f"%s    - Iterable entity: {type(source)}" % cmi_debug ) 
             for item in source:
                 if isinstance(item, Mapping):
                     yield item
@@ -237,6 +267,9 @@ class CompositeScorer:
 
         If no chunks are available, it falls back to root-level counts.
         """
+        cmi_debug = __name__+"::"+self.normalize_article.__name__+"
+        logging.info(f"%s    - Normalize input article structure..." % cmi_debug )
+
         published_epoch = self.resolve_published_epoch(article)
 
         if self._has_explicit_strengths(article):
@@ -290,44 +323,65 @@ class CompositeScorer:
           2. nested age dicts with published_epoch
           3. ISO timestamp strings: iso_age, published_utc, published_at, skim_age
         """
+
+        cmi_debug = __name__+"::"+self.resolve_published_epoch.__name__+"
+        logging.info(f"%s    - Resolving published epoch data..." % cmi_debug )
+
         direct_epoch = self._to_float_or_none(article.get("published_epoch"))
         if direct_epoch is not None:
+            logging.info(f"%s    - PUBLISHED_EPOCH resolved DIRECTLY as: {direct_epoch}..." % cmi_debug )
             return direct_epoch
 
+
+        logging.info(f"%s    - PUBLISHED_EPOCH resolution miss! - Deeper processing..." % cmi_debug )
         for key in ("age", "age0", "publish_age", "skim_age"):
             value = article.get(key)
             if isinstance(value, Mapping):
                 nested_epoch = self._to_float_or_none(value.get("published_epoch"))
                 if nested_epoch is not None:
+                    logging.info(f"%s    - PUBLISHED_EPOCH found in nested structure: {nested_epoch}..." % cmi_debug )
                     return nested_epoch
                 nested_iso = value.get("published_utc")
                 parsed_nested = self._parse_datetime_epoch(nested_iso)
                 if parsed_nested is not None:
+                    logging.info(f"%s    - PUBLISHED_UTC epoch found in nested structure: {parsed_nested}..." % cmi_debug )
                     return parsed_nested
 
         for key in ("iso_age", "published_utc", "published_at", "published"):
             parsed = self._parse_datetime_epoch(article.get(key))
             if parsed is not None:
+                logging.info(f"%s    - {key.upper()} epoch found: {parsed}" % cmi_debug )
                 return parsed
 
         parsed_skim = self._parse_datetime_epoch(article.get("skim_age"))
         if parsed_skim is not None:
+            logging.info(f"%s    - SKIM_AGE epoch found: {parsed_skim}..." % cmi_debug )    
             return parsed_skim
 
         return None
 
+
+# ############################# Method
     def load_symbol_articles_from_lmdb(
             self,
             symbol: str,
             db_path: str | Path = DEFAULT_LMDB_PATH,
             db_id: str = DEFAULT_DB_ID) -> Iterable[dict[str, Any]]:
-        """Stream JSON article records for one ticker from Bespin's LMDB cache."""
+        """
+        Stream LMDB JSON article records for one ticker from Bespin's LMDB cache
+        """
         if lmdb is None:
             raise RuntimeError("lmdb is not installed; install requirements before reading LMDB.")
+
+        cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__+"
+        logging.info(f"%s    - Compute LMDB data composite score..." % cmi_debug )
 
         symbol = symbol.upper()
         db_path = Path(db_path)
         prefix = f"{db_id}.{symbol}.".encode("utf-8")
+
+        cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__+"
+        logging.info(f"%s    - Scaning for LMDB data pattern: {prefix}" % cmi_debug )
 
         env = lmdb.open(
             str(db_path),
@@ -340,6 +394,8 @@ class CompositeScorer:
             with env.begin() as txn:
                 cursor = txn.cursor()
                 if cursor.set_range(prefix):
+                    cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__+"
+                    logging.info(f"%s    - Opened LMDB database for READ-ONLY Txn..." % cmi_debug )
                     for key, value in cursor:
                         if not key.startswith(prefix):
                             break
@@ -348,10 +404,14 @@ class CompositeScorer:
                         except (UnicodeDecodeError, json.JSONDecodeError):
                             continue
                         if isinstance(record, dict):
+                            self.lmdb_record_count += 1
                             yield record
         finally:
+            cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__+"
+            logging.info(f"%s    - Close LMDB database" % cmi_debug )
             env.close()
 
+# #############################
     def params(self) -> dict[str, float]:
         return {
             "half_life_hours": self.half_life_hours,
@@ -360,6 +420,7 @@ class CompositeScorer:
             "min_effective_volume": self.min_effective_volume,
         }
 
+# #############################
     def _dataframe_to_articles(self, dataframe: Any) -> Iterable[dict[str, Any]]:
         records = dataframe.to_dict(orient="records")
         if "urlhash" not in getattr(dataframe, "columns", []):
@@ -391,25 +452,30 @@ class CompositeScorer:
 
         yield from grouped.values()
 
+# ############################# Decorfator #1
     @staticmethod
     def _looks_like_dataframe(source: Any) -> bool:
         return hasattr(source, "to_dict") and hasattr(source, "columns")
 
+# ############################# Decorfator #2
     @staticmethod
     def _is_chunk_key(key: Any) -> bool:
         key_text = str(key)
         return key_text.isdigit() and len(key_text) == 3
 
+# ############################# Decorfator #3
     @staticmethod
     def _has_explicit_strengths(article: Mapping[str, Any]) -> bool:
         keys = {"positive_strength", "neutral_strength", "negative_strength"}
         return any(key in article for key in keys)
 
+# ############################# Decorfator #4
     @staticmethod
     def _to_float(value: Any) -> float:
         parsed = CompositeScorer._to_float_or_none(value)
         return 0.0 if parsed is None or math.isnan(parsed) else parsed
 
+# ############################# Decorfator #5
     @staticmethod
     def _to_float_or_none(value: Any) -> float | None:
         if value is None:
@@ -419,6 +485,7 @@ class CompositeScorer:
         except (TypeError, ValueError):
             return None
 
+# ############################# Decorfator #6
     @staticmethod
     def _parse_datetime_epoch(value: Any) -> float | None:
         if value is None:
@@ -443,6 +510,7 @@ class CompositeScorer:
         return parsed.timestamp()
 
 
+# ############################# MAIN() entry poiunt for command-line execution
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Compute one Bespin composite sentiment score from LMDB."
