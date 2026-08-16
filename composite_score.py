@@ -155,18 +155,23 @@ class CompositeScorer:
             published_epoch = normalized.get("published_epoch")
             if published_epoch is None:
                 articles_skipped_no_timestamp += 1
+                logging.info(f"%s    - Skip article with no timestamp" % cmi_debug )
                 continue
 
+            logging.info(f"%s    - Compute article age" % cmi_debug )
             age_seconds = run_epoch - float(published_epoch)
             if age_seconds < 0.0:
                 age_seconds = 0.0
 
             age_hours = age_seconds / SECONDS_PER_HOUR
             weight = 0.5 ** (age_hours / self.half_life_hours)
-
+            logging.info(f"%s    - Article age: {age_hours:.2f} hours, weight: {weight:.4f}" % cmi_debug)
+            logging.info(f"%s    - computing weighted scores : Pos/Neg/Neu..." % cmi_debug)
+             
             weighted_positive += weight * float(normalized["positive_strength"])
             weighted_negative += weight * float(normalized["negative_strength"])
             weighted_neutral += weight * float(normalized["neutral_strength"])
+            logging.info(f"%s    - computing weighted scores : N_EFF..." % cmi_debug)
             n_eff += weight
             articles_used += 1
 
@@ -223,6 +228,7 @@ class CompositeScorer:
         }
         return self.composite_report
 
+# ############################# Method
     def iter_scoreable_articles(self, source: Any) -> Iterable[Mapping[str, Any]]:
         """Yield article-like dicts from Bespin dict/list/DataFrame sources."""
 
@@ -256,6 +262,7 @@ class CompositeScorer:
 
         raise TypeError(f"Unsupported composite score source: {type(source)!r}")
 
+# ############################# Method
     def normalize_article(self, article: Mapping[str, Any]) -> dict[str, float | None]:
         """
         Convert a template-style or Bespin-style article record to strengths.
@@ -377,10 +384,10 @@ class CompositeScorer:
         if lmdb is None:
             raise RuntimeError("lmdb is not installed; install requirements before reading LMDB.")
 
+        symbol = symbol.upper()
         cmi_debug = __name__+"::"+self.load_symbol_articles_from_lmdb.__name__
         logging.info(f"%s    - Load {symbol} article data from LMDB..." % cmi_debug )
 
-        symbol = symbol.upper()
         db_path = Path(db_path)
         prefix = f"{db_id}.{symbol}.".encode("utf-8")
 
@@ -417,6 +424,8 @@ class CompositeScorer:
 
 # #############################
     def params(self) -> dict[str, float]:
+        cmi_debug = __name__+"::"+self.params.__name__
+        logging.info(f"%s    - Load 4 critical static Weighting PARAMS" % cmi_debug )
         return {
             "half_life_hours": self.half_life_hours,
             "volume_shrinkage_k": self.volume_shrinkage_k,
