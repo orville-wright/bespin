@@ -48,8 +48,6 @@ SECONDS_PER_HOUR = 3600.0
 DEFAULT_DB_ID = "0001"
 DEFAULT_LMDB_PATH = Path("datastore") / "LMDB_0001"
 
-global args
-global parser
 
 # ############################# MAIN CLASS
 class CompositeScorer:
@@ -562,7 +560,7 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    if args['bool_verbose'] is True:        # Logging level
+    if args.bool_verbose is True:        # Logging level
         print ( "Enabeling verbose info logging..." )
         logging.disable(0)                  # Log level = OFF
     else:
