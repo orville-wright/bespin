@@ -158,14 +158,14 @@ class CompositeScorer:
                 logging.info(f"%s    - Skip article with no timestamp" % cmi_debug )
                 continue
 
-            logging.info(f"%s    - Compute article age" % cmi_debug )
+            logging.info(f"%s    - Set article age window" % cmi_debug )
             age_seconds = run_epoch - float(published_epoch)
             if age_seconds < 0.0:
                 age_seconds = 0.0
 
             age_hours = age_seconds / SECONDS_PER_HOUR
             weight = 0.5 ** (age_hours / self.half_life_hours)
-            logging.info(f"%s    - Article age: {age_hours:.2f} hours, weight: {weight:.4f}" % cmi_debug)
+            logging.info(f"%s    - Article age set to: {age_hours:.2f} hours, weight: {weight:.4f}" % cmi_debug)
             logging.info(f"%s    - computing weighted scores : Pos/Neg/Neu..." % cmi_debug)
              
             weighted_positive += weight * float(normalized["positive_strength"])
@@ -178,6 +178,7 @@ class CompositeScorer:
         params = self.params()
 
         if n_eff == 0.0:
+            logging.info(f"%s    - Computed N_EFF = 0.0 !!" % cmi_debug)
             self.composite_report = {
                 "symbol": symbol,
                 "state": "no_scoreable_articles",
@@ -194,24 +195,30 @@ class CompositeScorer:
             }
             return self.composite_report
 
+        logging.info(f"%s    - computing Directional Mass..." % cmi_debug)
         directional_mass = weighted_positive + weighted_negative
         if directional_mass == 0.0:
+            logging.info(f"%s    - Computed Directional Mass & Polarity = 0.0 !!" % cmi_debug)
             polarity = 0.0
             all_neutral = True
         else:
             polarity = (weighted_positive - weighted_negative) / directional_mass
             all_neutral = False
+            logging.info(f"%s    - Computed Directional Mass & Polarity: {directional_mass:.2f} / {polarity:.4f}" % cmi_debug)
 
         total_mass = directional_mass + weighted_neutral
         density = 0.0 if total_mass == 0.0 else directional_mass / total_mass
         volume_factor = n_eff / (n_eff + self.volume_shrinkage_k)
         score = polarity * (density ** self.density_exponent) * volume_factor
+        logging.info(f"%s    - Insufficient Fresh Article coverage !" % cmi_debug)
         state = (
             "insufficient_fresh_coverage"
             if n_eff < self.min_effective_volume
             else "scored"
         )
 
+        logging.info(f"%s    - Computed HEALTY score: {score:.4f}" % cmi_debug)
+        logging.info(f"%s    - Build final composite_score data dict" % cmi_debug)
         self.composite_report = {
             "symbol": symbol,
             "state": state,
