@@ -612,51 +612,84 @@ class CompositeScorer:
 
         resolved_rows = []
         unresolved_rows = []
+        tag_tally = {"Pos": 0, "Neu": 0, "Neg": 0, "---": 0}
 
         for article in articles:
             urlhash10 = str(article.get("urlhash", "UNKNOWN"))[:10]
-            published_epoch, _provenance = self.resolve_published_epoch(article)
+
+            # One adapter call yields timestamp AND strengths - same
+            # normalization the scorer uses, so the tag can never
+            # disagree with the composite's view of the article.
+            profile = self.normalize_article(article)
+            published_epoch = profile["published_epoch"]
+
+            # Dominant-bucket sentiment tag from article-level strengths
+            ps = profile["positive_strength"]
+            us = profile["neutral_strength"]
+            ns_ = profile["negative_strength"]
+            if profile["state"] != "scored":
+                tag = "---"     # empty / unreadable: no sentiment claim
+            elif ps > us and ps > ns_:
+                tag = "Pos"
+            elif ns_ > us and ns_ > ps:
+                tag = "Neg"
+            else:
+                tag = "Neu"     # neutral-dominant, incl. exact ties
+            tag_tally[tag] += 1
 
             if published_epoch is None:
-                unresolved_rows.append(urlhash10)
+                unresolved_rows.append((urlhash10, tag))
                 continue
 
             age_seconds = run_epoch - float(published_epoch)
             if age_seconds < 0.0:
                 age_seconds = 0.0   # same clock-skew clamp as the scorer
 
+            if profile["state"] != "scored":
+                # Timestamped but NOT scoreable (empty/unreadable): it
+                # casts no vote, so it must show no weight - the w
+                # column means VOTING weight, exactly as the scorer
+                # applies it. Age still shown for context.
+                resolved_rows.append((urlhash10, age_seconds, None, tag))
+                continue
+
             age_hours = age_seconds / SECONDS_PER_HOUR
             weight = 0.5 ** (age_hours / self.half_life_hours)
-            resolved_rows.append((urlhash10, age_seconds, weight))
+            resolved_rows.append((urlhash10, age_seconds, weight, tag))
 
         # youngest first: heaviest voters read top-left, dead tail last
         resolved_rows.sort(key=lambda row: row[1])
         sum_weights = 0.0
-        for _h, _a, row_weight in resolved_rows:
-            sum_weights += row_weight
+        for _h, _a, row_weight, _t in resolved_rows:
+            if row_weight is not None:
+                sum_weights += row_weight
 
-        print(f"Article news Age HEAT MAP  (w = decay weight @ {self.half_life_hours:.0f}h half-life)")
-        print("=" * 118)
+        print(f"Article news Age HEAT MAP  (w = decay weight @ {self.half_life_hours:.0f}h half-life | Pos/Neu/Neg = dominant article sentiment)")
+        print("=" * 130)
 
         cells = []
         art_index = 0
-        for urlhash10, age_seconds, weight in resolved_rows:
+        for urlhash10, age_seconds, weight, tag in resolved_rows:
             age_text = self._humanize_age(age_seconds)
-            cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {age_text:<13} w={weight:.3f}")
+            if weight is None:
+                cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {age_text:<13} w= ---  {tag}")
+            else:
+                cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {age_text:<13} w={weight:.3f} {tag}")
             art_index += 1
-        for urlhash10 in unresolved_rows:
-            cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {'UNRESOLVED':<13} w= --- ")
+        for urlhash10, tag in unresolved_rows:
+            cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {'UNRESOLVED':<13} w= ---  {tag}")
             art_index += 1
 
         for i in range(0, len(cells), columns):
             print("    ".join(cells[i:i + columns]))
 
-        print("-" * 118)
+        print("-" * 130)
         print(f"Articles: {len(resolved_rows) + len(unresolved_rows)} "
               f"| resolved: {len(resolved_rows)} "
               f"| unresolved: {len(unresolved_rows)} "
-              f"| Sum of weights: {sum_weights:.2f}  "
-              f"(== n_eff under clean-store invariant)")
+              f"| Pos: {tag_tally['Pos']} Neu: {tag_tally['Neu']} Neg: {tag_tally['Neg']} "
+              f"| Sum of voting weights: {sum_weights:.2f}  "
+              f"(== composite n_eff, by construction)")
         print()
 
         return {
@@ -665,6 +698,7 @@ class CompositeScorer:
             "sum_weights": round(sum_weights, 2),
             "resolved": len(resolved_rows),
             "unresolved": len(unresolved_rows),
+            "tag_tally": tag_tally,
         }
 
 # ############################# Method #5f
