@@ -379,18 +379,18 @@ class CompositeScorer:
         the legacy statistic, kept for continuity next to the new
         weighted metrics).
 
-        Formulas VERIFIED against my_sentiment.py source:
-          net_sentiment  = positive_share - negative_share
+        Formulas VERIFIED against my_sentiment.py source (both
+        sentiment_vector_model AND sentiment_metrics - the full legacy
+        strength model is transcribed verbatim below):
+          positive_pct   = pos_c / (pos_c + neg_c)   neutral-excluded
+          pos/neg mass   = pct * bucket mean score
+          neutral mass   = neutral bucket mean (count-invariant)
+          shares         = mass / total_strength
+          net_sentiment  = (pos_mass - neg_mass) / total_strength
           signal clarity = 1 - neutral_share
-          signal convctn = direction_score * clarity
-                         == net_sentiment ALWAYS (algebraic identity:
-                         ((ps-ns)/(ps+ns)) * (ps+ns) = ps-ns)
-          signal purity  = max(pos, neu, neg) share
+          signal convctn = direction_score * clarity == net (identity)
+          signal purity  = max share
           bias label     = classify_conviction threshold matrix
-                           (reproduced verbatim in _classify_conviction)
-        STILL INFERRED (computed upstream of my_sentiment.py - diff
-        against one legacy run to verify):
-          directional signal mass = mean sent_score per bucket
         """
         cmi_debug = __name__+"::"+self.legacy_corpus_profile.__name__
         logging.info(f"%s    - Compute {symbol} legacy corpus profile..." % cmi_debug )
@@ -417,19 +417,60 @@ class CompositeScorer:
             print("Sentiment:      NO SCOREABLE CHUNKS IN CORPUS")
             return {"symbol": symbol, "state": "no_scoreable_chunks"}
 
-        positive_share = chunk_tally["positive"] / total_chunks
-        neutral_share = chunk_tally["neutral"] / total_chunks
-        negative_share = chunk_tally["negative"] / total_chunks
-        net_sentiment = positive_share - negative_share
-        clarity = positive_share + negative_share
-        confidence = max(positive_share, neutral_share, negative_share)
-
-        strengths = {}
+        # ---- bucket means (the engine's *_t inputs) ----
+        bucket_means = {}
         for bucket in _VALID_SENT_TYPES:
             if chunk_tally[bucket] > 0:
-                strengths[bucket] = score_sums[bucket] / chunk_tally[bucket]
+                bucket_means[bucket] = score_sums[bucket] / chunk_tally[bucket]
             else:
-                strengths[bucket] = 0.0
+                bucket_means[bucket] = 0.0
+
+        # ---- VERBATIM transcription of sentiment_metrics() from
+        # my_sentiment.py - the legacy strength model. Sync contract:
+        # change there -> change HERE too. ----
+        positive_c = chunk_tally["positive"]
+        negative_c = chunk_tally["negative"]
+        positive_t = bucket_means["positive"]
+        negative_t = bucket_means["negative"]
+        neutral_t = bucket_means["neutral"]
+
+        total_articles = positive_c + negative_c
+        if total_articles == 0:
+            # engine returns None here; state it explicitly instead
+            print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
+            print(f"Symbol:         {symbol}")
+            print("Sentiment:      NO DIRECTIONAL CHUNKS IN CORPUS (all neutral)")
+            return {"symbol": symbol, "state": "no_directional_chunks",
+                    "total_chunks": total_chunks}
+
+        # Neutral-excluded count proportions
+        positive_pct = positive_c / total_articles
+        negative_pct = negative_c / total_articles
+
+        # Strength model. NOTE faithful quirk: neutral_strength is the
+        # bare neutral MEAN - it is count-invariant (1 neutral chunk
+        # weighs the same as 500). Reproduced as-is from the engine.
+        positive_strength = positive_pct * positive_t
+        negative_strength = negative_pct * negative_t
+        neutral_strength = neutral_t
+
+        total_strength = positive_strength + negative_strength + neutral_strength
+        if total_strength == 0:
+            total_strength = 1e-9
+
+        positive_share = positive_strength / total_strength
+        negative_share = negative_strength / total_strength
+        neutral_share = neutral_strength / total_strength
+
+        # Core signal (ONLY truth source)
+        net_sentiment = (positive_strength - negative_strength) / total_strength
+
+        # Confidence (dominant signal share)
+        confidence = max(positive_share, neutral_share, negative_share)
+        clarity = 1 - neutral_share
+        strengths = {"positive": positive_strength,
+                     "neutral": neutral_strength,
+                     "negative": negative_strength}
 
         # Bias label via the engine's conviction threshold matrix
         # (NOT sign-of-net: conviction +0.03 must read "Neutral").
