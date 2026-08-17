@@ -368,6 +368,176 @@ class CompositeScorer:
         }
         return self.polarity_report
 
+# ############################# Method #5b
+    def legacy_corpus_profile(
+            self,
+            symbol: str,
+            articles: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+        """
+        Print the legacy scan-end "Sentiment Profile Analysis" block,
+        computed from LMDB corpus chunk tallies (UNWEIGHTED - this is
+        the legacy statistic, kept for continuity next to the new
+        weighted metrics).
+
+        Formulas VERIFIED against my_sentiment.py source:
+          net_sentiment  = positive_share - negative_share
+          signal clarity = 1 - neutral_share
+          signal convctn = direction_score * clarity
+                         == net_sentiment ALWAYS (algebraic identity:
+                         ((ps-ns)/(ps+ns)) * (ps+ns) = ps-ns)
+          signal purity  = max(pos, neu, neg) share
+          bias label     = classify_conviction threshold matrix
+                           (reproduced verbatim in _classify_conviction)
+        STILL INFERRED (computed upstream of my_sentiment.py - diff
+        against one legacy run to verify):
+          directional signal mass = mean sent_score per bucket
+        """
+        cmi_debug = __name__+"::"+self.legacy_corpus_profile.__name__
+        logging.info(f"%s    - Compute {symbol} legacy corpus profile..." % cmi_debug )
+
+        chunk_tally = {"positive": 0, "neutral": 0, "negative": 0}
+        score_sums = {"positive": 0.0, "neutral": 0.0, "negative": 0.0}
+
+        for article in articles:
+            for chunk in self.iter_lmdb_chunks(article):
+                sent_type = str(chunk.get("sent_type", chunk.get("sent", ""))).lower()
+                sent_score = self._to_float_or_none(
+                    chunk.get("sent_score", chunk.get("rank")))
+                if sent_type not in _VALID_SENT_TYPES:
+                    continue    # invalid chunks are error-logged by normalize_article
+                if sent_score is None or math.isnan(sent_score):
+                    continue
+                chunk_tally[sent_type] += 1
+                score_sums[sent_type] += max(0.0, min(1.0, sent_score))
+
+        total_chunks = sum(chunk_tally.values())
+        if total_chunks == 0:
+            print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
+            print(f"Symbol:         {symbol}")
+            print("Sentiment:      NO SCOREABLE CHUNKS IN CORPUS")
+            return {"symbol": symbol, "state": "no_scoreable_chunks"}
+
+        positive_share = chunk_tally["positive"] / total_chunks
+        neutral_share = chunk_tally["neutral"] / total_chunks
+        negative_share = chunk_tally["negative"] / total_chunks
+        net_sentiment = positive_share - negative_share
+        clarity = positive_share + negative_share
+        confidence = max(positive_share, neutral_share, negative_share)
+
+        strengths = {}
+        for bucket in _VALID_SENT_TYPES:
+            if chunk_tally[bucket] > 0:
+                strengths[bucket] = score_sums[bucket] / chunk_tally[bucket]
+            else:
+                strengths[bucket] = 0.0
+
+        # Bias label via the engine's conviction threshold matrix
+        # (NOT sign-of-net: conviction +0.03 must read "Neutral").
+        # conviction == net_sentiment by algebraic identity.
+        bias = self._classify_conviction(net_sentiment)
+
+        base, next_base, sentiment_label, progress_pct = \
+            self._compute_band(net_sentiment)
+
+        print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
+        print(f"Symbol:         {symbol}")
+        print(f"Sentiment:      {sentiment_label}   | Directionally biased -> {bias} ")
+        print(f"Base sentiment: {base}")
+        print(f"Band Progress:  {progress_pct}%\t| through {base} band")
+        # round() not :.4f - byte-matches the engine's dict-value prints
+        print(f"Signal clarity: {round(clarity, 4)}")
+        print(f"Signal convctn: {round(net_sentiment, 4)}\t| {bias}")
+        print(f"Net Score:      {net_sentiment:+.3f}\t| Sentiment Oscilator Direction")
+        print(f"Signal purity:  {confidence:.1%}\t| Dominant Signal Share")
+        print("\nSentiment Composition:")
+        print(f"Positivity:     {positive_share:.1%}\t| (Directional signal mass:  {strengths['positive']:.3f})")
+        print(f"Neutrality:     {neutral_share:.1%}\t| (Non-directional ambiguity: {strengths['neutral']:.3f})")
+        print(f"Negativity:     {negative_share:.1%}\t| (Directional signal mass:  {strengths['negative']:.3f})")
+        print()
+
+        return {
+            "symbol": symbol,
+            "state": "profiled",
+            "sentiment": sentiment_label,
+            "base_sentiment": base,
+            "band_progress": progress_pct,
+            "net_score": round(net_sentiment, 4),
+            "signal_clarity": round(clarity, 4),
+            "signal_purity": round(confidence, 4),
+            "positive_share": round(positive_share, 4),
+            "neutral_share": round(neutral_share, 4),
+            "negative_share": round(negative_share, 4),
+            "total_chunks": total_chunks,
+        }
+
+# ############################# Method #5c
+    @staticmethod
+    def _compute_band(net_sentiment: float) -> tuple[str, str | None, str, float]:
+        """
+        Symmetric sentiment band resolver (magnitude + sign), identical
+        logic to the engine-module version. NOTE: intentional duplicate
+        of the band code in the NLP engine - if the band ladder or
+        Approaching threshold ever changes there, change it HERE too.
+        """
+        net = max(-1.0, min(1.0, net_sentiment))
+        mag = abs(net)
+        if net > 0:
+            side = "Bullish"
+        elif net < 0:
+            side = "Bearish"
+        else:
+            side = None
+
+        ladder = ["Neutral", "Slightly {s}", "{s}", "Strongly {s}", "Extremely {s}"]
+        band_width = 0.25
+        i = min(int(mag / band_width), 3)
+        progress = (mag - i * band_width) / band_width
+
+        if side is None:
+            base = "Neutral"
+            next_base = None
+        else:
+            base = ladder[i].format(s=side)
+            next_base = ladder[i + 1].format(s=side)
+
+        if next_base and progress >= 0.5:
+            sentiment_label = f"Approaching {next_base}"
+        else:
+            sentiment_label = base
+
+        return base, next_base, sentiment_label, round(progress * 100, 1)
+
+# ############################# Method #5d
+    @staticmethod
+    def _classify_conviction(conviction: float) -> str:
+        """
+        VERBATIM reproduction of classify_conviction() from
+        my_sentiment.py::sentiment_vector_model - must stay in sync
+        with the engine. Change there -> change HERE too.
+
+        KNOWN ASYMMETRY (reproduced faithfully, flagged for review in
+        the engine): thresholds are not mirrored across zero -
+        Slightly spans +0.04..0.19 vs -0.04..-0.20, Strongly begins at
+        +0.45 vs -0.50. So +0.47 reads "Strongly Bullish" while -0.47
+        reads "Bearish". If the engine's matrix is ever symmetrized,
+        update this copy in the same commit.
+        """
+        SENTIMENT_BANDS = [
+            ( 0.45,  1.00, "Strongly Bullish"),
+            ( 0.19,  0.45, "Bullish"),
+            ( 0.04,  0.19, "Slightly Bullish"),
+            (-0.04,  0.04, "Neutral"),
+            (-0.20, -0.04, "Slightly Bearish"),
+            (-0.50, -0.20, "Bearish"),
+            (-1.00, -0.50, "Strongly Bearish"),
+        ]
+        for low, high, label in SENTIMENT_BANDS:
+            if low <= conviction < high:
+                return label
+        if conviction >= 1.0:
+            return "Strongly Bullish"
+        return "Strongly Bearish"
+
 # ############################# Method #6
     def iter_scoreable_articles(self, source: Any) -> Iterable[Mapping[str, Any]]:
         """Yield article-like dicts from Bespin dict/list/DataFrame sources."""
@@ -846,6 +1016,14 @@ def main() -> int:
         required=False,
         default=False,
     )
+    parser.add_argument(
+        "--no-profile",
+        help="suppress the legacy Sentiment Profile Analysis block",
+        action="store_true",
+        dest="bool_no_profile",
+        required=False,
+        default=False,
+    )
     parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 
     args = parser.parse_args()
@@ -856,16 +1034,23 @@ def main() -> int:
     else:
         logging.disable(20)                 # suppress INFO and below (quiet default; ERROR still shows)
 
+    run_epoch = args.run_epoch if args.run_epoch is not None else time.time()
+
     scorer = CompositeScorer()
-    report = scorer.score_symbol_from_lmdb(args.symbol, args.db_path, args.run_epoch)
+    scorer._reset_run_counters()
+    # Materialize ONCE: the LMDB stream is single-use, but the legacy
+    # profile and the weighted metrics both need the full corpus.
+    records = list(scorer.load_symbol_articles_from_lmdb(args.symbol, args.db_path))
+
+    if args.bool_no_profile is False:
+        scorer.legacy_corpus_profile(args.symbol.upper(), records)
+
+    report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
     print(json.dumps(report, indent=2, sort_keys=True))
 
     if args.bool_polarity is True:
-        scorer._reset_run_counters()
-        records = scorer.load_symbol_articles_from_lmdb(args.symbol, args.db_path)
         polarity_report = scorer.recency_weighted_polarity(
-            args.symbol.upper(), records,
-            args.run_epoch if args.run_epoch is not None else time.time())
+            args.symbol.upper(), records, run_epoch)
         print(json.dumps(polarity_report, indent=2, sort_keys=True))
     return 0
 
