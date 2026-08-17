@@ -538,6 +538,106 @@ class CompositeScorer:
             return "Strongly Bullish"
         return "Strongly Bearish"
 
+# ############################# Method #5e
+    def age_heat_map(
+            self,
+            symbol: str,
+            articles: Iterable[Mapping[str, Any]],
+            run_epoch: float,
+            columns: int = 3) -> dict[str, Any]:
+        """
+        Print the Article news Age HEAT MAP with per-article decay
+        weights - a direct visualization of WHO IS ACTUALLY VOTING in
+        the composite, not just an age listing.
+
+        Per article: urlhash prefix, humanized age, and the exact
+        decay weight w = 0.5 ** (age_hours / half_life) that
+        _normalize_and_accumulate applies. Sorted youngest-first
+        (heaviest voters at the top). Articles with unresolvable
+        timestamps print with 'w= --- ' and sort last - visible, never
+        silently dropped.
+
+        FOOTER RECONCILIATION: the printed sum-of-weights equals the
+        composite report's n_eff whenever every timestamped article is
+        also scoreable - true by definition under the clean-store
+        invariant. A mismatch between this footer and n_eff means some
+        articles have timestamps but no usable sentiment (empty /
+        unreadable states) - investigate.
+
+        Returns {rows, sum_weights, resolved, unresolved} for storage.
+        """
+        cmi_debug = __name__+"::"+self.age_heat_map.__name__
+        logging.info(f"%s    - Build {symbol} age heat map @ window: {run_epoch}" % cmi_debug )
+
+        resolved_rows = []
+        unresolved_rows = []
+
+        for article in articles:
+            urlhash10 = str(article.get("urlhash", "UNKNOWN"))[:10]
+            published_epoch, _provenance = self.resolve_published_epoch(article)
+
+            if published_epoch is None:
+                unresolved_rows.append(urlhash10)
+                continue
+
+            age_seconds = run_epoch - float(published_epoch)
+            if age_seconds < 0.0:
+                age_seconds = 0.0   # same clock-skew clamp as the scorer
+
+            age_hours = age_seconds / SECONDS_PER_HOUR
+            weight = 0.5 ** (age_hours / self.half_life_hours)
+            resolved_rows.append((urlhash10, age_seconds, weight))
+
+        # youngest first: heaviest voters read top-left, dead tail last
+        resolved_rows.sort(key=lambda row: row[1])
+        sum_weights = 0.0
+        for _h, _a, row_weight in resolved_rows:
+            sum_weights += row_weight
+
+        print(f"Article news Age HEAT MAP  (w = decay weight @ {self.half_life_hours:.0f}h half-life)")
+        print("=" * 118)
+
+        cells = []
+        art_index = 0
+        for urlhash10, age_seconds, weight in resolved_rows:
+            age_text = self._humanize_age(age_seconds)
+            cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {age_text:<13} w={weight:.3f}")
+            art_index += 1
+        for urlhash10 in unresolved_rows:
+            cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {'UNRESOLVED':<13} w= --- ")
+            art_index += 1
+
+        for i in range(0, len(cells), columns):
+            print("    ".join(cells[i:i + columns]))
+
+        print("-" * 118)
+        print(f"Articles: {len(resolved_rows) + len(unresolved_rows)} "
+              f"| resolved: {len(resolved_rows)} "
+              f"| unresolved: {len(unresolved_rows)} "
+              f"| Sum of weights: {sum_weights:.2f}  "
+              f"(== n_eff under clean-store invariant)")
+        print()
+
+        return {
+            "symbol": symbol,
+            "rows": resolved_rows,
+            "sum_weights": round(sum_weights, 2),
+            "resolved": len(resolved_rows),
+            "unresolved": len(unresolved_rows),
+        }
+
+# ############################# Method #5f
+    @staticmethod
+    def _humanize_age(age_seconds: float) -> str:
+        """Floor-convention age text, matching Yahoo's skim style."""
+        hours = age_seconds / SECONDS_PER_HOUR
+        if hours < 1.0:
+            return f"{int(age_seconds // 60)} mins ago"
+        elif hours < 24.0:
+            return f"{int(hours)} hours ago"
+        else:
+            return f"{int(hours // 24)} days ago"
+
 # ############################# Method #6
     def iter_scoreable_articles(self, source: Any) -> Iterable[Mapping[str, Any]]:
         """Yield article-like dicts from Bespin dict/list/DataFrame sources."""
@@ -1024,6 +1124,14 @@ def main() -> int:
         required=False,
         default=False,
     )
+    parser.add_argument(
+        "--no-heatmap",
+        help="suppress the Article news Age HEAT MAP block",
+        action="store_true",
+        dest="bool_no_heatmap",
+        required=False,
+        default=False,
+    )
     parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 
     args = parser.parse_args()
@@ -1044,6 +1152,9 @@ def main() -> int:
 
     if args.bool_no_profile is False:
         scorer.legacy_corpus_profile(args.symbol.upper(), records)
+
+    if args.bool_no_heatmap is False:
+        scorer.age_heat_map(args.symbol.upper(), records, run_epoch)
 
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
     print(json.dumps(report, indent=2, sort_keys=True))
