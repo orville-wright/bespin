@@ -77,7 +77,7 @@ class y_unvol:
         return
     
 # method #3
-    def build_tg_df0(self):
+    def build_uv_df0(self):
         """
         Build-out a fully populated Pandas DataFrame containg all the extracted/scraped fields from the
         html/markup table data Wrangle, clean/convert/format the data correctly.
