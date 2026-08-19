@@ -30,9 +30,11 @@ from y_daylosers import y_daylosers
 from y_smallcaps import smallcap_screen
 from y_techevents import y_techevents
 from y_topgainers import y_topgainers
+from y_unvol import y_unvol
 from datastore_eng_LMDB import lmdb_io_eng
 
 from neo4j_graphdb import neo4j_auradb
+import y_unvol
 """
 Disbaled for now
 TODO: Move out to xop.py
@@ -168,7 +170,7 @@ def main():
         mlx_loser_dataset.print_top10()          # print it
         print ( " " )
 
-########### 3 Generla News Reader ################
+########### 4 Generla News Reader ################
 # DEV: Adding and testing all the new Market Data enbgines / extractors here
 # Notes for: AI coding assistance @claude
 
@@ -243,6 +245,20 @@ def main():
         # Add unusual vol into recommendations list []
         #recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(un_vol_activity.up_df0.loc[uminv, ['Pct_change']][0]) )
         recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(upct) )
+
+########### YAHOOF FINANCE UNUSUAL VOLUME  ################
+        print ( "========== Unusual Volume movers ================================" )
+        y_unvol_reader = y_cookiemonster(2)        # instantiate class of cookiemonster
+        y_unvol_dataset = y_unvol(1)               # instantiate class
+        y_unvol_dataset.init_dummy_session()       # setup cookie jar and headers
+ 
+        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('https://finance.yahoo.com/markets/stocks/unusual-volume-stocks/')
+        y_unvol_dataset.ext_get_data(1)
+
+        x = y_unvol_dataset.build_tl_df0()     # build full dataframe
+        y_unvol_dataset.build_top10()          # show top 10
+        y_unvol_dataset.print_top10()          # print it
+        print ( " " )
 
 ################################################################################
 # generate FINAL combo list 
