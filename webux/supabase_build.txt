@@ -1,0 +1,192 @@
+-- =====================================================================
+-- Bespin sentiment time-series schema - Supabase / Postgres
+--
+-- Dual-writer design: SF + Auckland instances write independently
+-- with NO coordination. Safety properties relied upon:
+--   * article identity  = full sha256 urlhash (deterministic on both)
+--   * run identity      = (instance_id, symbol, run_epoch)
+--   * append-only facts = runs/rows are INSERT-only, never UPDATE
+--   * dimension writes  = INSERT ... ON CONFLICT (urlhash) DO NOTHING
+--   * methodology drift = params jsonb per run, divergence audit table
+--
+-- Writers: Bespin instances via service-role key (bypasses RLS).
+-- Reader:  WebUI via anon key, read-only RLS policies below.
+-- =====================================================================
+
+
+-- ############################# Table #1
+-- Article dimension: one row per article EVER, across both instances.
+-- Immutable after first write (first-writer-wins); disagreements are
+-- recorded in article_divergences, never merged here.
+CREATE TABLE articles (
+    urlhash          text PRIMARY KEY,
+    symbol           text NOT NULL,
+    url              text,
+    published_at     timestamptz NOT NULL,
+    published_epoch  double precision NOT NULL,
+    sent_tag         text NOT NULL,
+    pos_strength     double precision,
+    neu_strength     double precision,
+    neg_strength     double precision,
+    chunk_count      integer,
+    first_seen_at    timestamptz NOT NULL DEFAULT now(),
+    first_seen_by    text NOT NULL,
+
+    CONSTRAINT ck_articles_urlhash_len CHECK (char_length(urlhash) = 64),
+    CONSTRAINT ck_articles_sent_tag CHECK (sent_tag IN ('Pos', 'Neu', 'Neg', '---')),
+    CONSTRAINT ck_articles_strengths CHECK (
+        (pos_strength IS NULL OR (pos_strength >= 0.0 AND pos_strength <= 1.0))
+        AND (neu_strength IS NULL OR (neu_strength >= 0.0 AND neu_strength <= 1.0))
+        AND (neg_strength IS NULL OR (neg_strength >= 0.0 AND neg_strength <= 1.0))
+    )
+);
+
+CREATE INDEX idx_articles_symbol_published
+    ON articles (symbol, published_at DESC);
+
+COMMENT ON TABLE articles IS
+    'Article dimension. Key = full 64-char sha256 of article URL. '
+    'First-writer-wins; INSERT ... ON CONFLICT (urlhash) DO NOTHING. '
+    'NEVER truncate the key: 10-char prefixes are display-only.';
+
+
+-- ############################# Table #2
+-- Run header: one row per composite scoring run per symbol per
+-- instance. Append-only. This is the evidence table for post-mortems.
+CREATE TABLE heatmap_runs (
+    run_id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    instance_id          text NOT NULL,
+    bespin_version       text,
+    symbol               text NOT NULL,
+    run_epoch            double precision NOT NULL,
+    run_at               timestamptz NOT NULL,
+    composite_score      double precision,
+    polarity             double precision,
+    directional_density  double precision,
+    volume_factor        double precision,
+    n_eff                double precision NOT NULL,
+    state                text NOT NULL,
+    articles_total       integer NOT NULL,
+    articles_used        integer NOT NULL,
+    pos_count            integer,
+    neu_count            integer,
+    neg_count            integer,
+    params               jsonb NOT NULL,
+
+    CONSTRAINT uq_run UNIQUE (instance_id, symbol, run_epoch),
+    CONSTRAINT ck_runs_state CHECK (state IN (
+        'scored', 'insufficient_fresh_coverage', 'no_scoreable_articles')),
+    CONSTRAINT ck_runs_n_eff CHECK (n_eff >= 0.0),
+    CONSTRAINT ck_runs_composite_range CHECK (
+        composite_score IS NULL
+        OR (composite_score >= -1.0 AND composite_score <= 1.0))
+);
+
+CREATE INDEX idx_runs_symbol_epoch
+    ON heatmap_runs (symbol, run_epoch DESC);
+CREATE INDEX idx_runs_instance
+    ON heatmap_runs (instance_id, run_at DESC);
+
+COMMENT ON TABLE heatmap_runs IS
+    'One composite scoring run. APPEND-ONLY - runs are evidence and '
+    'are never updated. uq_run makes accidental double-writes fail '
+    'loudly. params records the frozen methodology constants that '
+    'produced this run: SELECT DISTINCT params FROM heatmap_runs '
+    'returning >1 row is the cross-instance methodology-drift alarm.';
+
+
+-- ############################# Table #3
+-- Heat map rows: per-run article membership + observed voting weight.
+CREATE TABLE heatmap_rows (
+    run_id       bigint NOT NULL REFERENCES heatmap_runs (run_id),
+    urlhash      text NOT NULL REFERENCES articles (urlhash),
+    age_seconds  double precision,
+    weight       double precision,
+
+    CONSTRAINT pk_heatmap_rows PRIMARY KEY (run_id, urlhash),
+    CONSTRAINT ck_rows_weight CHECK (
+        weight IS NULL OR (weight >= 0.0 AND weight <= 1.0))
+);
+
+CREATE INDEX idx_rows_urlhash
+    ON heatmap_rows (urlhash);
+
+COMMENT ON TABLE heatmap_rows IS
+    'Heat map membership per run. weight = the VOTING weight the '
+    'composite actually applied; NULL = article was present but cast '
+    'no vote (empty/unreadable/unresolved). Stored, not derived, so '
+    'history survives any future constants change. Per-article decay '
+    'curves = join runs on run_id, plot weight vs run_epoch per '
+    'urlhash, color by articles.sent_tag.';
+
+
+-- ############################# Table #4
+-- Trigger events (unusual volume etc.) for chart overlays. Both
+-- instances may record the same market event; the observer is tagged
+-- and the dashboard dedupes on (symbol, trigger_type, time window).
+CREATE TABLE triggers (
+    trigger_id    bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    instance_id   text NOT NULL,
+    symbol        text NOT NULL,
+    triggered_at  timestamptz NOT NULL,
+    trigger_type  text NOT NULL,
+    payload       jsonb
+);
+
+CREATE INDEX idx_triggers_symbol_time
+    ON triggers (symbol, triggered_at DESC);
+
+COMMENT ON TABLE triggers IS
+    'Candidate-surfacing events (e.g. unusual_volume) with observer '
+    'instance tagged. payload carries the raw trigger row, e.g. '
+    'price, pct_change, volume, vol_pct.';
+
+
+-- ############################# Table #5
+-- Cross-instance divergence audit: written when a writer hits an
+-- articles conflict AND its computed strengths differ from the stored
+-- row beyond epsilon. This is the cross-user robustness check,
+-- materialized as data.
+CREATE TABLE article_divergences (
+    urlhash       text NOT NULL REFERENCES articles (urlhash),
+    reported_by   text NOT NULL,
+    reported_at   timestamptz NOT NULL DEFAULT now(),
+    pos_strength  double precision,
+    neu_strength  double precision,
+    neg_strength  double precision,
+    chunk_count   integer,
+
+    CONSTRAINT pk_article_divergences
+        PRIMARY KEY (urlhash, reported_by, reported_at)
+);
+
+COMMENT ON TABLE article_divergences IS
+    'Two independent pipelines disagreed about the same article. '
+    'Expected causes: article updated between scrapes, paywall '
+    'variants, truncation differences. A rising rate here is a '
+    'methodology signal, not noise - investigate.';
+
+
+-- =====================================================================
+-- Row Level Security: WebUI (anon key) is READ-ONLY on everything.
+-- Bespin writers use the service-role key, which bypasses RLS.
+-- No INSERT/UPDATE/DELETE policies exist for anon - by omission,
+-- all writes through the anon key are denied.
+-- =====================================================================
+
+ALTER TABLE articles            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE heatmap_runs        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE heatmap_rows        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE triggers            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE article_divergences ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY read_articles ON articles
+    FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY read_runs ON heatmap_runs
+    FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY read_rows ON heatmap_rows
+    FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY read_triggers ON triggers
+    FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY read_divergences ON article_divergences
+    FOR SELECT TO anon, authenticated USING (true);

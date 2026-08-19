@@ -1,0 +1,23 @@
+Bespin repo structural notes
+============================
+
+
+3 Best Practices to Avoid Monorepo Pitfalls
+
+1. Strict .gitignore Boundaries:
+    *  Ensure web/node_modules/, web/dist/, core/.venv/, and datastore/LMDB_*
+        are in .gitignore.
+
+    * Code files (JS/TS/Python) are tiny—your repo size will remain small.
+
+
+2. Decoupled API Contract:
+    * Place a lightweight API layer (e.g., FastAPI) between core/ and web/.
+    
+    * The frontend fetches JSON endpoints rather than importing Python directly, preserving a clean boundary if you ever decide to split them later.
+
+
+3. Easy Extraction Path:
+    * If you ever hire a dedicated frontend developer later, simply moving the web/ directory into a new Git repository takes
+      less than 5 minutes (git subtree or simple copy).
+

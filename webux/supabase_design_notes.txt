@@ -1,0 +1,140 @@
+
+Bespin Supabase Table structure
+=================================
+
+These notes are from a supabase design conversation with Claude.ai after extyensive analysis of the bespin code.
+
+
+This is exactly the deployment the architecture has been quietly preparing for — your UTC-everywhere discipline, deterministic urlhashes, 
+and frozen shared constants are precisely the three things that make uncoordinated dual-writer operation safe. But "no coordination" is
+a property you get by designing for it, not by both pointing at the same database, so the schema needs four amendments, one of which
+surfaces a genuinely interesting subtlety.
+
+=============== ================= ================== ==================== =====================
+
+1. instance_id graduates from optional to structural. 
+- A run is an observation by one instance — SFO (San Francisco) and AKL (AUckland) runs are distinct facts even about the same symbol at similar times.
+	* So heatmap_runs gets instance_id text NOT NULL, and critically the uniqueness constraint becomes UNIQUE (instance_id, symbol, run_epoch) 
+	* the old constraint would let one brother's legitimate run collide with the other's. 
+
+
+Same column on triggers (you'll both observe the same Yahoo unusual-volume event; tagging the observer and letting the dashboard dedupe is simpler than 
+trying to make triggers globally unique). Add bespin_version text to runs while you're there 
+— with two uncoordinated deployers, knowing which code produced a row is provenance you'll eventually want.
+
+2. The articles dimension is where the compounding happens 
+— and where the one real subtlety lives. 
+		* Same URL → same SHA-256 → same key on both instances, so the dimension deduplicates your combined investigation automatically; 
+		* the writer idiom is INSERT ... ON CONFLICT (urlhash) DO NOTHING, which makes concurrent same-article writes from both hemispheres 
+		  safe without locks or coordination. 
+
+The subtlety: I earlier called sentiment strengths "immutable article facts," and with two observers that's not quite true.
+- You both run the same HF model, but you scrape at different times 
+— paywall variants, article updates, truncation differences can yield different chunk sets for the same urlhash, hence different strengths.
+
+Recommended resolution: first-writer-wins on the dimension (add first_seen_by), plus a small article_divergences audit table the writer populates
+	when it hits a conflict and its computed strengths differ from the stored row beyond an epsilon. 
+	That's not defensive bloat — it is literally your planned cross-instance robustness check materialized as a table: two independent pipelines 
+	disagreeing about the same article is exactly the methodology signal you said you wanted to collect, and now it collects itself.
+
+
+
+3. Anchor semantics across instances 
+— know what is and isn't comparable. Within each instance, the shared-run_epoch ranking rule stands unchanged. 
+	* Across instances, your runs will have different anchors by definition (no coordination), which is fine for everything you actually want 
+	* time-series charts, trend overlays, "what did AKL see six hours after SFO" 
+	* but means exact composite equality between an SF run and an NZ run is never expected even on identical corpora, because n_eff decays between
+	  the two anchors. 
+
+- The dashboard convention that handles this: compare trajectories, never point values, across instances.
+	* Meanwhile the params jsonb per run becomes your frozen-constants enforcement mechanism: if either instance ever drifts (say a locally edited
+	  half-life), it's permanently visible in the data, and a dashboard sanity query 
+	* — SELECT DISTINCT params FROM heatmap_runs returning more than one row — is your methodology-drift alarm.
+
+4. Auth for two writers, one reader. 
+- Both instances write with the service-role key (or, slightly better, two dedicated Postgres roles so writes are attributable at the connection
+  level, matching instance_id at the data level); the WebUI reads via anon key against read-only RLS policies. Nothing else changes.
+
+
+============================================= Notes ===============================================
+
+NOTES:
+Worth naming the emergent benefit you didn't list: the geography is a feature. 
+- Auckland sits ~19–21 hours ahead of San Francisco, so his runs sample the news cycle while you sleep 
+— including US pre-market hours during his afternoon. 
+		* Overlapping symbols get near-round-the-clock time-series density neither of you could produce alone, and non-overlapping symbols extend
+		the corpus breadth for free. The compounding you described isn't just additive storage; it's complementary sampling.
+
+WARNING:
+The one behavioral rule that replaces all coordination: 
+-  both instances must deploy the same writer code and never mutate 
+	* append runs, conflict-skip dimensions, and let the divergence table catch the rest. 
+	* Everything else — timing, symbol choice, run frequency — genuinely needs no agreement, which was the goal.
+
+
+That's the complete consolidated schema 
+— all five tables with every amendment from our design discussion folded in, validated as legal PostgreSQL (25 statements parsed clean: 
+	* 5 tables
+	* 5 indexes
+	* 5 comment
+	* 5 RLS enables
+	* 5 policies
+	
+
+============================================== recap =================================================
+
+What's in it, and the decisions it locks down:
+
+-  The five tables:
+	1. articles
+	   (dimension, full 64-char urlhash PK with a CHECK enforcing the length so a truncated key can never sneak in, first-writer-wins 
+	   fields, plus chunk_count and url — the click-through column)
+	
+	2. heatmap_runs
+	   (append-only evidence, UNIQUE (instance_id, symbol, run_epoch) so both your runs coexist and accidental double-writes
+	   fail loudly, params jsonb as the per-run methodology fingerprint)
+	   
+	3.	heatmap_rows
+	    (composite PK (run_id, urlhash), weight nullable with NULL meaning non-voting — matching the heat map's w= --- semantics exactly)
+	
+	4.	triggers
+	    (instance-tagged, jsonb payload for your unusual-volume rows)
+
+	5.	article_divergences
+		(the cross-instance robustness check as a table).
+
+Defensive constraints in your no-silent-defaults style:
+	* sent_tag and state are CHECK-constrained to their exact string-state vocabularies
+	* a typo'd state from a future code change is a loud insert failure, not quiet garbage
+
+	* strengths, weights, and composite are range-checked to their mathematical domains.
+	
+	* Indexes cover the four chart queries we identified: symbol time-series (runs), per-article decay curves (rows.urlhash),
+	  key-article timelines (articles symbol+published_at), and trigger overlays.
+	  
+	* RLS is enabled everywhere with SELECT-only policies for anon/authenticated
+
+— the WebUI key physically cannot write; your two Bespin writers use the service-role key, which bypasses RLS by design.
+- And the COMMENT ON entries embed the operating doctrine into the database itself 
+— append-only rule, ON CONFLICT idiom, the methodology-drift alarm query 
+— so the schema documents its own contracts for whichever of you is looking at it in a year.
+
+Three things deliberately not in this file, so you know they're conscious omissions rather than gaps: 
+- the dashboard's trigger-dedup view (same market event observed by both instances) is a presentation concern 
+	* a SELECT DISTINCT ON (symbol, trigger_type, date_trunc('hour', triggered_at)) view you can add when the WebUI takes shape
+	  partitioning on heatmap_rows 
+	* nnecessary below tens of millions of rows, and premature structure is its own liability; and the Python writer
+
+	  (publish_run_to_supabase()) 
+	  
+— that's the next code deliverable when you're ready, and the schema fixes its contract: 
+	* insert dimension-misses with ON CONFLICT DO NOTHING, compare-and-log divergences, one run row, then membership rows, all
+	  in one transaction.
+
+NOTE:
+One operational note for day one:
+	* agree the two instance_id strings with your brother before either of you writes a row 
+	* something stable like "orville-sfo" / "wilbur-akl"
+	* ecause they're forever in the evidence tables, and pick the bespin_version convention (git short-hash works well) at the same time.
+	* Those two strings are the only coordination this entire design requires.
+
