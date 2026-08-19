@@ -14,9 +14,9 @@ logging.basicConfig(level=logging.INFO)
 class y_unvol:
     """Class to extract Unusual Volume data set from finance.yahoo.com"""
     # global accessors
-    tg_df0 = None        # DataFrame - Full list of top gainers
-    tg_df1 = None        # DataFrame - Ephemerial list of top 10 gainers. Allways overwritten
-    tg_df2 = None        # DataFrame - Top 10 ever 10 secs for 60 secs
+    uv_dg0 = None        # DataFrame - Full list of top gainers
+    uv_dg1 = None        # DataFrame - Ephemerial list of top 10 gainers. Allways overwritten
+    uv_dg2 = None        # DataFrame - Top 10 ever 10 secs for 60 secs
     all_tag_tr = None    # BS4 handle of the <tr> extracted data
     rows_extr = 0        # number of rows of data extracted
     ext_req = None       # request was handled by y_cookiemonster
@@ -39,9 +39,9 @@ class y_unvol:
         cmi_debug = __name__+"::"+self.__init__.__name__
         logging.info( f'%s Instance.#{yti}' % cmi_debug )
         # init empty DataFrame with present colum names
-        self.tg_df0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
-        self.tg_df1 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
-        self.tg_df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg1 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
         self.yti = yti
         return
 
@@ -83,11 +83,11 @@ class y_unvol:
         html/markup table data Wrangle, clean/convert/format the data correctly.
         """
 
-        cmi_debug = __name__+"::"+self.build_tg_df0.__name__+".#"+str(self.yti)
+        cmi_debug = __name__+"::"+self.build_uv_df0.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
         time_now = time.strftime("%H:%M:%S", time.localtime() )
         logging.info('%s - Create clean NULL DataFrame' % cmi_debug )
-        self.tg_df0 = pd.DataFrame()             # new df, but is NULLed
+        self.uv_dg0 = pd.DataFrame()             # new df, but is NULLed
         x = 0
         self.rows_extr = int( len(self.tag_tbody.find_all('tr')) )
         self.rows_tr_rows = int( len(self.tr_rows) )
@@ -231,12 +231,12 @@ class y_unvol:
 
             ################################ 6 ####################################
             self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time' ], index=[x] )
-            self.tg_df0 = pd.concat([self.tg_df0, self.df_1_row])  
+            self.uv_dg0 = pd.concat([self.uv_dg0, self.df_1_row])  
             x+=1
 
         logging.info('%s - populated new DF0 dataset' % cmi_debug )
         return x        # number of rows inserted into DataFrame (0 = some kind of #FAIL)
-                        # sucess = lobal class accessor (y_toplosers.tg_df0) populated & updated
+                        # sucess = lobal class accessor (y_toplosers.uv_dg0) populated & updated
 
 # method #4
     def topg_listall(self):
@@ -247,7 +247,7 @@ class y_unvol:
         logging.info('%s - IN' % cmi_debug )
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
-        print ( self.tg_df0.sort_values(by='Pct_change', ascending=False ) )    # only do after fixtures datascience dataframe has been built
+        print ( self.uv_dg0.sort_values(by='Pct_change', ascending=False ) )    # only do after fixtures datascience dataframe has been built
         return
 
 # method #5
@@ -261,11 +261,11 @@ class y_unvol:
         cmi_debug = __name__+"::"+self.build_top10.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
         logging.info('%s - Drop all rows from DF1' % cmi_debug )
-        self.tg_df1.drop(self.tg_df1.index, inplace=True)
+        self.uv_dg1.drop(self.uv_dg1.index, inplace=True)
         logging.info('%s - Copy DF0 -> ephemerial DF1' % cmi_debug )
-        self.tg_df1 = self.tg_df0.sort_values(by='Pct_change', ascending=False ).head(self.rows_extr).copy(deep=True)    # create new DF via copy of top 10 entries
-        self.tg_df1.rename(columns = {'Row':'ERank'}, inplace = True)    # Rank is more accurate for this Ephemerial DF
-        self.tg_df1.reset_index(inplace=True, drop=True)    # reset index each time so its guaranteed sequential
+        self.uv_dg1 = self.uv_dg0.sort_values(by='Pct_change', ascending=False ).head(self.rows_extr).copy(deep=True)    # create new DF via copy of top 10 entries
+        self.uv_dg1.rename(columns = {'Row':'ERank'}, inplace = True)    # Rank is more accurate for this Ephemerial DF
+        self.uv_dg1.reset_index(inplace=True, drop=True)    # reset index each time so its guaranteed sequential
         return
 
 # method #6
@@ -279,8 +279,8 @@ class y_unvol:
         logging.info('%s - IN' % cmi_debug )
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
-        self.tg_df1.style.set_properties(**{'text-align': 'left'})
-        print ( f"{self.tg_df1.sort_values(by='Pct_change', ascending=False ).head(self.rows_extr)}" )
+        self.uv_dg1.style.set_properties(**{'text-align': 'left'})
+        print ( f"{self.uv_dg1.sort_values(by='Pct_change', ascending=False ).head(self.rows_extr)}" )
         return
 
 # method #7
@@ -290,6 +290,6 @@ class y_unvol:
 
         cmi_debug = __name__+"::"+self.build_tenten60.__name__+".#"+str(self.yti)
         logging.info('%s - IN' % cmi_debug )
-        self.tg_df2 = self.tg_df2.append(self.tg_df1, ignore_index=False)    # merge top 10 into
-        self.tg_df2.reset_index(inplace=True, drop=True)    # ensure index is allways unique + sequential
+        self.uv_dg2 = self.uv_dg2.append(self.uv_dg1, ignore_index=False)    # merge top 10 into
+        self.uv_dg2.reset_index(inplace=True, drop=True)    # ensure index is allways unique + sequential
         return
