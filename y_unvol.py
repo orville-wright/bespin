@@ -39,9 +39,9 @@ class y_unvol:
         cmi_debug = __name__+"::"+self.__init__.__name__
         logging.info( f'%s Instance.#{yti}' % cmi_debug )
         # init empty DataFrame with present colum names
-        self.uv_dg0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
-        self.uv_dg1 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
-        self.uv_dg2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Pct_chg52w', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg1 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Pct_chg52w', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Pct_chg52w', 'Mkt_cap', 'M_B', 'Time'] )
         self.yti = yti
         return
 
@@ -204,12 +204,13 @@ class y_unvol:
                        price_clean, \
                        price_chg_clean, \
                        pct_clean, \
+                       pctg_change52w, \
                        mktcap_clean, \
                        mb, \
                        time_now ]]
 
             ################################ 6 ####################################
-            self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time' ], index=[x] )
+            self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Pct_chg52w', 'Mkt_cap', 'M_B', 'Time' ], index=[x] )
             self.uv_dg0 = pd.concat([self.uv_dg0, self.df_1_row])  
             x+=1
 
