@@ -31,6 +31,7 @@ from y_smallcaps import smallcap_screen
 from y_techevents import y_techevents
 from y_topgainers import y_topgainers
 from y_unvol import y_unvol
+from y_unvoljs import yf_unvol
 from datastore_eng_LMDB import lmdb_io_eng
 
 from neo4j_graphdb import neo4j_auradb
@@ -259,6 +260,17 @@ def main():
         y_unvol_dataset.build_top10()          # show top 10
         y_unvol_dataset.print_top10()          # print it
         print ( " " )
+
+########### Testing new JSON YF Unusual VOLUME extractor ################
+        print ( "========== YF JSON mode Unusually high Volume ========================================" )
+        yf_un_vol_activity = yf_unvol(1, args)       # instantiate NEW nasdaq data class, args = global var
+        yf_un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
+
+        # should test success of extract before attempting DF population
+        un_vol_activity.build_df(0)           # 0 = UP Unusual volume
+
+        # find lowest price stock in unusuall UP volume list
+        up_unvols = un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
 
 ################################################################################
 # generate FINAL combo list 
