@@ -96,7 +96,8 @@ class y_unvol:
 
         for datarow in self.tr_rows:
 
-            # >>>DEBUG<< for whedatarow.stripped_stringsn yahoo.com changes data model...
+            # >>>DEBUG<< for when yahoo.com changes data model...
+            """
             y = 1
             print ( f"===================== Debug =========================" )
             print ( f"Data {y}: {datarow}" )
@@ -110,9 +111,10 @@ class y_unvol:
                 #logging.info( f'%s - Data: {debug_data.strings}' % cmi_debug )
                 y += 1
             print ( f"===================== Debug =========================" )
-            # >>>DEBUG<< for when yahoo.com changes data model...
+            """
           
             # Data Extractor Generator
+            # internal private helper function
             def extr_gen(): 
                 for i in datarow.find_all("td"):
                     if i.canvas is not None:
