@@ -106,7 +106,7 @@ class y_unvol:
                     print ( f"Data {y}: Found Canvas, skipping..." )
                 else:
                     print ( f"Data {y}:  {i.text}" )
-                    print ( f"Data {ss}: {next(i.stripped_strings)}" )
+                    print ( f"Data s/s: {next(i.stripped_strings)}" )
                 #logging.info( f'%s - Data: {debug_data.strings}' % cmi_debug )
                 y += 1
             print ( f"===================== Debug =========================" )
