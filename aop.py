@@ -218,7 +218,10 @@ def main():
 
 # process Nasdaq.com unusual_vol ################
     if args['bool_uvol'] is True:
-        print ( "========== Unusually high Volume / Up =======================================================" )
+        
+        # UNUSUAL Volumes directly from NASDAQ.com for NASDAQ stocks only !
+        #
+        print ( "========== NASDAQ only Unusually high Volume / Up =============================================" )
         un_vol_activity = un_volumes(1, args)       # instantiate NEW nasdaq data class, args = global var
         un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
 
@@ -240,7 +243,7 @@ def main():
         print ( " " )
         print ( f"{un_vol_activity.up_unvol_listall()} " )
         print ( " ")
-        print ( "========== Unusually high Volume / Down =====================================================" )
+        print ( "========== NASDAQ only  Unusually high Volume / Down ===========================================" )
         print ( f"{un_vol_activity.down_unvol_listall()} " )
         print ( " ")
         # Add unusual vol into recommendations list []
@@ -248,12 +251,16 @@ def main():
         recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(upct) )
 
 ########### YAHOOF FINANCE UNUSUAL VOLUME  ################
-        print ( "========== Unusual Volume movers ================================" )
+        # UNUSUAL Volumes directly from Finaince Yahoo.com
+        # Stocks original from many/any/all exchanges that Yahoo.com is tracking.
+        # Could also include NASDAQ stocks from Nasdaq explcit list
+
+        print ( "========== Unusual Volume movers / Broad Spectrum Finaince Yahoo.com view ===================" )
         y_unvol_reader = y_cookiemonster(2)        # instantiate class of cookiemonster
         y_unvol_dataset = y_unvol(1)               # instantiate class
         y_unvol_dataset.init_dummy_session()       # setup cookie jar and headers
  
-        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('finance.yahoo.com/markets/stocks/unusual-volume-stocks/')
+        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('finance.yahoo.com/markets/stocks/unusual-volume-stocks/?start=0&count=200')
         y_unvol_dataset.ext_get_data(1)
 
         x = y_unvol_dataset.build_uv_df0()     # build full dataframe

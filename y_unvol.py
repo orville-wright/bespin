@@ -23,7 +23,7 @@ class y_unvol:
     yti = 0
     cycle = 0            # class thread loop counter
 
-    dummy_url = "https://finance.yahoo.com/markets/stocks/unusual-volume-stocks/"
+    dummy_url = "https://finance.yahoo.com/markets/stocks/unusual-volume-stocks/?start=0&count=100"
 
     yahoo_headers = { \
                         'authority': 'finance.yahoo.com', \
@@ -39,9 +39,9 @@ class y_unvol:
         cmi_debug = __name__+"::"+self.__init__.__name__
         logging.info( f'%s Instance.#{yti}' % cmi_debug )
         # init empty DataFrame with present colum names
-        self.uv_dg0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
-        self.uv_dg1 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
-        self.uv_dg2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Pct_chg52w', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg1 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Pct_chg52w', 'Mkt_cap', 'M_B', 'Time'] )
+        self.uv_dg2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Pct_chg52w', 'Mkt_cap', 'M_B', 'Time'] )
         self.yti = yti
         return
 
@@ -58,8 +58,8 @@ class y_unvol:
         Leverage BeautifulSoup4 to extract the raw html data from a
         previously rendered webpage - (rendered by y_cookiemonster).
         NOTE:
-        - y_cookiemonster now uses playwright for rendering
-        - ext_req is now the full html page as rendered by playwright (not a response object
+        - y_cookiemonster now uses playwright for rendering JS
+        - ext_req is now the full html page as rendered by playwright (not a response object)
         """
         self.yti = yti
         cmi_debug = __name__+"::"+self.ext_get_data.__name__+".#"+str(self.yti)
@@ -68,7 +68,7 @@ class y_unvol:
 
         # pickup pre-renderd playwright page from (handled by Y_cookiemonster) 
         r = self.ext_req
-        logging.info( f"%s - BS4 stream processing..." % cmi_debug )
+        logging.info( f"%s - BS4 extractor processing JS page data..." % cmi_debug )
         self.soup = BeautifulSoup(r, 'html.parser')     # playwright rendered data
 
         self.tag_tbody = self.soup.find('tbody')
@@ -96,23 +96,25 @@ class y_unvol:
 
         for datarow in self.tr_rows:
 
-            # >>>DEBUG<< for whedatarow.stripped_stringsn yahoo.com changes data model...
+            # >>>DEBUG<< for when yahoo.com changes data model...
+            """
             y = 1
             print ( f"===================== Debug =========================" )
-            #print ( f"Data {y}: {datarow}" )
+            print ( f"Data {y}: {datarow}" )
             for i in datarow.find_all("td"):
                 print ( f"===================================================" )
                 if i.canvas is not None:
                     print ( f"Data {y}: Found Canvas, skipping..." )
                 else:
-                    print ( f"Data {y}: {i.text}" )
-                    print ( f"Data g: {next(i.stripped_strings)}" )
+                    print ( f"Data {y}:  {i.text}" )
+                    print ( f"Data s/s: {next(i.stripped_strings)}" )
                 #logging.info( f'%s - Data: {debug_data.strings}' % cmi_debug )
                 y += 1
             print ( f"===================== Debug =========================" )
-            # >>>DEBUG<< for when yahoo.com changes data model...
+            """
           
             # Data Extractor Generator
+            # internal private helper function
             def extr_gen(): 
                 for i in datarow.find_all("td"):
                     if i.canvas is not None:
@@ -122,71 +124,63 @@ class y_unvol:
 
             ################################ 1 ####################################
             extr_strs = extr_gen()
-            co_sym = next(extr_strs)             # 1 : ticker symbol info / e.g "NWAU"
-            co_name = next(extr_strs)            # 2 : company name / e.g "Consumer Automotive Finance, Inc."
-            mini_chart = next(extr_strs)         # 3 : embeded mini GFX chart
-            price = next(extr_strs)              # 3 : price (Intraday) / e.g "0.0031"
-
+            co_sym = next(extr_strs)            # 1 : ticker symbol info / e.g "NWAU"
+            co_name = next(extr_strs)           # 2 : company name / e.g "Consumer Automotive Finance, Inc."
+            mini_chart = next(extr_strs)        # 3 : embeded mini GFX chart tag is: SPARKLINE
+            
+            rel_volume = next(extr_strs)        # 4 : relative volume 1 day
+            price = next(extr_strs)             # 5 : Intraday price e.g "0.0031"
+            price_change = next(extr_strs)      # 6 : Intraday price change e.g "+0.23"
+            pctg_change = next(extr_strs)       # 7 : Percentage changed
+            
             ################################ 2 ####################################
-
-            change_sign = next(extr_strs)        # 4 : test for dedicated column for +/- indicator
-            logging.info( f"{cmi_debug} : {co_sym} : Check $ CHANGE dedicated [+-] field..." )
-            if change_sign == "+" or change_sign == "-":    # 4 : is $ change sign [+/-] a dedciated field
-                change_val = next(extr_strs)     # 4 : Yes, advance iterator to next field (ignore dedciated sign field)
-            else:
-                change_val = change_sign         # 4 : get $ change, but its possibly +/- signed
-                #if (re.search(r'\+', change_val)) or (re.search(r'\-', change_val)) is True:
-                if (re.search(r'\+', change_val)) or (re.search(r'\-', change_val)) is not None:
-                    logging.info( f"{cmi_debug} : $ CHANGE: {change_val} [+-], stripping..." )
-                    change_cl = re.sub(r'[\+\-]', "", change_val)       # remove +/- sign
-                    logging.info( f"{cmi_debug} : $ CHANGE cleaned to: {change_cl}" )
-                else:
-                    logging.info( f"{cmi_debug} : {change_val} : $ CHANGE is NOT signed [+-]" )
-                    change_cl = re.sub(r'[\,]', "", change_val)       # remove
-                    logging.info( f"{cmi_debug} : $ CHANGE: {change_cl}" )
-
-            pct_sign = next(extr_strs)              # 5 : test for dedicated column for +/- indicator
-            logging.info( f"{cmi_debug} : {co_sym} : Check % CHANGE dedicated [+-] field..." )
-            if pct_sign == "+" or pct_sign == "-":  # 5 : is %_change sign [+/-] a dedciated field
-                pct_val = next(extr_strs)           # 5 : advance iterator to next field (ignore dedciated sign field)
-            else:
-                pct_val = pct_sign                  # 5 get % change, but its possibly +/- signed
-                if (re.search(r'\+', pct_val)) or (re.search(r'\-', pct_val)) is not None:
-                    logging.info( f"{cmi_debug} : % CHANGE {pct_val} [+-], stripping..." )
-                    pct_cl = re.sub(r'[\+\-\%]', "", pct_val)       # remove +/-/% signs
-                    logging.info( f"{cmi_debug} : % CHANGE cleaned to: {pct_cl}" )
-                else:
-                    logging.info( f"{cmi_debug} : {pct_val} : % CHANGE is NOT signed [+-]" )
-                    change_cl = re.sub(r'[\,\%]', "", pct_val)       # remove
-                    logging.info( f"{cmi_debug} : % CHANGE: {pct_val}" )
- 
+            vol = next(extr_strs)               # 8 : Day Volume with scale indicator e.g "5.748M"
+            avg_vol = next(extr_strs)           # 9 : Avg. Dayily vol over 3 months (with scale indicviator)  e.g "61.447M"
+            
             ################################ 3 ####################################
-            vol = next(extr_strs)            # 6 : volume with scale indicator/ e.g "70.250k"
-            avg_vol = next(extr_strs)        # 7 : Avg. vol over 3 months) / e.g "61,447"
-            mktcap = next(extr_strs)         # 8 : Market cap with scale indicator / e.g "15.753B"
-            peratio = next(extr_strs)        # 9 : PE ratio TTM (Trailing 12 months) / e.g "N/A"
-            #mini_gfx = next(extr_strs)      # 10 : IGNORED = mini-canvas graphic 52-week rnage (no TXT/strings avail)
+            mktcap = next(extr_strs)            # 10 : Market cap (intraday) with scale indicator / e.g "15.753B"
+            peratio = next(extr_strs)           # 11 : PE ratio TTM (Trailing 12 months)  e.g "N/A" or "--" or "26.83"
 
             ################################ 4 ####################################
+            pctg_change52w  = next(extr_strs)   # 12  Percentage change across 52-week range (this is a CRITICAL metric)
+            price_range52w = next(extr_strs)    # 13  Complex Mini Graphic - IGNORED by Bespin !!!
+
+            ################################ 5 ####################################
             # now wrangle the data...
             co_sym_lj = f"{co_sym:<6}"                                   # left justify TXT in DF & convert to raw string
             co_name_lj = np.array2string(np.char.ljust(co_name, 60) )    # left justify TXT in DF & convert to raw string
-            co_name_lj = (re.sub(r'[\'\"]', '', co_name_lj) )             # remove " ' and strip leading/trailing spaces     
-            price_cl = (re.sub(r'\,', '', price))                         # remove ,
+            co_name_lj = (re.sub(r'[\'\"]', '', co_name_lj) )            # remove " ' and strip leading/trailing spaces
+            price_cl = (re.sub(r'\,', '', price))                        # remove ,
             price_clean = float(price_cl)
-            change_sign_multiplier = -1 if change_sign == "-" or str(change_val).strip().startswith("-") else 1
-            change_cl = re.sub(r'[\+\-,]', "", str(change_val))
-            change_clean = float(change_cl) * change_sign_multiplier
 
-            if pct_val == "N/A":
-                pct_clean = float(0.0)                              # Bad data. FOund a filed with N/A instead of read num
+            change_sign_multiplier = -1 if str(price_change).strip().startswith("-") else 1
+            price_chg_raw = re.sub(r'[\+\-,]', "", str(price_change))           # remove all non numeric tags from the price change number
+            price_chg_clean = float(price_chg_raw) * change_sign_multiplier     # convert price_change into a real signed float
+
+            # WARNING: Percentgae change has "%" sign tagged onto number.
+            if pctg_change == "N/A" or pctg_change == "0.00%":          # Bad data found
+                pct_clean = float(0.0)                                  # Set N/A or 0.00% to a real float = 0.0
+                logging.info( f"{cmi_debug} : % CHANGE is BAD, reset to 0.00..." )
             else:
-                pct_sign_multiplier = -1 if pct_sign == "-" or str(pct_val).strip().startswith("-") else 1
-                pct_cl = re.sub(r'[\%\+\-,]', "", pct_val )
-                pct_clean = float(pct_cl) * pct_sign_multiplier
-                if change_clean < 0 and pct_clean > 0:
-                    pct_clean = -pct_clean
+                logging.info( f"{cmi_debug} : % CHANGE {pctg_change} [+-%] tag, stripping..." )
+                pct_cl = re.sub(r'[\%\+\-,]', "", pctg_change )         # remove all non numeric tags from the number
+                pct_sign_multiplier = -1 if str(pctg_change).strip().startswith("-") else 1
+                pct_clean = float(pct_cl) * pct_sign_multiplier         # convert pct_change into a real signed float
+                logging.info( f"{cmi_debug} : % CHANGE set to true signed numeric val: {pct_clean}..." )
 
+
+            if pctg_change52w == "N/A" or pctg_change52w == "0.00%" or pctg_change52w == "--":     # Bad data found
+                pctg_change52w = float(0.0)                                  # Set N/A or 0.00% to a real float = 0.0
+                logging.info( f"{cmi_debug} : % 52W-CHANGE is BAD, reset to 0.00..." )
+            else:
+                logging.info( f"{cmi_debug} : % 52-W-CHANGE {pctg_change52w} [+-%] tag, stripping..." )
+                pct52w_cl = re.sub(r'[\%\+\-,]', "", pctg_change52w )         # remove all non numeric tags from the number
+                pct52w_sign_multiplier = -1 if str(pctg_change52w).strip().startswith("-") else 1
+                pct52w_clean = float(pct52w_cl) * pct52w_sign_multiplier         # convert pct_change into a real signed float
+                logging.info( f"{cmi_debug} : % 52-W-CHANGE set to true signed numeric val: {pct52w_clean}..." )
+
+            
+            
             ################################ 5 ####################################
             mktcap = (re.sub(r'[N\/A]', '0', mktcap))               # handle N/A
             TRILLIONS = re.search('T', mktcap)
@@ -205,7 +199,7 @@ class y_unvol:
 
             if MILLIONS:
                 mktcap_clean = float(re.sub('M', '', mktcap))
-                mb = "LM"
+                mb = "SM"
                 logging.info( f'%s : #{x} : {co_sym_lj} Mkt cap: MILLIONS : M' % cmi_debug )
 
             if not TRILLIONS and not BILLIONS and not MILLIONS:
@@ -223,14 +217,15 @@ class y_unvol:
                        re.sub(r'\'', '', co_sym_lj), \
                        co_name_lj, \
                        price_clean, \
-                       change_clean, \
+                       price_chg_clean, \
                        pct_clean, \
+                       pct52w_clean, \
                        mktcap_clean, \
                        mb, \
                        time_now ]]
 
             ################################ 6 ####################################
-            self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Mkt_cap', 'M_B', 'Time' ], index=[x] )
+            self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', 'Pct_chg52w', 'Mkt_cap', 'M_B', 'Time' ], index=[x] )
             self.uv_dg0 = pd.concat([self.uv_dg0, self.df_1_row])  
             x+=1
 
@@ -263,7 +258,7 @@ class y_unvol:
         logging.info('%s - Drop all rows from DF1' % cmi_debug )
         self.uv_dg1.drop(self.uv_dg1.index, inplace=True)
         logging.info('%s - Copy DF0 -> ephemerial DF1' % cmi_debug )
-        self.uv_dg1 = self.uv_dg0.sort_values(by='Pct_change', ascending=False ).head(self.rows_extr).copy(deep=True)    # create new DF via copy of top 10 entries
+        self.uv_dg1 = self.uv_dg0.sort_values(by='Pct_chg52w', ascending=False ).head(self.rows_extr).copy(deep=True)    # create new DF via copy of top 10 entries
         self.uv_dg1.rename(columns = {'Row':'ERank'}, inplace = True)    # Rank is more accurate for this Ephemerial DF
         self.uv_dg1.reset_index(inplace=True, drop=True)    # reset index each time so its guaranteed sequential
         return
@@ -280,7 +275,7 @@ class y_unvol:
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
         self.uv_dg1.style.set_properties(**{'text-align': 'left'})
-        print ( f"{self.uv_dg1.sort_values(by='Pct_change', ascending=False ).head(self.rows_extr)}" )
+        print ( f"{self.uv_dg1.sort_values(by='Pct_chg52w', ascending=False ).head(self.rows_extr)}" )
         return
 
 # method #7
