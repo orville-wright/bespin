@@ -170,7 +170,7 @@ class y_unvol:
 
 
             pctg_change52w
-            if pctg_change52w == "N/A" or pctg_change52w == "0.00%":          # Bad data found
+            if pctg_change52w == "N/A" or pctg_change52w == "0.00%" or pctg_change == "--":          # Bad data found
                 pctg_change52w = float(0.0)                                  # Set N/A or 0.00% to a real float = 0.0
                 logging.info( f"{cmi_debug} : % 52W-CHANGE is BAD, reset to 0.00..." )
             else:
