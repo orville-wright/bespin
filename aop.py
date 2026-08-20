@@ -256,11 +256,11 @@ def main():
         # Could also include NASDAQ stocks from Nasdaq explcit list
 
         print ( "========== Unusual Volume movers / Broad Spectrum Finaince Yahoo.com view ===================" )
-        y_unvol_reader = y_cookiemonster(2)        # instantiate class of cookiemonster
+        y_unvol_reader = y_cookiemonster(3)        # instantiate class of cookiemonster
         y_unvol_dataset = y_unvol(1)               # instantiate class
         y_unvol_dataset.init_dummy_session()       # setup cookie jar and headers
  
-        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('finance.yahoo.com/markets/stocks/unusual-volume-stocks/?start=0&count=200')
+        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('query1.finance.yahoo.com/v1/finance/screener/predefined/saved?count=10&formatted=true&scrIds=unusual_volume_stocks&sortField=fiftytwowkpercentchange')
         y_unvol_dataset.ext_get_data(1)
 
         x = y_unvol_dataset.build_uv_df0()     # build full dataframe
