@@ -156,13 +156,13 @@ class y_unvol:
             price_chg_clean = float(price_chg_raw) * change_sign_multiplier     # convert price_change into a real signed float
 
             # WARNING: Percentgae change has "%" sign tagged onto number.
-            if pctg_change == "N/A" or "0.00%":
-                pct_clean = float(0.0)                                  # Bad data. Found a filed with N/A or 0.00% instead of real num
+            if pctg_change == "N/A" or pctg_change == "0.00%":          # Bad data found
+                pct_clean = float(0.0)                                  # Set N/A or 0.00% to a real float = 0.0
                 logging.info( f"{cmi_debug} : % CHANGE is BAD, reset to 0.00..." )
             else:
                 logging.info( f"{cmi_debug} : % CHANGE {pctg_change} [+-%] tag, stripping..." )
-                pct_sign_multiplier = -1 if str(pctg_change).strip().startswith("-") else 1
                 pct_cl = re.sub(r'[\%\+\-,]', "", pctg_change )         # remove all non numeric tags from the number
+                pct_sign_multiplier = -1 if str(pctg_change).strip().startswith("-") else 1
                 pct_clean = float(pct_cl) * pct_sign_multiplier         # convert pct_change into a real signed float
                 logging.info( f"{cmi_debug} : % CHANGE set to true signed numeric val: {pct_clean}..." )
 
