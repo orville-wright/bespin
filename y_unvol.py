@@ -166,6 +166,20 @@ class y_unvol:
                 pct_clean = float(pct_cl) * pct_sign_multiplier         # convert pct_change into a real signed float
                 logging.info( f"{cmi_debug} : % CHANGE set to true signed numeric val: {pct_clean}..." )
 
+
+            pctg_change52w
+            if pctg_change52w == "N/A" or pctg_change52w == "0.00%":          # Bad data found
+                pctg_change52w = float(0.0)                                  # Set N/A or 0.00% to a real float = 0.0
+                logging.info( f"{cmi_debug} : % 52W-CHANGE is BAD, reset to 0.00..." )
+            else:
+                logging.info( f"{cmi_debug} : % 52-W-CHANGE {pctg_change52w} [+-%] tag, stripping..." )
+                pct52w_cl = re.sub(r'[\%\+\-,]', "", pctg_change52w )         # remove all non numeric tags from the number
+                pct52w_sign_multiplier = -1 if str(pctg_change52w).strip().startswith("-") else 1
+                pct52w_clean = float(pct52w_cl) * pct52w_sign_multiplier         # convert pct_change into a real signed float
+                logging.info( f"{cmi_debug} : % 52-W-CHANGE set to true signed numeric val: {pct52w_clean}..." )
+
+            
+            
             ################################ 5 ####################################
             mktcap = (re.sub(r'[N\/A]', '0', mktcap))               # handle N/A
             TRILLIONS = re.search('T', mktcap)
@@ -204,7 +218,7 @@ class y_unvol:
                        price_clean, \
                        price_chg_clean, \
                        pct_clean, \
-                       pctg_change52w, \
+                       pct52w_clean, \
                        mktcap_clean, \
                        mb, \
                        time_now ]]
