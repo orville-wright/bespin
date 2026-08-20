@@ -23,7 +23,7 @@ class y_unvol:
     yti = 0
     cycle = 0            # class thread loop counter
 
-    dummy_url = "https://finance.yahoo.com/markets/stocks/unusual-volume-stocks/"
+    dummy_url = "https://finance.yahoo.com/markets/stocks/unusual-volume-stocks/?start=0&count=100"
 
     yahoo_headers = { \
                         'authority': 'finance.yahoo.com', \
@@ -259,7 +259,7 @@ class y_unvol:
         logging.info('%s - Drop all rows from DF1' % cmi_debug )
         self.uv_dg1.drop(self.uv_dg1.index, inplace=True)
         logging.info('%s - Copy DF0 -> ephemerial DF1' % cmi_debug )
-        self.uv_dg1 = self.uv_dg0.sort_values(by='Pct_change', ascending=False ).head(self.rows_extr).copy(deep=True)    # create new DF via copy of top 10 entries
+        self.uv_dg1 = self.uv_dg0.sort_values(by='Pct_chg52w', ascending=False ).head(self.rows_extr).copy(deep=True)    # create new DF via copy of top 10 entries
         self.uv_dg1.rename(columns = {'Row':'ERank'}, inplace = True)    # Rank is more accurate for this Ephemerial DF
         self.uv_dg1.reset_index(inplace=True, drop=True)    # reset index each time so its guaranteed sequential
         return
@@ -276,7 +276,7 @@ class y_unvol:
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
         self.uv_dg1.style.set_properties(**{'text-align': 'left'})
-        print ( f"{self.uv_dg1.sort_values(by='Pct_change', ascending=False ).head(self.rows_extr)}" )
+        print ( f"{self.uv_dg1.sort_values(by='Pct_chg52w', ascending=False ).head(self.rows_extr)}" )
         return
 
 # method #7
