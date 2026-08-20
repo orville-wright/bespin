@@ -220,7 +220,7 @@ def main():
         
         # UNUSUAL Volumes directly from NASDAQ.com for NASDAQ stocks only !
         #
-        print ( "========== Unusually high Volume / Up =======================================================" )
+        print ( "========== NASDAQ only Unusually high Volume / Up =============================================" )
         un_vol_activity = un_volumes(1, args)       # instantiate NEW nasdaq data class, args = global var
         un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
 
@@ -242,7 +242,7 @@ def main():
         print ( " " )
         print ( f"{un_vol_activity.up_unvol_listall()} " )
         print ( " ")
-        print ( "========== Unusually high Volume / Down =====================================================" )
+        print ( "========== NASDAQ only  Unusually high Volume / Down ===========================================" )
         print ( f"{un_vol_activity.down_unvol_listall()} " )
         print ( " ")
         # Add unusual vol into recommendations list []
