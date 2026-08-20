@@ -105,8 +105,8 @@ class y_unvol:
                 if i.canvas is not None:
                     print ( f"Data {y}: Found Canvas, skipping..." )
                 else:
-                    print ( f"Data {y}: {i.text}" )
-                    print ( f"Data g: {next(i.stripped_strings)}" )
+                    print ( f"Data {y}:  {i.text}" )
+                    print ( f"Data {ss}: {next(i.stripped_strings)}" )
                 #logging.info( f'%s - Data: {debug_data.strings}' % cmi_debug )
                 y += 1
             print ( f"===================== Debug =========================" )
@@ -147,21 +147,13 @@ class y_unvol:
             # now wrangle the data...
             co_sym_lj = f"{co_sym:<6}"                                   # left justify TXT in DF & convert to raw string
             co_name_lj = np.array2string(np.char.ljust(co_name, 60) )    # left justify TXT in DF & convert to raw string
-            co_name_lj = (re.sub(r'[\'\"]', '', co_name_lj) )             # remove " ' and strip leading/trailing spaces
-            price_cl = (re.sub(r'\,', '', price))                         # remove ,
+            co_name_lj = (re.sub(r'[\'\"]', '', co_name_lj) )            # remove " ' and strip leading/trailing spaces
+            price_cl = (re.sub(r'\,', '', price))                        # remove ,
             price_clean = float(price_cl)
 
-
-            """
-            if (re.search(r'\+', pct_val)) or (re.search(r'\-', pct_val)) is not None:
-                logging.info( f"{cmi_debug} : % CHANGE {pct_val} [+-], stripping..." )
-                pct_cl = re.sub(r'[\+\-\%]', "", pct_val)       # remove +/-/% signs
-                logging.info( f"{cmi_debug} : % CHANGE cleaned to: {pct_cl}" )
-            else:
-                logging.info( f"{cmi_debug} : {pct_val} : % CHANGE is NOT signed [+-]" )
-                change_cl = re.sub(r'[\,\%]', "", pct_val)       # remove
-                logging.info( f"{cmi_debug} : % CHANGE: {pct_val}" )
-            """
+            change_sign_multiplier = -1 if str(price_change).strip().startswith("-") else 1
+            price_chg_raw = re.sub(r'[\+\-,]', "", str(price_change))           # remove all non numeric tags from the price change number
+            price_chg_clean = float(price_chg_raw) * change_sign_multiplier     # convert price_change into a real signed float
 
             # WARNING: Percentgae change has "%" sign tagged onto number.
             if pctg_change == "N/A" or "0.00%":
@@ -210,7 +202,7 @@ class y_unvol:
                        re.sub(r'\'', '', co_sym_lj), \
                        co_name_lj, \
                        price_clean, \
-                       change_clean, \
+                       price_chg_clean, \
                        pct_clean, \
                        mktcap_clean, \
                        mb, \
