@@ -205,6 +205,7 @@ class yf_unvoljs:
         if ud == 0: self.up_df0.reset_index(inplace=True, drop=True)           # reset index each time so its guaranteed sequential
         if ud == 1: self.down_df1.reset_index(inplace=True, drop=True)         # reset index each time so its guaranteed sequential
         logging.info('%s - populated new DF' % cmi_debug )
+        print ( f"#-DEBUG-#208: {self.list_data}" )
         return x        # number of rows inserted into DataFrame (0 = some kind of #FAIL)
                         # sucess = lobal class accessor (y_toplosers.df0) populated & updated
 
