@@ -192,7 +192,7 @@ class yf_unvoljs:
 
             self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", 'Vol_pct', 'Time' ], index=[x] )
             if ud == 0:
-                logging.info( '%s - append UP Volume data into DataFrame' % cmi_debug )
+                logging.info( '%s - append UP Volume data into DataFrame: {x} / {co_sym}' % cmi_debug )
                 self.up_df0 = pd.concat([self.up_df0, self.df_1_row])    # append this ROW of data into the REAL DataFrame
             else:
                 logging.info('%s - append DOWN Volume data into DataFrame' % cmi_debug )
