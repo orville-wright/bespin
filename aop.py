@@ -31,6 +31,7 @@ from y_smallcaps import smallcap_screen
 from y_techevents import y_techevents
 from y_topgainers import y_topgainers
 from y_unvol import y_unvol
+from y_unvoljs import yf_unvol
 from datastore_eng_LMDB import lmdb_io_eng
 
 from neo4j_graphdb import neo4j_auradb
@@ -256,16 +257,28 @@ def main():
 
         print ( "========== Finaince Yahoo.com Unusual Volume movers / Broad Spectrum  view ===================" )
         y_unvol_reader = y_cookiemonster(2)        # instantiate class of cookiemonster
+
         y_unvol_dataset = y_unvol(1)               # instantiate class
         y_unvol_dataset.init_dummy_session()       # setup cookie jar and headers
  
-        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('finance.yahoo.com/markets/stocks/unusual-volume-stocks/?start=0&count=200')
+        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('query1.finance.yahoo.com/v1/finance/screener/predefined/saved?count=10&formatted=true&scrIds=unusual_volume_stocks&sortField=fiftytwowkpercentchange')
         y_unvol_dataset.ext_get_data(1)
 
         x = y_unvol_dataset.build_uv_df0()     # build full dataframe
         y_unvol_dataset.build_top10()          # show top 10
         y_unvol_dataset.print_top10()          # print it
         print ( " " )
+
+########### Testing new JSON YF Unusual VOLUME extractor ################
+        print ( "========== YF JSON mode Unusually high Volume ========================================" )
+        yf_un_vol_activity = yf_unvol(1, args)       # instantiate NEW nasdaq data class, args = global var
+        yf_un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
+
+        # should test success of extract before attempting DF population
+        un_vol_activity.build_df(0)           # 0 = UP Unusual volume
+
+        # find lowest price stock in unusuall UP volume list
+        up_unvols = un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
 
 ################################################################################
 # generate FINAL combo list 

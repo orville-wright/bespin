@@ -15,8 +15,12 @@ logging.basicConfig(level=logging.INFO)
 
 #####################################################
 # CLASS
-class un_volumes:
-    """Class to discover unusual volume data from NASDAQ.com data source"""
+class yf_unvol:
+    """
+    Class to discover unusual volume data from FINAINCE.YAHOO.com data source
+    Using the Direct API Endpoint to extract the JSON dataset.
+    No BeautifulSoup scraping required. Uses direct JSON accessors.
+    """
 
     # global accessors
     up_df0 = ""             # DataFrame - Full list of Unusual UP volume
@@ -30,12 +34,15 @@ class un_volumes:
     soup = ""               # BS4 shared handle between UP & DOWN (1 URL, 2 embeded data sets in HTML doc)
     args = []               # class dict to hold global args being passed in from main() methods
 
-                            # NASDAQ.com header/cookie hack
-    nasdaq_headers = { \
-                    'authority': 'api.nasdaq.com', \
+                            # YAHOO.com header/cookie hack
+    # https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?count=10&formatted=true&scrIds=unusual_volume_stocks&sortField=relative_volume_1day
+    # https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved
+
+    yf_headers = { \
+                    'authority': 'query1.finance.yahoo.com', \
                     'path': '/api/quote/list-type/unusual_volume', \
-                    'origin': 'https://www.nasdaq.com', \
-                    'referer': 'https://www.nasdaq.com', \
+                    'origin': 'https://www.finance.yahoo.com', \
+                    'referer': 'https://www.finance.yahoo.com', \
                     'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"', \
                     'sec-ch-ua-mobile': '"?0"', \
                     'sec-fetch-mode': 'cors', \
@@ -54,16 +61,17 @@ class un_volumes:
         self.df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", 'Vol_pct', 'Time' ] )
         self.yti = yti
         self.js_session = HTMLSession()                        # init JAVAScript processor early
-        self.js_session.cookies.update(self.nasdaq_headers)    # load cookie/header hack data set into session
+        self.js_session.cookies.update(self.yf_headers)    # load cookie/header hack data set into session
         return
 
 #####################################################
 # method #1
     def get_un_vol_data(self):
         """
-        Access NEW nasdaq.com JAVASCRIPT page [unusual volume] and extract the native JSON dataset
-        JSON dataset contains *BOTH* UP vol & DOWN vol for top 25 symbols, right now
-        NO BeautifulSOup scraping needed anymore. We access the pure JSON datset via native API rest call
+        Access NEW query1.finance.yahoo.com JAVASCRIPT API endpopint page [unusual volume] and extract the native JSON dataset
+        query1 paramsd control then entire data set.
+        We can extract the entire dataset in one call and then parse it into UP & DOWN data sets.
+        NO BeautifulSOup scraping needed anymore.
         note: Javascript engine is required, Cant process/read a JS page via requests(). The get() hangs forever
         """
 
@@ -71,25 +79,25 @@ class un_volumes:
         logging.info('%s - IN' % cmi_debug )
 
         # Initial blind get
-        # present ourself to NASDAQ.com so we can extract the critical cookie -> ak_bmsc
+        # present ourself to YAHOO.com so we can extract the critical cookie
         # be nice and set a healthy cookie package
         logging.info('%s - blind get()' % cmi_debug )
-        self.js_session.cookies.update(self.nasdaq_headers)    # redundent as it's done in INIT but I'm not sure its persisting from there
-        with self.js_session.get("https://www.nasdaq.com", stream=True, headers=self.nasdaq_headers, cookies=self.nasdaq_headers, timeout=5 ) as self.js_resp0:
+        self.js_session.cookies.update(self.yf_headers)    # redundent as it's done in INIT but I'm not sure its persisting from there
+        with self.js_session.get("https://www.finance.yahoo.com", stream=True, headers=self.yf_headers, cookies=self.yf_headers, timeout=5 ) as self.js_resp0:
             logging.info('%s - EXTRACT/INSERT valid cookie  ' % cmi_debug )
                         #self.js_session.cookies.update({'ak_bmsc': self.js_resp0.cookies['ak_bmsc']} )    # NASDAQ cookie hack
             #self.js_session.cookies.update({'bm_sv': self.js_resp0.cookies['bm_sv']} )    # NASDAQ cookie hack
 
         # 2nd get with the secret nasdaq.com cookie now inserted
         logging.info('%s - rest API read json' % cmi_debug )
-        with self.js_session.get("https://api.nasdaq.com/api/quote/list-type/unusual_volume", stream=True, headers=self.nasdaq_headers, cookies=self.nasdaq_headers, timeout=5 ) as self.js_resp2:
+        with self.js_session.get(" https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?count=50&formatted=true&scrIds=unusual_volume_stocks&sortField=relative_volume_1day", stream=True, headers=self.yf_headers, cookies=self.yf_headers, timeout=5 ) as self.js_resp2:
             logging.info('%s - json data extracted' % cmi_debug )
             logging.info('%s - store FULL json dataset' % cmi_debug )
             self.uvol_all_data = json.loads(self.js_resp2.text)
             logging.info('%s - store UP data locale' % cmi_debug )
-            self.uvol_up_data =  self.uvol_all_data['data']['up']['table']['rows']
-            logging.info('%s - store DOWN data locale' % cmi_debug )
-            self.uvol_down_data = self.uvol_all_data['data']['down']['table']['rows']
+            self.uvol_up_data =  self.uvol_all_data['finance']['result']['0']['quotes']
+            logging.info('%s - store data' % cmi_debug )
+            #self.uvol_down_data = self.uvol_all_data['data']['down']['table']['rows']
 
         # DEBUG
         if self.args['bool_xray'] is True:
@@ -133,13 +141,13 @@ class un_volumes:
         x = 1    # row counter Also leveraged for unique dataframe key
         for json_data_row in dataset:
             co_sym = json_data_row['symbol']
-            co_name = json_data_row['company']
-            price = json_data_row['lastSale']
-            price_net = json_data_row['netChange']
+            co_name = json_data_row['shortName']
+            price = json_data_row['regularMarketPrice']['raw']
+            price_net = json_data_row['regularMarketChange']['raw']
             arrow_updown = json_data_row['deltaIndicator']
-            price_pct = json_data_row['percentChange']
-            vol_abs = json_data_row['shareVolume']
-            vol_pct = json_data_row['volumePctChange']
+            price_pct = json_data_row['regularMarketChangePercent']['raw']
+            vol_abs = json_data_row['regularMarketVolume']['raw']
+            vol_pct = json_data_row['currency']
 
             # COL NAME     variable       final varable cleansed
             # ==================================================
