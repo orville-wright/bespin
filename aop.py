@@ -281,6 +281,16 @@ def main():
 
         # find lowest price stock in unusuall UP volume list
         _up_yf_unvols = yf_un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
+
+        _ulp = _up_yf_unvols['Cur_price'].min()                  # find lowest price row in DF
+        _uminv = _up_yf_unvols['Cur_price'].idxmin()             # get index ID of lowest price row
+        _u_got_it = _up_yf_unvols.loc[uminv]
+
+        _ulsym = u_got_it.at['Symbol']              # get symbol of lowest price item @ index_id
+        _ulname = u_got_it.at['Co_name']            # get name of lowest price item @ index_id
+        _upct = u_got_it.at['Pct_change']           # get %change of lowest price item @ index_id
+
+        recommended['2'] = ('YF Unusual vol:', _ulsym.rstrip(), '$'+str(_ulp), _ulname.rstrip(), '+%'+str(_upct) )
         print ( f"{_up_yf_unvols}" )
         
 ################################################################################
