@@ -90,12 +90,11 @@ class yf_unvoljs:
 
         # 2nd get with the secret nasdaq.com cookie now inserted
         logging.info('%s - rest API read json' % cmi_debug )
-        with self.js_session.get("https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?count=5&formatted=true&scrIds=unusual_volume_stocks&sortField=relative_volume_1day", stream=True, headers=self.yf_headers, cookies=self.yf_headers, timeout=5 ) as self.js_resp2:
+        with self.js_session.get("https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?count=200&formatted=true&scrIds=unusual_volume_stocks&sortField=relative_volume_1day", stream=True, headers=self.yf_headers, cookies=self.yf_headers, timeout=5 ) as self.js_resp2:
             logging.info('%s - json data extracted' % cmi_debug )
             logging.info('%s - store FULL json dataset' % cmi_debug )
             self.uvol_all_data = json.loads(self.js_resp2.text)
             logging.info('%s - store JSON dataset' % cmi_debug )
-            print ( f"#-DEBUG-#98: {self.uvol_all_data}")
             self.uvol_up_data =  self.uvol_all_data["finance"]["result"][0]["quotes"]
             #self.uvol_down_data = self.uvol_all_data['data']['down']['table']['rows']
 
@@ -191,7 +190,6 @@ class yf_unvoljs:
                        round(float(vol_pct_cl), 1), \
                        time_now ]]
 
-
             self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", 'Vol_pct', 'Time' ], index=[x] )
             if ud == 0:
                 logging.info( '%s - append UP Volume data into DataFrame' % cmi_debug )
@@ -205,7 +203,6 @@ class yf_unvoljs:
         if ud == 0: self.up_df0.reset_index(inplace=True, drop=True)           # reset index each time so its guaranteed sequential
         if ud == 1: self.down_df1.reset_index(inplace=True, drop=True)         # reset index each time so its guaranteed sequential
         logging.info('%s - populated new DF' % cmi_debug )
-        print ( f"#-DEBUG-#208: {self.list_data}" )
         return x        # number of rows inserted into DataFrame (0 = some kind of #FAIL)
                         # sucess = lobal class accessor (y_toplosers.df0) populated & updated
 
