@@ -56,9 +56,9 @@ class yf_unvoljs:
         logging.info( f'%s - Instantiate.#{yti}' % cmi_debug )
         # init empty DataFrame with preset colum names
         self.args = global_args                                # Only set once per INIT. all methods are set globally
-        self.up_df0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", 'Vol_pct', 'Time' ] )
-        self.down_df1 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", 'Vol_pct', 'Time' ] )
-        self.df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", 'Vol_pct', 'Time' ] )
+        self.up_df0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Time' ] )
+        self.down_df1 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Time' ] )
+        self.df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Time' ] )
         self.yti = yti
         self.js_session = HTMLSession()                        # init JAVAScript processor early
         self.js_session.cookies.update(self.yf_headers)    # load cookie/header hack data set into session
@@ -193,7 +193,7 @@ class yf_unvoljs:
                        round(float(vol_pct_cl), 1), \
                        time_now ]]
 
-            self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", 'Vol_pct', 'Time' ], index=[x] )
+            self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Time' ], index=[x] )
             if ud == 0:
                 logging.info( f"%s - append UP Volume data into DataFrame: {x} / {co_sym}" % cmi_debug )
                 self.up_df0 = pd.concat([self.up_df0, self.df_1_row])    # append this ROW of data into the REAL DataFrame
@@ -220,7 +220,7 @@ class yf_unvoljs:
         logging.info('ins.#%s.up_unvol_listall() - IN' % self.yti )
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
-        list_up = self.up_df0.sort_values(by='Pct_change', ascending=False )
+        list_up = self.up_df0.sort_values(by='52wk_Pct', ascending=False )
         list_up.reset_index(inplace=True, drop=True)           # reset index each time so its guaranteed sequential
         logging.info('ins.#%s.up_unvol_listall() - DONE' % self.yti )
         return list_up
