@@ -94,9 +94,9 @@ class yf_unvol:
             logging.info('%s - json data extracted' % cmi_debug )
             logging.info('%s - store FULL json dataset' % cmi_debug )
             self.uvol_all_data = json.loads(self.js_resp2.text)
-            logging.info('%s - store UP data locale' % cmi_debug )
+            logging.info('%s - store JSON dataset' % cmi_debug )
+            print ( f"#-DEBUG-#98: {self.uvol_all_data}")
             self.uvol_up_data =  self.uvol_all_data['finance']['result']['0']['quotes']
-            logging.info('%s - store data' % cmi_debug )
             #self.uvol_down_data = self.uvol_all_data['data']['down']['table']['rows']
 
         # DEBUG

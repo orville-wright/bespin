@@ -250,9 +250,9 @@ def main():
         #recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(un_vol_activity.up_df0.loc[uminv, ['Pct_change']][0]) )
         recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(upct) )
 
-########### YAHOOF FINANCE UNUSUAL VOLUME  ################
+########### YAHOO FINANCE UNUSUAL VOLUME  ################
         # UNUSUAL Volumes directly from Finaince Yahoo.com
-        # Stocks original from many/any/all exchanges that Yahoo.com is tracking.
+        # Stocks originate from many/any/all exchanges that Yahoo.com is tracking. So list is random.
         # Could also include NASDAQ stocks from Nasdaq explcit list
 
         print ( "========== Finaince Yahoo.com Unusual Volume movers / Broad Spectrum  view ===================" )
