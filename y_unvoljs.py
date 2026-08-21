@@ -90,7 +90,7 @@ class yf_unvol:
 
         # 2nd get with the secret nasdaq.com cookie now inserted
         logging.info('%s - rest API read json' % cmi_debug )
-        with self.js_session.get(" https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?count=50&formatted=true&scrIds=unusual_volume_stocks&sortField=relative_volume_1day", stream=True, headers=self.yf_headers, cookies=self.yf_headers, timeout=5 ) as self.js_resp2:
+        with self.js_session.get("https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?count=5&formatted=true&scrIds=unusual_volume_stocks&sortField=relative_volume_1day", stream=True, headers=self.yf_headers, cookies=self.yf_headers, timeout=5 ) as self.js_resp2:
             logging.info('%s - json data extracted' % cmi_debug )
             logging.info('%s - store FULL json dataset' % cmi_debug )
             self.uvol_all_data = json.loads(self.js_resp2.text)
