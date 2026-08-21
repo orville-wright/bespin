@@ -56,9 +56,9 @@ class yf_unvoljs:
         logging.info( f'%s - Instantiate.#{yti}' % cmi_debug )
         # init empty DataFrame with preset colum names
         self.args = global_args                                # Only set once per INIT. all methods are set globally
-        self.up_df0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Time' ] )
-        self.down_df1 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Time' ] )
-        self.df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Time' ] )
+        self.up_df0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Exchange', 'Time' ] )
+        self.down_df1 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Exchange', 'Time' ] )
+        self.df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Exchange', 'Time' ] )
         self.yti = yti
         self.js_session = HTMLSession()                        # init JAVAScript processor early
         self.js_session.cookies.update(self.yf_headers)    # load cookie/header hack data set into session
@@ -150,6 +150,7 @@ class yf_unvoljs:
             price_pct_clean = json_data_row['regularMarketChangePercent']['raw']
             vol_abs_cl = json_data_row['regularMarketVolume']['raw']
             vol_pct_cl = json_data_row['fiftyTwoWeekChangePercent']['raw']
+            exchange = json_data_row['fullExchangeName']
 
             # COL NAME     variable       final varable cleansed
             # ==================================================
@@ -191,9 +192,10 @@ class yf_unvoljs:
                        price_pct_clean, \
                        round(float(vol_abs_cl)), \
                        round(float(vol_pct_cl), 1), \
+                       exchange, \
                        time_now ]]
 
-            self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Time' ], index=[x] )
+            self.df_1_row = pd.DataFrame(self.list_data, columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Exchange', 'Time' ], index=[x] )
             if ud == 0:
                 logging.info( f"%s - append UP Volume data into DataFrame: {x} / {co_sym}" % cmi_debug )
                 self.up_df0 = pd.concat([self.up_df0, self.df_1_row])    # append this ROW of data into the REAL DataFrame
