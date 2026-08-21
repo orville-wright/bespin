@@ -261,7 +261,7 @@ def main():
         y_unvol_dataset = y_unvol(1)               # instantiate class
         y_unvol_dataset.init_dummy_session()       # setup cookie jar and headers
  
-        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('finance.yahoo.com/markets/stocks/unusual-volume-stocks/?start=0&count=5')
+        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('finance.yahoo.com/markets/stocks/unusual-volume-stocks/?start=0&count=20')
         y_unvol_dataset.ext_get_data(1)
 
         x = y_unvol_dataset.build_uv_df0()     # build full dataframe
