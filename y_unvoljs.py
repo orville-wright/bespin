@@ -144,7 +144,7 @@ class yf_unvoljs:
             co_name = json_data_row['shortName']
             price = json_data_row['regularMarketPrice']['raw']
             price_net = json_data_row['regularMarketChange']['raw']
-            arrow_updown = json_data_row['deltaIndicator']
+            #arrow_updown = json_data_row['deltaIndicator']
             price_pct = json_data_row['regularMarketChangePercent']['raw']
             vol_abs = json_data_row['regularMarketVolume']['raw']
             vol_pct = json_data_row['currency']
