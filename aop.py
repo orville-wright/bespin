@@ -290,7 +290,8 @@ def main():
         _ulname = u_got_it.at['Co_name']            # get name of lowest price item @ index_id
         _upct = u_got_it.at['Pct_change']           # get %change of lowest price item @ index_id
 
-        recommended['2'] = ('YF Unusual vol:', _ulsym.rstrip(), '$'+str(_ulp), _ulname.rstrip(), '+%'+str(_upct) )
+        print ( f"Best low-buy OPPTY: #{_uminv} - {_ulname.rstrip()} ({_ulsym.rstrip()}) @ ${_ulp} / {_upct}% gain" )
+        print ( " " )
         print ( f"{_up_yf_unvols}" )
         
 ################################################################################
