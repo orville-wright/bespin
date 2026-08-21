@@ -275,10 +275,10 @@ def main():
         yf_un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
 
         # should test success of extract before attempting DF population
-        un_vol_activity.build_df(0)           # 0 = UP Unusual volume
+        yf_un_vol_activity.build_df(0)           # 0 = UP Unusual volume
 
         # find lowest price stock in unusuall UP volume list
-        up_unvols = un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
+        up_unvols = yf_un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
 
 ################################################################################
 # generate FINAL combo list 
