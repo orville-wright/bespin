@@ -149,7 +149,7 @@ class yf_unvoljs:
             #arrow_updown = json_data_row['deltaIndicator']
             price_pct_clean = json_data_row['regularMarketChangePercent']['raw']
             vol_abs_cl = json_data_row['regularMarketVolume']['raw']
-            vol_pct_cl = 25
+            vol_pct_cl = json_data_row['fiftytwowkpercentchange']['raw']
 
             # COL NAME     variable       final varable cleansed
             # ==================================================
