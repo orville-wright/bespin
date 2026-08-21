@@ -201,7 +201,7 @@ def main():
 # small caps are isolated outside the regular dataset by yahoo.com
     if args['bool_scr'] is True:
         print ( "========== Small Cap / Top Gainers / +5% with Mkt-cap > $299M ==========" )
-        scap_reader = y_cookiemonster(2)             # instantiate class of cookiemonster
+        scap_reader = y_cookiemonster(1)             # instantiate class of cookiemonster
         small_cap_dataset = smallcap_screen(1)       # instantiate class of a Small Scap Screener
         small_cap_dataset.init_dummy_session()       # setup cookie jar and headers
  
@@ -254,7 +254,7 @@ def main():
         # Stocks original from many/any/all exchanges that Yahoo.com is tracking.
         # Could also include NASDAQ stocks from Nasdaq explcit list
 
-        print ( "========== Unusual Volume movers / Broad Spectrum Finaince Yahoo.com view ===================" )
+        print ( "========== Finaince Yahoo.com Unusual Volume movers / Broad Spectrum  view ===================" )
         y_unvol_reader = y_cookiemonster(2)        # instantiate class of cookiemonster
         y_unvol_dataset = y_unvol(1)               # instantiate class
         y_unvol_dataset.init_dummy_session()       # setup cookie jar and headers

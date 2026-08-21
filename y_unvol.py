@@ -47,6 +47,7 @@ class y_unvol:
 
 #method 1
     def init_dummy_session(self):
+        cmi_debug = __name__+"::"+self.init_dummy_session.__name__+".#"+str(self.yti)
         self.dummy_resp0 = requests.get(self.dummy_url, stream=True, headers=self.yahoo_headers, cookies=self.yahoo_headers, timeout=5 )
         hot_cookies = requests.utils.dict_from_cookiejar(self.dummy_resp0.cookies)
         #self.js_session.cookies.update({'A1': self.js_resp0.cookies['A1']} )    # yahoo cookie hack
