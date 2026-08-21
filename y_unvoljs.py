@@ -140,7 +140,10 @@ class yf_unvoljs:
         x = 1    # row counter Also leveraged for unique dataframe key
         for json_data_row in dataset:
             co_sym = json_data_row['symbol']
-            co_name = json_data_row['shortName']
+            try:
+                co_name = json_data_row['shortName']
+            except KeyError:
+                co_name = "BAD_DATA_NO_NAME_AVAILABLE"                
             price_cl = json_data_row['regularMarketPrice']['raw']
             price_net_clean = json_data_row['regularMarketChange']['raw']
             #arrow_updown = json_data_row['deltaIndicator']
