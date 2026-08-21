@@ -250,7 +250,8 @@ def main():
         #recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(un_vol_activity.up_df0.loc[uminv, ['Pct_change']][0]) )
         recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(upct) )
 
-########### YAHOO FINANCE UNUSUAL VOLUME  ################
+        """
+        ########### YAHOO FINANCE UNUSUAL VOLUME  ################
         # UNUSUAL Volumes directly from Finaince Yahoo.com
         # Stocks originate from many/any/all exchanges that Yahoo.com is tracking. So list is random.
         # Could also include NASDAQ stocks from Nasdaq explcit list
@@ -268,6 +269,7 @@ def main():
         y_unvol_dataset.build_top10()          # show top 10
         y_unvol_dataset.print_top10()          # print it
         print ( " " )
+        """
 
 ########### Testing new JSON YF Unusual VOLUME extractor ################
         print ( "========== YF JSON mode Unusually high Volume ========================================" )
