@@ -278,8 +278,9 @@ def main():
         yf_un_vol_activity.build_df(0)           # 0 = UP Unusual volume
 
         # find lowest price stock in unusuall UP volume list
-        up_unvols = yf_un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
-
+        _up_yf_unvols = yf_un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
+        print ( f"{_up_yf_unvols}" )
+        
 ################################################################################
 # generate FINAL combo list 
 # combine all the findings into 1 place - single source of truth
