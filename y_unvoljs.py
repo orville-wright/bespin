@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 
 #####################################################
 # CLASS
-class yf_unvol:
+class yf_unvoljs:
     """
     Class to discover unusual volume data from FINAINCE.YAHOO.com data source
     Using the Direct API Endpoint to extract the JSON dataset.

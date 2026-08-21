@@ -31,7 +31,7 @@ from y_smallcaps import smallcap_screen
 from y_techevents import y_techevents
 from y_topgainers import y_topgainers
 from y_unvol import y_unvol
-from y_unvoljs import yf_unvol
+from y_unvoljs import yf_unvoljs
 from datastore_eng_LMDB import lmdb_io_eng
 
 from neo4j_graphdb import neo4j_auradb
@@ -271,7 +271,7 @@ def main():
 
 ########### Testing new JSON YF Unusual VOLUME extractor ################
         print ( "========== YF JSON mode Unusually high Volume ========================================" )
-        yf_un_vol_activity = yf_unvol(1, args)       # instantiate NEW nasdaq data class, args = global var
+        yf_un_vol_activity = yf_unvoljs(1, args)       # instantiate NEW nasdaq data class, args = global var
         yf_un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
 
         # should test success of extract before attempting DF population
