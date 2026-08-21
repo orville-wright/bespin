@@ -142,12 +142,12 @@ class yf_unvoljs:
         for json_data_row in dataset:
             co_sym = json_data_row['symbol']
             co_name = json_data_row['shortName']
-            price = json_data_row['regularMarketPrice']['raw']
-            price_net = json_data_row['regularMarketChange']['raw']
+            price_cl = json_data_row['regularMarketPrice']['raw']
+            price_net_clean = json_data_row['regularMarketChange']['raw']
             #arrow_updown = json_data_row['deltaIndicator']
-            price_pct = json_data_row['regularMarketChangePercent']['raw']
-            vol_abs = json_data_row['regularMarketVolume']['raw']
-            vol_pct = json_data_row['currency']
+            price_pct_clean = json_data_row['regularMarketChangePercent']['raw']
+            vol_abs_cl = json_data_row['regularMarketVolume']['raw']
+            vol_pct_cl = 25
 
             # COL NAME     variable       final varable cleansed
             # ==================================================
@@ -167,6 +167,7 @@ class yf_unvoljs:
             co_name_lj = np.array2string(np.char.ljust(co_name_lj, 60) )   # left justify TXT in DF & convert to raw string
             co_name_lj = (re.sub('[\']', '', co_name_lj) )                 # remove " ' and strip leading/trailing spaces
 
+            """
             price_cl = (re.sub('[ $,]', '', price))                        # remove $ sign
             price_net_cl = (re.sub(r'[\+]', '', price_net))                 # remove + sign, preserve -
             price_pct_cl = (re.sub(r'[\+%]', '', price_pct))                # remove +/% signs, preserve -
@@ -177,6 +178,7 @@ class yf_unvoljs:
             price_pct_clean = round(float(price_pct_cl), 2)
             if price_net_clean < 0 and price_pct_clean > 0:
                 price_pct_clean = -price_pct_clean
+            """
 
             self.list_data = [[ \
                        x, \
