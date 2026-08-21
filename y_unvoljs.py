@@ -96,7 +96,7 @@ class yf_unvol:
             self.uvol_all_data = json.loads(self.js_resp2.text)
             logging.info('%s - store JSON dataset' % cmi_debug )
             print ( f"#-DEBUG-#98: {self.uvol_all_data}")
-            self.uvol_up_data =  self.uvol_all_data['finance']['result']['0']['quotes']
+            self.uvol_up_data =  self.uvol_all_data["finance"]["result"][0]["quotes"]
             #self.uvol_down_data = self.uvol_all_data['data']['down']['table']['rows']
 
         # DEBUG
