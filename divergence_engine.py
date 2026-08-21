@@ -127,26 +127,22 @@ class NewsMetrics:
     Clean interface between the news sentiment pipeline and
     the divergence engine.
 
-    These values should come from your completed news sentiment
-    pipeline / LMDB.
+    These values should come from  completed news sentiment pipeline / LMDB.
 
     Attributes
     ----------
     net_score:
         Overall directional sentiment score.
-
         Example:
             +0.291
 
     composite_score:
         Freshness-weighted current sentiment.
-
         Example:
             +0.0059
 
     n_eff:
         Effective current news volume after temporal decay.
-
         Example:
             0.04
 
@@ -378,13 +374,9 @@ class DivergenceResult:
     # ------------------------------------------------------------------------
 
     price_return: float
-
     price_shock_zscore: float
-
     price_shock_score: float
-
     intraday_shock_score: float
-
     final_price_shock_score: float
 
     # ------------------------------------------------------------------------
@@ -392,21 +384,15 @@ class DivergenceResult:
     # ------------------------------------------------------------------------
 
     net_score: float
-
     composite_score: float
-
     n_eff: float
 
     news_coverage_score: float
-
     news_coverage_gap: float
-
     news_alignment_score: float
 
     polarity: Optional[float]
-
     directional_density: Optional[float]
-
     signal_purity: Optional[float]
 
     # ------------------------------------------------------------------------
@@ -414,7 +400,6 @@ class DivergenceResult:
     # ------------------------------------------------------------------------
 
     volume_ratio: Optional[float]
-
     volume_shock_factor: float
 
     # ------------------------------------------------------------------------
@@ -422,11 +407,8 @@ class DivergenceResult:
     # ------------------------------------------------------------------------
 
     price_direction: str
-
     news_direction: str
-
     is_price_shock: bool
-
     is_news_vacuum: bool
 
     # ------------------------------------------------------------------------
@@ -466,46 +448,16 @@ class DivergenceEngine:
 
     def __init__(
         self,
-
-        min_effective_volume: float = (
-            DEFAULT_MIN_EFFECTIVE_VOLUME
-        ),
-
-        price_shock_sigma: float = (
-            DEFAULT_PRICE_SHOCK_SIGMA
-        ),
-
-        coverage_exponent: float = (
-            DEFAULT_COVERAGE_EXPONENT
-        ),
-
-        max_volume_factor: float = (
-            DEFAULT_MAX_VOLUME_FACTOR
-        ),
-
-        news_neutral_threshold: float = (
-            DEFAULT_NEWS_NEUTRAL_THRESHOLD
-        ),
-
-        watch_threshold: float = (
-            DEFAULT_WATCH_THRESHOLD
-        ),
-
-        moderate_threshold: float = (
-            DEFAULT_MODERATE_THRESHOLD
-        ),
-
-        strong_threshold: float = (
-            DEFAULT_STRONG_THRESHOLD
-        ),
-
-        major_threshold: float = (
-            DEFAULT_MAJOR_THRESHOLD
-        ),
-
-        extreme_threshold: float = (
-            DEFAULT_EXTREME_THRESHOLD
-        ),
+        min_effective_volume: float = (DEFAULT_MIN_EFFECTIVE_VOLUME),
+        price_shock_sigma: float = (DEFAULT_PRICE_SHOCK_SIGMA),
+        coverage_exponent: float = (DEFAULT_COVERAGE_EXPONENT),
+        max_volume_factor: float = (DEFAULT_MAX_VOLUME_FACTOR),
+        news_neutral_threshold: float = (DEFAULT_NEWS_NEUTRAL_THRESHOLD),
+        watch_threshold: float = (DEFAULT_WATCH_THRESHOLD),
+        moderate_threshold: float = (DEFAULT_MODERATE_THRESHOLD),
+        strong_threshold: float = (DEFAULT_STRONG_THRESHOLD),
+        major_threshold: float = (DEFAULT_MAJOR_THRESHOLD),
+        extreme_threshold: float = (DEFAULT_EXTREME_THRESHOLD),
     ) -> None:
 
         if min_effective_volume <= 0:
@@ -758,99 +710,41 @@ class DivergenceEngine:
         )
 
         return DivergenceResult(
-
             symbol=symbol,
-
-            divergence_score=(
-                divergence_score
-            ),
-
-            severity=(
-                severity.value
-            ),
-
-            divergence_type=(
-                divergence_type.value
-            ),
+            divergence_score=(divergence_score),
+            severity=(severity.value),
+            divergence_type=(divergence_type.value),
 
             # PRICE
-            price_return=(
-                price_metrics.daily_return
-            ),
-
-            price_shock_zscore=(
-                price_metrics.price_shock_zscore
-            ),
-
-            price_shock_score=(
-                price_metrics.price_shock_score
-            ),
-
-            intraday_shock_score=(
-                price_metrics.intraday_shock_score
-            ),
-
-            final_price_shock_score=(
-                price_metrics.final_price_shock_score
-            ),
+            price_return=(price_metrics.daily_return),
+            price_shock_zscore=(price_metrics.price_shock_zscore),
+            price_shock_score=(price_metrics.price_shock_score),
+            intraday_shock_score=(price_metrics.intraday_shock_score),
+            final_price_shock_score=(price_metrics.final_price_shock_score),
 
             # NEWS
             net_score=news.net_score,
-
             composite_score=news.composite_score,
-
             n_eff=news.n_eff,
-
-            news_coverage_score=(
-                news_coverage_score
-            ),
-
-            news_coverage_gap=(
-                news_coverage_gap
-            ),
-
-            news_alignment_score=(
-                news_alignment_score
-            ),
-
+            news_coverage_score=(news_coverage_score),
+            news_coverage_gap=(news_coverage_gap),
+            news_alignment_score=(news_alignment_score),
             polarity=news.polarity,
-
-            directional_density=(
-                news.directional_density
-            ),
-
+            directional_density=(news.directional_density),
             signal_purity=news.signal_purity,
 
             # VOLUME
-            volume_ratio=(
-                volume_metrics.volume_ratio
-            ),
-
-            volume_shock_factor=(
-                volume_metrics.volume_shock_factor
-            ),
+            volume_ratio=(volume_metrics.volume_ratio),
+            volume_shock_factor=(volume_metrics.volume_shock_factor),
 
             # DIAGNOSTICS
-            price_direction=(
-                price_direction
-            ),
-
-            news_direction=(
-                news_direction
-            ),
-
-            is_price_shock=(
-                is_price_shock
-            ),
-
-            is_news_vacuum=(
-                is_news_vacuum
-            ),
+            price_direction=(price_direction),
+            news_direction=(news_direction),
+            is_price_shock=(is_price_shock),
+            is_news_vacuum=(is_news_vacuum),
 
             # INTERPRETATION
-            interpretation=(
-                interpretation
-            ),
+            interpretation=(interpretation),
         )
 
     # ========================================================================
