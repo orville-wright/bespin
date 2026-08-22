@@ -351,6 +351,8 @@ def quoute_examples():
     # OHLCV bars data with 1-minute granularity
     #
     
+    print ( f"#-DEBUG-#354 : alpaca_symbol =  {args['alpaca_symbol']}" )
+
     if args['alpaca_symbol'] is not False:
         alpaca_symbol = args['alpaca_symbol'].upper()
         print(f"========== Alpaca Live Quote for: {alpaca_symbol} ==========")
