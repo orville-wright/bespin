@@ -269,6 +269,14 @@ def quoute_examples():
         wq.do_wrangle()
         wq.clean_cast()
         wq.build_data_sets()
+
+        print ( "===================== Nasdaq quote data =======================" )
+        c = 1
+        for k, v in wq.qd_quote.items():
+            print ( f"{c} - {k} : {v}" )
+            c += 1
+
+        ## DELETE ME : DEPRECATED
         # add Tech Events Sentiment to quote dict{}
         te_nq_quote = wq.qd_quote
         """
@@ -287,11 +295,6 @@ def quoute_examples():
             te.te_into_nquote(te_nq_quote)     # NOTE: needs to be the point to new refactored class nasdqa_wrangler::nq_wrangler qd_quote{}
         """
 
-        print ( "===================== Nasdaq quote data =======================" )
-        c = 1
-        for k, v in wq.qd_quote.items():
-            print ( f"{c} - {k} : {v}" )
-            c += 1
         """
         print ( f"===================== Technial Events =========================" )
         te.build_te_df(1)
@@ -319,14 +322,12 @@ def quoute_examples():
             c += 1
         print ( "========================================================" )
         print ( " " )
-    """
-
-    """
+    
     EXAMPLE #3
     bigcharts.marketwatch.com - data via BS4 scraping
     quote data is 15 mins delayed
     40 data fields provided
-    """
+
     if args['qsymbol'] is not False:
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#3"
         bc = bc_quote(5, args)                  # setup an emphemerial dict
@@ -342,6 +343,8 @@ def quoute_examples():
             c += 1
         print ( "========================================================" )
         print ( " " )
+
+    """
 
     #################################################################################
     # ALPACA API Integration - Live quotes and bars ################################
