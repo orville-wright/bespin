@@ -382,7 +382,7 @@ def quoute_examples():
         
         print(" ")
         
-    if args['alpaca_bars'] is True:
+    if args['alpaca_bars'] is not False:
         bars_symbol = args['alpaca_bars'].upper()
         print(f"========== Alpaca OHLCV Bars for: {bars_symbol} ==========")
         
