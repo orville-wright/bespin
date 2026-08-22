@@ -8,18 +8,13 @@ from enum import Enum
 from typing import Any, Iterable, Mapping, Optional
 
 
-# ============================================================================
+# =====================
 # CONSTANTS
-# ============================================================================
 
 DEFAULT_MIN_EFFECTIVE_VOLUME = 3.0
-
 DEFAULT_PRICE_SHOCK_SIGMA = 3.0
-
 DEFAULT_COVERAGE_EXPONENT = 1.5
-
 DEFAULT_MAX_VOLUME_FACTOR = 1.5
-
 DEFAULT_NEWS_NEUTRAL_THRESHOLD = 0.10
 
 DEFAULT_WATCH_THRESHOLD = 0.25
@@ -97,8 +92,6 @@ Final DAS is bounded to [0, 1].
 
 # ============================================================================
 # ENUMS
-# ============================================================================
-
 class DivergenceSeverity(str, Enum):
     NONE = "None"
     WATCH = "Watch"
@@ -106,7 +99,6 @@ class DivergenceSeverity(str, Enum):
     STRONG = "Strong Divergence"
     MAJOR = "Major Divergence"
     EXTREME = "Extreme Divergence"
-
 
 class DivergenceType(str, Enum):
     NONE = "None"
@@ -119,42 +111,41 @@ class DivergenceType(str, Enum):
 
 # ============================================================================
 # NEWS METRICS
-# ============================================================================
-
 @dataclass(frozen=True)
 class NewsMetrics:
     """
-    Clean interface between the news sentiment pipeline and
-    the divergence engine.
+    Clean interface between the news sentiment pipeline and the divergence engine.
 
-    These values should come from  completed news sentiment pipeline / LMDB.
+    These values should come from  completed news sentiment pipeline...
+    compososite_score.py computes these by processing LMBD records and applying temporal decay.
 
     Attributes
     ----------
     net_score:
         Overall directional sentiment score.
-        Example:
-            +0.291
+        Example:    +0.291
 
     composite_score:
         Freshness-weighted current sentiment.
-        Example:
-            +0.0059
+        Example:    +0.0059
 
     n_eff:
         Effective current news volume after temporal decay.
-        Example:
-            0.04
+        Example:    0.04
 
     polarity:
         Overall polarity / confidence of the news signal.
+        Example: 0.9225
 
     directional_density:
         Degree to which the news corpus contains directional
         rather than neutral information.
+        Example: 0.6244
 
     signal_purity:
         Dominant signal share from the sentiment engine.
+        Example: 50.55%
+
     """
 
     net_score: float
@@ -178,30 +169,18 @@ class NewsMetrics:
         """
 
         return cls(
-            net_score=float(
-                data.get("net_score", 0.0)
-            ),
-
-            composite_score=float(
-                data.get("composite_score", 0.0)
-            ),
-
-            n_eff=float(
-                data.get("n_eff", 0.0)
-            ),
-
-            polarity=(
-                float(data["polarity"])
+            net_score=float(data.get("net_score", 0.0)),
+            composite_score=float(data.get("composite_score", 0.0)),
+            n_eff=float(data.get("n_eff", 0.0)),
+            polarity=(float(data["polarity"])
                 if data.get("polarity") is not None
                 else None
             ),
-
             directional_density=(
                 float(data["directional_density"])
                 if data.get("directional_density") is not None
                 else None
             ),
-
             signal_purity=(
                 float(data["signal_purity"])
                 if data.get("signal_purity") is not None
@@ -221,11 +200,8 @@ class NewsMetrics:
 class MarketMetrics:
     """
     Market information required by the divergence engine.
-
     Returns are expected as decimal values.
-
     Example:
-
         +13.63% = 0.1363
     """
 
@@ -303,9 +279,8 @@ class MarketMetrics:
         )
 
 
-# ============================================================================
+# =================================================
 # PRICE SHOCK METRICS
-# ============================================================================
 
 @dataclass(frozen=True)
 class PriceShockMetrics:
@@ -314,23 +289,16 @@ class PriceShockMetrics:
     """
 
     daily_return: float
-
     return_std: float
-
     price_shock_zscore: float
-
     price_shock_score: float
-
     intraday_shock_score: float
-
     final_price_shock_score: float
-
     direction: str
 
 
-# ============================================================================
+# ==================================================
 # VOLUME METRICS
-# ============================================================================
 
 @dataclass(frozen=True)
 class VolumeShockMetrics:
@@ -339,17 +307,12 @@ class VolumeShockMetrics:
     """
 
     current_volume: Optional[float]
-
     average_volume: Optional[float]
-
     volume_ratio: Optional[float]
-
     volume_shock_factor: float
 
-
-# ============================================================================
+# =================================================
 # DIVERGENCE RESULT
-# ============================================================================
 
 @dataclass(frozen=True)
 class DivergenceResult:
@@ -361,17 +324,13 @@ class DivergenceResult:
 
     # ------------------------------------------------------------------------
     # FINAL SIGNAL
-    # ------------------------------------------------------------------------
 
     divergence_score: float
-
     severity: str
-
     divergence_type: str
 
     # ------------------------------------------------------------------------
     # PRICE
-    # ------------------------------------------------------------------------
 
     price_return: float
     price_shock_zscore: float
@@ -381,7 +340,6 @@ class DivergenceResult:
 
     # ------------------------------------------------------------------------
     # NEWS
-    # ------------------------------------------------------------------------
 
     net_score: float
     composite_score: float
@@ -397,14 +355,12 @@ class DivergenceResult:
 
     # ------------------------------------------------------------------------
     # VOLUME
-    # ------------------------------------------------------------------------
 
     volume_ratio: Optional[float]
     volume_shock_factor: float
 
     # ------------------------------------------------------------------------
     # DIAGNOSTICS
-    # ------------------------------------------------------------------------
 
     price_direction: str
     news_direction: str
@@ -413,29 +369,24 @@ class DivergenceResult:
 
     # ------------------------------------------------------------------------
     # INTERPRETATION
-    # ------------------------------------------------------------------------
 
     interpretation: str
 
     # ------------------------------------------------------------------------
     # SERIALIZATION
-    # ------------------------------------------------------------------------
 
     def to_dict(self) -> dict[str, Any]:
-
         return asdict(self)
 
 
 # ============================================================================
 # DIVERGENCE ENGINE
-# ============================================================================
 
 class DivergenceEngine:
     """
     Standalone PRICE SHOCK -> NEWS COVERAGE GAP detection engine.
 
     The engine has no knowledge of:
-
         - LMDB
         - article storage
         - article retrieval
@@ -522,7 +473,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # PUBLIC API
-    # ========================================================================
 
     def analyze(
         self,
@@ -550,15 +500,11 @@ class DivergenceEngine:
         """
 
         symbol = symbol.upper().strip()
-
         self._validate_market(market)
-
         self._validate_news(news)
 
         # --------------------------------------------------------------------
         # PRICE SHOCK
-        # --------------------------------------------------------------------
-
         price_metrics = (
             self._calculate_price_shock_metrics(
                 market
@@ -567,8 +513,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # NEWS COVERAGE
-        # --------------------------------------------------------------------
-
         news_coverage_score = (
             self._calculate_news_coverage_score(
                 news.n_eff
@@ -582,8 +526,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # NEWS ALIGNMENT
-        # --------------------------------------------------------------------
-
         news_alignment_score = (
             self._calculate_news_alignment(
                 news
@@ -592,8 +534,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # VOLUME
-        # --------------------------------------------------------------------
-
         volume_metrics = (
             self._calculate_volume_metrics(
                 market
@@ -602,22 +542,17 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # FINAL DIVERGENCE SCORE
-        # --------------------------------------------------------------------
-
         divergence_score = (
             self._calculate_divergence_score(
                 price_shock_score=(
                     price_metrics.final_price_shock_score
                 ),
-
                 news_coverage_gap=(
                     news_coverage_gap
                 ),
-
                 news_alignment_score=(
                     news_alignment_score
                 ),
-
                 volume_shock_factor=(
                     volume_metrics.volume_shock_factor
                 ),
@@ -626,8 +561,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # FLAGS
-        # --------------------------------------------------------------------
-
         is_price_shock = (
             price_metrics.final_price_shock_score
             >= 0.50
@@ -640,8 +573,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # DIRECTIONS
-        # --------------------------------------------------------------------
-
         price_direction = (
             self._get_price_direction(
                 price_metrics.daily_return
@@ -656,8 +587,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # TYPE
-        # --------------------------------------------------------------------
-
         divergence_type = (
             self._classify_divergence_type(
                 price_return=(
@@ -676,8 +605,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # SEVERITY
-        # --------------------------------------------------------------------
-
         severity = (
             self._classify_severity(
                 divergence_score
@@ -686,8 +613,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # INTERPRETATION
-        # --------------------------------------------------------------------
-
         interpretation = (
             self._build_interpretation(
                 symbol=symbol,
@@ -749,7 +674,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # PRICE SHOCK
-    # ========================================================================
 
     def _calculate_price_shock_metrics(
         self,
@@ -759,17 +683,13 @@ class DivergenceEngine:
         Calculate daily and intraday price shock.
 
         Daily:
-
             z = return / historical_std
-
             score = min(1, abs(z) / 3)
 
         Intraday:
-
             Use the largest available intraday return.
 
         Final:
-
             max(daily_score, intraday_score)
         """
 
@@ -818,7 +738,6 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # INTRADAY
-        # --------------------------------------------------------------------
 
         intraday_returns = []
 
@@ -864,13 +783,9 @@ class DivergenceEngine:
         return PriceShockMetrics(
 
             daily_return=daily_return,
-
             return_std=return_std,
-
             price_shock_zscore=zscore,
-
             price_shock_score=daily_score,
-
             intraday_shock_score=(
                 intraday_score
             ),
@@ -888,7 +803,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # NEWS COVERAGE
-    # ========================================================================
 
     def _calculate_news_coverage_score(
         self,
@@ -910,7 +824,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # NEWS ALIGNMENT
-    # ========================================================================
 
     @staticmethod
     def _calculate_news_alignment(
@@ -944,7 +857,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # VOLUME
-    # ========================================================================
 
     def _calculate_volume_metrics(
         self,
@@ -969,11 +881,8 @@ class DivergenceEngine:
                 current_volume=(
                     market.current_volume
                 ),
-
                 average_volume=None,
-
                 volume_ratio=None,
-
                 volume_shock_factor=1.0,
             )
 
@@ -989,11 +898,8 @@ class DivergenceEngine:
                 current_volume=(
                     market.current_volume
                 ),
-
                 average_volume=None,
-
                 volume_ratio=None,
-
                 volume_shock_factor=1.0,
             )
 
@@ -1009,13 +915,10 @@ class DivergenceEngine:
                 current_volume=(
                     market.current_volume
                 ),
-
                 average_volume=(
                     average_volume
                 ),
-
                 volume_ratio=None,
-
                 volume_shock_factor=1.0,
             )
 
@@ -1035,19 +938,15 @@ class DivergenceEngine:
         )
 
         return VolumeShockMetrics(
-
             current_volume=(
                 market.current_volume
             ),
-
             average_volume=(
                 average_volume
             ),
-
             volume_ratio=(
                 volume_ratio
             ),
-
             volume_shock_factor=(
                 volume_shock_factor
             ),
@@ -1055,7 +954,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # FINAL DIVERGENCE SCORE
-    # ========================================================================
 
     def _calculate_divergence_score(
         self,
@@ -1111,8 +1009,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # DIVERGENCE TYPE
-    # ========================================================================
-
     def _classify_divergence_type(
         self,
         price_return: float,
@@ -1155,19 +1051,15 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # BULLISH PRICE
-        # --------------------------------------------------------------------
 
         if price_bullish:
-
             if news_neutral:
-
                 return (
                     DivergenceType
                     .BULLISH_PRICE_NEWS_VACUUM
                 )
 
             if news_bearish:
-
                 return (
                     DivergenceType
                     .BULLISH_PRICE_BEARISH_NEWS
@@ -1180,19 +1072,15 @@ class DivergenceEngine:
 
         # --------------------------------------------------------------------
         # BEARISH PRICE
-        # --------------------------------------------------------------------
 
         if price_bearish:
-
             if news_neutral:
-
                 return (
                     DivergenceType
                     .BEARISH_PRICE_NEWS_VACUUM
                 )
 
             if news_bullish:
-
                 return (
                     DivergenceType
                     .BEARISH_PRICE_BULLISH_NEWS
@@ -1207,38 +1095,30 @@ class DivergenceEngine:
 
     # ========================================================================
     # SEVERITY
-    # ========================================================================
-
     def _classify_severity(
         self,
         score: float,
     ) -> DivergenceSeverity:
 
         if score >= self.extreme_threshold:
-
             return DivergenceSeverity.EXTREME
 
         if score >= self.major_threshold:
-
             return DivergenceSeverity.MAJOR
 
         if score >= self.strong_threshold:
-
             return DivergenceSeverity.STRONG
 
         if score >= self.moderate_threshold:
-
             return DivergenceSeverity.MODERATE
 
         if score >= self.watch_threshold:
-
             return DivergenceSeverity.WATCH
 
         return DivergenceSeverity.NONE
 
     # ========================================================================
     # DIRECTION
-    # ========================================================================
 
     @staticmethod
     def _get_price_direction(
@@ -1246,11 +1126,9 @@ class DivergenceEngine:
     ) -> str:
 
         if return_value > 0:
-
             return "Bullish"
 
         if return_value < 0:
-
             return "Bearish"
 
         return "Neutral"
@@ -1280,7 +1158,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # INTERPRETATION
-    # ========================================================================
 
     def _build_interpretation(
         self,
@@ -1339,29 +1216,17 @@ class DivergenceEngine:
 
     # ========================================================================
     # VALIDATION
-    # ========================================================================
 
     @staticmethod
-    def _validate_market(
-        market: MarketMetrics,
-    ) -> None:
+    def _validate_market(market: MarketMetrics,) -> None:
 
         if market.current_price <= 0:
-
-            raise ValueError(
-                "current_price must be > 0"
-            )
+            raise ValueError("current_price must be > 0")
 
         if market.previous_close <= 0:
+            raise ValueError("previous_close must be > 0")
 
-            raise ValueError(
-                "previous_close must be > 0"
-            )
-
-        if len(
-            market.historical_returns
-        ) < 2:
-
+        if len(market.historical_returns) < 2:
             raise ValueError(
                 "historical_returns must contain "
                 "at least two observations."
@@ -1371,10 +1236,7 @@ class DivergenceEngine:
             market.current_volume is not None
             and market.current_volume < 0
         ):
-
-            raise ValueError(
-                "current_volume cannot be negative."
-            )
+            raise ValueError("current_volume cannot be negative.")
 
     # ========================================================================
 
@@ -1402,7 +1264,6 @@ class DivergenceEngine:
 
     # ========================================================================
     # UTILITIES
-    # ========================================================================
 
     @staticmethod
     def _clean_numeric_list(
@@ -1412,39 +1273,25 @@ class DivergenceEngine:
         cleaned: list[float] = []
 
         for value in values:
-
             if value is None:
                 continue
-
             try:
-
                 numeric_value = float(
                     value
                 )
-
-            except (
-                TypeError,
-                ValueError,
-            ):
-
+            except (TypeError,ValueError,):
                 continue
 
-            if not math.isfinite(
-                numeric_value
-            ):
-
+            if not math.isfinite(numeric_value):
                 continue
 
-            cleaned.append(
-                numeric_value
-            )
+            cleaned.append(numeric_value)
 
         return cleaned
 
 
 # ============================================================================
 # CONVENIENCE FUNCTION
-# ============================================================================
 
 def calculate_divergence(
     symbol: str,
