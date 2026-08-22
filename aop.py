@@ -295,6 +295,10 @@ def main():
         print ( f"{_up_yf_unvols}" )
         
 ################################################################################
+# DELETE ME
+# THis was the original logic to combine all the findings into a single source of truth
+# it will now be done by AI
+# 
 # generate FINAL combo list 
 # combine all the findings into 1 place - single source of truth
     """
