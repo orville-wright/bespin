@@ -71,10 +71,10 @@ parser.add_argument('-u','--unusual', help='unusual up & down volume', action='s
 parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
 parser.add_argument('--news-cycle', help='Full news cycle extract from every new data engine', action='store_true', dest='news_cycle', required=False, default=False)
+parser.add_argument('--alpaca', help='Get Alpaca live quotes for symbol', action='store', dest='alpaca_symbol', required=False, default=False)
 
 #
 """
-parser.add_argument('--alpaca', help='Get Alpaca live quotes for symbol', action='store', dest='alpaca_symbol', required=False, default=False)
 parser.add_argument('--alpaca-bars', help='Get Alpaca OHLCV bars for symbol', action='store', dest='alpaca_bars', required=False, default=False)
 parser.add_argument('--alpaca-feed', help='Alpaca data feed: iex, sip, delayed_sip, boats, overnight, or otc', action='store', dest='alpaca_feed', required=False, default=None)
 parser.add_argument('--sec', help='Get SEC filings for symbol', action='store', dest='sec_symbol', required=False, default=False)
