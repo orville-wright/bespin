@@ -925,6 +925,7 @@ quote price data is 5 mins delayed
 """
 def quoute_examples():
     if args['qsymbol'] is not False:
+        # ######################## EXAMPLE 1
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#1"
         nq = nquote(1, args)                          # Nasdqa quote instance from nasdqa_quotes.py
         nq.init_dummy_session()                       # note: this will set nasdaq magic cookie
@@ -968,7 +969,7 @@ def quoute_examples():
             te.te_into_nquote(te_nq_quote)     # NOTE: needs to be the point to new refactored class nasdqa_wrangler::nq_wrangler qd_quote{}
         """
 
-        print ( "===================== Nasdaq quote data =======================" )
+        print ( "===================== QUOTE TYPE: 1 Nasdaq quote data =======================" )
         c = 1
         for k, v in wq.qd_quote.items():
             print ( f"{c} - {k} : {v}" )
@@ -983,7 +984,7 @@ def quoute_examples():
 
 
     """
-    EXAMPLE #2
+    # ######################## EXAMPLE 2
     marketwatch.com - data via Craw4ai scraper
     quote price data is 15 mins delayed
     """
@@ -991,10 +992,10 @@ def quoute_examples():
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#2"
         bc = bc_quote(2, args)                  # create an instance
         bc_symbol = args['qsymbol'].upper()     # what symbol are we getting a quote for?
-        asyncio.run(bc.c4ai_mwquote(bc_symbol))             # new Crawl4ai scraper
         print ( " " )
-        print ( f"Get MarketWatch.com Detailed Quote data for: {bc_symbol}" )
-        print ( "================= MarketWatch Quote  data =======================" )
+        print ( "================= TYPE #2: MarketWatch Quote  data =======================" )
+        print ( f"MarketWatch.com Detailed Quote data for: {bc_symbol}" )
+        asyncio.run(bc.c4ai_mwquote(bc_symbol))             # new Crawl4ai scraper
         c = 1
         for k, v in bc.quote.items():
             print ( f"{c} - {k} : {v}" )
@@ -1003,7 +1004,7 @@ def quoute_examples():
         print ( " " )
 
     """
-    EXAMPLE #3
+    # ######################## EXAMPLE 3
     bigcharts.marketwatch.com - data via BS4 scraping
     quote data is 15 mins delayed
     40 data fields provided

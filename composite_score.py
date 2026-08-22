@@ -74,7 +74,7 @@ class CompositeScorer:
       - score_symbol_from_lmdb(symbol, db_path=DEFAULT_LMDB_PATH, ...)
     """
 
-    # Class assessors for sharing reports
+    # Class assessors for sharing final reports
     x_legacy_profile_report = None
     x_heatmap_report = None
     x_composite_score_report = None
