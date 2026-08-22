@@ -276,6 +276,75 @@ def quoute_examples():
     else:
         print ( "No symbol provided for NASDAQ quote extraction" )
 
+    #################################################################################
+    # ALPACA API Integration - Live quotes and bars
+    if args['alpaca_symbol'] is not False:
+        a_symbol = args['alpaca_symbol'].upper()
+        print(f"========== Alpaca Live Quote for: {a_symbol} ==========")  
+        try:
+            alpaca = alpaca_md(1, args)
+            market_open = alpaca.get_market_status()
+            print(f"Market Status: {'Open' if market_open else 'Closed'}")
+            
+            # Get live quote
+            quote = alpaca.get_live_quote(a_symbol)
+            if quote:
+                print(f"Live Quote Data:")
+                for k, v in quote.items():
+                    print(f"  {k}: {v}")
+            else:
+                print(f"No quote data available for {a_symbol}")
+                
+        except Exception as e:
+            print(f"Error getting Alpaca quote: {e}")
+            logging.error(f"Alpaca quote error for {a_symbol}: {e}")
+        
+        print(" ")
+    else:
+        print("No symbol provided for Alpaca live quote extraction")
+        
+    if args['alpaca_bars'] is not False:
+        #bars_symbol = args['alpaca_bars'].upper()
+        bars_symbol = a_symbol
+        bars_limit = args['alpaca_bars']
+
+        l=args['alpaca_bars']
+        print(f"========== Alpaca OHLCV Bars for: {bars_symbol} ==========")
+        
+        try:
+            alpaca = alpaca_md(2, args)
+            
+            # Get bars data (last 20 minutes of 1-minute bars)
+            bars_df = alpaca.get_bars(bars_symbol, timeframe="1Min", limit=bars_limit)
+            if bars_df is not None and not bars_df.empty:
+                print(f"Recent {len(bars_df)} minute bars:")
+                pd.set_option('display.max_columns', None)
+                pd.set_option('display.width', None)
+                print(bars_df.to_string(index=False))
+                
+                # Calculate some basic stats
+                if len(bars_df) > 1:
+                    latest_close = bars_df.iloc[-1]['Close']
+                    previous_close = bars_df.iloc[-2]['Close']
+                    price_change = latest_close - previous_close
+                    pct_change = (price_change / previous_close) * 100
+                    
+                    print(f"\nRecent Price Movement:")
+                    print(f"  Latest Close: ${latest_close:.2f}")
+                    print(f"  Previous Close: ${previous_close:.2f}")
+                    print(f"  Change: ${price_change:.2f} ({pct_change:.2f}%)")
+                    print(f"  Volume (latest bar): {bars_df.iloc[-1]['Volume']:,}")
+            else:
+                print(f"No bars data available for {bars_symbol}")
+                
+        except Exception as e:
+            print(f"Error getting Alpaca bars: {e}")
+            logging.error(f"Alpaca bars error for {bars_symbol}: {e}")
+        
+        print(" ")
+    else:
+        print("No symbol provided for Alpaca OHLCV bars extraction")
+
     ## DELETE ME : DEPRECATED
     # add Tech Events Sentiment to quote dict{}
     # te_nq_quote = wq.qd_quote
@@ -344,81 +413,7 @@ def quoute_examples():
 
     """
 
-    #################################################################################
-    # ALPACA API Integration - Live quotes and bars ################################
-    #################################################################################
 
-    #
-    # ALPACA API INTEGRATION
-    # Live quotes via Alpaca API - real-time data during market hours
-    # OHLCV bars data with 1-minute granularity
-    #
-    
-    print ( f"#-DEBUG-#354 : alpaca_symbol =  {args['alpaca_symbol']}" )
-
-    if args['alpaca_symbol'] is not False:
-        a_symbol = args['alpaca_symbol'].upper()
-        print(f"========== Alpaca Live Quote for: {a_symbol} ==========")
-        
-        try:
-            alpaca = alpaca_md(1, args)
-            market_open = alpaca.get_market_status()
-            print(f"Market Status: {'Open' if market_open else 'Closed'}")
-            
-            # Get live quote
-            quote = alpaca.get_live_quote(a_symbol)
-            if quote:
-                print(f"Live Quote Data:")
-                for k, v in quote.items():
-                    print(f"  {k}: {v}")
-            else:
-                print(f"No quote data available for {a_symbol}")
-                
-        except Exception as e:
-            print(f"Error getting Alpaca quote: {e}")
-            logging.error(f"Alpaca quote error for {a_symbol}: {e}")
-        
-        print(" ")
-    else:
-        print("No symbol provided for Alpaca live quote extraction")
-        
-    if args['alpaca_bars'] is not False:
-        bars_symbol = args['alpaca_bars'].upper()
-        print(f"========== Alpaca OHLCV Bars for: {bars_symbol} ==========")
-        
-        try:
-            alpaca = alpaca_md(2, args)
-            
-            # Get bars data (last 20 minutes of 1-minute bars)
-            bars_df = alpaca.get_bars(bars_symbol, timeframe="1Min", limit=60)
-            if bars_df is not None and not bars_df.empty:
-                print(f"Recent {len(bars_df)} minute bars:")
-                pd.set_option('display.max_columns', None)
-                pd.set_option('display.width', None)
-                print(bars_df.to_string(index=False))
-                
-                # Calculate some basic stats
-                if len(bars_df) > 1:
-                    latest_close = bars_df.iloc[-1]['Close']
-                    previous_close = bars_df.iloc[-2]['Close']
-                    price_change = latest_close - previous_close
-                    pct_change = (price_change / previous_close) * 100
-                    
-                    print(f"\nRecent Price Movement:")
-                    print(f"  Latest Close: ${latest_close:.2f}")
-                    print(f"  Previous Close: ${previous_close:.2f}")
-                    print(f"  Change: ${price_change:.2f} ({pct_change:.2f}%)")
-                    print(f"  Volume (latest bar): {bars_df.iloc[-1]['Volume']:,}")
-            else:
-                print(f"No bars data available for {bars_symbol}")
-                
-        except Exception as e:
-            print(f"Error getting Alpaca bars: {e}")
-            logging.error(f"Alpaca bars error for {bars_symbol}: {e}")
-        
-        print(" ")
-    else:
-        print("No symbol provided for Alpaca OHLCV bars extraction")
 
 if __name__ == '__main__':
     main()
