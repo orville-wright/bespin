@@ -74,6 +74,13 @@ class CompositeScorer:
       - score_symbol_from_lmdb(symbol, db_path=DEFAULT_LMDB_PATH, ...)
     """
 
+    # Class assessors for sharing reports
+    x_legacy_profile_report = None
+    x_heatmap_report = None
+    x_composite_score_report = None
+    x_polarity_report = None
+
+
     def __init__(
             self,
             half_life_hours: float = HALF_LIFE_HOURS,
@@ -1193,7 +1200,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--no-profile",
-        help="suppress the legacy Sentiment Profile Analysis block",
+        help="suppress printing the legacy Sentiment Profile Analysis block",
         action="store_true",
         dest="bool_no_profile",
         required=False,
@@ -1226,19 +1233,22 @@ def main() -> int:
     records = list(scorer.load_symbol_articles_from_lmdb(args.symbol, args.db_path))
 
     if args.bool_no_profile is False:
-        scorer.legacy_corpus_profile(args.symbol.upper(), records)
-
+        x_legacy_profile_report = scorer.legacy_corpus_profile(args.symbol.upper(), records)
+        
     if args.bool_no_heatmap is False:
-        scorer.age_heat_map(args.symbol.upper(), records, run_epoch)
+        x_heatmap_report = scorer.age_heat_map(args.symbol.upper(), records, run_epoch)
 
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
     print(json.dumps(report, indent=2, sort_keys=True))
+    x_composite_score_report = report
 
     if args.bool_polarity is True:
         polarity_report = scorer.recency_weighted_polarity(
             args.symbol.upper(), records, run_epoch)
         print(json.dumps(polarity_report, indent=2, sort_keys=True))
+        x_polarity_report = polarity_report
     return 0
+
 
 
 if __name__ == "__main__":
