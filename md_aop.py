@@ -243,6 +243,7 @@ quote price data is 5 mins delayed
 def quoute_examples():
     print ( f"#-DEBUG-#354 : alpaca_symbol =  {args['alpaca_symbol']}" )
 
+    """
     if args['qsymbol'] is not False:
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#1"
         nq = nquote(1, args)                          # Nasdqa quote instance from nasdqa_quotes.py
@@ -277,10 +278,11 @@ def quoute_examples():
             c += 1
     else:
         print ( "No symbol provided for NASDAQ quote extraction" )
+    """
 
     ## DELETE ME : DEPRECATED
     # add Tech Events Sentiment to quote dict{}
-    te_nq_quote = wq.qd_quote
+    # te_nq_quote = wq.qd_quote
     """
     te = y_techevents(2)
     te.form_api_endpoints(nq_symbol)
