@@ -64,7 +64,7 @@ work_inst = 0
 yti = 1
 
 parser = argparse.ArgumentParser(prog="Aop", description="Entropy apperture engine")
-parser.add_argument('-q','--quote', help='Get ticker price action quote', action='store', dest='qsymbol', required=False, default=False)
+parser.add_argument('--quote', help='Get ticker price action quote', action='store', dest='qsymbol', required=False, default=False)
 parser.add_argument('-s','--screen', help='Small cap screener logic', action='store_true', dest='bool_scr', required=False, default=False)
 parser.add_argument('-t','--tops', help='show top ganers/losers', action='store_true', dest='bool_tops', required=False, default=False)
 parser.add_argument('-u','--unusual', help='unusual up & down volume', action='store_true', dest='bool_uvol', required=False, default=False)
@@ -361,8 +361,8 @@ def quoute_examples():
     print ( f"#-DEBUG-#354 : alpaca_symbol =  {args['alpaca_symbol']}" )
 
     if args['alpaca_symbol'] is not False:
-        alpaca_symbol = args['alpaca_symbol'].upper()
-        print(f"========== Alpaca Live Quote for: {alpaca_symbol} ==========")
+        a_symbol = args['alpaca_symbol'].upper()
+        print(f"========== Alpaca Live Quote for: {a_symbol} ==========")
         
         try:
             alpaca = alpaca_md(1, args)
@@ -370,17 +370,17 @@ def quoute_examples():
             print(f"Market Status: {'Open' if market_open else 'Closed'}")
             
             # Get live quote
-            quote = alpaca.get_live_quote(alpaca_symbol)
+            quote = alpaca.get_live_quote(a_symbol)
             if quote:
                 print(f"Live Quote Data:")
                 for k, v in quote.items():
                     print(f"  {k}: {v}")
             else:
-                print(f"No quote data available for {alpaca_symbol}")
+                print(f"No quote data available for {a_symbol}")
                 
         except Exception as e:
             print(f"Error getting Alpaca quote: {e}")
-            logging.error(f"Alpaca quote error for {alpaca_symbol}: {e}")
+            logging.error(f"Alpaca quote error for {a_symbol}: {e}")
         
         print(" ")
     else:
