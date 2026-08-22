@@ -241,6 +241,8 @@ quote price data is 5 mins delayed
 10 data fields provided
 """
 def quoute_examples():
+    print ( f"#-DEBUG-#354 : alpaca_symbol =  {args['alpaca_symbol']}" )
+    
     if args['qsymbol'] is not False:
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#1"
         nq = nquote(1, args)                          # Nasdqa quote instance from nasdqa_quotes.py
