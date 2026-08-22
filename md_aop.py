@@ -118,7 +118,7 @@ def main():
 
 
 ########## 0 Basic Quotes #################3
-    if args['qsymbol'] is not False:
+    if args['qsymbol'] is not False or args['alpaca_symbol'] is not False or args['alpaca_bars'] is not False:
         quoute_examples()
 
 ########### 1 - TOP GAINERS ################
@@ -241,9 +241,6 @@ quote price data is 5 mins delayed
 10 data fields provided
 """
 def quoute_examples():
-    print ( f"#-DEBUG-#354 : alpaca_symbol =  {args['alpaca_symbol']}" )
-
-    """
     if args['qsymbol'] is not False:
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#1"
         nq = nquote(1, args)                          # Nasdqa quote instance from nasdqa_quotes.py
@@ -278,7 +275,6 @@ def quoute_examples():
             c += 1
     else:
         print ( "No symbol provided for NASDAQ quote extraction" )
-    """
 
     ## DELETE ME : DEPRECATED
     # add Tech Events Sentiment to quote dict{}
