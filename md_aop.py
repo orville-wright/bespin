@@ -72,11 +72,11 @@ parser.add_argument('-v','--verbose', help='verbose error logging', action='stor
 parser.add_argument('-x','--xray', help='dump detailed debug data structures', action='store_true', dest='bool_xray', required=False, default=False)
 parser.add_argument('--news-cycle', help='Full news cycle extract from every new data engine', action='store_true', dest='news_cycle', required=False, default=False)
 parser.add_argument('--alpaca', help='Get Alpaca live quotes for symbol', action='store', dest='alpaca_symbol', required=False, default=False)
-
-#
-"""
 parser.add_argument('--alpaca-bars', help='Get Alpaca OHLCV bars for symbol', action='store', dest='alpaca_bars', required=False, default=False)
 parser.add_argument('--alpaca-feed', help='Alpaca data feed: iex, sip, delayed_sip, boats, overnight, or otc', action='store', dest='alpaca_feed', required=False, default=None)
+
+# FORCE GITHUB to refresh
+"""
 parser.add_argument('--sec', help='Get SEC filings for symbol', action='store', dest='sec_symbol', required=False, default=False)
 parser.add_argument('--fred', help='Get FRED economic data snapshot', action='store_true', dest='bool_fred', required=False, default=False)
 parser.add_argument('--polygon', help='Get Polygon.io quote for symbol', action='store', dest='polygon_symbol', required=False, default=False)
