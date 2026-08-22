@@ -390,7 +390,7 @@ def quoute_examples():
             alpaca = alpaca_md(2, args)
             
             # Get bars data (last 20 minutes of 1-minute bars)
-            bars_df = alpaca.get_bars(bars_symbol, timeframe="1Min", limit=20)
+            bars_df = alpaca.get_bars(bars_symbol, timeframe="1Min", limit=60)
             if bars_df is not None and not bars_df.empty:
                 print(f"Recent {len(bars_df)} minute bars:")
                 pd.set_option('display.max_columns', None)
