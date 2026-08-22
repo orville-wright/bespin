@@ -263,6 +263,9 @@ def quoute_examples():
             wq.asset_class = ac                       # wrangeler class MUST know the class of asset its working on
 
         logging.info( f"============ Getting nasdaq quote data for asset class: {ac} ==========" )
+        # qd_quote = {}              # quote as dict
+        # qd_data0 = []              # JSON data payload
+        # quote_df0 = ""             # quote as DataFram
         wq.setup_zones(1, nq.quote_json1, nq.quote_json2, nq.quote_json3)
         wq.do_wrangle()
         wq.clean_cast()
@@ -274,7 +277,7 @@ def quoute_examples():
             print ( f"{c} - {k} : {v}" )
             c += 1
     else:
-        print ( "No symbol provided for NASDAQ quote extraction" )
+        print ( "\nNo symbol provided for NASDAQ quote extraction" )
 
     #################################################################################
     # ALPACA API Integration - Live quotes and bars
@@ -301,7 +304,7 @@ def quoute_examples():
         
         print(" ")
     else:
-        print("No symbol provided for Alpaca live quote extraction")
+        print("\nNo symbol provided for Alpaca live quote extraction")
         
     if args['alpaca_bars'] is not False:
         #bars_symbol = args['alpaca_bars'].upper()

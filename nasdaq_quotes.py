@@ -70,7 +70,6 @@ class nquote:
         logging.info( f'%s - Instantiate.#{yti}' % cmi_debug )
         # init empty DataFrame with preset colum names
         self.args = global_args                                # Only set once per INIT. all methods are set globally
-        #self.quote_df0 = pd.DataFrame(columns=[ 'Symbol', 'Co_name', 'arrow_updown', 'Cur_price', 'Prc_change', 'Pct_change', 'Open_price', 'Prev_close', 'Vol', 'Mkt_cap', 'Exch_timestamp', 'Time' ] )
         self.yti = yti
         self.js_session = HTMLSession()                        # init JAVAScript processor early
         self.js_session.cookies.update(self.nasdaq_headers)    # load DEFAULT cookie/header hack package into session
