@@ -275,33 +275,33 @@ def quoute_examples():
         for k, v in wq.qd_quote.items():
             print ( f"{c} - {k} : {v}" )
             c += 1
+    else:
+        print ( "No symbol provided for NASDAQ quote extraction" )
 
-        ## DELETE ME : DEPRECATED
-        # add Tech Events Sentiment to quote dict{}
-        te_nq_quote = wq.qd_quote
-        """
-        te = y_techevents(2)
-        te.form_api_endpoints(nq_symbol)
-        success = te.get_te_zones(2)
-        if success == 0:
-            te.build_te_data(2)
-            te.te_into_nquote(te_nq_quote)
-            #nq.quote.update({"today_only": te.te_sentiment[0][2]} )
-            #nq.quote.update({"short_term": te.te_sentiment[1][2]} )
-            #nq.quote.update({"med_term": te.te_sentiment[2][2]} )
-            #nq.quote.update({"long_term": te.te_sentiment[3][2]} )
-        else:
-            te.te_is_bad()                     # FORCE Tech Events to be N/A
-            te.te_into_nquote(te_nq_quote)     # NOTE: needs to be the point to new refactored class nasdqa_wrangler::nq_wrangler qd_quote{}
-        """
-
-        """
-        print ( f"===================== Technial Events =========================" )
-        te.build_te_df(1)
-        te.reset_te_df0()
-        print ( f"{te.te_df0}" )
-        print ( f"===============================================================" )
-        """
+    ## DELETE ME : DEPRECATED
+    # add Tech Events Sentiment to quote dict{}
+    te_nq_quote = wq.qd_quote
+    """
+    te = y_techevents(2)
+    te.form_api_endpoints(nq_symbol)
+    success = te.get_te_zones(2)
+    if success == 0:
+        te.build_te_data(2)
+        te.te_into_nquote(te_nq_quote)
+        #nq.quote.update({"today_only": te.te_sentiment[0][2]} )
+        #nq.quote.update({"short_term": te.te_sentiment[1][2]} )
+        #nq.quote.update({"med_term": te.te_sentiment[2][2]} )
+        #nq.quote.update({"long_term": te.te_sentiment[3][2]} )
+    else:
+        te.te_is_bad()                     # FORCE Tech Events to be N/A
+        te.te_into_nquote(te_nq_quote)     # NOTE: needs to be the point to new refactored class nasdqa_wrangler::nq_wrangler qd_quote{}
+    
+    print ( f"===================== Technial Events =========================" )
+    te.build_te_df(1)
+    te.reset_te_df0()
+    print ( f"{te.te_df0}" )
+    print ( f"===============================================================" )
+    """
 
 
     """
@@ -381,6 +381,8 @@ def quoute_examples():
             logging.error(f"Alpaca quote error for {alpaca_symbol}: {e}")
         
         print(" ")
+    else:
+        print("No symbol provided for Alpaca live quote extraction")
         
     if args['alpaca_bars'] is not False:
         bars_symbol = args['alpaca_bars'].upper()
@@ -417,6 +419,8 @@ def quoute_examples():
             logging.error(f"Alpaca bars error for {bars_symbol}: {e}")
         
         print(" ")
+    else:
+        print("No symbol provided for Alpaca OHLCV bars extraction")
 
 if __name__ == '__main__':
     main()
