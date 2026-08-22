@@ -242,7 +242,7 @@ quote price data is 5 mins delayed
 """
 def quoute_examples():
     print ( f"#-DEBUG-#354 : alpaca_symbol =  {args['alpaca_symbol']}" )
-    
+
     if args['qsymbol'] is not False:
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#1"
         nq = nquote(1, args)                          # Nasdqa quote instance from nasdqa_quotes.py
@@ -305,7 +305,6 @@ def quoute_examples():
     EXAMPLE #2
     marketwatch.com - data via Craw4ai scraper
     quote price data is 15 mins delayed
-    """
     if args['qsymbol'] is not False:
         cmi_debug = "aop.quote_examples()"+"::"+"TYPE.#2"
         bc = bc_quote(2, args)                  # create an instance
@@ -320,6 +319,7 @@ def quoute_examples():
             c += 1
         print ( "========================================================" )
         print ( " " )
+    """
 
     """
     EXAMPLE #3
