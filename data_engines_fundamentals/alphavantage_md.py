@@ -23,7 +23,7 @@ class alphavantage_md:
         self.instance_id = instance_id
         logging.info( f'%s  - Instantiate.#{instance_id}' % cmi_debug )
         self.args = global_args or {}
-        self.base_url = "https://www.alphavantage.co/query"
+        self.base_url = "https://www.alphavantage.co/query?"
         
         # Load environment variables from .env file
         load_status = dotenv.load_dotenv()
