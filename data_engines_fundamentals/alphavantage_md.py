@@ -213,7 +213,8 @@ class alphavantage_md:
         except Exception as e:
             logging.error(f"Error fetching daily data for {symbol}: {e}")
             return pd.DataFrame()
-    
+
+# ########################################
     def get_weekly_data(self, symbol):
         """
         Get weekly time series data
@@ -862,10 +863,10 @@ def main():
         
         # test get_weekly_data
         print(f"\nGetting Weekly data for {test_symbol}...")
-        daily_df = av.get_weekly_data(test_symbol, outputsize='compact')
-        if not daily_df.empty:
-            print(f"Daily data shape: {daily_df.shape}")
-            print(daily_df.head())
+        weekly_df = av.get_weekly_data(test_symbol)
+        if not weekly_df.empty:
+            print(f"Weekly data shape: {weekly_df.shape}")
+            print(weekly_df.head())
         
         time.sleep(4)
         
