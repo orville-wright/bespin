@@ -1133,7 +1133,7 @@ class CompositeScorer:
             print ( f"{psc_quote}" )
             return psc_data_package
 
-"""
+        """
         print(f"\n========== Alpaca Live Quote for: {self.symbol} ==========")  
         try:
             alpaca = alpaca_md(1, args=None)
@@ -1159,7 +1159,7 @@ class CompositeScorer:
             logging.error(f"Alpaca quote error for {self.symbol}: {e}")
         
         print(" ")
-"""
+        """
 
 
 # ############################# Decorator #1
