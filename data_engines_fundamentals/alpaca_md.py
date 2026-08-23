@@ -228,8 +228,8 @@ class alpaca_md:
         _sym_req_params = StockLatestQuoteRequest(symbol_or_symbols=[_tkrsym])
         _quote = _client.get_stock_latest_quote(_sym_req_params)
 
-        _sym_req_params2 = StockQuotesRequest(symbol_or_symbols=[_tkrsym])
-        _quote2 = _client.get_stock_quotes(_sym_req_params2)
+        #_sym_req_params2 = StockQuotesRequest(symbol_or_symbols=[_tkrsym])
+        #_quote2 = _client.get_stock_quotes(_sym_req_params2)
     
 
         print ( "================================================\n")
@@ -269,8 +269,6 @@ class alpaca_md:
 
 
         print ( f"#-DEBUG-#: PSC quote1: {_quote[_tkrsym].ask_price}" )
-        print ( "================================================\n")
-        print ( f"#-DEBUG-#: PSC quote2: {_quote2[_tkrsym]}" )
         print ( "================================================\n")
         
         # Build PSC Package dict
