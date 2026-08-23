@@ -206,8 +206,8 @@ class alpaca_md:
  # builds a list of quote data for 1 single symbol
     def build_psc_pkg(self, symbol):
         """
-        Build the Price Shock Calculator Data Package
-        - which requires live price data
+        Construct the Price Shock Calculator Data Package
+        - which looks like this..
         
         price_data = {
             "current_price": 235.68,
@@ -222,8 +222,6 @@ class alpaca_md:
             }
         """
         psc_package = dict()
-        
-        print ( "#-DEBUG-#: ALPACA build PSC Package ====================" )
         _tkrsym = symbol.upper()
         _client = StockHistoricalDataClient(self.api_key, self.secret_key)
         _sym_req_params = StockLatestQuoteRequest(symbol_or_symbols=[_tkrsym])
@@ -231,13 +229,14 @@ class alpaca_md:
 
         #_sym_req_params2 = StockQuotesRequest(symbol_or_symbols=[_tkrsym])
         #_quote2 = _client.get_stock_quotes(_sym_req_params2)
-    
-
-        print ( "================================================\n")
-        
-        # Define previous day range
-        # range set at 100
-        start_day = datetime.now() - timedelta(days=100) # buffer for weekends
+       
+        # Setup Timeseries Market Data extraction to collect Historical Close price into
+        # - Start set at 100 days ago back in time
+        # - Limit=None means colelct all timeseries datapoints up to today
+        # - Weekends and non-trading days are naturally excluded by ALPACA
+        # - Final number of elements is indeterministic, due to weekends/non-trading days
+        #   so 100 is a good/safe dataset range
+        start_day = datetime.now() - timedelta(days=100)
         prev_close_params = StockBarsRequest(
             symbol_or_symbols=[_tkrsym],
             timeframe=TimeFrame.Day,
@@ -245,43 +244,26 @@ class alpaca_md:
             limit=None,
         )
 
-        bars = _client.get_stock_bars(prev_close_params)
-        previous_close = bars.df.iloc[0]["close"]
-        h_close_bars100 = bars.df["close"].tolist()
-        #print( f"#-DEBUG-#: SHDC prev_close:\n{previous_close}" )
-        #print( f"#-DEBUG-#: SHDC prev_close:{all_close_bars}" )
-        print ( "================================================\n")
-        #print( f"#-DEBUG-#: bars:\n{bars}\n" )
-        print( f"#-DEBUG-#: 1 SHDL.bars.df:\n{bars.df["close"]}" )
-        print( f"#-DEBUG-#: 2 SHDL.bars.df:\n{h_close_bars100}" )
-        print ( "================================================\n")
-        
+        bars = _client.get_stock_bars(prev_close_params)    # get timeseries data now
+        h_close_bars100 = bars.df["close"].tolist()         # isolate close collumn fron DF and convert to list[]
+        #previous_close = bars.df.iloc[0]["close"]        
         #print ( f"#-DEBUG-#: SHDL.ask_price: {_quote[_tkrsym].ask_price}" )
-        #print ( "================================================\n")
         
-        # Build PSC Package dict
-        #psc_package["current_price"] = _quote[_tkrsym].ask_price
-
-        # Leverage the Snapshot API to extract most of the data we need
-        #
+        # Collect PSC Package Price data from live ALPACA Market Data Feed
+        # Leverage the Rich Snapshot API
+        # - it has lots of price data in a handful of internal dicts{}
         snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
         snapshot = _client.get_stock_snapshot(snapshot_params)
         last_trade_close = snapshot[_tkrsym].latest_trade.price
         previous_close1 = snapshot[_tkrsym].previous_daily_bar.close
-        previous_close2 = snapshot[_tkrsym]
-        previous_close3 = snapshot
         today_open = snapshot[_tkrsym].daily_bar.open
         today_volume = snapshot[_tkrsym].daily_bar.volume
         today_vwap = snapshot[_tkrsym].daily_bar.vwap
         previous_open = snapshot[_tkrsym].previous_daily_bar.open
-        
-        #print ( f"#-DEBUG-#: snapshot.symb: {previous_close2}" )
-        #print ( "================================================\n")
-        #print ( f"#-DEBUG-#: snapshot.raw: {previous_close3}" )
-        #print ( "================================================\n")
 
-        # build out the PSC Data package
-        #
+        # Construct Price Shoch Calculator Data package
+        # - is a multi element dict{}
+        # - with historical_closes as list
         psc_package["symbol"] = _tkrsym
         psc_package["current_price"] = last_trade_close
         psc_package["previous_close"] = previous_close1
@@ -293,7 +275,8 @@ class alpaca_md:
 
         print ( "#-DEBUG-#: FULL PSC Package:\n" )
         pprint.pprint(psc_package, indent=4)
-                
+        
+        return psc_package     
         
  # #################### 9
  # builds a list of quote data for 1 single symbol
