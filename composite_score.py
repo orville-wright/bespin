@@ -1291,38 +1291,14 @@ def main() -> int:
     
     psc_symbol = args.symbol.upper()
     price_shock_input = alpaca.build_psc_pkg(psc_symbol)
-    #print ( f"{psc_quote}" )    
 
     psc_price_metrics = psc.calculate(price_shock_input)
+
+    print ( "======================================================")
+    print ( "========= Price Shock Calculator Metrics =============")
+    print ( f"{psc_price_metrics}")
+    print ( "======================================================")
     
-    # TESTING DATA ONLY
-    # repalce with live price acquisiton code...
-    # do alpaca price here !!
-    """
-
-    price_shock_input = {
-        "symbol": psc_symbol,
-        "current_price": 235.68,
-        "previous_close": 233.69,
-        "historical_closes": [
-            234.91,
-            233.82,
-            235.17,
-            232.64,
-            231.98,
-            234.11,
-            233.47,
-            232.91,
-            235.02,
-            234.38,
-            234.50,
-            234.44,
-        ],
-    }
-
-    print ( f"#-DEBUG-#1305 payload:\n{price_shock_input}\n" )
-    """
-        
     scorer.psc_get_md(args.symbol.upper())
 
     scorer._reset_run_counters()
