@@ -209,7 +209,7 @@ class alpaca_md:
         try:
             data = self._get_json(url, params, f"fetching quote for {symbol.upper()}")
             
-            print (f"#-DEBUG-#212: json_pkg:\n{data}\n")
+            print (f"#-DEBUG-#212: json_pkg:\n{self._get_json}\n")
         
             if 'quotes' in data and symbol.upper() in data['quotes']:
                 quote = data['quotes'][symbol.upper()]
