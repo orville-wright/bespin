@@ -240,7 +240,7 @@ class alpaca_md:
             symbol_or_symbols=[_tkrsym],
             timeframe=TimeFrame.Day,
             start=yesterday,
-            limit=50
+            limit=100
         )
 
         bars = _client.get_stock_bars(prev_close_params)
