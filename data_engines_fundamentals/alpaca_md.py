@@ -245,7 +245,22 @@ class alpaca_md:
         )
 
         bars = _client.get_stock_bars(prev_close_params)    # get timeseries data now
-        h_close_bars100 = bars.df["close"].tolist()         # isolate close collumn fron DF and convert to list[]
+        historical_df = bars.df.copy()              # tmep df to cleanse/remove todays price polution from DF
+        today = datetime.now().date()
+        timestamps = historical_df.index.get_level_values("timestamp")
+
+        # remove price for TDAY from Dataframe
+        historical_df = historical_df[
+            timestamps.date < today
+        ]
+
+        h_close_bars100 = (
+            historical_df["close"]
+            .astype(float)
+            .tolist()
+        )
+
+        # h_close_bars100 = bars.df["close"].tolist()         # isolate close collumn fron DF and convert to list[]
         #previous_close = bars.df.iloc[0]["close"]        
         #print ( f"#-DEBUG-#: SHDL.ask_price: {_quote[_tkrsym].ask_price}" )
         
