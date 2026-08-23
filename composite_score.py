@@ -1298,9 +1298,7 @@ def main() -> int:
         ],
     }
 
-    psc_price_metrics = psc.calculate(
-        price_shock_input
-    )
+    psc_price_metrics = psc.calculate(price_shock_input)
 
     print ( f"#-DEBUG-#1305 PSC:\n{psc_price_metrics}" )
 
