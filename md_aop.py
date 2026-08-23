@@ -1,5 +1,9 @@
 #! python3
 
+import os
+
+import requests
+import dotenv
 import websockets.client  # Force-loads the client module into the websockets namespace
 import asyncio
 import random
@@ -303,6 +307,40 @@ def quoute_examples():
             logging.error(f"Alpaca quote error for {a_symbol}: {e}")
         
         print(" ")
+
+        print ( f"====== HACKING ON ALPHAVANTAGE API INTEGRATION ======" )
+        # Load environment variables from .env file
+        load_status = dotenv.load_dotenv()
+        logging.info( f'%s  - Load keys from .env file' % cmi_debug )
+        if load_status is False:
+            logging.warning(f'%s - Env loaded failed !' % cmi_debug)
+        
+        # Get API key from environment
+        av_api_key = os.getenv('ALPHAVANTAGE_API_KEY')
+        if not av_api_key:
+            logging.warning( f"%s - ALPHAVANTAGE_API_KEY not found!" % cmi_debug)
+
+        
+        # Alpha Vantage base endpoint URL
+        url = 'https://alphavantage.co'
+
+        # Configure your API query parameters according to documentation
+        params = {
+            'function': 'RSI',          # Call the RSI endpoint
+            'symbol': 'MSFT',           # Stock ticker symbol
+            'interval': 'daily',        # Data point frequency (daily, weekly, monthly, etc.)
+            'time_period': '14',        # Standard RSI tracking period length
+            'series_type': 'close',     # Base calculation price point
+            'apikey': 'av_api_key'    # Your personal API authentication key
+        }
+
+        # Execute call and parse the response object
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        # Look at structural metadata or actual numeric series output
+        print(data.keys())
+
     else:
         print("\nNo symbol provided for Alpaca live quote extraction")
         
