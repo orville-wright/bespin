@@ -287,6 +287,7 @@ def quoute_examples():
     # ALPACA API Integration - Live quotes and bars
     if args['alpaca_symbol'] is not False:
         a_symbol = args['alpaca_symbol'].upper()
+        
         print(f"========== Alpaca Live Quote for: {a_symbol} ==========")  
         try:
             alpaca = alpaca_md(1, args)
@@ -295,8 +296,9 @@ def quoute_examples():
             
             # Get live quote
             quote = alpaca.get_live_quote(a_symbol)
+            
             if quote:
-                print(f"Live Quote Data:")
+                print( "Live Quote Data:")
                 for k, v in quote.items():
                     print(f"  {k}: {v}")
             else:
