@@ -235,7 +235,6 @@ class alpaca_md:
         print ( "================================================\n")
         
         # Define previous day range
-        today_now = datetime.now()
         start_day = datetime.now() - timedelta(days=100) # buffer for weekends
         prev_close_params = StockBarsRequest(
             symbol_or_symbols=[_tkrsym],
@@ -246,7 +245,9 @@ class alpaca_md:
 
         bars = _client.get_stock_bars(prev_close_params)
         previous_close = bars.df.iloc[0]["close"]
-        print( f"#-DEBUG-#: SHDC prev_close:\n{previous_close}" )
+        all_close_bars = bars.df.iloc["close"]
+        #print( f"#-DEBUG-#: SHDC prev_close:\n{previous_close}" )
+        print( f"#-DEBUG-#: SHDC prev_close:{all_close_bars}" )
         print ( "================================================\n")
         #print( f"#-DEBUG-#: bars:\n{bars}\n" )
         print( f"#-DEBUG-#: SHDL.bars:\n{bars.df}" )
