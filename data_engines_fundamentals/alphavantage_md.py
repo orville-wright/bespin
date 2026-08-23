@@ -41,7 +41,8 @@ class alphavantage_md:
         self.timeseries_df = pd.DataFrame()
         self.indicators_df = pd.DataFrame()
         self.fundamentals_df = pd.DataFrame()
-    
+
+# ########################### method 1
     def get_global_quote(self, symbol):
         """
         Get real-time quote for a symbol
@@ -151,7 +152,8 @@ class alphavantage_md:
         except Exception as e:
             logging.error(f"Error fetching intraday data for {symbol}: {e}")
             return pd.DataFrame()
-    
+
+# ##################################### method
     def get_daily_data(self, symbol, outputsize='compact'):
         """
         Get daily time series data
@@ -176,6 +178,9 @@ class alphavantage_md:
             
             data = response.json()
             
+            print ( f"#-DEBUG-#181 : {self.base_url}\n, {params}\n ")
+            print ( f"#-DEBUG-#182 : {data}\n ")
+                        
             if 'Time Series (Daily)' in data:
                 time_series = data['Time Series (Daily)']
                 
@@ -827,6 +832,13 @@ def main():
         
         # Test symbol search
         test_symbol = "AAPL"
+ 
+        # Test global quote
+        print(f"\nGetting global quote for {test_symbol}...")
+        quote = av.get_global_quote(test_symbol)
+        if quote:
+            print(f"Quote data: {quote}")
+            ltd = quote['latest_trading_day']
 
         """
         test_search = "Apple"
@@ -838,11 +850,6 @@ def main():
         
         """
 
-        # Test global quote
-        print(f"\nGetting global quote for {test_symbol}...")
-        quote = av.get_global_quote(test_symbol)
-        if quote:
-            print(f"Quote data: {quote}")
 
         # Test daily data
         print(f"\nGetting daily data for {test_symbol}...")
