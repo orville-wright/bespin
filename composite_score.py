@@ -1129,8 +1129,9 @@ class CompositeScorer:
         else:
             self.symbol = symbol.upper()
             alpaca = alpaca_md(1, args=None)
-            psc_data_package = alpaca.build_psc_pkg(a_symbol)
-            print ( f"{psc_quote}" )
+            psc_data_package = alpaca.build_psc_pkg(self.symbol)
+            
+            print ( f"{psc_data_package}" )
             return psc_data_package
 
         """
