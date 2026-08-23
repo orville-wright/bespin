@@ -221,12 +221,23 @@ class alpaca_md:
                 ],
             }
         """
+        psc_package = dict()
+        
         print ( "#-DEBUG-#: ALPACA build PSC Package ====================" )
         _tkrsym = symbol.upper()
         _client = StockHistoricalDataClient(self.api_key, self.secret_key)
         _sym_req_params = StockLatestQuoteRequest(symbol_or_symbols=[_tkrsym])
         _quote = _client.get_stock_latest_quote(_sym_req_params)
-        print ( f"#-DEBUG-#: PSC quote: {_quote[_tkrsym].ask_price}" )
+
+        _sym_req_params2 = StockQuotesRequest(symbol_or_symbols=[_tkrsym])
+        _quote2 = _client.get_stock_quotes(_sym_req_params2)
+        
+        #_quotebars_params = 
+        psc_package["current_price"] = _quote[_tkrsym].ask_price
+        
+        print ( f"#-DEBUG-#: PSC quote1: {_quote[_tkrsym].ask_price}" )
+        print ( f"#-DEBUG-#: PSC quote2: {_quote[_tkrsym]}" )
+        
 
  # #################### 9
  # builds a list of quote data for 1 single symbol
