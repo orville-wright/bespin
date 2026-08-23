@@ -851,9 +851,18 @@ def main():
         """
 
 
+        """
         # Test daily data
         print(f"\nGetting daily data for {test_symbol}...")
         daily_df = av.get_daily_data(test_symbol, outputsize='compact')
+        if not daily_df.empty:
+            print(f"Daily data shape: {daily_df.shape}")
+            print(daily_df.head())
+        """
+        
+        # test get_weekly_data
+        print(f"\nGetting Weekly data for {test_symbol}...")
+        daily_df = av.get_weekly_data(test_symbol, outputsize='compact')
         if not daily_df.empty:
             print(f"Daily data shape: {daily_df.shape}")
             print(daily_df.head())
