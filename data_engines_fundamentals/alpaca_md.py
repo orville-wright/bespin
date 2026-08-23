@@ -245,12 +245,19 @@ class alpaca_md:
 
         bars = _client.get_stock_bars(prev_close_params)
         previous_close = bars.df.iloc[0]["close"]
-        print( f"#-DEBUG-#: prev_close:\n{previous_close}" )
+        print( f"#-DEBUG-#: SHDC prev_close:\n{previous_close}" )
         print ( "================================================\n")
         #print( f"#-DEBUG-#: bars:\n{bars}\n" )
-        print( f"#-DEBUG-#: bars:\n{bars.df}" )
+        print( f"#-DEBUG-#: SHDL.bars:\n{bars.df}" )
         print ( "================================================\n")
+        print ( f"#-DEBUG-#: SHDL.ask_price: {_quote[_tkrsym].ask_price}" )
+        print ( "================================================\n")
+        
+        # Build PSC Package dict
+        #psc_package["current_price"] = _quote[_tkrsym].ask_price
 
+        # Leverage the Snapshot API to extract most of the data we need
+        #
         snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
         snapshot = _client.get_stock_snapshot(snapshot_params)
         last_trade_close = snapshot[_tkrsym].latest_trade.price
@@ -262,25 +269,22 @@ class alpaca_md:
         today_vwap = snapshot[_tkrsym].daily_bar.vwap
         previous_open = snapshot[_tkrsym].previous_daily_bar.open
         
-        print ( f"#-DEBUG-#: snapshot pc1: {previous_close2}" )
+        print ( f"#-DEBUG-#: snapshot.symb: {previous_close2}" )
         print ( "================================================\n")
-        print ( f"#-DEBUG-#: snapshot pc2: {previous_close3}" )
+        print ( f"#-DEBUG-#: snapshot.raw: {previous_close3}" )
         print ( "================================================\n")
 
-
-        print ( f"#-DEBUG-#: PSC quote1: {_quote[_tkrsym].ask_price}" )
-        print ( "================================================\n")
-        
-        # Build PSC Package dict
-        #psc_package["current_price"] = _quote[_tkrsym].ask_price
+        # build out the PSC Data package
+        #
         psc_package["symbol"] = _tkrsym
         psc_package["current_price"] = last_trade_close
         psc_package["previous_close"] = previous_close1
         psc_package["today_open"] = today_open
         psc_package["previous_open"] = previous_open
         psc_package["today_vwap"] = today_vwap
+        psc_package["today_volume"] = today_volume
 
-        print ( f"#-DEBUG-#: FULL PSC Package: {psc_package}\n" )
+        print ( f"#-DEBUG-#: FULL PSC Package:\n{psc_package}\n" )
         
                 
         
