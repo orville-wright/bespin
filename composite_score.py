@@ -1133,8 +1133,12 @@ class CompositeScorer:
         try:
             alpaca = alpaca_md(1, args=None)
             market_open = alpaca.get_market_status()
-            self.market_status = market_open
-            print(f"Market Status: {market_open} / {'Open' if market_open else 'Closed'}")
+            if market_open:
+                self.market_status = "OPEN"
+            else:
+                self.market_status = "CLOSED"
+                #/ {'Open' if market_open else 'Closed'}
+            print(f"Market Status: {self.market_status}")
             
             # Get live quote
             quote = alpaca.get_live_quote(self.symbol)

@@ -836,12 +836,13 @@ def main():
             print(f"Search results shape: {search_results.shape}")
             print(search_results.head())
         
+        """
+
         # Test global quote
         print(f"\nGetting global quote for {test_symbol}...")
         quote = av.get_global_quote(test_symbol)
         if quote:
             print(f"Quote data: {quote}")
-        """
 
         # Test daily data
         print(f"\nGetting daily data for {test_symbol}...")
@@ -874,6 +875,7 @@ def main():
         if market_status:
             print(f"Market status retrieved successfully")
         
+        """
         time.sleep(4)
         # Test market news
         print(f"\nGetting market news for {test_symbol}...")
@@ -887,6 +889,7 @@ def main():
                 print(f"Published: {article.get('time_published')}")
                 print(f"Sentiment: {article.get('overall_sentiment_label')} ({article.get('overall_sentiment_score')})")
                 print(f"URL: {article.get('url')}")
+        """
         
     except Exception as e:
         print(f"Error in main: {e}")
