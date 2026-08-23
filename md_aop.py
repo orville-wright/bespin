@@ -318,10 +318,24 @@ def quoute_examples():
         av_api_key = os.getenv('ALPHAVANTAGE_API_KEY')
         if not av_api_key:
             logging.warning( f"%s - ALPHAVANTAGE_API_KEY not found!" % cmi_debug)
+        else:
+            print (f"API_KEY loaded successfully: {av_api_key}" )
 
         
         # Alpha Vantage base endpoint URL
-        url = 'https://alphavantage.co'
+        url = 'https://www.alphavantage.co/query?'
+        # https://www.alphavantage.co/query?
+        # function=RSI
+        # &symbol=IBM
+        # &interval=weekly
+        # &time_period=10
+        # &series_type=open
+        # &apikey=
+        #
+        # &month=
+        # Use month parameter (in YYYY-MM format) to return data
+        # for a specific month in history. For example, month=2009-01
+
 
         # Configure your API query parameters according to documentation
         params = {
@@ -333,6 +347,7 @@ def quoute_examples():
             'apikey': av_api_key        # Your personal API authentication key
         }
 
+        print (f"URL: {url}{params}" )
         # Execute call and parse the response object
         response = requests.get(url, params=params)
         data = response.json()
