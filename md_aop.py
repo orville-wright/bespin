@@ -353,7 +353,11 @@ def quoute_examples():
         data = response.json()
 
         # Look at structural metadata or actual numeric series output
-        print(data.keys())
+        print( f"Keys:\n{data.keys()}" )
+        print (f"Raw Data:\n{data}" )
+        print (f"Metadata:\n{data['Meta Data']}" )
+        print (f"Tech Analysis: {data['Technical Analysis: RSI']}" )
+
 
     else:
         print("\nNo symbol provided for Alpaca live quote extraction")
