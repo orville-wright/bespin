@@ -341,7 +341,8 @@ def quoute_examples():
         params = {
             'function': 'RSI',          # Call the RSI endpoint
             'symbol': 'MSFT',           # Stock ticker symbol
-            'interval': 'daily',        # Data point frequency (daily, weekly, monthly, etc.)
+            'month': '2026-07',          # Optional: specify a month for historical data
+            'interval': 'weekly',        # Data point frequency (daily, weekly, monthly, etc.)
             'time_period': '3',        # Standard RSI tracking period length
             'series_type': 'close',     # Base calculation price point
             'apikey': av_api_key        # Your personal API authentication key
