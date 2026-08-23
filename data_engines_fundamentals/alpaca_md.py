@@ -235,12 +235,12 @@ class alpaca_md:
         print ( "================================================\n")
         
         # Define previous day range
-        yesterday = datetime.now() - timedelta(days=30) # buffer for weekends
+        yesterday = datetime.now() - timedelta(days=100) # buffer for weekends
         prev_close_params = StockBarsRequest(
             symbol_or_symbols=[_tkrsym],
             timeframe=TimeFrame.Day,
             start=yesterday,
-            limit=5
+            limit=50
         )
 
         bars = _client.get_stock_bars(prev_close_params)
