@@ -209,14 +209,20 @@ class alpaca_md:
         try:
             data = self._get_json(url, params, f"fetching quote for {symbol.upper()}")
             
-            print (f"#-DEBUG-#212: json_pkg:\n{self._get_json}\n")
+            print (f"#-DEBUG-#212: json_pkg:\n{data}\n")
         
             if 'quotes' in data and symbol.upper() in data['quotes']:
                 quote = data['quotes'][symbol.upper()]
                 self.quote_data[symbol.upper()] = self._format_quote_data(quote, symbol.upper())
+            
+                print ( f"#-DEBUG-#: ALPACA new-quote ====================" )
+                _tkrsym = symbol.upper()
+                _client = StockHistoricalDataClient(self.api_key, self.secret_key)
+                _sym_req_params = StockLatestQuoteRequest(symbol_or_symbols=[_tkrsym])
+                _quote = _client.get_stock_latest_quote(_sym_req_params)
+                print ( f"#-DEBUG-#: new-quote: {_quote[_tkrsym].ask_price}" )
+                
                 return self.quote_data[symbol.upper()]
-                #data2 = self._get_json(url, params, f"fetching quote for {symbol.upper()}")
-                #client = StockHistoricalDataClient('api-key', 'secret-key')
             else:
                 logging.warning(f"No quote data found for symbol: {symbol}")
                 return None
