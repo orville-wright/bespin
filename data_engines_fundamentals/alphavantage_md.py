@@ -236,6 +236,9 @@ class alphavantage_md:
             response.raise_for_status()
             
             data = response.json()
+
+            print ( f"#-DEBUG-#240 : {self.base_url}\n, {params}\n ")
+            print ( f"#-DEBUG-#241 : {data}\n ")
             
             if 'Weekly Time Series' in data:
                 time_series = data['Weekly Time Series']
