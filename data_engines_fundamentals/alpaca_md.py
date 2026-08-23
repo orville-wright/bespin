@@ -486,9 +486,9 @@ def show_data(data):
 # Tghe module is a class only. Not a executable code.
 # TODO: Delete main() when module is tagged as STABLE
 
-
+"""
 def main():
-    """Example usage of alpaca_md class"""
+    # Example usage of alpaca_md class
     try:
         # Initialize Alpaca market data instance
         alpaca = alpaca_md(1)
@@ -529,3 +529,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+"""

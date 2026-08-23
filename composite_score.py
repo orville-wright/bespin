@@ -1128,7 +1128,12 @@ class CompositeScorer:
             exit(2)
         else:
             self.symbol = symbol.upper()
-            
+            alpaca = alpaca_md(1, args=None)
+            psc_data_package = alpaca.build_psc_pkg(a_symbol)
+            print ( f"{psc_quote}" )
+            return psc_data_package
+
+"""
         print(f"\n========== Alpaca Live Quote for: {self.symbol} ==========")  
         try:
             alpaca = alpaca_md(1, args=None)
@@ -1154,6 +1159,7 @@ class CompositeScorer:
             logging.error(f"Alpaca quote error for {self.symbol}: {e}")
         
         print(" ")
+"""
 
 
 # ############################# Decorator #1
@@ -1278,17 +1284,23 @@ def main() -> int:
 
     ######################################
 
-    scorer = CompositeScorer()
-
-    psc = PriceShockCalculator()
+    scorer = CompositeScorer()          # instance of 
+    psc = PriceShockCalculator()        # instance of
+    alpaca = alpaca_md(1, args=None)    # instance of
+    
     psc_symbol = args.symbol.upper()
+    price_shock_input = alpaca.build_psc_pkg(psc_symbol)
+    #print ( f"{psc_quote}" )    
+
+    psc_price_metrics = psc.calculate(price_shock_input)
     
     # TESTING DATA ONLY
     # repalce with live price acquisiton code...
     # do alpaca price here !!
+    """
 
     price_shock_input = {
-        "ticker_symbol": psc_symbol,
+        "symbol": psc_symbol,
         "current_price": 235.68,
         "previous_close": 233.69,
         "historical_closes": [
@@ -1307,16 +1319,9 @@ def main() -> int:
         ],
     }
 
-
     print ( f"#-DEBUG-#1305 payload:\n{price_shock_input}\n" )
-
-    psc_price_metrics = psc.calculate(price_shock_input)
-
-    print ( f"#-DEBUG-#1305 PSC:\n{psc_price_metrics}\n" )
-
-    # TEST alpaca price getter
-    print ( f"#-DEBUG-#1308 ALPACA():\n{psc_price_metrics}\n" )
-    
+    """
+        
     scorer.psc_get_md(args.symbol.upper())
 
     scorer._reset_run_counters()
