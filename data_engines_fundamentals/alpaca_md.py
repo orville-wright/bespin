@@ -9,8 +9,7 @@ from dotenv import load_dotenv
 import logging
 
 from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockLatestQuoteRequest, StockQuotesRequest
-from alpaca.data.requests import StockBarsRequest
+from alpaca.data.requests import StockLatestQuoteRequest, StockQuotesRequest, StockBarsRequest, StockSnapshotRequest
 from alpaca.data.timeframe import TimeFrame
 
 
@@ -231,9 +230,10 @@ class alpaca_md:
 
         _sym_req_params2 = StockQuotesRequest(symbol_or_symbols=[_tkrsym])
         _quote2 = _client.get_stock_quotes(_sym_req_params2)
-        
+    
         #_quotebars_params = 
         psc_package["current_price"] = _quote[_tkrsym].ask_price
+        print ( "================================================\n")
         
         # Define previous day range
         yesterday = datetime.now() - timedelta(days=3) # buffer for weekends
@@ -246,12 +246,25 @@ class alpaca_md:
 
         bars = _client.get_stock_bars(prev_close_params)
         previous_close = bars.df.iloc[0]["close"]
-        print( f"#-DEBUG-#: prev_close:\n{previous_close}\n" )
+        print( f"#-DEBUG-#: prev_close:\n{previous_close}" )
+        print ( "================================================\n")
         #print( f"#-DEBUG-#: bars:\n{bars}\n" )
-        print( f"#-DEBUG-#: bars:\n{bars.df}\n" )
+        print( f"#-DEBUG-#: bars:\n{bars.df}" )
+        print ( "================================================\n")
+
+        snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
+        snapshot = _client.get_stock_snapshot(snapshot_params)
+        previous_close2 = snapshot[_tkrsym].prev_daily_bar.close
+        previous_close3 = snapshot[_tkrsym].prev_daily_bar
+        print ( f"#-DEBUG-#: snapshot pc1: {previous_close2}" )
+        print ( "================================================\n")
+        print ( f"#-DEBUG-#: snapshot pc2: {previous_close3}" )
+        print ( "================================================\n")
+
 
         print ( f"#-DEBUG-#: PSC quote1: {_quote[_tkrsym].ask_price}" )
-        print ( f"#-DEBUG-#: PSC quote2: {_quote[_tkrsym]}" )
+        print ( "================================================\n")
+        print ( f"#-DEBUG-#: PSC quote2: {_quote2[_tkrsym]}" )
         
 
  # #################### 9
