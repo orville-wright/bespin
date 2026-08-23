@@ -241,13 +241,13 @@ class alpaca_md:
             symbol_or_symbols=[_tkrsym],
             timeframe=TimeFrame.Day,
             start=yesterday,
-            limit=1
+            limit=10
         )
 
         bars = _client.get_stock_bars(prev_close_params)
         previous_close = bars.df.iloc[0]["close"]
         print( f"#-DEBUG-#: prev_close:\n{previous_close}\n" )
-        print( f"#-DEBUG-#: bars:\n{bars}\n" )
+        #print( f"#-DEBUG-#: bars:\n{bars}\n" )
         print( f"#-DEBUG-#: bars:\n{bars.df}\n" )
 
         print ( f"#-DEBUG-#: PSC quote1: {_quote[_tkrsym].ask_price}" )
