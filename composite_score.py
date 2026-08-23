@@ -31,6 +31,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from data_engines_fundamentals.alpaca_md import alpaca_md
+from price_shock import PriceShockCalculator
+
 # logging setup
 logging.basicConfig(level=logging.INFO)
 
@@ -1106,6 +1109,47 @@ class CompositeScorer:
                 article["negative_strength"] = 0.0
             yield article
 
+    # #############################
+    # ALPACA API Integration
+    # setup the price data structre for calculate()
+    # price schock calculator support method to get alpaca market price data
+
+    def psc_get_md(self, symbol):
+        if symbol is None:
+            raise ValueError(
+                "symbol is required"
+            )
+            exit(1)
+        elif not isinstance(symbol, str):
+            raise ValueError(
+                "symbol must be a string"
+            )
+            exit(2)
+        else:
+            self.symbol = symbol.upper()
+            
+        print(f"========== Alpaca Live Quote for: {a_symbol} ==========")  
+        try:
+            alpaca = alpaca_md(1, args)
+            market_open = alpaca.get_market_status()
+            print(f"Market Status: {'Open' if market_open else 'Closed'}")
+            
+            # Get live quote
+            quote = alpaca.get_live_quote(a_symbol)
+            if quote:
+                print(f"Live Quote Data:")
+                for k, v in quote.items():
+                    print(f"  {k}: {v}")
+            else:
+                print(f"No quote data available for {a_symbol}")
+                
+        except Exception as e:
+            print(f"Error getting Alpaca quote: {e}")
+            logging.error(f"Alpaca quote error for {a_symbol}: {e}")
+        
+        print(" ")
+
+
 # ############################# Decorator #1
     @staticmethod
     def _looks_like_dataframe(source: Any) -> bool:
@@ -1226,7 +1270,44 @@ def main() -> int:
 
     run_epoch = args.run_epoch if args.run_epoch is not None else time.time()
 
+    ######################################
+
     scorer = CompositeScorer()
+
+    psc = PriceShockCalculator()
+    psc_symbol = args.symbol.upper()
+    # TESTING DATA ONLY
+    # repalce with live price acquisiton code...
+    # do alpaca price here !!
+
+    price_shock_input = {
+        "ticker_symbol": psc_symbol,
+        "current_price": 235.68,
+        "previous_close": 233.69,
+        "historical_closes": [
+            234.91,
+            233.82,
+            235.17,
+            232.64,
+            231.98,
+            234.11,
+            233.47,
+            232.91,
+            235.02,
+            234.38,
+        ],
+    }
+
+    psc_price_metrics = psc.calculate(
+        price_shock_input
+    )
+
+    print ( f"#-DEBUG-#1305 PSC:\n{psc_price_metrics}" )
+
+    # TEST alpaca price getter
+    print ( f"#-DEBUG-#1308 ALPACA():\n{psc_price_metrics}" )
+    scorer.psc_get_md(args.symbol.upper())
+
     scorer._reset_run_counters()
     # Materialize ONCE: the LMDB stream is single-use, but the legacy
     # profile and the weighted metrics both need the full corpus.
