@@ -10,13 +10,10 @@ import logging
 # archietcted by Dave Brace
 
 """
-price_shock.py
-
 Calculates how abnormal today's stock price movement is relative
 to the stock's normal historical daily price movement.
 
 INPUT:
-
     {
         "current_price": float,
         "previous_close": float,
@@ -24,26 +21,22 @@ INPUT:
     }
 
 OUTPUT:
-
     {
         "price_return": float,
         "price_shock_zscore": float,
         "price_shock_score": float,
     }
 
-The calculator does not use news, sentiment, volume, VWAP, or
-intraday bars. Its only responsibility is identifying whether
+The calculator is only responsibile for identifying whether
 today's price movement is unusually large for this stock.
 """
 
 # #####################################################
-
 class PriceShockCalculator:
     """
     Calculate an abnormal-price-movement score.
 
     The calculation uses:
-
         1. Today's return versus previous close.
         2. Historical daily returns.
         3. Median absolute movement as the normal baseline.
@@ -77,16 +70,14 @@ class PriceShockCalculator:
         self.zscore_cap = zscore_cap
     
     # ##############################
-
     def calculate(
         self,
         price_data: Mapping[str, Any],
     ) -> dict[str, float]:
+
         """
         Calculate today's price shock.
-
-        REQUIRED INPUT STRUCTURE:
-
+         INPUT STRUCTURE:
             price_data = {
                 "current_price": float,
                 "previous_close": float,
@@ -94,7 +85,6 @@ class PriceShockCalculator:
             }
 
         Example:
-
             price_data = {
                 "current_price": 235.68,
                 "previous_close": 233.69,
@@ -111,14 +101,13 @@ class PriceShockCalculator:
         prior trading-session closing prices. 60 is recommended.
 
         RETURNS:
-
             {
                 "price_return": 0.008526,
                 "price_shock_zscore": 1.3724,
                 "price_shock_score": 0.2745,
             }
         """
-
+        
         current_price = self._positive_float(
             price_data.get("current_price"),
             "current_price",
@@ -139,30 +128,24 @@ class PriceShockCalculator:
                 "10 valid prior trading-session closes"
             )
 
-        # ---------------------------------------------------------
-        # 1. Today's actual price movement.
-        # ---------------------------------------------------------
+        # Phase 1. Today's actual price movement.
 
         price_return = (
             current_price - previous_close
         ) / previous_close
 
-        # ---------------------------------------------------------
-        # 2. Calculate historical daily returns.
-        #
-        # If historical_closes is:
-        #
+
+        # Phase 2. Calculate historical daily returns.
+        # - input a list[ ]
+        # If historical_closes data is:
         #     [230, 232, 231, 235]
         #
-        # returns become:
-        #
+        # returns translated to:
         #     +0.87%
         #     -0.43%
         #     +1.73%
-        # ---------------------------------------------------------
 
         historical_returns = []
-
         for previous, current in zip(
             historical_closes,
             historical_closes[1:],
@@ -176,7 +159,7 @@ class PriceShockCalculator:
 
         if len(historical_returns) < 10:
             raise ValueError(
-                "Not enough valid historical daily returns"
+                "Not enough historical daily return data"
             )
 
         # Only use the most recent lookback returns.
@@ -184,13 +167,10 @@ class PriceShockCalculator:
             -self.lookback:
         ]
 
-        # ---------------------------------------------------------
-        # 3. We are measuring SIZE of movement, not direction.
+        # Phase 3. Measureg SIZE of movement, not direction.
         #
         # Direction remains available in price_return.
-        #
         # +3% and -3% are both large price shocks.
-        # ---------------------------------------------------------
 
         historical_moves = [
             abs(value)
@@ -199,21 +179,14 @@ class PriceShockCalculator:
 
         today_move = abs(price_return)
 
-        # ---------------------------------------------------------
-        # 4. Establish normal movement.
-        #
+        # Phase 4. Establish normal movement.
         # Median is used instead of mean because it is much less
         # affected by historical earnings/news shocks.
-        # ---------------------------------------------------------
-
         median_move = median(
             historical_moves
         )
 
-        # ---------------------------------------------------------
-        # 5. Calculate Median Absolute Deviation (MAD).
-        # ---------------------------------------------------------
-
+        # Phase 5. Calculate Median Absolute Deviation (MAD).
         deviations = [
             abs(value - median_move)
             for value in historical_moves
@@ -221,12 +194,8 @@ class PriceShockCalculator:
 
         mad = median(deviations)
 
-        # ---------------------------------------------------------
-        # 6. Convert MAD into a standard-deviation-like scale.
-        #
+        # Phase 6. Convert MAD into a standard-deviation-like scale.
         # 1.4826 is the standard normal consistency factor.
-        # ---------------------------------------------------------
-
         if mad > 0:
             scale = self.MAD_SCALE * mad
         else:
@@ -237,15 +206,10 @@ class PriceShockCalculator:
                 1e-6,
             )
 
-        # ---------------------------------------------------------
-        # 7. Calculate robust z-score.
-        #
+        # Phase 7. Calculate robust z-score.
         # 0.0 means today's movement is approximately normal.
-        #
         # Larger positive values mean increasingly abnormal
         # movement.
-        # ---------------------------------------------------------
-
         price_shock_zscore = (
             today_move - median_move
         ) / scale
@@ -257,9 +221,7 @@ class PriceShockCalculator:
             0.0,
         )
 
-        # ---------------------------------------------------------
-        # 8. Normalize z-score to 0.0 - 1.0.
-        #
+        # Phase 8. Normalize z-score to 0.0 - 1.0.
         # z = 0 -> 0.00
         # z = 1 -> 0.20
         # z = 2 -> 0.40
@@ -267,8 +229,6 @@ class PriceShockCalculator:
         # z = 4 -> 0.80
         # z = 5 -> 1.00
         # z > 5 -> 1.00
-        # ---------------------------------------------------------
-
         price_shock_score = min(
             price_shock_zscore / self.zscore_cap,
             1.0,
@@ -289,6 +249,7 @@ class PriceShockCalculator:
             ),
         }
 
+# ###################### decorators
     @staticmethod
     def _clean_prices(
         prices: Any,

@@ -83,6 +83,7 @@ class CompositeScorer:
     x_composite_score_report = None
     x_polarity_report = None
 
+    market_status = None
 
     def __init__(
             self,
@@ -1128,16 +1129,17 @@ class CompositeScorer:
         else:
             self.symbol = symbol.upper()
             
-        print(f"========== Alpaca Live Quote for: {self.symbol} ==========")  
+        print(f"\n========== Alpaca Live Quote for: {self.symbol} ==========")  
         try:
             alpaca = alpaca_md(1, args=None)
             market_open = alpaca.get_market_status()
-            print(f"Market Status: {'Open' if market_open else 'Closed'}")
+            self.market_status = market_open
+            print(f"Market Status: {market_open} / {'Open' if market_open else 'Closed'}")
             
             # Get live quote
             quote = alpaca.get_live_quote(self.symbol)
             if quote:
-                print(f"Live Quote Data:")
+                print( "Live Quote Data:" )
                 for k, v in quote.items():
                     print(f"  {k}: {v}")
             else:
@@ -1276,6 +1278,7 @@ def main() -> int:
 
     psc = PriceShockCalculator()
     psc_symbol = args.symbol.upper()
+    
     # TESTING DATA ONLY
     # repalce with live price acquisiton code...
     # do alpaca price here !!
@@ -1301,14 +1304,15 @@ def main() -> int:
     }
 
 
-    print ( f"#-DEBUG-#1305 payload:\n{price_shock_input}" )
+    print ( f"#-DEBUG-#1305 payload:\n{price_shock_input}\n" )
 
     psc_price_metrics = psc.calculate(price_shock_input)
 
-    print ( f"#-DEBUG-#1305 PSC:\n{psc_price_metrics}" )
+    print ( f"#-DEBUG-#1305 PSC:\n{psc_price_metrics}\n" )
 
     # TEST alpaca price getter
-    print ( f"#-DEBUG-#1308 ALPACA():\n{psc_price_metrics}" )
+    print ( f"#-DEBUG-#1308 ALPACA():\n{psc_price_metrics}\n" )
+    
     scorer.psc_get_md(args.symbol.upper())
 
     scorer._reset_run_counters()
