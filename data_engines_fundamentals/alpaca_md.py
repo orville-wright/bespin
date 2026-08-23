@@ -200,6 +200,34 @@ class alpaca_md:
 
         logging.error(base_message)
 
+
+
+ # #################### 9
+ # builds a list of quote data for 1 single symbol
+    def build_psc_pkg(self, symbol):
+        """
+        Build the Price Shock Calculator Data Package
+        - which requires live price data
+        
+        price_data = {
+            "current_price": 235.68,
+            "previous_close": 233.69,
+            "historical_closes": [
+                228.41,
+                229.17,
+                227.93,
+                231.04,
+                ...
+                ],
+            }
+        """
+        print ( "#-DEBUG-#: ALPACA build PSC Package ====================" )
+        _tkrsym = symbol.upper()
+        _client = StockHistoricalDataClient(self.api_key, self.secret_key)
+        _sym_req_params = StockLatestQuoteRequest(symbol_or_symbols=[_tkrsym])
+        _quote = _client.get_stock_latest_quote(_sym_req_params)
+        print ( f"#-DEBUG-#: PSC quote: {_quote[_tkrsym].ask_price}" )
+
  # #################### 9
  # builds a list of quote data for 1 single symbol
     def get_live_quote(self, symbol, feed=None):

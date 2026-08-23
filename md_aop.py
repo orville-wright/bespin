@@ -295,6 +295,8 @@ def quoute_examples():
             print(f"Market Status: {'Open' if market_open else 'Closed'}")
             
             # Get live quote
+            psc_quote = alpaca.build_psc_pkg(a_symbol)
+            
             quote = alpaca.get_live_quote(a_symbol)
             
             if quote:
