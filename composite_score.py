@@ -1295,8 +1295,13 @@ def main() -> int:
             232.91,
             235.02,
             234.38,
+            234.50,
+            234.44,
         ],
     }
+
+
+    print ( f"#-DEBUG-#1305 payload:\n{price_shock_input}" )
 
     psc_price_metrics = psc.calculate(price_shock_input)
 
