@@ -5,6 +5,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta, date
 import time
+import pprint
 from dotenv import load_dotenv
 import logging
 
@@ -235,7 +236,8 @@ class alpaca_md:
         print ( "================================================\n")
         
         # Define previous day range
-        start_day = datetime.now() - timedelta(days=60) # buffer for weekends
+        # range set at 100
+        start_day = datetime.now() - timedelta(days=100) # buffer for weekends
         prev_close_params = StockBarsRequest(
             symbol_or_symbols=[_tkrsym],
             timeframe=TimeFrame.Day,
@@ -245,16 +247,17 @@ class alpaca_md:
 
         bars = _client.get_stock_bars(prev_close_params)
         previous_close = bars.df.iloc[0]["close"]
-        all_close_bars = bars
+        h_close_bars100 = bars.df["close"].tolist()
         #print( f"#-DEBUG-#: SHDC prev_close:\n{previous_close}" )
         #print( f"#-DEBUG-#: SHDC prev_close:{all_close_bars}" )
         print ( "================================================\n")
         #print( f"#-DEBUG-#: bars:\n{bars}\n" )
         print( f"#-DEBUG-#: 1 SHDL.bars.df:\n{bars.df["close"]}" )
-        print( f"#-DEBUG-#: 2 SHDL.bars.df:\n{bars.df["close"].tolist()}" )
+        print( f"#-DEBUG-#: 2 SHDL.bars.df:\n{h_close_bars100}" )
         print ( "================================================\n")
-        print ( f"#-DEBUG-#: SHDL.ask_price: {_quote[_tkrsym].ask_price}" )
-        print ( "================================================\n")
+        
+        #print ( f"#-DEBUG-#: SHDL.ask_price: {_quote[_tkrsym].ask_price}" )
+        #print ( "================================================\n")
         
         # Build PSC Package dict
         #psc_package["current_price"] = _quote[_tkrsym].ask_price
@@ -272,10 +275,10 @@ class alpaca_md:
         today_vwap = snapshot[_tkrsym].daily_bar.vwap
         previous_open = snapshot[_tkrsym].previous_daily_bar.open
         
-        print ( f"#-DEBUG-#: snapshot.symb: {previous_close2}" )
-        print ( "================================================\n")
-        print ( f"#-DEBUG-#: snapshot.raw: {previous_close3}" )
-        print ( "================================================\n")
+        #print ( f"#-DEBUG-#: snapshot.symb: {previous_close2}" )
+        #print ( "================================================\n")
+        #print ( f"#-DEBUG-#: snapshot.raw: {previous_close3}" )
+        #print ( "================================================\n")
 
         # build out the PSC Data package
         #
@@ -286,9 +289,10 @@ class alpaca_md:
         psc_package["previous_open"] = previous_open
         psc_package["today_vwap"] = today_vwap
         psc_package["today_volume"] = today_volume
+        psc_package["historical_closes"] = h_close_bars100
 
-        print ( f"#-DEBUG-#: FULL PSC Package:\n{psc_package}\n" )
-        
+        print ( "#-DEBUG-#: FULL PSC Package:\n" )
+        pprint.pprint(psc_package, indent=4)
                 
         
  # #################### 9
