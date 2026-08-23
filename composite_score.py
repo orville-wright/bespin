@@ -1298,7 +1298,7 @@ def main() -> int:
     print ( "========= Price Shock Calculator Metrics =============")
     print ( f"{psc_price_metrics}")
     print ( "======================================================")
-    print ( f"{raw_psc_df}")
+    print ( f"{raw_psc_df.to_string()}")
     print ( "======================================================")
     
     scorer.psc_get_md(args.symbol.upper())
