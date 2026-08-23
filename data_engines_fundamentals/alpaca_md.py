@@ -254,8 +254,9 @@ class alpaca_md:
 
         snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
         snapshot = _client.get_stock_snapshot(snapshot_params)
-        previous_close2 = snapshot[_tkrsym].prev_daily_bar.close
-        previous_close3 = snapshot[_tkrsym].prev_daily_bar
+        #previous_close2 = snapshot[_tkrsym].prev_daily_bar.close
+        previous_close2 = snapshot[_tkrsym]
+        previous_close3 = snapshot
         print ( f"#-DEBUG-#: snapshot pc1: {previous_close2}" )
         print ( "================================================\n")
         print ( f"#-DEBUG-#: snapshot pc2: {previous_close3}" )
