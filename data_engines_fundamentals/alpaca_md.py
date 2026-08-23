@@ -247,11 +247,11 @@ class alpaca_md:
         previous_close = bars.df.iloc[0]["close"]
         all_close_bars = bars
         #print( f"#-DEBUG-#: SHDC prev_close:\n{previous_close}" )
-        print( f"#-DEBUG-#: SHDC prev_close:{all_close_bars}" )
+        #print( f"#-DEBUG-#: SHDC prev_close:{all_close_bars}" )
         print ( "================================================\n")
         #print( f"#-DEBUG-#: bars:\n{bars}\n" )
         print( f"#-DEBUG-#: 1 SHDL.bars.df:\n{bars.df["close"]}" )
-        print( f"#-DEBUG-#: 2 SHDL.bars.df:\n{bars.df[["close"]]}" )
+        print( f"#-DEBUG-#: 2 SHDL.bars.df:\n{bars.df["close"].tolist()}" )
         print ( "================================================\n")
         print ( f"#-DEBUG-#: SHDL.ask_price: {_quote[_tkrsym].ask_price}" )
         print ( "================================================\n")
