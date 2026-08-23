@@ -245,7 +245,7 @@ class alpaca_md:
 
         bars = _client.get_stock_bars(prev_close_params)
         previous_close = bars.df.iloc[0]["close"]
-        all_close_bars = bars.df.iloc["close"]
+        all_close_bars = bars
         #print( f"#-DEBUG-#: SHDC prev_close:\n{previous_close}" )
         print( f"#-DEBUG-#: SHDC prev_close:{all_close_bars}" )
         print ( "================================================\n")
