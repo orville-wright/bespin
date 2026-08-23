@@ -248,6 +248,7 @@ class alpaca_md:
         previous_close = bars.df.iloc[0]["close"]
         print( f"#-DEBUG-#: prev_close:\n{previous_close}\n" )
         print( f"#-DEBUG-#: bars:\n{bars}\n" )
+        print( f"#-DEBUG-#: bars:\n{bars.df}\n" )
 
         print ( f"#-DEBUG-#: PSC quote1: {_quote[_tkrsym].ask_price}" )
         print ( f"#-DEBUG-#: PSC quote2: {_quote[_tkrsym]}" )
