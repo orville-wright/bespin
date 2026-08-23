@@ -308,6 +308,7 @@ def quoute_examples():
         
         print(" ")
 
+        """
         print ( f"====== HACKING ON ALPHAVANTAGE API INTEGRATION ======" )
         # Load environment variables from .env file
         load_status = dotenv.load_dotenv()
@@ -358,7 +359,8 @@ def quoute_examples():
         print (f"Raw Data:\n{data}" )
         print (f"Metadata:\n{data['Meta Data']}" )
         print (f"Tech Analysis: {data['Technical Analysis: RSI']}" )
-
+        """
+    
 
     else:
         print("\nNo symbol provided for Alpaca live quote extraction")
