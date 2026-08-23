@@ -8,6 +8,11 @@ import time
 from dotenv import load_dotenv
 import logging
 
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.data.requests import StockBarsRequest
+from alpaca.data.timeframe import TimeFrame
+
+
 # #################### class
 class alpaca_md:
     """
@@ -204,10 +209,15 @@ class alpaca_md:
         try:
             data = self._get_json(url, params, f"fetching quote for {symbol.upper()}")
             
+            print (f"#-DEBUG-#212: json_pkg: {data}\n")
+        
             if 'quotes' in data and symbol.upper() in data['quotes']:
                 quote = data['quotes'][symbol.upper()]
                 self.quote_data[symbol.upper()] = self._format_quote_data(quote, symbol.upper())
                 return self.quote_data[symbol.upper()]
+            
+                #data2 = self._get_json(url, params, f"fetching quote for {symbol.upper()}")
+                #client = StockHistoricalDataClient('api-key', 'secret-key')
             else:
                 logging.warning(f"No quote data found for symbol: {symbol}")
                 return None
