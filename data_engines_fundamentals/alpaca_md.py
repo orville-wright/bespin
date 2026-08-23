@@ -231,8 +231,7 @@ class alpaca_md:
         _sym_req_params2 = StockQuotesRequest(symbol_or_symbols=[_tkrsym])
         _quote2 = _client.get_stock_quotes(_sym_req_params2)
     
-        #_quotebars_params = 
-        psc_package["current_price"] = _quote[_tkrsym].ask_price
+
         print ( "================================================\n")
         
         # Define previous day range
@@ -254,9 +253,15 @@ class alpaca_md:
 
         snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
         snapshot = _client.get_stock_snapshot(snapshot_params)
-        #previous_close2 = snapshot[_tkrsym].prev_daily_bar.close
+        last_trade_close = snapshot[_tkrsym].latest_trade.price
+        previous_close1 = snapshot[_tkrsym].previous_daily_bar.close
         previous_close2 = snapshot[_tkrsym]
         previous_close3 = snapshot
+        today_open = snapshot[_tkrsym].daily_bar.open
+        today_volume = snapshot[_tkrsym].daily_bar.volume
+        today_vwap = snapshot[_tkrsym].daily_bar.vwap
+        previous_open = snapshot[_tkrsym].previous_daily_bar.open
+        
         print ( f"#-DEBUG-#: snapshot pc1: {previous_close2}" )
         print ( "================================================\n")
         print ( f"#-DEBUG-#: snapshot pc2: {previous_close3}" )
@@ -266,8 +271,21 @@ class alpaca_md:
         print ( f"#-DEBUG-#: PSC quote1: {_quote[_tkrsym].ask_price}" )
         print ( "================================================\n")
         print ( f"#-DEBUG-#: PSC quote2: {_quote2[_tkrsym]}" )
+        print ( "================================================\n")
         
+        # Build PSC Package dict
+        #psc_package["current_price"] = _quote[_tkrsym].ask_price
+        psc_package["symbol"] = _tkrsym
+        psc_package["current_price"] = last_trade_close
+        psc_package["previous_close"] = previous_close1
+        psc_package["today_open"] = today_open
+        psc_package["previous_open"] = previous_open
+        psc_package["today_vwap"] = today_vwap
 
+        print ( f"#-DEBUG-#: FULL PSC Package: {psc_package}\n" )
+        
+                
+        
  # #################### 9
  # builds a list of quote data for 1 single symbol
     def get_live_quote(self, symbol, feed=None):
