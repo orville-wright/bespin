@@ -287,15 +287,15 @@ def quoute_examples():
     # ALPACA API Integration - Live quotes and bars
     if args['alpaca_symbol'] is not False:
         a_symbol = args['alpaca_symbol'].upper()
+        alpaca = alpaca_md(1, args)
+        psc_quote = alpaca.build_psc_pkg(a_symbol)
+        print ( f"{psc_quote}" )
         
+        """
         print(f"========== Alpaca Live Quote for: {a_symbol} ==========")  
         try:
-            alpaca = alpaca_md(1, args)
             market_open = alpaca.get_market_status()
             print(f"Market Status: {'Open' if market_open else 'Closed'}")
-            
-            # Get live quote
-            psc_quote = alpaca.build_psc_pkg(a_symbol)
             
             quote = alpaca.get_live_quote(a_symbol)
             
@@ -312,7 +312,6 @@ def quoute_examples():
         
         print(" ")
 
-        """
         print ( f"====== HACKING ON ALPHAVANTAGE API INTEGRATION ======" )
         # Load environment variables from .env file
         load_status = dotenv.load_dotenv()
@@ -364,8 +363,6 @@ def quoute_examples():
         print (f"Metadata:\n{data['Meta Data']}" )
         print (f"Tech Analysis: {data['Technical Analysis: RSI']}" )
         """
-    
-
     else:
         print("\nNo symbol provided for Alpaca live quote extraction")
         

@@ -273,8 +273,8 @@ class alpaca_md:
         psc_package["today_volume"] = today_volume
         psc_package["historical_closes"] = h_close_bars100
 
-        print ( "#-DEBUG-#: FULL PSC Package:\n" )
-        pprint.pprint(psc_package, indent=4)
+        #print ( "#-DEBUG-#: FULL PSC Package:\n" )
+        #pprint.pprint(psc_package, indent=4)
         
         return psc_package     
         
@@ -288,7 +288,7 @@ class alpaca_md:
         try:
             data = self._get_json(url, params, f"fetching quote for {symbol.upper()}")
             
-            print (f"#-DEBUG-#212: json_pkg:\n{data}\n")
+            #print (f"#-DEBUG-#212: json_pkg:\n{data}\n")
         
             if 'quotes' in data and symbol.upper() in data['quotes']:
                 quote = data['quotes'][symbol.upper()]
