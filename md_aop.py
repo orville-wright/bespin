@@ -330,7 +330,7 @@ def quoute_examples():
             'interval': 'daily',        # Data point frequency (daily, weekly, monthly, etc.)
             'time_period': '14',        # Standard RSI tracking period length
             'series_type': 'close',     # Base calculation price point
-            'apikey': 'av_api_key'    # Your personal API authentication key
+            'apikey': av_api_key        # Your personal API authentication key
         }
 
         # Execute call and parse the response object
