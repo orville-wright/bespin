@@ -311,7 +311,6 @@ def quoute_examples():
         print ( f"====== HACKING ON ALPHAVANTAGE API INTEGRATION ======" )
         # Load environment variables from .env file
         load_status = dotenv.load_dotenv()
-        logging.info( f'%s  - Load keys from .env file' % cmi_debug )
         if load_status is False:
             logging.warning(f'%s - Env loaded failed !' % cmi_debug)
         
