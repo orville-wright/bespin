@@ -276,7 +276,7 @@ class alpaca_md:
         #print ( "#-DEBUG-#: FULL PSC Package:\n" )
         #pprint.pprint(psc_package, indent=4)
         
-        return psc_package     
+        return psc_package, bars.df    
         
  # #################### 9
  # builds a list of quote data for 1 single symbol

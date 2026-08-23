@@ -1129,10 +1129,10 @@ class CompositeScorer:
         else:
             self.symbol = symbol.upper()
             alpaca = alpaca_md(1, args=None)
-            psc_data_package = alpaca.build_psc_pkg(self.symbol)
+            psc_data_package, psc_bars_df = alpaca.build_psc_pkg(self.symbol)
             
             print ( f"{psc_data_package}" )
-            return psc_data_package
+            return psc_data_package, psc_bars_df
 
         """
         print(f"\n========== Alpaca Live Quote for: {self.symbol} ==========")  
@@ -1290,13 +1290,15 @@ def main() -> int:
     alpaca = alpaca_md(1, args=None)    # instance of
     
     psc_symbol = args.symbol.upper()
-    price_shock_input = alpaca.build_psc_pkg(psc_symbol)
+    price_shock_input, raw_psc_df = alpaca.build_psc_pkg(psc_symbol)
 
     psc_price_metrics = psc.calculate(price_shock_input)
 
     print ( "======================================================")
     print ( "========= Price Shock Calculator Metrics =============")
     print ( f"{psc_price_metrics}")
+    print ( "======================================================")
+    print ( f"{raw_psc_df}")
     print ( "======================================================")
     
     scorer.psc_get_md(args.symbol.upper())
