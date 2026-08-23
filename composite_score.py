@@ -1130,7 +1130,7 @@ class CompositeScorer:
             
         print(f"========== Alpaca Live Quote for: {self.symbol} ==========")  
         try:
-            alpaca = alpaca_md(1, args)
+            alpaca = alpaca_md(1, args=None)
             market_open = alpaca.get_market_status()
             print(f"Market Status: {'Open' if market_open else 'Closed'}")
             
@@ -1145,7 +1145,7 @@ class CompositeScorer:
                 
         except Exception as e:
             print(f"Error getting Alpaca quote: {e}")
-            logging.error(f"Alpaca quote error for {self.symboll}: {e}")
+            logging.error(f"Alpaca quote error for {self.symbol}: {e}")
         
         print(" ")
 
