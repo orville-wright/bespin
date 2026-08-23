@@ -235,6 +235,19 @@ class alpaca_md:
         #_quotebars_params = 
         psc_package["current_price"] = _quote[_tkrsym].ask_price
         
+        # Define previous day range
+        yesterday = datetime.now() - timedelta(days=3) # buffer for weekends
+        prev_close_params = StockBarsRequest(
+            symbol_or_symbols=[_tkrsym],
+            timeframe=TimeFrame.Day,
+            start=yesterday,
+            limit=1
+        )
+
+        bars = _client.get_stock_bars(prev_close_params)
+        previous_close = bars.df.iloc[0]["close"]
+        print( f"#-DEBUG-#: prev_close:\n{previous_close}\n" )
+
         print ( f"#-DEBUG-#: PSC quote1: {_quote[_tkrsym].ask_price}" )
         print ( f"#-DEBUG-#: PSC quote2: {_quote[_tkrsym]}" )
         
