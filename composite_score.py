@@ -1291,6 +1291,9 @@ def main() -> int:
     
     psc_symbol = args.symbol.upper()
     price_shock_input, raw_psc_df = alpaca.build_psc_pkg(psc_symbol)
+    
+    print ( f"{price_shock_input}" )
+    print ( f"{raw_psc_df}" )
 
     psc_price_metrics = psc.calculate(price_shock_input)
 
@@ -1301,7 +1304,7 @@ def main() -> int:
     print ( f"{raw_psc_df.to_string()}")
     print ( "======================================================")
     
-    scorer.psc_get_md(args.symbol.upper())
+    # scorer.psc_get_md(args.symbol.upper())
 
     scorer._reset_run_counters()
     # Materialize ONCE: the LMDB stream is single-use, but the legacy
