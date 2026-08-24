@@ -1293,7 +1293,7 @@ def main() -> int:
 
     psc_price_metrics = psc.calculate(price_shock_input)
     print ( "=============== Price Shock Calculator Metrics =============")
-    print ( f"{psc_price_metrics}")
+    print ( f"{psc_price_metrics}\n")
 
     scorer._reset_run_counters()
     # Materialize ONCE: the LMDB stream is single-use, but the legacy
