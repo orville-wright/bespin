@@ -237,19 +237,26 @@ class alpaca_md:
         # - compare the bar date against today's UTC date.
 
         today_utc = datetime.now(timezone.utc).date()
+        print (f"TODAY_UTC: {today_utc}")
+
         timestamps = historical_df.index.get_level_values("timestamp")
         historical_df = historical_df[timestamps.date < today_utc]
+        print (f"HISTORICAL DF less today:\n{historical_df} ")
 
         # 3. HARD VALIDATION
         # If today's bar somehow survives the filter, STOP.
         # Do not allow contaminated data into the PSC calculator.
         if not historical_df.empty:
+            print (f"HISTORICAL DF is NOT empty" )
             last_timestamp = (
                 historical_df.index
                 .get_level_values("timestamp")[-1]
             )
 
             last_historical_date = last_timestamp.date()
+            print (f"LAST DATE in DF is: {last_historical_date} / TODAY is: {today_utc}" )
+            print (f"LAST data entry in DF is\n"{last_timestamp} )
+
             if last_historical_date >= today_utc:
                 raise ValueError(
                     "PRICE SHOCK DATA ERROR: "
@@ -258,6 +265,7 @@ class alpaca_md:
                     "Today's price must NOT be included "
                     "in historical_closes."
                 )
+        else:
 
         # 4. EXTRACT HISTORICAL CLOSES
         h_close_bars100 = (
