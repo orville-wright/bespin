@@ -1283,29 +1283,17 @@ def main() -> int:
     run_epoch = args.run_epoch if args.run_epoch is not None else time.time()
 
     ######################################
-    # start the processes now...
 
     scorer = CompositeScorer()          # instance of 
     psc = PriceShockCalculator()        # instance of
     alpaca = alpaca_md(1, args=None)    # instance of
     
     psc_symbol = args.symbol.upper()
-    #
-    # ( f"ALPACA Instance: Tyoe: {type(alpaca)}" )
     price_shock_input, raw_psc_df = alpaca.build_psc_pkg(psc_symbol)
-    #scorer.psc_get_md(args.symbol.upper())
-    
-    print ( f"{price_shock_input}" )
-    print ( f"{raw_psc_df}" )
 
     psc_price_metrics = psc.calculate(price_shock_input)
-
-    print ( "======================================================")
-    print ( "========= Price Shock Calculator Metrics =============")
+    print ( "=============== Price Shock Calculator Metrics =============")
     print ( f"{psc_price_metrics}")
-    print ( "======================================================")
-    print ( f"{raw_psc_df.to_string()}")
-    print ( "======================================================")
 
     scorer._reset_run_counters()
     # Materialize ONCE: the LMDB stream is single-use, but the legacy
