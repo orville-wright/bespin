@@ -1,18 +1,21 @@
 #! python3
 
 import os
+import math
 import requests
 import pandas as pd
-import time
 from datetime import datetime, timedelta, timezone
-import pprint
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
+
 import logging
 
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockLatestQuoteRequest, StockQuotesRequest, StockBarsRequest, StockSnapshotRequest
 from alpaca.data.timeframe import TimeFrame
 
+
+MARKET_TZ = ZoneInfo("America/New_York")
 
 # #################### class
 class alpaca_md:
@@ -202,14 +205,8 @@ class alpaca_md:
 
 
 
- # #################### 9
- # builds a list of quote data for 1 single symbol
- from zoneinfo import ZoneInfo
-import math
-
-MARKET_TZ = ZoneInfo("America/New_York")
-
-
+# #################### 9
+# builds a list of quote data for 1 single symbol
 def build_psc_pkg(self, symbol):
     """
     Construct the Price Shock Calculator Data Package.
