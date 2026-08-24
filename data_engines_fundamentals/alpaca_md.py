@@ -204,104 +204,111 @@ class alpaca_md:
 
  # #################### 9
  # builds a list of quote data for 1 single symbol
-    def build_psc_pkg(self, symbol):
-        """
-        Construct the Price Shock Calculator Data Package.
+ from zoneinfo import ZoneInfo
+import math
 
-        IMPORTANT:
-        historical_closes contains ONLY COMPLETED PRIOR TRADING DAYS.
-        Today's trading bar is explicitly excluded.
-        """
+MARKET_TZ = ZoneInfo("America/New_York")
 
-        psc_package = dict()
-        _tkrsym = symbol.upper()
-        _client = StockHistoricalDataClient(self.api_key,self.secret_key)
 
-        # 1. GET HISTORICAL DAILY BARS
-        start_day = datetime.now(timezone.utc) - timedelta(days=100)
+def build_psc_pkg(self, symbol):
+    """
+    Construct the Price Shock Calculator Data Package.
 
-        prev_close_params = StockBarsRequest(
-            symbol_or_symbols=[_tkrsym],
-            timeframe=TimeFrame.Day,
-            start=start_day,
-            limit=None,
+    INVARIANT:
+    historical_closes contains ONLY sessions STRICTLY BEFORE the session
+    reported by snapshot.daily_bar. The boundary is a TRADING SESSION,
+    not a calendar date, so weekends and holidays are handled correctly.
+    """
+    psc_package = {}
+    _tkrsym = symbol.upper()
+    _client = StockHistoricalDataClient(self.api_key, self.secret_key)
+
+    # ---------------------------------------------------------
+    # 1. SNAPSHOT FIRST — it defines what "current session" means
+    # ---------------------------------------------------------
+    snapshot = _client.get_stock_snapshot(
+        StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
+    )
+    snap = snapshot[_tkrsym]
+
+    current_session = snap.daily_bar.timestamp.astimezone(MARKET_TZ).date()
+    prior_session   = snap.previous_daily_bar.timestamp.astimezone(MARKET_TZ).date()
+
+    # ---------------------------------------------------------
+    # 2. HISTORICAL DAILY BARS
+    #    ~150 calendar days ≈ 104 sessions. 100 days gave you ~68.
+    # ---------------------------------------------------------
+    start_day = datetime.now(timezone.utc) - timedelta(days=150)
+
+    bars = _client.get_stock_bars(StockBarsRequest(
+        symbol_or_symbols=[_tkrsym],
+        timeframe=TimeFrame.Day,
+        start=start_day,
+        limit=None,
+    ))
+    historical_df = bars.df.copy().sort_index()
+
+    # ---------------------------------------------------------
+    # 3. CUT ON SESSION, NOT CALENDAR DATE
+    # ---------------------------------------------------------
+    ts = historical_df.index.get_level_values("timestamp")
+    session_dates = ts.tz_convert(MARKET_TZ).date          # numpy array of date
+    historical_df = historical_df[session_dates < current_session]
+
+    # ---------------------------------------------------------
+    # 4. VALIDATION THAT CAN ACTUALLY FAIL
+    # ---------------------------------------------------------
+    if historical_df.empty:
+        raise ValueError(
+            f"PRICE SHOCK DATA ERROR: no completed sessions for {_tkrsym} "
+            f"before {current_session}."
         )
 
-        bars = _client.get_stock_bars(prev_close_params)
-        historical_df = bars.df.copy()
+    last_session = (
+        historical_df.index.get_level_values("timestamp")[-1]
+        .astimezone(MARKET_TZ).date()
+    )
 
-        # =========================================================
-        # 2. REMOVE TODAY'S BAR
-        # - Alpaca timestamps are UTC.
-        # - NEVER use today's partially completed daily bar in historical_closes.
-        # - compare the bar date against today's UTC date.
+    # Independent check #1: the surviving tail must be the session the
+    # snapshot calls "previous". If these disagree, the two data sources
+    # are out of sync and the shock calculation is meaningless.
+    if last_session != prior_session:
+        raise ValueError(
+            f"PRICE SHOCK DATA ERROR: history ends {last_session} but "
+            f"snapshot.previous_daily_bar is {prior_session}."
+        )
 
-        today_utc = datetime.now(timezone.utc).date()
-        print (f"TODAY_UTC: {today_utc}")
+    # Independent check #2: no session may fall on a weekend.
+    if last_session.weekday() >= 5:
+        raise ValueError(
+            f"PRICE SHOCK DATA ERROR: {last_session} is a weekend."
+        )
 
-        timestamps = historical_df.index.get_level_values("timestamp")
-        historical_df = historical_df[timestamps.date < today_utc]
-        print (f"HISTORICAL DF less today:\n{historical_df} ")
+    # ---------------------------------------------------------
+    # 5. BUILD THE PACKAGE — top level, NOT in an else branch
+    # ---------------------------------------------------------
+    h_close_bars = historical_df["close"].astype(float).tolist()
 
-        # 3. HARD VALIDATION
-        # If today's bar somehow survives the filter, STOP.
-        # Do not allow contaminated data into the PSC calculator.
-        if not historical_df.empty:
-            print (f"HISTORICAL DF is NOT empty" )
-            last_timestamp = (
-                historical_df.index
-                .get_level_values("timestamp")[-1]
-            )
+    # Soft cross-check: the last historical close should equal the
+    # snapshot's previous close. Warn rather than raise — feeds and
+    # adjustment handling can differ by a fraction of a cent.
+    if not math.isclose(h_close_bars[-1],
+                        float(snap.previous_daily_bar.close),
+                        rel_tol=1e-6):
+        print(f"WARNING: tail close {h_close_bars[-1]} != "
+              f"snapshot previous_close {snap.previous_daily_bar.close}")
 
-            last_historical_date = last_timestamp.date()
-            print (f"LAST DATE in DF is: {last_historical_date} / TODAY is: {today_utc}" )
-            print (f"LAST data entry in DF is\n{last_timestamp}" )
+    psc_package["symbol"]            = _tkrsym
+    psc_package["session_date"]      = current_session
+    psc_package["current_price"]     = snap.latest_trade.price
+    psc_package["today_open"]        = snap.daily_bar.open
+    psc_package["today_vwap"]        = snap.daily_bar.vwap
+    psc_package["today_volume"]      = snap.daily_bar.volume
+    psc_package["previous_close"]    = snap.previous_daily_bar.close
+    psc_package["previous_open"]     = snap.previous_daily_bar.open
+    psc_package["historical_closes"] = h_close_bars
 
-            if last_historical_date >= today_utc:
-                raise ValueError(
-                    "PRICE SHOCK DATA ERROR: "
-                    f"historical data contains today's bar "
-                    f"({last_timestamp}). "
-                    "Today's price must NOT be included "
-                    "in historical_closes."
-                )
-        else:
-            # 4. EXTRACT HISTORICAL CLOSES
-            h_close_bars100 = (
-                historical_df["close"]
-                .astype(float)
-                .tolist()
-            )
-
-            # 5. GET CURRENT / TODAY'S MARKET DATA
-            snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
-            snapshot = _client.get_stock_snapshot(snapshot_params)
-            last_trade_close = (snapshot[_tkrsym].latest_trade.price)
-
-            previous_close1 = (snapshot[_tkrsym].previous_daily_bar.close)
-            today_open = (snapshot[_tkrsym].daily_bar.open)
-            today_volume = (snapshot[_tkrsym].daily_bar.volume)
-            today_vwap = (snapshot[_tkrsym].daily_bar.vwap)
-            previous_open = (snapshot[_tkrsym].previous_daily_bar.open)
-
-            # 6. CONSTRUCT PRICE SHOCK CALCULATOR PACKAGE
-            psc_package["symbol"] = _tkrsym
-
-            # TODAY
-            psc_package["current_price"] = last_trade_close
-            psc_package["today_open"] = today_open
-            psc_package["today_vwap"] = today_vwap
-            psc_package["today_volume"] = today_volume
-
-            # PRIOR TRADING DAY
-            psc_package["previous_close"] = previous_close1
-            psc_package["previous_open"] = previous_open
-
-            # HISTORICAL BASELINE
-            # IMPORTANT: today is excluded
-            psc_package["historical_closes"] = h_close_bars100
-
-        return psc_package, bars.df
+    return psc_package, bars.df
         
  # #################### 9
  # builds a list of quote data for 1 single symbol
