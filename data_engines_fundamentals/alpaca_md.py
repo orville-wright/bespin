@@ -3,8 +3,8 @@
 import os
 import requests
 import pandas as pd
-from datetime import datetime, timedelta, date
 import time
+from datetime import datetime, timedelta, timezone
 import pprint
 from dotenv import load_dotenv
 import logging
@@ -206,37 +206,20 @@ class alpaca_md:
  # builds a list of quote data for 1 single symbol
     def build_psc_pkg(self, symbol):
         """
-        Construct the Price Shock Calculator Data Package
-        - which looks like this..
-        
-        price_data = {
-            "current_price": 235.68,
-            "previous_close": 233.69,
-            "historical_closes": [
-                228.41,
-                229.17,
-                227.93,
-                231.04,
-                ...
-                ],
-            }
+        Construct the Price Shock Calculator Data Package.
+
+        IMPORTANT:
+        historical_closes contains ONLY COMPLETED PRIOR TRADING DAYS.
+        Today's trading bar is explicitly excluded.
         """
+
         psc_package = dict()
         _tkrsym = symbol.upper()
-        _client = StockHistoricalDataClient(self.api_key, self.secret_key)
-        _sym_req_params = StockLatestQuoteRequest(symbol_or_symbols=[_tkrsym])
-        _quote = _client.get_stock_latest_quote(_sym_req_params)
+        _client = StockHistoricalDataClient(self.api_key,self.secret_key)
 
-        #_sym_req_params2 = StockQuotesRequest(symbol_or_symbols=[_tkrsym])
-        #_quote2 = _client.get_stock_quotes(_sym_req_params2)
-       
-        # Setup Timeseries Market Data extraction to collect Historical Close price into
-        # - Start set at 100 days ago back in time
-        # - Limit=None means colelct all timeseries datapoints up to today
-        # - Weekends and non-trading days are naturally excluded by ALPACA
-        # - Final number of elements is indeterministic, due to weekends/non-trading days
-        #   so 100 is a good/safe dataset range
-        start_day = datetime.now() - timedelta(days=100)
+        # 1. GET HISTORICAL DAILY BARS
+        start_day = datetime.now(timezone.utc) - timedelta(days=100)
+
         prev_close_params = StockBarsRequest(
             symbol_or_symbols=[_tkrsym],
             timeframe=TimeFrame.Day,
@@ -244,54 +227,74 @@ class alpaca_md:
             limit=None,
         )
 
-        bars = _client.get_stock_bars(prev_close_params)    # get timeseries data now
-        historical_df = bars.df.copy()              # tmep df to cleanse/remove todays price polution from DF
-        today = datetime.now().date()
+        bars = _client.get_stock_bars(prev_close_params)
+        historical_df = bars.df.copy()
+
+        # =========================================================
+        # 2. REMOVE TODAY'S BAR
+        # - Alpaca timestamps are UTC.
+        # - NEVER use today's partially completed daily bar in historical_closes.
+        # - compare the bar date against today's UTC date.
+
+        today_utc = datetime.now(timezone.utc).date()
         timestamps = historical_df.index.get_level_values("timestamp")
+        historical_df = historical_df[timestamps.date < today_utc]
 
-        # remove price for TDAY from Dataframe
-        historical_df = historical_df[
-            timestamps.date < today
-        ]
+        # 3. HARD VALIDATION
+        # If today's bar somehow survives the filter, STOP.
+        # Do not allow contaminated data into the PSC calculator.
+        if not historical_df.empty:
+            last_timestamp = (
+                historical_df.index
+                .get_level_values("timestamp")[-1]
+            )
 
+            last_historical_date = last_timestamp.date()
+            if last_historical_date >= today_utc:
+                raise ValueError(
+                    "PRICE SHOCK DATA ERROR: "
+                    f"historical data contains today's bar "
+                    f"({last_timestamp}). "
+                    "Today's price must NOT be included "
+                    "in historical_closes."
+                )
+
+        # 4. EXTRACT HISTORICAL CLOSES
         h_close_bars100 = (
             historical_df["close"]
             .astype(float)
             .tolist()
         )
 
-        # h_close_bars100 = bars.df["close"].tolist()         # isolate close collumn fron DF and convert to list[]
-        #previous_close = bars.df.iloc[0]["close"]        
-        #print ( f"#-DEBUG-#: SHDL.ask_price: {_quote[_tkrsym].ask_price}" )
-        
-        # Collect PSC Package Price data from live ALPACA Market Data Feed
-        # Leverage the Rich Snapshot API
-        # - it has lots of price data in a handful of internal dicts{}
+        # 5. GET CURRENT / TODAY'S MARKET DATA
         snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
         snapshot = _client.get_stock_snapshot(snapshot_params)
-        last_trade_close = snapshot[_tkrsym].latest_trade.price
-        previous_close1 = snapshot[_tkrsym].previous_daily_bar.close
-        today_open = snapshot[_tkrsym].daily_bar.open
-        today_volume = snapshot[_tkrsym].daily_bar.volume
-        today_vwap = snapshot[_tkrsym].daily_bar.vwap
-        previous_open = snapshot[_tkrsym].previous_daily_bar.open
+        last_trade_close = (snapshot[_tkrsym].latest_trade.price)
 
-        # Construct Price Shoch Calculator Data package
-        # - is a multi element dict{}
-        # - with historical_closes as list
+        previous_close1 = (snapshot[_tkrsym].previous_daily_bar.close)
+        today_open = (snapshot[_tkrsym].daily_bar.open)
+        today_volume = (snapshot[_tkrsym].daily_bar.volume)
+        today_vwap = (snapshot[_tkrsym].daily_bar.vwap)
+        previous_open = (snapshot[_tkrsym].previous_daily_bar.open)
+
+        # 6. CONSTRUCT PRICE SHOCK CALCULATOR PACKAGE
         psc_package["symbol"] = _tkrsym
+
+        # TODAY
         psc_package["current_price"] = last_trade_close
-        psc_package["previous_close"] = previous_close1
         psc_package["today_open"] = today_open
-        psc_package["previous_open"] = previous_open
         psc_package["today_vwap"] = today_vwap
         psc_package["today_volume"] = today_volume
+
+        # PRIOR TRADING DAY
+        psc_package["previous_close"] = previous_close1
+        psc_package["previous_open"] = previous_open
+
+        # HISTORICAL BASELINE
+        # IMPORTANT: today is excluded
         psc_package["historical_closes"] = h_close_bars100
 
-        #print ( "#-DEBUG-#: FULL PSC Package:\n" )
-        #pprint.pprint(psc_package, indent=4)
-        
-        return psc_package, historical_df    
+        return psc_package, bars.df
         
  # #################### 9
  # builds a list of quote data for 1 single symbol
