@@ -220,7 +220,6 @@ def build_psc_pkg(self, symbol):
     _tkrsym = symbol.upper()
     _client = StockHistoricalDataClient(self.api_key, self.secret_key)
 
-    # ---------------------------------------------------------
     # 1. SNAPSHOT FIRST — it defines what "current session" means
     # ---------------------------------------------------------
     snapshot = _client.get_stock_snapshot(
@@ -231,7 +230,6 @@ def build_psc_pkg(self, symbol):
     current_session = snap.daily_bar.timestamp.astimezone(MARKET_TZ).date()
     prior_session   = snap.previous_daily_bar.timestamp.astimezone(MARKET_TZ).date()
 
-    # ---------------------------------------------------------
     # 2. HISTORICAL DAILY BARS
     #    ~150 calendar days ≈ 104 sessions. 100 days gave you ~68.
     # ---------------------------------------------------------
@@ -245,14 +243,12 @@ def build_psc_pkg(self, symbol):
     ))
     historical_df = bars.df.copy().sort_index()
 
-    # ---------------------------------------------------------
     # 3. CUT ON SESSION, NOT CALENDAR DATE
     # ---------------------------------------------------------
     ts = historical_df.index.get_level_values("timestamp")
     session_dates = ts.tz_convert(MARKET_TZ).date          # numpy array of date
     historical_df = historical_df[session_dates < current_session]
 
-    # ---------------------------------------------------------
     # 4. VALIDATION THAT CAN ACTUALLY FAIL
     # ---------------------------------------------------------
     if historical_df.empty:
@@ -281,7 +277,6 @@ def build_psc_pkg(self, symbol):
             f"PRICE SHOCK DATA ERROR: {last_session} is a weekend."
         )
 
-    # ---------------------------------------------------------
     # 5. BUILD THE PACKAGE — top level, NOT in an else branch
     # ---------------------------------------------------------
     h_close_bars = historical_df["close"].astype(float).tolist()
