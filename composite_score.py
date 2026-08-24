@@ -1114,7 +1114,7 @@ class CompositeScorer:
     # ALPACA API Integration
     # setup the price data structre for calculate()
     # price schock calculator support method to get alpaca market price data
-
+    @staticmethod
     def psc_get_md(self, symbol):
         if symbol is None:
             raise ValueError(
