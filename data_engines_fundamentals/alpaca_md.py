@@ -203,9 +203,7 @@ class alpaca_md:
 
         logging.error(base_message)
 
-
-
-# #################### 9
+# #################### Method 8
 # builds a list of quote data for 1 single symbol
 def build_psc_pkg(self, symbol):
     """
