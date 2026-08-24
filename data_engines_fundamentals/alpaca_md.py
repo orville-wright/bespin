@@ -205,6 +205,7 @@ class alpaca_md:
 
 # #################### Method 8
 # builds a list of quote data for 1 single symbol
+
 def build_psc_pkg(self, symbol):
     """
     Construct the Price Shock Calculator Data Package.
