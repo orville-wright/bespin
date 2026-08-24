@@ -255,7 +255,7 @@ class alpaca_md:
 
             last_historical_date = last_timestamp.date()
             print (f"LAST DATE in DF is: {last_historical_date} / TODAY is: {today_utc}" )
-            print (f"LAST data entry in DF is\n"{last_timestamp} )
+            print (f"LAST data entry in DF is\n{last_timestamp}" )
 
             if last_historical_date >= today_utc:
                 raise ValueError(
