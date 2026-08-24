@@ -1292,7 +1292,10 @@ def main() -> int:
     
     psc_symbol = args.symbol.upper()
     #
+    print ( f"ALPACA Instance: Tyoe: {type{alpaca}}" )
+
     price_shock_input, raw_psc_df = alpaca.build_psc_pkg(psc_symbol)
+    # scorer.psc_get_md(args.symbol.upper())
     
     print ( f"{price_shock_input}" )
     print ( f"{raw_psc_df}" )
