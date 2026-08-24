@@ -266,41 +266,40 @@ class alpaca_md:
                     "in historical_closes."
                 )
         else:
+            # 4. EXTRACT HISTORICAL CLOSES
+            h_close_bars100 = (
+                historical_df["close"]
+                .astype(float)
+                .tolist()
+            )
 
-        # 4. EXTRACT HISTORICAL CLOSES
-        h_close_bars100 = (
-            historical_df["close"]
-            .astype(float)
-            .tolist()
-        )
+            # 5. GET CURRENT / TODAY'S MARKET DATA
+            snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
+            snapshot = _client.get_stock_snapshot(snapshot_params)
+            last_trade_close = (snapshot[_tkrsym].latest_trade.price)
 
-        # 5. GET CURRENT / TODAY'S MARKET DATA
-        snapshot_params = StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
-        snapshot = _client.get_stock_snapshot(snapshot_params)
-        last_trade_close = (snapshot[_tkrsym].latest_trade.price)
+            previous_close1 = (snapshot[_tkrsym].previous_daily_bar.close)
+            today_open = (snapshot[_tkrsym].daily_bar.open)
+            today_volume = (snapshot[_tkrsym].daily_bar.volume)
+            today_vwap = (snapshot[_tkrsym].daily_bar.vwap)
+            previous_open = (snapshot[_tkrsym].previous_daily_bar.open)
 
-        previous_close1 = (snapshot[_tkrsym].previous_daily_bar.close)
-        today_open = (snapshot[_tkrsym].daily_bar.open)
-        today_volume = (snapshot[_tkrsym].daily_bar.volume)
-        today_vwap = (snapshot[_tkrsym].daily_bar.vwap)
-        previous_open = (snapshot[_tkrsym].previous_daily_bar.open)
+            # 6. CONSTRUCT PRICE SHOCK CALCULATOR PACKAGE
+            psc_package["symbol"] = _tkrsym
 
-        # 6. CONSTRUCT PRICE SHOCK CALCULATOR PACKAGE
-        psc_package["symbol"] = _tkrsym
+            # TODAY
+            psc_package["current_price"] = last_trade_close
+            psc_package["today_open"] = today_open
+            psc_package["today_vwap"] = today_vwap
+            psc_package["today_volume"] = today_volume
 
-        # TODAY
-        psc_package["current_price"] = last_trade_close
-        psc_package["today_open"] = today_open
-        psc_package["today_vwap"] = today_vwap
-        psc_package["today_volume"] = today_volume
+            # PRIOR TRADING DAY
+            psc_package["previous_close"] = previous_close1
+            psc_package["previous_open"] = previous_open
 
-        # PRIOR TRADING DAY
-        psc_package["previous_close"] = previous_close1
-        psc_package["previous_open"] = previous_open
-
-        # HISTORICAL BASELINE
-        # IMPORTANT: today is excluded
-        psc_package["historical_closes"] = h_close_bars100
+            # HISTORICAL BASELINE
+            # IMPORTANT: today is excluded
+            psc_package["historical_closes"] = h_close_bars100
 
         return psc_package, bars.df
         
