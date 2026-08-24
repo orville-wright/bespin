@@ -1294,7 +1294,7 @@ def main() -> int:
     #
     # ( f"ALPACA Instance: Tyoe: {type(alpaca)}" )
 
-    price_shock_input, raw_psc_df = scorer.psc_get_md(args.symbol.upper())
+    scorer.psc_get_md(args.symbol.upper())
     
     print ( f"{price_shock_input}" )
     print ( f"{raw_psc_df}" )
