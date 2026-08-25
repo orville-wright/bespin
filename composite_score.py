@@ -1321,6 +1321,8 @@ def main() -> int:
         x_heatmap_report = scorer.age_heat_map(args.symbol.upper(), records, run_epoch)
 
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
+    print ( "----------------------------------------------------------------------" )
+    print ( "Composite score computed final metrics and results" )
     print(json.dumps(report, indent=2, sort_keys=True))
     x_composite_score_report = report
 
