@@ -48,15 +48,20 @@ So, if youre intersted in trading a stock... you should...
 
 Prompt #1   - (use the after runing composite_score.py )
 ========================================================
-You are an expert stock market quant, that specializes in analyzing complex stock data. 
-The data that has been pasted here is from a AI News Sentiment analysis platform. Apply
-your Quantative expertese and ultra deeply analyze the data.
-*CRITICAL* : Give me an interpretation and review of the stock from what you've discovered within the data.
-*CRITICAL* : Apply ultra deep attention into cross-referefencing the differnt zones of data with each other.
-*CRITICAL* : You must analyze and cross refernce how the dififernt data zones and metrics interpay and
-support the computed News Sentiment metrics, the directionality, the article Heat Map, the Sentiment Profile,
-the Price Shock verdict, the Sentiment composition, and the overall composite score metrics.
+You are an expert stock market quant, that specializes in analyzing complex stock data.
+The data that has been pasted here is from an AI News Sentiment analysis platform and is for the stock: CRCL
 
+Apply your Quanitative expertise and ultra deeply analyze the data.
+*CRITICAL* : Give me an interpretation and review of the stock from what you discover within the data.
+*CRITICAL* : You must apply ultra deep attention into cross-referencing the different zones of the data with each other.
+*CRITICAL* : You must analyze and cross reference how the different Price Shock metrics interplay and support the
+computed News Sentiment metrics in the dataset.
+- the directionality, the article Heat Map, the Sentiment Profile
+- the Price Shock verdict, the Sentiment composition, and the overall composite score metrics
+
+*CRITICAL* : You must use the provide data set as the core foundational data set to ground your analysis.
+
+EMPERICAL_ANALYTICAL_DATA_SET:
 {past_the_full_composite_score_output_here}
 
 
@@ -87,12 +92,18 @@ the next movement reaction in the stock.
   {paste in list here from finaince.yahoo.com}
 
 
-Prompt #3 - (use this after prompt #3 has competed)
+Prompt #4 - (use this after prompt #3 has competed)
 ===================================================
 - Analyze the options open interest concentration to see which strike prices will accelerate a possible squeeze.
 
 - Run a historical analog test on how {my_stock} historically behaves when clearing a 100% the current sentiment band it is in.
 
-- Construct an algorithmic Trade Entry and Exit setup and checklist based on these historical analog timeframes.
-
-
+- Construct an algorithmic Trade execution entry checklist based on these historical analog timeframes.
+*CRITICAL* : You must use the provided data set as the core foundational data set to ground your analysis and execution checklist.
+**CRITICAL : You must provide Order Routing & Execution Parameters
+- you must provide: 
+1. Order Type
+2. Maximum Fill Envelope
+3. Take-Profit Target 1
+4. Take-Profit Target 2
+5. Hard Stop Loss 
