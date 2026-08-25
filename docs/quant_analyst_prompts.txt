@@ -1,0 +1,98 @@
+
+How to use Bespin and these prompts....
+
+
+1. choose a stock that you are intersted in
+2. run the Bespin News Sentiment engine for that stock
+
+    uv run aop.py -n {my_stock} 999
+
+    - The news sentiment engine is now just a core data extactor engine
+    - This was the orignal goal of it.
+    - It will now get the latest news articels (generally ~100) and add them into the LMDB corpus.
+    - It reads each article, and compute the Pos/Neu/Neg Sentiment metrics for each article
+    - It then stores all of the computed sentiment metrics in the LMDB (along with a lot of supporting data)
+    - It will print some intersting info reports at the end of the run
+      note: The reports are just for the artitlces that its read NOW, in this moment... for this run only
+            The report does not scan the LMDB for all previous article sentiment metrics
+
+Note: For very hot stocks that publish news very frequenelty... (e.g. Nvidia)... maybe run it Twice a day
+    - This now makes "uv run aop.py -n {my_stock} 999" a data gathering engine, and not the "Sentiment Intelligence" engine.
+      Which was the oringal design.
+
+
+3.  When the News Sentiment engine finishes its News UPDATE run...
+    run the Bespin Sentiment Composite Score engine for the stock you just collected the latest news on
+
+    uv run composite_score.py {my_stock}
+
+The Composite Score engine is designed to Intelligently compute a single "Composite score" from all of the
+    - News Sentiment metrics that exist in the LMDB for {my_stock}... yes 100% all LMDB records!
+    - From a bunch of other data sources within the system
+    - From live TimeSeries Stock Price data for {my_stock}... collected live when you run composite_score.py
+    - From a set of curated Financal Statistical + mathmatical formulas and algo's (about 10 different Quant algo's)
+
+    composite_score.py will output a final Quant variable (along with a lot of other supporting data sets).
+        e.g. composite_score: 0.302
+    
+    Computing a single proovable Deterministic composite score from all that data is complex and dififcult.
+        - This is what Qunat's do. This is how they make their $$$$$$$$$$$$$
+
+So, if youre intersted in trading a stock... you should...
+    - update its news every day (i.e. uv run aop.py -n {my_stock} 999)
+    - Generate the Composite Score Report, and its supporting Datasets
+    - Instruct a GPT LLM Infernence service to interpret the Bespin output.
+    - Digest the Analysis... and make a trade decision
+
+
+
+Prompt #1   - (use the after runing composite_score.py )
+========================================================
+You are an expert stock market quant, that specializes in analyzing complex stock data. 
+The data that has been pasted here is from a AI News Sentiment analysis platform. Apply
+your Quantative expertese and ultra deeply analyze the data.
+*CRITICAL* : Give me an interpretation and review of the stock from what you've discovered within the data.
+*CRITICAL* : Apply ultra deep attention into cross-referefencing the differnt zones of data with each other.
+*CRITICAL* : You must analyze and cross refernce how the dififernt data zones and metrics interpay and
+support the computed News Sentiment metrics, the directionality, the article Heat Map, the Sentiment Profile,
+the Price Shock verdict, the Sentiment composition, and the overall composite score metrics.
+
+{past_the_full_composite_score_output_here}
+
+
+Prompt #2 - (use this after prompt #1 has produced output)
+==========================================================
+Execute a deeper analysis and map out... 
+*CRITICAL* : The exact algorithmic breakthrough event (if one has been identified)
+*CRITICAL* : Predict the breakthrough tipping point date, time where the sentiment will probabilistically
+cross over into its next sentiment territory band. 
+*CRITICAL* : You must provide a deep analysis of that breaktheough event, with predicted supporting dates and price info.
+*CRITICAL* : You must provide Upper, Middle and lower bound price predicitons
+*CRITICAL* : You must provide the amount of time (in days/hours) that the breaktheough will take.
+
+
+Prompt #3 - (use this after prompt #2 has completed)
+====================================================
+Based on your ultra deep analysis, compute how all of your identified quantative answers will stimulate
+the next movement reaction in the stock.
+*CRITICAL* : Compute and explain how that will affect the price of the stock.
+*CRITICAL* : Show actual predicted stock price movemtns numbers.
+
+- Right now, the stock is trading at: {price} / {gain/loss} / {%_move)
+
+- These are the top institutional holders..
+  {paste in list here from finaince.yahoo.com}
+
+- These are the top Mutual Fund Holders...
+  {paste in list here from finaince.yahoo.com}
+
+
+Prompt #3 - (use this after prompt #3 has competed)
+===================================================
+- Analyze the options open interest concentration to see which strike prices will accelerate a possible squeeze.
+
+- Run a historical analog test on how {my_stock} historically behaves when clearing a 100% the current sentiment band it is in.
+
+- Construct an algorithmic Trade Entry and Exit setup and checklist based on these historical analog timeframes.
+
+
