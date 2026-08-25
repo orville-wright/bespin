@@ -683,12 +683,12 @@ class CompositeScorer:
         for urlhash10, age_seconds, weight, tag in resolved_rows:
             age_text = self._humanize_age(age_seconds)
             if weight is None:
-                cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {age_text:<13} w= ---  {tag} | ")
+                cells.append(f"Art:{art_index:4d} {urlhash10}  {age_text:<13} w= ---  {tag} | ")
             else:
-                cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {age_text:<13} w={weight:.3f} {tag} | ")
+                cells.append(f"Art:{art_index:4d} {urlhash10}  {age_text:<13} w={weight:.3f} {tag} | ")
             art_index += 1
         for urlhash10, tag in unresolved_rows:
-            cells.append(f"Art:{art_index:4d} {urlhash10}  Age: {'UNRESOLVED':<13} w= ---  {tag} | ")
+            cells.append(f"Art:{art_index:4d} {urlhash10}  {'UNRESOLVED':<13} w= ---  {tag} | ")
             art_index += 1
 
         for i in range(0, len(cells), columns):
