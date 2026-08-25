@@ -710,7 +710,7 @@ class ml_sentiment:
         confidence = max(positive_share, neutral_share, negative_share)
 
         # Compute Direction via helper function
-        self.sentiment_direction(
+        direction_summary_report = self.sentiment_direction(
             symbol=symbol,
             net_sentiment=net_sentiment,
             confidence=confidence,
@@ -848,6 +848,7 @@ class ml_sentiment:
         # (same-quote nesting is a SyntaxError before 3.12)
 
         # Print SUMMARY Report - final analysis read-out
+        """
         print(f"Symbol:         {symbol}")
         print(f"Sentiment:      {sentiment_label}   | Directionally biased -> {split_vector_model['sentiment']} ")
         print(f"Base sentiment: {base}")
@@ -861,6 +862,7 @@ class ml_sentiment:
         print(f"Neutrality:     {neutral_share:.1%}\t| (Non-directional ambiguity: {neutral_strength:.3f})")
         print(f"Negativity:     {negative_share:.1%}\t| (Directional signal mass:  {negative_strength:.3f})")
         print()
+        """
 
         self.summary_report = {
             "symbol": symbol,
@@ -879,6 +881,7 @@ class ml_sentiment:
             "negative_strength": negative_strength
         }
 
+        # class attribute self.attribute is populated 
         return self.summary_report
 
     # #################################### 8
