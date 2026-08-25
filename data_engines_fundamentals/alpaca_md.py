@@ -229,8 +229,8 @@ class alpaca_md:
         current_session = snap.daily_bar.timestamp.astimezone(MARKET_TZ).date()
         prior_session   = snap.previous_daily_bar.timestamp.astimezone(MARKET_TZ).date()
 
-        # 2. HISTORICAL DAILY BARS
-        #    ~150 calendar days ≈ 104 sessions. 100 days gave you ~68.
+        # 2. Construct the HISTORICAL DAILY BARS Timeseries Time frame window.
+        #    ~150 calendar days ≈ 104 sessions. 100 days => ~68 days pf prices.
         # ---------------------------------------------------------
         start_day = datetime.now(timezone.utc) - timedelta(days=150)
 
@@ -242,18 +242,18 @@ class alpaca_md:
         ))
         historical_df = bars.df.copy().sort_index()
 
-        # 3. CUT ON SESSION, NOT CALENDAR DATE
+        # 3. Get the Timeseries data and CUT-OFF the time window on MARKET SESSION dates, NOT CALENDAR date
         # ---------------------------------------------------------
-        ts = historical_df.index.get_level_values("timestamp")
-        session_dates = ts.tz_convert(MARKET_TZ).date          # numpy array of date
-        historical_df = historical_df[session_dates < current_session]
+        ts = historical_df.index.get_level_values("timestamp")          # read the bulk Timeseries data from Alpaca now!
+        session_dates = ts.tz_convert(MARKET_TZ).date                   # numpy array of date
+        historical_df = historical_df[session_dates < current_session]  # cut out the dataset, remove last session contamination
 
-        # 4. VALIDATION THAT CAN ACTUALLY FAIL
+        # 4. VALIDATION - Things that can FAIL and contaminate/invalidate the data
         # ---------------------------------------------------------
         if historical_df.empty:
             raise ValueError(
-                f"PRICE SHOCK DATA ERROR: no completed sessions for {_tkrsym} "
-                f"before {current_session}."
+                f"FAIL:  Data Error - no completed sessions for: {_tkrsym} "
+                f"before date: {current_session}."
             )
 
         last_session = (
@@ -261,34 +261,35 @@ class alpaca_md:
             .astimezone(MARKET_TZ).date()
         )
 
-        # Independent check #1: the surviving tail must be the session the
-        # snapshot calls "previous". If these disagree, the two data sources
-        # are out of sync and the shock calculation is meaningless.
+        # Independent check #1: the surviving tail must be the session the snapshot calls "previous".
+        # If these disagree, the two data sources are out of sync and the shock calculation is meaningless.
         if last_session != prior_session:
             raise ValueError(
-                f"PRICE SHOCK DATA ERROR: history ends {last_session} but "
-                f"snapshot.previous_daily_bar is {prior_session}."
+                f"ERROR: Data Error: History ends @ {last_session} but... "
+                f"Previous daily Timeseries ends @  {prior_session}."
             )
 
         # Independent check #2: no session may fall on a weekend.
         if last_session.weekday() >= 5:
             raise ValueError(
-                f"PRICE SHOCK DATA ERROR: {last_session} is a weekend."
+                f"FAIL: Data Error: Last trading session: {last_session} is a weekend."
             )
 
-        # 5. BUILD THE PACKAGE — top level, NOT in an else branch
+        # 5. BUILD the  Final Data Package
         # ---------------------------------------------------------
         h_close_bars = historical_df["close"].astype(float).tolist()
 
-        # Soft cross-check: the last historical close should equal the
-        # snapshot's previous close. Warn rather than raise — feeds and
-        # adjustment handling can differ by a fraction of a cent.
+        # Soft cross-check: the last historical close should equal the snapshot's previous close.
+        # WARN if not — Market Data feeds and adjustment handling can differ by a fraction of a cent.
+        # e.g Most warnings will be: "85.43 != 87.42" (which is kind of accpetible)
         if not math.isclose(h_close_bars[-1],
                             float(snap.previous_daily_bar.close),
                             rel_tol=1e-6):
-            print(f"WARNING: tail close {h_close_bars[-1]} != "
-                f"snapshot previous_close {snap.previous_daily_bar.close}")
+            print(f"WARNING: Data Tail close: ${h_close_bars[-1]} != "
+                f"Previous_close: ${snap.previous_daily_bar.close}"
+                f"  by: ${h_close_bars[-1]}-{snap.previous_daily_bar.close}" )
 
+        # build the data dict now...
         psc_package["symbol"]            = _tkrsym
         psc_package["session_date"]      = current_session
         psc_package["current_price"]     = snap.latest_trade.price
@@ -299,7 +300,7 @@ class alpaca_md:
         psc_package["previous_open"]     = snap.previous_daily_bar.open
         psc_package["historical_closes"] = h_close_bars
 
-        return psc_package, bars.df
+        return psc_package, bars.df     # hand-off data package and Historical TimeSeries bars DataFrame
         
  # #################### 9
  # builds a list of quote data for 1 single symbol
