@@ -1292,7 +1292,7 @@ def main() -> int:
     price_shock_input, raw_psc_df = alpaca.build_psc_pkg(psc_symbol)
 
     psc_price_metrics = psc.calculate(price_shock_input)
-    print (f"\nPrice Shock Data Package:\n{psc_price_metrics}")
+    print (f"\nPrice Shock Data Package:\n{price_shock_input}")
     print ( "=============== Price Shock Calculator Metrics =============")
     print ( f"{psc_price_metrics}\n")
 
