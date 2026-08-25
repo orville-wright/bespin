@@ -1293,16 +1293,19 @@ def main() -> int:
 
     psc_price_metrics = psc.calculate(price_shock_input)
     print ("\nPrice Shock Data Package:\n")
-    print ( f"Symbol: {price_shock_input["symbol"]}     / Session Date: {price_shock_input["session_date"]} / Close Price: {price_shock_input["current_price"]} / Open Price: {price_shock_input["today_open"]} ")
+    print ( f"Symbol: {price_shock_input["symbol"]} - Session Date: {price_shock_input["session_date"]} / Close Price: {price_shock_input["current_price"]} / Open Price: {price_shock_input["today_open"]} ")
     print ( f"VWAP:   {price_shock_input["today_vwap"]} / Session Vol:  {price_shock_input["today_volume"]} / Prev Close:  {price_shock_input["previous_close"]} / Prev Open:  {price_shock_input["previous_open"]} ")
  
+    print ( "---------------------------------------------------------" )
     _hist_close_list = price_shock_input["historical_closes"]
+    print ( f"Previous close prices - {len(_hist_close_list)} days")
     _columns = 5
     for i in range(0, len(_hist_close_list), _columns):
         row = _hist_close_list[i:i + _columns]
         print(" | ".join(f"{value:8.2f}" for value in row))
 
-    print ( "\n=============== Price Shock Calculator Metrics =============")
+    print ( "\nComputed Price Shock Metrics for composite Score engine")
+    print ( "---------------------------------------------------------" )
     print ( f"{psc_price_metrics}\n")
 
     scorer._reset_run_counters()
