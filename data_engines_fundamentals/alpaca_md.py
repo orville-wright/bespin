@@ -287,7 +287,7 @@ class alpaca_md:
                             rel_tol=1e-6):
             print(f"WARNING: Data Tail close: ${h_close_bars[-1]} != "
                 f"Previous_close: ${snap.previous_daily_bar.close}"
-                f"  by: ${(h_close_bars[-1])-(snap.previous_daily_bar.close)}" )
+                f"  by: ${(h_close_bars[-1]-snap.previous_daily_bar.close):.3f}" )
 
         # build the data dict now...
         psc_package["symbol"]            = _tkrsym
