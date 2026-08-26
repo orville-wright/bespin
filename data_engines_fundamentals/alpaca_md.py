@@ -281,15 +281,16 @@ class alpaca_md:
 
         # Soft cross-check: the last historical close should equal the snapshot's previous close.
         # WARN if not — Market Data feeds and adjustment handling can differ by a fraction of a cent.
-        # e.g Most warnings will be: "85.43 != 87.42" (which is kind of accpetible)
+        # e.g Most warnings will be: e.g 0.005 from "85.402 != 87.407" (which is kind of accpetible)
         if not math.isclose(h_close_bars[-1],
                             float(snap.previous_daily_bar.close),
                             rel_tol=1e-6):
-            print(f"\nWARNING: Price missmatch // Timeseries Last close: ${h_close_bars[-1]} != "
+            print(f"\nWARNING: Close Price missmatch\nTimeseries Last close: ${h_close_bars[-1]} != "
                 f"Live MKT Data Prev Close: ${snap.previous_daily_bar.close}"
                 f"  by: ${(h_close_bars[-1]-snap.previous_daily_bar.close):.3f}" )
 
-        # build the data dict now...
+        # #########################################
+        # build the final PRICE SHOCK data package dict{} now...
         psc_package["symbol"]            = _tkrsym
         psc_package["session_date"]      = current_session
         psc_package["current_price"]     = snap.latest_trade.price

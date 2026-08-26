@@ -1114,6 +1114,7 @@ class CompositeScorer:
     # ALPACA API Integration
     # setup the price data structre for calculate()
     # price schock calculator support method to get alpaca market price data
+    """
     def psc_get_md(self, symbol):
         if symbol is None:
             raise ValueError(
@@ -1133,7 +1134,8 @@ class CompositeScorer:
             print ( f"{psc_data_package}" )
             return psc_data_package, psc_bars_df
 
-        """
+    """
+    """
         print(f"\n========== Alpaca Live Quote for: {self.symbol} ==========")  
         try:
             alpaca = alpaca_md(1, args=None)
@@ -1159,7 +1161,7 @@ class CompositeScorer:
             logging.error(f"Alpaca quote error for {self.symbol}: {e}")
         
         print(" ")
-        """
+    """
 
 
 # ############################# Decorator #1
@@ -1307,7 +1309,11 @@ def main() -> int:
 
     print ( "\nComputed Price Shock Metrics for composite Score engine")
     print ( "---------------------------------------------------------" )
-    print ( f"{psc_price_metrics}\n")
+    print ( f"Price return: {psc_price_metrics["price_return"]} //"
+           f"Price shock Zscore: {psc_price_metrics["price_shock_zscore"]} //"
+           f"Proce shock Score: {["price_shock_score"]}" )
+    
+    #print ( f"{psc_price_metrics}\n")
 
     scorer._reset_run_counters()
     # Materialize ONCE: the LMDB stream is single-use, but the legacy
