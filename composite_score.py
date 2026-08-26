@@ -699,8 +699,7 @@ class CompositeScorer:
               f"| resolved: {len(resolved_rows)} "
               f"| unresolved: {len(unresolved_rows)} "
               f"| Pos: {tag_tally['Pos']} Neu: {tag_tally['Neu']} Neg: {tag_tally['Neg']} "
-              f"| Sum of voting weights: {sum_weights:.2f}  "
-              f"(== composite n_eff, by construction)")
+              f"| Sum of voting weights: {sum_weights:.2f} (constructed composite n_eff) ")
         print()
 
         return {
@@ -1327,6 +1326,11 @@ def main() -> int:
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
     print ( "----------------------------------------------------------------------" )
     print ( "Composite score computed final metrics and results" )
+    print ( f"Articles evaled: {report["adapter"]["article_empirical"]} // "
+            f"Scored arts: {report["state_tally"]["scored"] //}"
+            f"Empty arts: {report["state_tally"]["empty"] //}"
+            f"Unreadable: {report["state_tally"]["unreadable"] //}" )
+    
     print(json.dumps(report, indent=2, sort_keys=True))
     x_composite_score_report = report
 
