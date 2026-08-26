@@ -487,7 +487,11 @@ def main():
 
     if args['newsai_sent'] is not False:
             news_symbol = (args['newsai_sent'][0]).upper()
-            arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit scraping to nn articles.
+            try:
+                arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit scraping to nn articles.
+            except  IndexError:
+                arg_cycle = 50          # default articels to get if users fails to provide a number on cmdline
+                print ( "No user constrained scan limit provided! - Scanning for {arg_cycle} articles...")
             cmi_debug = __name__+"::newsai_sent.#1"
             ai_nlp_cycle = int(1)
             bad_articles = int(1)
