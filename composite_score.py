@@ -1325,13 +1325,13 @@ def main() -> int:
 
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
     print ( "----------------------------------------------------------------------" )
+    print(json.dumps(report, indent=2, sort_keys=True))
     print ( "Composite score computed final metrics and results" )
     print ( f"Articles evaled: {report["adapter"]["article_empirical"]} // "
             f"Scored arts: {report["state_tally"]["scored"]} // "
             f"Empty arts: {report["state_tally"]["empty"]} // "
             f"Unreadable: {report["state_tally"]["unreadable"]}" )
     
-    print(json.dumps(report, indent=2, sort_keys=True))
     x_composite_score_report = report
 
     if args.bool_polarity is True:
