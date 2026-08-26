@@ -1338,12 +1338,12 @@ def main() -> int:
     print ( f"Directional density: {report["directional_density"]}")
     print ( f"n_eff (fresh weighted news confidence): {report["n_eff"]}")
 
-    print(json.dumps(report, indent=2, sort_keys=True))
     print ( f"Polarity: {report["polarity"]} // "
-            f"Volume factor: {report["volume_factor"]} // "
-            f"Positive factor: {polarity_report["P"]} // "
-            f"Negative factor: {polarity_report["N"]} //\n\n")
+            f"Volume factor: {report["volume_factor"]} //\n"
+            f"Positive weighting factor: {polarity_report["P"]} // "
+            f"Negative weighting factor: {polarity_report["N"]} //\n\n")
 
+    #print(json.dumps(report, indent=2, sort_keys=True))
     """
     if args.bool_polarity is True:
         polarity_report = scorer.recency_weighted_polarity(
