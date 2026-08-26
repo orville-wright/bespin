@@ -229,7 +229,7 @@ class alpaca_md:
         current_session = snap.daily_bar.timestamp.astimezone(MARKET_TZ).date()
         prior_session   = snap.previous_daily_bar.timestamp.astimezone(MARKET_TZ).date()
 
-        # 2. Construct the HISTORICAL DAILY BARS Timeseries Time frame window.
+        # 2. Construct the HISTORICAL DAILY BARS Timeseries data window.
         #    ~150 calendar days ≈ 104 sessions. 100 days => ~68 days pf prices.
         # ---------------------------------------------------------
         start_day = datetime.now(timezone.utc) - timedelta(days=150)
@@ -240,19 +240,19 @@ class alpaca_md:
             start=start_day,
             limit=None,
         ))
-        historical_df = bars.df.copy().sort_index()
+        historical_df = bars.df.copy().sort_index()     # Timeseries Price data (OHLCV, VWAP)...
 
         # 3. Get the Timeseries data and CUT-OFF the time window on MARKET SESSION dates, NOT CALENDAR date
         # ---------------------------------------------------------
         ts = historical_df.index.get_level_values("timestamp")          # read the bulk Timeseries data from Alpaca now!
         session_dates = ts.tz_convert(MARKET_TZ).date                   # numpy array of date
-        historical_df = historical_df[session_dates < current_session]  # cut out the dataset, remove last session contamination
+        historical_df = historical_df[session_dates < current_session]  # cut out our dataset, by REMOVING **Last Session** contamination
 
         # 4. VALIDATION - Things that can FAIL and contaminate/invalidate the data
         # ---------------------------------------------------------
         if historical_df.empty:
             raise ValueError(
-                f"FAIL:  Data Error - no completed sessions for: {_tkrsym} "
+                f"FAIL:  Data Error - no Timeseries OHLCV pricing data for: {_tkrsym} "
                 f"before date: {current_session}."
             )
 
@@ -285,8 +285,8 @@ class alpaca_md:
         if not math.isclose(h_close_bars[-1],
                             float(snap.previous_daily_bar.close),
                             rel_tol=1e-6):
-            print(f"WARNING: Data Tail close: ${h_close_bars[-1]} != "
-                f"Previous_close: ${snap.previous_daily_bar.close}"
+            print(f"\nWARNING: Price missmatch // Timeseries Last close: ${h_close_bars[-1]} != "
+                f"Live MKT Data Prev Close: ${snap.previous_daily_bar.close}"
                 f"  by: ${(h_close_bars[-1]-snap.previous_daily_bar.close):.3f}" )
 
         # build the data dict now...
