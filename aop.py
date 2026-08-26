@@ -492,6 +492,12 @@ def main():
             except  IndexError:
                 arg_cycle = 50          # default articels to get if users fails to provide a number on cmdline
                 print ( f"No user constrained scan limit provided! - Scanning for {arg_cycle} articles...")
+
+            if arg_cycle == 999:
+                print ( "Scanning for maximum number of News articles: 999... ")
+            else:
+                print ( f"User constrained news scan limit to: {arg_cycle} articles...")
+
             cmi_debug = __name__+"::newsai_sent.#1"
             ai_nlp_cycle = int(1)
             bad_articles = int(1)
