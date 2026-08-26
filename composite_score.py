@@ -1326,11 +1326,22 @@ def main() -> int:
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
     print ( "----------------------------------------------------------------------" )
     print(json.dumps(report, indent=2, sort_keys=True))
-    print ( "Composite score computed final metrics and results" )
+    print ( f"Composite score computed article metrics for: {report["symbol"]}" )
     print ( f"Articles evaled: {report["adapter"]["provenance_tally"]["article_empirical"]} // "
             f"Scored arts: {report["adapter"]["state_tally"]["scored"]} // "
             f"Empty arts: {report["adapter"]["state_tally"]["empty"]} // "
-            f"Unreadable: {report["adapter"]["state_tally"]["unreadable"]}" )
+            f"Unreadable arts: {report["adapter"]["state_tally"]["unreadable"]}" )
+    
+    print ( "FINAL Composite score results" )
+    print ( f"Composite score: {["composite_score"]} // ")
+    print ( f"Directional density: {["directional_density"]} // ")
+    print ( f"n_eff (fresh news confidence): {["n_eff"]} // ") ""
+    
+    print ( f"Polarity: {["polarity"]} // ")
+    print ( f"Volume factor: {["volume_factor"]} // ")
+    # N
+    # P
+    
     
     x_composite_score_report = report
 
