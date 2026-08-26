@@ -719,8 +719,7 @@ def main():
             ai_sent_time = ai_sent_end_time - ai_sent_start_time            # compute total time
 
             # #############################################
-            # Final Summary report
-            print ( f"=================== Sentiment Profile Analysis for: {news_symbol.upper()} ===================" )
+            # Final News scan Summary report
             # note - df_final is a jumbo DataFrame that holds all sentimnent metrics for this run
             # but it is not used in the final summary report, but it is available for debugging and analysis
             # 
@@ -741,10 +740,10 @@ def main():
             #print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
 
-            print ( f"Valid AI articles read:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
-            print ( f"Rehydrated cache articles:  {sent_ai.kv_rehydrated}")
-            print ( f"New C4 extracted articles:  {news_ai.yfn.kv_created_C4}")
-            print ( f"New BS4 extracted articles: {news_ai.yfn.kv_created_BS4}")
+            print ( f"Valid AI articles read:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4} //"
+                    f"Potentially bad: {bad_articles} // Total considerd: {sn_idx}" )
+            print ( f"Rehydrated from cache:      {sent_ai.kv_rehydrated}")
+            print ( f"New C4 extracted articles:  {news_ai.yfn.kv_created_C4} // New BS4 extracted articles: {news_ai.yfn.kv_created_BS4}")
             print ( f"Total new articles extrctd: {news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}")
             print ( f"Sentimnt chunks from cache: {sent_ai.sen_cache_eng}" )
             print ( f"LLM computed sent chunks:   {sent_ai.sen_llm_eng}" )
