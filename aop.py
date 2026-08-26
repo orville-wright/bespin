@@ -521,8 +521,8 @@ def main():
 
             logging.info( '%s - Execute nlp_read_one AI news sentiment LOOP...' % cmi_debug)
             
+            # SCAN the depth 0 top level news page for this stock
             # scan_news_feed() + eval_news_feed_stories()
-
             articles_found = asyncio.run(news_ai.nlp_read_one(news_symbol, args))  
             if articles_found == 0:
                 print ( f"AI news reader found NO articles for Stock [ {news_symbol} ]" )
@@ -554,7 +554,7 @@ def main():
             ai_sent_start_time = time.perf_counter()  # Mark the start time
             for sn_idx, sn_row in news_ai.yfn.ml_ingest.items():    # Main LOOP - all pages extrated in ml_ingest
                 aggmean_sent_df = pd.DataFrame()                    # reset DataFrame for each article
-                thint = news_ai.nlp_summary_report(3, sn_idx)       # get this TYPE of new article from ml_ingest : sn_idx = article counter loop
+                thint = news_ai.nlp_summary_report(3, sn_idx)       # article from ml_ingest : sn_idx = article counter loop
 
                 # ######################################################
                 # Anti-bot avoidance scraping load-balancer logic
@@ -740,8 +740,8 @@ def main():
             #print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
 
-            print ( f"Valid AI articles read:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4} //"
-                    f"Potentially bad: {bad_articles} // Total considerd: {sn_idx}" )
+            print ( f"Valid AI articles read:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4} // "
+                    f"No considerd for AI: {bad_articles} // Total evaluated: {sn_idx}" )
             print ( f"Rehydrated from cache:      {sent_ai.kv_rehydrated}")
             print ( f"New C4 extracted articles:  {news_ai.yfn.kv_created_C4} // New BS4 extracted articles: {news_ai.yfn.kv_created_BS4}")
             print ( f"Total new articles extrctd: {news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}")
@@ -754,6 +754,7 @@ def main():
             # ############### Done reading many articles ###################
 
             #print ( f"{news_ai.yfn.ml_ingest}")
+            print ( f"#-DEBUG-# ml_ingest:\n{news_ai.yfn.ml_ingest}" )
 
             print ("\n\n")
 
