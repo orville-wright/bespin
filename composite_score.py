@@ -1326,7 +1326,6 @@ def main() -> int:
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
     x_composite_score_report = report      # store report as accessor dict
 
-    #print(json.dumps(report, indent=2, sort_keys=True))
     print ( f"Composite score article metrics for: {report["symbol"]}" )
     print ( "----------------------------------------------------------------------" )
     print ( f"Articles evaled: {report["adapter"]["provenance_tally"]["article_empirical"]} // "
@@ -1338,6 +1337,7 @@ def main() -> int:
     print ( f"Directional density: {report["directional_density"]}")
     print ( f"n_eff (fresh weighted news confidence): {report["n_eff"]}")
 
+    print(json.dumps(report, indent=2, sort_keys=True))
     print ( f"Polarity: {report["polarity"]} // "
             f"Volume factor: {report["volume_factor"]} // "
             f"Positive factor: {report["P"]} // "
