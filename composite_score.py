@@ -1299,12 +1299,13 @@ def main() -> int:
  
     print ( "----------------------------------------------------------------------------" )
     _hist_close_list = price_shock_input["historical_closes"]
-    print ( f"Previous close prices - {len(_hist_close_list)} historical dayily prices")
+    print ( f"Prev Price close corpus contains {len(_hist_close_list)} historical daily values")
     _columns = 5
     for i in range(0, len(_hist_close_list), _columns):
         row = _hist_close_list[i:i + _columns]
         print(" | ".join(f"{value:8.2f}" for value in row))
 
+    print ( f"#-DEBUG-# price_shock_input: {price_shock_input}" )
     print ( "\nComputed Price Shock Metrics for composite Score engine")
     print ( "---------------------------------------------------------" )
     print ( f"{psc_price_metrics}\n")
