@@ -318,7 +318,7 @@ class alpaca_md:
                 quote = data['quotes'][symbol.upper()]
                 self.quote_data[symbol.upper()] = self._format_quote_data(quote, symbol.upper())
             
-                print ( f"#-DEBUG-#: ALPACA new-quote ====================" )
+                print ( "#-DEBUG-#: ALPACA new-quote ====================" )
                 _tkrsym = symbol.upper()
                 _client = StockHistoricalDataClient(self.api_key, self.secret_key)
                 _sym_req_params = StockLatestQuoteRequest(symbol_or_symbols=[_tkrsym])

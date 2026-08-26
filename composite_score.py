@@ -1305,7 +1305,6 @@ def main() -> int:
         row = _hist_close_list[i:i + _columns]
         print(" | ".join(f"{value:8.2f}" for value in row))
 
-    print ( f"#-DEBUG-# price_shock_input: {price_shock_input}" )
     print ( "\nComputed Price Shock Metrics for composite Score engine")
     print ( "---------------------------------------------------------" )
     print ( f"{psc_price_metrics}\n")
