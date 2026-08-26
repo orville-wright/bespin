@@ -1309,11 +1309,9 @@ def main() -> int:
 
     print ( "\nComputed Price Shock Metrics for composite Score engine")
     print ( "---------------------------------------------------------" )
-    print ( f"Price return: {psc_price_metrics["price_return"]} //"
-           f"Price shock Zscore: {psc_price_metrics["price_shock_zscore"]} //"
-           f"Proce shock Score: {["price_shock_score"]}" )
-    
-    #print ( f"{psc_price_metrics}\n")
+    print ( f"Price return: {psc_price_metrics["price_return"]} // "
+            f"Price shock Zscore: {psc_price_metrics["price_shock_zscore"]} // "
+            f"Price shock Score: {psc_price_metrics["price_shock_score"]}\n")
 
     scorer._reset_run_counters()
     # Materialize ONCE: the LMDB stream is single-use, but the legacy
