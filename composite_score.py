@@ -1326,15 +1326,16 @@ def main() -> int:
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
     x_composite_score_report = report      # store report as accessor dict
 
+    #print(json.dumps(report, indent=2, sort_keys=True))
+    print ( f"Composite score article metrics for: {report["symbol"]}" )
     print ( "----------------------------------------------------------------------" )
-    print(json.dumps(report, indent=2, sort_keys=True))
-    print ( f"Composite score computed article metrics for: {report["symbol"]}" )
     print ( f"Articles evaled: {report["adapter"]["provenance_tally"]["article_empirical"]} // "
             f"Scored arts: {report["adapter"]["state_tally"]["scored"]} // "
             f"Empty arts: {report["adapter"]["state_tally"]["empty"]} // "
             f"Unreadable arts: {report["adapter"]["state_tally"]["unreadable"]}" )
     
     print ( "FINAL Composite score results" )
+    print ( "----------------------------------------------------------------------" )
     print ( f"Composite score: {["composite_score"]} // ")
     print ( f"Directional density: {["directional_density"]} // ")
     print ( f"n_eff (fresh news confidence): {["n_eff"]} // ")
@@ -1342,7 +1343,7 @@ def main() -> int:
     print ( f"Polarity: {["polarity"]} // "
             f"Volume factor: {["volume_factor"]} // "
             f"Positive factor: {["P"]} // "
-            f"Negative factor: {["N"]} //")
+            f"Negative factor: {["N"]} //\n\n")
     
 
     if args.bool_polarity is True:
