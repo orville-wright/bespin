@@ -465,9 +465,9 @@ def main():
         #     Also add Index # from main Full Combo table  (make visual lookup quicker/easier)
         #  te_uniques = x.list_uniques()
         print ( f"\n\n" )
-        print ( f"========== Hottest stocks Bullish status =============" )
+        print ( "========== Hottest stocks Bullish status =============" )
         print ( f"{te.te_df0[['Symbol', 'Today', 'Short', 'Mid', 'Long', 'Bullcount', 'Senti']].sort_values(by=['Bullcount', 'Senti'], ascending=False)}" )
-        print ( f"------------------------------------------------------" )
+        print ( "------------------------------------------------------" )
         #
         # HACKING : show uniques from COMBO def
         print ( "***** Hacking ***** " )
@@ -491,7 +491,7 @@ def main():
                 arg_cycle = int(args['newsai_sent'][1])     # for testing & debug. Limit scraping to nn articles.
             except  IndexError:
                 arg_cycle = 50          # default articels to get if users fails to provide a number on cmdline
-                print ( "No user constrained scan limit provided! - Scanning for {arg_cycle} articles...")
+                print ( f"No user constrained scan limit provided! - Scanning for {arg_cycle} articles...")
             cmi_debug = __name__+"::newsai_sent.#1"
             ai_nlp_cycle = int(1)
             bad_articles = int(1)
