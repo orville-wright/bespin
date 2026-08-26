@@ -1333,18 +1333,15 @@ def main() -> int:
             f"Scored arts: {report["adapter"]["state_tally"]["scored"]} // "
             f"Empty arts: {report["adapter"]["state_tally"]["empty"]} // "
             f"Unreadable arts: {report["adapter"]["state_tally"]["unreadable"]}" )
-    
-    print ( "FINAL Composite score results" )
     print ( "----------------------------------------------------------------------" )
-    print ( f"Composite score: {["composite_score"]} // ")
-    print ( f"Directional density: {["directional_density"]} // ")
-    print ( f"n_eff (fresh news confidence): {["n_eff"]} // ")
+    print ( f"Composite score: {report["composite_score"]}")
+    print ( f"Directional density: {report["directional_density"]}")
+    print ( f"n_eff (fresh weighted news confidence): {report["n_eff"]}")
 
-    print ( f"Polarity: {["polarity"]} // "
-            f"Volume factor: {["volume_factor"]} // "
-            f"Positive factor: {["P"]} // "
-            f"Negative factor: {["N"]} //\n\n")
-    
+    print ( f"Polarity: {report["polarity"]} // "
+            f"Volume factor: {report["volume_factor"]} // "
+            f"Positive factor: {report["P"]} // "
+            f"Negative factor: {report["N"]} //\n\n")
 
     if args.bool_polarity is True:
         polarity_report = scorer.recency_weighted_polarity(
