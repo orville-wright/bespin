@@ -283,7 +283,7 @@ class CompositeScorer:
 
         directional_mass = m["P"] + m["N"]
         if directional_mass == 0.0:
-            logging.info(f"%s    - Computed Directional Mass & Polarity = 0.0 !!" % cmi_debug)
+            logging.info( "%s    - Computed Directional Mass & Polarity = 0.0 !!" % cmi_debug)
             polarity = 0.0
             all_neutral = True
         else:
@@ -302,7 +302,7 @@ class CompositeScorer:
 
         if m["n_eff"] < self.min_effective_volume:
             state = "insufficient_fresh_coverage"
-            logging.info(f"%s    - Insufficient Fresh Article coverage !" % cmi_debug)
+            logging.info( "%s    - Insufficient Fresh Article coverage !" % cmi_debug)
         else:
             state = "scored"
 
