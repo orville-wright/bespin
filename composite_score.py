@@ -1324,6 +1324,8 @@ def main() -> int:
         x_heatmap_report = scorer.age_heat_map(args.symbol.upper(), records, run_epoch)
 
     report = scorer.composite_score(args.symbol.upper(), records, run_epoch)
+    x_composite_score_report = report      # store report as accessor dict
+
     print ( "----------------------------------------------------------------------" )
     print(json.dumps(report, indent=2, sort_keys=True))
     print ( f"Composite score computed article metrics for: {report["symbol"]}" )
@@ -1335,15 +1337,13 @@ def main() -> int:
     print ( "FINAL Composite score results" )
     print ( f"Composite score: {["composite_score"]} // ")
     print ( f"Directional density: {["directional_density"]} // ")
-    print ( f"n_eff (fresh news confidence): {["n_eff"]} // ") ""
+    print ( f"n_eff (fresh news confidence): {["n_eff"]} // ")
+
+    print ( f"Polarity: {["polarity"]} // "
+            f"Volume factor: {["volume_factor"]} // "
+            f"Positive factor: {["P"]} // "
+            f"Negative factor: {["N"]} //")
     
-    print ( f"Polarity: {["polarity"]} // ")
-    print ( f"Volume factor: {["volume_factor"]} // ")
-    # N
-    # P
-    
-    
-    x_composite_score_report = report
 
     if args.bool_polarity is True:
         polarity_report = scorer.recency_weighted_polarity(
