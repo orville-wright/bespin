@@ -740,13 +740,15 @@ def main():
             #print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("--------------------------------")
 
-            print ( f"Valid AI articles read:     {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4} // "
-                    f"No considerd for AI: {bad_articles} // Total evaluated: {sn_idx}" )
-            print ( f"Rehydrated from cache:      {sent_ai.kv_rehydrated}")
-            print ( f"New C4 extracted articles:  {news_ai.yfn.kv_created_C4} // New BS4 extracted articles: {news_ai.yfn.kv_created_BS4}")
-            print ( f"Total new articles extrctd: {news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}")
-            print ( f"Sentimnt chunks from cache: {sent_ai.sen_cache_eng}" )
-            print ( f"LLM computed sent chunks:   {sent_ai.sen_llm_eng}" )
+
+            print ( f"Total evaluated:            {sn_idx} // "
+                    f"Valid articles read by AI: {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4} // "
+                    f"Not read by AI: {bad_articles}" )
+            print ( f"New C4 articles add:        {news_ai.yfn.kv_created_C4} // New BS4 articles added: {news_ai.yfn.kv_created_BS4} // "
+                    f"Arts Rehydrated from cache: {sent_ai.kv_rehydrated}")
+            print ( f"Total New articles extrctd: {news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
+            print ( f"LLM computed sent chunks:   {sent_ai.sen_llm_eng} // "
+                    f"Sentiment chunks rehydrated from cacche: {sent_ai.sen_cache_eng}" )
             print ( f"Total sentiment chunks:     {sent_ai.df0_row_count}" )
             print ( "\n" )
 
