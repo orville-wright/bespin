@@ -1341,7 +1341,7 @@ def main() -> int:
     print ( f"Polarity: {report["polarity"]} // "
             f"Volume factor: {report["volume_factor"]}\n"
             f"Positive weighting factor: {polarity_report["P"]} // "
-            f"Negative weighting factor: {polarity_report["N"]}\n\n")
+            f"Negative weighting factor: {polarity_report["N"]} // Pos:Neg ratio: {polarity_report["N"]/polarity_report["P"]:.3f} : 1\n\n")
 
 
 if __name__ == "__main__":

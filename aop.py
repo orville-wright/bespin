@@ -729,7 +729,7 @@ def main():
                 positive_t, negative_t, neutral_t
             )
 
-            print (f"=================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ===================" )
+            print (f"=========================== AI NLP Sentiment processing metrics: {news_symbol.upper()} ===========================" )
             print (f"LLM Vec Tokenz:  {_ttcz} - Chars: {_tccz} / Words: {_twcz} / scent/paras: {(_tscz + _tpcz + _trcz)} | AI read time: {(ai_sent_time / 60):.2f} mins" )
             print (f"Human read time: {(hpt_mins):.1f} mins ({(hpt_hours):.1f} hours)\t| Human analyst time: {analyst_time:.1f} hours" )
             print (f"AI performance:  {round((hpt_mins * 60) / (ai_sent_time / 60))} X Faster than a Human\t| Human analyst cost: ${round(analyst_cost):,}" )
@@ -738,9 +738,7 @@ def main():
             #pd.set_option('display.max_rows', None)
             #pd.set_option('display.max_columns', None)
             #print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
-            print ("--------------------------------")
-
-
+            print ("------------------------------------------------------------------------------------------------------------------")
             print ( f"Total evaluated for AI:     {sn_idx} // "
                     f"Valid articles read by AI: {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4} // "
                     f"Not read by AI: {bad_articles} // Candidates: {news_ai.ml_yfn_dataset.articles_found}" )
@@ -754,7 +752,7 @@ def main():
 
             # End Summary report
             # ############### Done reading many articles ###################
-
+            #-DEBUG-#
             #print ( f"{news_ai.yfn.ml_ingest}")
             #print ( f"#-DEBUG-# ml_ingest:\n{news_ai.yfn.ml_ingest}" )
 
