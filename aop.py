@@ -741,7 +741,7 @@ def main():
             print ("--------------------------------")
 
 
-            print ( f"Total evaluated for AI:    {sn_idx} // "
+            print ( f"Total evaluated for AI:     {sn_idx} // "
                     f"Valid articles read by AI: {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4} // "
                     f"Not read by AI: {bad_articles} // Candidates: {news_ai.ml_yfn_dataset.articles_found}" )
             print ( f"New C4 articles add:        {news_ai.yfn.kv_created_C4} // New BS4 articles added: {news_ai.yfn.kv_created_BS4} // "
