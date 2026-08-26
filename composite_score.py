@@ -1327,9 +1327,9 @@ def main() -> int:
     print ( "----------------------------------------------------------------------" )
     print ( "Composite score computed final metrics and results" )
     print ( f"Articles evaled: {report["adapter"]["article_empirical"]} // "
-            f"Scored arts: {report["state_tally"]["scored"] //}"
-            f"Empty arts: {report["state_tally"]["empty"] //}"
-            f"Unreadable: {report["state_tally"]["unreadable"] //}" )
+            f"Scored arts: {report["state_tally"]["scored"]} // "
+            f"Empty arts: {report["state_tally"]["empty"]} // "
+            f"Unreadable: {report["state_tally"]["unreadable"]}" )
     
     print(json.dumps(report, indent=2, sort_keys=True))
     x_composite_score_report = report
