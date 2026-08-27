@@ -225,7 +225,7 @@ class alpaca_md:
             StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
         )
         
-        print ( f"#-DEBUG-# snapshot: {_tkrsym}" )
+        print ( f"#-DEBUG-# snapshot: {snapshot}" )
         snap = snapshot[_tkrsym]
 
         current_session = snap.daily_bar.timestamp.astimezone(MARKET_TZ).date()
