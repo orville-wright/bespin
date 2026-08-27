@@ -857,13 +857,15 @@ def main():
 
         """
         """
+        time.sleep(5)
         # Test daily data
         print(f"\nGetting daily data for {test_symbol}...")
         daily_df = av.get_daily_data(test_symbol, outputsize='compact')
         if not daily_df.empty:
             print(f"Daily data shape: {daily_df.shape}")
             print(daily_df.head())
-        
+
+        time.sleep(5)        
         # test get_weekly_data
         print(f"\nGetting Weekly data for {test_symbol}...")
         weekly_df = av.get_weekly_data(test_symbol)
@@ -871,10 +873,9 @@ def main():
             print(f"Weekly data shape: {weekly_df.shape}")
             print(weekly_df.head())
         
-        time.sleep(4)
-        
+        time.sleep(5)
         # Test technical indicator
-        print(f"\nGetting SMA for {test_symbol}...")
+        print(f"\nGetting SMA Technical Indicator for {test_symbol}...")
         sma_df = av.get_sma(test_symbol, interval='daily', time_period=20)
         if not sma_df.empty:
             print(f"SMA data shape: {sma_df.shape}")
@@ -897,7 +898,7 @@ def main():
             print(f"Market status retrieved successfully")
         """
         
-        time.sleep(4)
+        time.sleep(5)
         # Test market news
         print(f"\nGetting market news for {test_symbol}...")
         news_data = av.market_news(tickers=test_symbol, limit=50)
