@@ -1334,16 +1334,17 @@ def main() -> int:
             f"Empty arts: {report["adapter"]["state_tally"]["empty"]} // "
             f"Unreadable arts: {report["adapter"]["state_tally"]["unreadable"]}" )
     print ( "----------------------------------------------------------------------" )
-    print ( f"Composite score: {report["composite_score"]}")
+    print ( f"Score engine status: {report["state"]}" )
+    print ( f"Composite score:     {report["composite_score"]}")
     print ( f"Directional density: {report["directional_density"]}")
     print ( f"n_eff (fresh weighted news confidence): {report["n_eff"]}")
 
-    print ( f"Polarity: {report["polarity"]} // "
+    print ( f"Polarity:      {report["polarity"]} // "
             f"Volume factor: {report["volume_factor"]}\n"
             f"Positive weighting factor: {polarity_report["P"]} // "
             f"Negative weighting factor: {polarity_report["N"]} // Pos:Neg ratio: {polarity_report["P"]/polarity_report["N"]:.3f}-to-1\n\n")
 
-    print ( f"{report}")
+    #print ( f"{report}")
 
 if __name__ == "__main__":
     raise SystemExit(main())
