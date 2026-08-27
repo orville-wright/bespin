@@ -739,10 +739,10 @@ def main():
             #pd.set_option('display.max_columns', None)
             #print ( f"DEBUG-#659:  sent_ai.df_final\n{df_final}\n")
             print ("------------------------------------------------------------------------------------------------------------------")
-            print ( f"Total evaluated for AI:     {sn_idx} // "
+            print ( f"Possible good AI targets:  {sn_idx} // "
                     f"Valid articles read by AI: {sent_ai.kv_rehydrated + news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4} // "
                     f"Not read by AI: {bad_articles} // Candidates: {news_ai.ml_yfn_dataset.articles_found}" )
-            print ( f"New C4 articles add:        {news_ai.yfn.kv_created_C4} // New BS4 articles added: {news_ai.yfn.kv_created_BS4} // "
+            print ( f"New articles added by C4:   {news_ai.yfn.kv_created_C4} // New articles added by BS4: {news_ai.yfn.kv_created_BS4} // "
                     f"Arts Rehydrated from cache: {sent_ai.kv_rehydrated}")
             print ( f"Total New articles extrctd: {news_ai.yfn.kv_created_C4 + news_ai.yfn.kv_created_BS4}" )
             print ( f"LLM computed sent chunks:   {sent_ai.sen_llm_eng} // "
