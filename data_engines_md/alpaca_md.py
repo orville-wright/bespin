@@ -225,8 +225,11 @@ class alpaca_md:
             StockSnapshotRequest(symbol_or_symbols=[_tkrsym])
         )
         
-        print ( f"#-DEBUG-# snapshot: {snapshot}" )
-        snap = snapshot[_tkrsym]
+        try:
+            snap = snapshot[_tkrsym]
+        except KeyError:
+            print ( f"ERROR: Alpaca MKT Data API failed to get Daily Snapshot data for: {_tkrsym}")
+            exit(1)
 
         current_session = snap.daily_bar.timestamp.astimezone(MARKET_TZ).date()
         prior_session   = snap.previous_daily_bar.timestamp.astimezone(MARKET_TZ).date()
