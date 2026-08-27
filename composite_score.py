@@ -1343,6 +1343,7 @@ def main() -> int:
             f"Positive weighting factor: {polarity_report["P"]} // "
             f"Negative weighting factor: {polarity_report["N"]} // Pos:Neg ratio: {polarity_report["P"]/polarity_report["N"]:.3f}-to-1\n\n")
 
+    print ( f"{report}")
 
 if __name__ == "__main__":
     raise SystemExit(main())
