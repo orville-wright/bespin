@@ -835,7 +835,7 @@ def main():
         print("========== Alpha Vantage Market Data Test ==========")
         
         # Test symbol search
-        test_symbol = "AAPL"
+        test_symbol = "AMD"
  
         # Test global quote
         print(f"\nGetting global quote for {test_symbol}...")
@@ -856,13 +856,13 @@ def main():
 
 
         """
+        """
         # Test daily data
         print(f"\nGetting daily data for {test_symbol}...")
         daily_df = av.get_daily_data(test_symbol, outputsize='compact')
         if not daily_df.empty:
             print(f"Daily data shape: {daily_df.shape}")
             print(daily_df.head())
-        """
         
         # test get_weekly_data
         print(f"\nGetting Weekly data for {test_symbol}...")
@@ -880,6 +880,7 @@ def main():
             print(f"SMA data shape: {sma_df.shape}")
             print(sma_df.head())
         
+        """
         # Test company overview
         print(f"\nGetting company overview for {test_symbol}...")
         overview = av.get_company_overview(test_symbol)
@@ -894,8 +895,8 @@ def main():
         market_status = av.get_market_status()
         if market_status:
             print(f"Market status retrieved successfully")
-        
         """
+        
         time.sleep(4)
         # Test market news
         print(f"\nGetting market news for {test_symbol}...")
@@ -909,7 +910,7 @@ def main():
                 print(f"Published: {article.get('time_published')}")
                 print(f"Sentiment: {article.get('overall_sentiment_label')} ({article.get('overall_sentiment_score')})")
                 print(f"URL: {article.get('url')}")
-        """
+        
         
     except Exception as e:
         print(f"Error in main: {e}")

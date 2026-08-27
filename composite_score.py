@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from data_engines_fundamentals.alpaca_md import alpaca_md
+from data_engines_md.alpaca_md import alpaca_md
 from price_shock import PriceShockCalculator
 
 # logging setup
@@ -101,7 +101,7 @@ class CompositeScorer:
         self.lmdb_record_count = 0
         self.processing_record = 0
         cmi_debug = __name__+"::" + self.__init__.__name__
-        logging.info(f'%s Instantiate' % cmi_debug)
+        logging.info( '%s Instantiate' % cmi_debug)
 
 # ############################# Method #0
     def _reset_run_counters(self) -> None:

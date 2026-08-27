@@ -20,7 +20,7 @@ import pprint
 
 # my private classes & methods
 from y_cookiemonster import y_cookiemonster
-from data_engines_fundamentals.alpaca_md import alpaca_md
+from data_engines_md.alpaca_md import alpaca_md
 from bigcharts_md import bc_quote
 from nasdaq_uvoljs import un_volumes
 from nasdaq_wrangler import nq_wrangler
@@ -31,7 +31,7 @@ from y_techevents import y_techevents
 from y_topgainers import y_topgainers
 
 # NEWS Data Extractor engines
-from data_engines_fundamentals.polygon_md import polygon_md
+from data_engines_md.polygon_md import polygon_md
 from data_engines_news.barrons_news import barrons_news
 from data_engines_news.benzinga_news import benzinga_news
 from data_engines_news.forbes_news import forbes_news
@@ -43,17 +43,17 @@ from data_engines_news.hedgeweek_news import hedgeweek_news
 """
 Disbaled for now
 Market DATA Extractor engines
-from data_engines_fundamentals.alphavantage_md import alphavantage_md
-from data_engines_fundamentals.fred_md import fred_md
-from data_engines_fundamentals.eodhistoricaldata_md import eodhistoricaldata_md
-from data_engines_fundamentals.financialmodelingprep_md import financialmodelingprep_md
-from data_engines_fundamentals.finnhub_md import finnhub_md
-from data_engines_fundamentals.marketstack_md import marketstack_md
-from data_engines_fundamentals.sec_md import sec_md
-from data_engines_fundamentals.stockdata_md import stockdata_md
-from data_engines_fundamentals.stooq_md import stooq_md
-from data_engines_fundamentals.tiingo_md import tiingo_md
-from data_engines_fundamentals.twelvedata_md import twelvedata_md
+from data_engines_md.alphavantage_md import alphavantage_md
+from data_engines_md.fred_md import fred_md
+from data_engines_md.eodhistoricaldata_md import eodhistoricaldata_md
+from data_engines_md.financialmodelingprep_md import financialmodelingprep_md
+from data_engines_md.finnhub_md import finnhub_md
+from data_engines_md.marketstack_md import marketstack_md
+from data_engines_md.sec_md import sec_md
+from data_engines_md.stockdata_md import stockdata_md
+from data_engines_md.stooq_md import stooq_md
+from data_engines_md.tiingo_md import tiingo_md
+from data_engines_md.twelvedata_md import twelvedata_md
 
 """
 
