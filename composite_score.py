@@ -1354,14 +1354,11 @@ def main() -> int:
     composite_report=report,
     market=price_shock_input,
     )
-    print("\nDivergence Analysis")
-    print("--------------------- Divergence Engine ------------------------------------")
+
+    print("--------------------- News / Price Divergence Alert Engine ---------------------")
     print(divergence_result.interpretation)
-    print(f"Severity:          {divergence_result.severity}")
-    print(f"Type:              {divergence_result.divergence_type}")
-    print(f"Divergence score:  {divergence_result.divergence_score:.4f}")
-    print(f"News gap:          {divergence_result.news_coverage_gap:.1%}")
-    print(f"Interpretation:    {divergence_result.interpretation}")
-    
+    print ("\n\n")
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
