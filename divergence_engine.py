@@ -470,12 +470,10 @@ class DivergenceEngine:
             else ""
         )
         return (
-            f"{symbol}: {severity.value}. {divergence_type.value}. "
-            f"Price moved {price.daily_return:+.2%}; shock score "
-            f"{price.final_price_shock_score:.3f}. Composite news score "
-            f"{news.composite_score:+.4f} with n_eff {news.n_eff:.2f}, "
-            f"leaving a {coverage_gap:.1%} coverage gap. "
-            f"Divergence score is {score:.3f}.{volume_text}"
+            f"Stock symbol: {symbol}: Severity: {severity.value} // Divergece alert: {divergence_type.value}\n"
+            f"Price moved:  {price.daily_return:+.2%} // Movement shock score: {price.final_price_shock_score:.3f}\n"
+            f"Composite news score: {news.composite_score:+.4f} with Freshness (n_eff): {news.n_eff:.2f}\n"
+            f"New coverage vaccum gap: {coverage_gap:.1%} // Final Divergence score alert: {score:.3f}.{volume_text}"
         )
 
     @staticmethod
