@@ -1348,14 +1348,14 @@ def main() -> int:
 
     #print ( f"{report}")
 
-    print ( f"#-DEBUG-# - testing Divergenece Eengine..." )
+
     divergence_result = DivergenceEngine().analyze_from_composite(
     symbol=args.symbol.upper(),
     composite_report=report,
     market=price_shock_input,
     )
 
-    print("--------------------- News / Price Divergence Alert Engine ---------------------")
+    print("\n\n--------------------- News / Price Divergence Alert Engine ---------------------")
     print(divergence_result.interpretation)
     print ("\n\n")
 
