@@ -1347,5 +1347,15 @@ def main() -> int:
 
     #print ( f"{report}")
 
+    print ( f"#-DEBUG-# - testing Divergenece Eengine..." )
+    divergence_result = DivergenceEngine().analyze_from_composite(
+    symbol=args.symbol.upper(),
+    composite_report=report,
+    market=price_shock_input,
+    )
+    print("\nDivergence Analysis")
+    print("--------------------- Divergence Engine ------------------------------------")
+    print(divergence_result.interpretation)
+    
 if __name__ == "__main__":
     raise SystemExit(main())
