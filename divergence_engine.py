@@ -38,12 +38,12 @@ class DivergenceSeverity(str, Enum):
 
 class DivergenceType(str, Enum):
     NONE = "None"
-    BULLISH_PRICE_NEWS_VACUUM = "Bullish Price / News Vacuum"
-    BULLISH_PRICE_BEARISH_NEWS = "Bullish Price / Bearish News"
-    BEARISH_PRICE_NEWS_VACUUM = "Bearish Price / News Vacuum"
-    BEARISH_PRICE_BULLISH_NEWS = "Bearish Price / Bullish News"
-    BULLISH_CONFIRMATION = "Bullish Price / Bullish News Confirmation"
-    BEARISH_CONFIRMATION = "Bearish Price / Bearish News Confirmation"
+    BULLISH_PRICE_NEWS_VACUUM = "Bullish Price + News Vacuum"
+    BULLISH_PRICE_BEARISH_NEWS = "Bullish Price + Bearish News"
+    BEARISH_PRICE_NEWS_VACUUM = "Bearish Price + News Vacuum"
+    BEARISH_PRICE_BULLISH_NEWS = "Bearish Price + Bullish News"
+    BULLISH_CONFIRMATION = "Bullish Price + Bullish News Confirmation"
+    BEARISH_CONFIRMATION = "Bearish Price + Bearish News Confirmation"
 
 
 @dataclass(frozen=True)
