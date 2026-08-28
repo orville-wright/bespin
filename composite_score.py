@@ -33,6 +33,7 @@ from typing import Any
 
 from data_engines_md.alpaca_md import alpaca_md
 from price_shock import PriceShockCalculator
+from divergence_engine import DivergenceEngine
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
