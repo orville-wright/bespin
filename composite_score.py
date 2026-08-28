@@ -1296,7 +1296,7 @@ def main() -> int:
     psc_price_metrics = psc.calculate(price_shock_input)
     print ("\nPrice Shock Data Package")
     print ( "----------------------------------------------------------------------------" )
-    print ( f"Symbol: {price_shock_input["symbol"]} - Session Date: {price_shock_input["session_date"]} / Close Price: {price_shock_input["current_price"]} / Open Price: {price_shock_input["today_open"]} ")
+    print ( f"Symbol: {price_shock_input["symbol"]} - Session Date: {price_shock_input["session_date"]} / Current Price: {price_shock_input["current_price"]} / Open Price: {price_shock_input["today_open"]} ")
     print ( f"VWAP:   {price_shock_input["today_vwap"]} / Session Vol:  {price_shock_input["today_volume"]} / Prev Close:  {price_shock_input["previous_close"]} / Prev Open:  {price_shock_input["previous_open"]} ")
  
     print ( "----------------------------------------------------------------------------" )
