@@ -520,7 +520,7 @@ class DivergenceEngine:
             else ""
         )
         return (
-            f"Stock symbol: {symbol}  // Severity: {severity.value:7} // Divergence alert: {divergence_type.value}\n"
+            f"Stock symbol:  {symbol:7}  // Severity: {severity.value} // Divergence alert: {divergence_type.value}\n"
             f"Price moved:  {price.daily_return:+7.2%} // News/Price movement shock score: {price.final_price_shock_score:.3f}\n"
             f"Composite news score:     {news.composite_score:+.4f} with Freshness (n_eff): {news.n_eff:.2f}\n"
             f"News coverage vaccum gap: {coverage_gap:.1%} \nOverall Divergence score alert: {score:.3f} {volume_text}"
