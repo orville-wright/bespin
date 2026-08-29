@@ -162,7 +162,13 @@ class alphavantage_md:
         if not self.api_key:
             logging.error("Alpha Vantage API key required")
             return pd.DataFrame()
-        
+
+        # WARN
+        # outputsize: compact 
+        # - returns only the latest 100 data points
+        #   Available to FREE subscriber + Premium
+        # - full full returns the full-length time series of 20+ years of historical data.
+        #   Available to PREMIUM subscribers only !
         try:
             params = {
                 'function': 'TIME_SERIES_DAILY',
@@ -835,7 +841,7 @@ def main():
         print("========== Alpha Vantage Market Data Test ==========")
         
         # Test symbol search
-        test_symbol = "YDES"
+        test_symbol = "NOVO"
  
         # Test global quote
         print(f"\nGetting global quote for {test_symbol}...")
