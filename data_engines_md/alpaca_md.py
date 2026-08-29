@@ -270,9 +270,9 @@ class alpaca_md:
         # If these disagree, the two data sources are out of sync and the shock calculation is meaningless.
         if last_session != prior_session:
             print ( "============== Session Data Error ==============" )
-            print ( f"LAST session:\n{last_session}" )
+            print ( f"LAST session:\n{historical_df}" )
             print ( "============== ================== ==============" )
-            print ( f"PREV session:\n{prior_session}" )
+            print ( f"PREV session:\n{snap.previous_daily_bar}" )
             print ( "============== Session Data Error ==============" )
 
             raise ValueError(
