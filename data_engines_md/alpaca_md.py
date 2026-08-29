@@ -268,6 +268,13 @@ class alpaca_md:
 
         # Independent check #1: the surviving tail must be the session the snapshot calls "previous".
         # If these disagree, the two data sources are out of sync and the shock calculation is meaningless.
+        # TODO:
+        # If CHECK #1 fails...
+        # - we should try to get the same TImesheries data from a differnt Marklet Data source
+        # - like AlphaVantage
+        # - and then re-run the packagebuild out, and see if this test passes.
+        # - if it fails again, then something is very very wrong with this stocks Market Data.
+        #
         if last_session != prior_session:
             print ( "============== Session Data Error ==============" )
             print ( f"LAST session:\n{historical_df}" )
