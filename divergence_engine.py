@@ -26,7 +26,9 @@ DEFAULT_EXTREME_THRESHOLD = 0.90
 DEFAULT_DB_ID = "0001"
 DEFAULT_LMDB_PATH = Path("datastore") / "LMDB_0001"
 
-# ##############################################
+# ################################# Class ENUM 1
+# Core Class ENUM
+# Named constant values for Type Safety and Validation
 class DivergenceSeverity(str, Enum):
     NONE = "None"
     WATCH = "Watch"
@@ -35,7 +37,9 @@ class DivergenceSeverity(str, Enum):
     MAJOR = "Major Divergence"
     EXTREME = "Extreme Divergence"
 
-
+# ################################# Class ENUM 2
+# Core Class ENUM
+# Named constant values for Type Safety and Validation
 class DivergenceType(str, Enum):
     NONE = "None"
     BULLISH_PRICE_NEWS_VACUUM = "Bullish Price + News Vacuum"
@@ -46,6 +50,11 @@ class DivergenceType(str, Enum):
     BEARISH_CONFIRMATION = "Bearish Price + Bearish News Confirmation"
 
 
+# ################################# Core Class Decorated Method
+# Immutable Data structure: NewsMetrics
+# Helper Method 1: from_composite_report
+# Helper Method 2: from_mapping
+# Helper Method 3: to_dict
 @dataclass(frozen=True)
 class NewsMetrics:
     """News metrics produced by composite_score.py."""
@@ -100,6 +109,9 @@ class NewsMetrics:
         return asdict(self)
 
 
+# ################################# Core Class Decorated Method
+# Immutable Data structure: MarketMetrics
+# Helper Method: from_mapping
 @dataclass(frozen=True)
 class MarketMetrics:
     current_price: float
@@ -130,7 +142,8 @@ class MarketMetrics:
             return_4h=_optional_float(data.get("return_4h")),
         )
 
-
+# ################################# Core Class Named Data structure
+# Immutable Data structure: PriceShockMetrics
 @dataclass(frozen=True)
 class PriceShockMetrics:
     daily_return: float
@@ -142,6 +155,8 @@ class PriceShockMetrics:
     direction: str
 
 
+# ################################# Core Class Named Data structure
+# Immutable Data structure: VolumeShockMetrics
 @dataclass(frozen=True)
 class VolumeShockMetrics:
     current_volume: float | None
@@ -150,6 +165,10 @@ class VolumeShockMetrics:
     volume_shock_factor: float
 
 
+# ################################# Core Class Named Data structure
+# named Data structure: DivergenceResult
+# Immutable (read-only)
+# Converter method (converts to dict{})
 @dataclass(frozen=True)
 class DivergenceResult:
     symbol: str
@@ -181,7 +200,10 @@ class DivergenceResult:
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
-# ##############################################
+
+# ################################# Core Main Class
+# Core Divergecne engine controller
+#
 class DivergenceEngine:
     """Detect price/news divergence using CompositeScorer news metrics."""
 
@@ -221,6 +243,8 @@ class DivergenceEngine:
         self.major_threshold = major_threshold
         self.extreme_threshold = extreme_threshold
 
+    # ######################### Core Main Class Method 1
+    #
     def analyze(
         self,
         symbol: str,
@@ -291,6 +315,8 @@ class DivergenceEngine:
             ),
         )
 
+    # ######################### Core Main Class Method 2
+    #
     def analyze_from_composite(
         self,
         symbol: str,
@@ -306,6 +332,8 @@ class DivergenceEngine:
         )
         return self.analyze(symbol, news, market)
 
+    # ######################### Core Main Class Method 3
+    #
     def analyze_articles(
         self,
         symbol: str,
@@ -316,6 +344,8 @@ class DivergenceEngine:
         report = self._get_scorer().score_symbol(symbol, articles, run_epoch or time.time())
         return self.analyze_from_composite(symbol, report, market)
 
+    # ######################### Core Main Class Method 4
+    #
     def analyze_lmdb(
         self,
         symbol: str,
@@ -332,6 +362,8 @@ class DivergenceEngine:
         )
         return self.analyze_from_composite(symbol, report, market)
 
+    # ######################### Core Main Class Method 5
+    #
     def _calculate_price_shock_metrics(self, market: MarketMetrics) -> PriceShockMetrics:
         daily_return = (market.current_price - market.previous_close) / market.previous_close
         returns = _clean_numeric_list(market.historical_returns)
@@ -364,7 +396,8 @@ class DivergenceEngine:
             final_price_shock_score=max(daily_score, intraday_score),
             direction=self._get_price_direction(daily_return),
         )
-
+    # ######################### Core Main Class Method 6
+    #
     def _calculate_volume_metrics(self, market: MarketMetrics) -> VolumeShockMetrics:
         volumes = _clean_numeric_list(market.historical_volumes or [])
         if market.current_volume is None or not volumes:
@@ -378,6 +411,15 @@ class DivergenceEngine:
         factor = min(self.max_volume_factor, math.sqrt(max(ratio, 0.0)))
         return VolumeShockMetrics(market.current_volume, average_volume, ratio, factor)
 
+
+    # ##################################
+    # Calculate the Divergence Score
+    # - Quant Statitsical formula used...
+    # score => 
+    # price_shock_score x (news_coverage_gap ^ coverage_exponent)  x (1.0 - news_alignment_score) x volume_shock_factor
+
+    # ######################### Core Main Class Helper Method 1
+    #
     def _calculate_divergence_score(
         self,
         price_shock_score: float,
@@ -393,6 +435,9 @@ class DivergenceEngine:
         )
         return min(1.0, max(0.0, score))
 
+    # ######################### Core Main Class Method 2
+    # Provide a Written description of the Divergence score
+    #    
     def _classify_divergence_type(
         self,
         price_return: float,
@@ -418,6 +463,9 @@ class DivergenceEngine:
             return DivergenceType.BEARISH_CONFIRMATION
         return DivergenceType.BEARISH_PRICE_NEWS_VACUUM
 
+    # ######################### Core Main Class Method 3
+    # provide a written description of the Divergecne Serverity
+    #
     def _classify_severity(self, score: float) -> DivergenceSeverity:
         if score >= self.extreme_threshold:
             return DivergenceSeverity.EXTREME
@@ -431,6 +479,8 @@ class DivergenceEngine:
             return DivergenceSeverity.WATCH
         return DivergenceSeverity.NONE
 
+    # ######################### Core Main Class Decorated Helper Methods
+    #  
     @staticmethod
     def _get_price_direction(return_value: float) -> str:
         if return_value > 0:
@@ -506,6 +556,8 @@ class DivergenceEngine:
             if not math.isfinite(value):
                 raise ValueError(f"{name} must be finite")
 
+# ######################### Core Method
+#  
 
 def calculate_divergence(
     symbol: str,
@@ -515,6 +567,7 @@ def calculate_divergence(
     return DivergenceEngine().analyze(symbol, news, market)
 
 
+# ######################### Core Heklper Method 2
 def _clean_numeric_list(values: Iterable[Any]) -> list[float]:
     if values is None or isinstance(values, (str, bytes)):
         return []
@@ -530,7 +583,7 @@ def _clean_numeric_list(values: Iterable[Any]) -> list[float]:
             cleaned.append(parsed)
     return cleaned
 
-
+# ######################### Core Method 2
 def _returns_from_closes(closes: Iterable[Any]) -> list[float]:
     prices = [x for x in _clean_numeric_list(closes) if x > 0]
     return [
@@ -539,7 +592,7 @@ def _returns_from_closes(closes: Iterable[Any]) -> list[float]:
         if previous > 0
     ]
 
-
+# ######################### Core Method 3
 def _optional_float(value: Any) -> float | None:
     if value is None:
         return None
@@ -550,6 +603,7 @@ def _optional_float(value: Any) -> float | None:
     return parsed if math.isfinite(parsed) else None
 
 
+# ######################### Core Method 4
 def _optional_float_list(values: Any) -> list[float] | None:
     if values is None or isinstance(values, (str, bytes)):
         return None
@@ -558,11 +612,11 @@ def _optional_float_list(values: Any) -> list[float] | None:
     except TypeError:
         return None
 
-
+# ######################### Core Method 5
 def _float_or_zero(value: Any) -> float:
     return _optional_float(value) or 0.0
 
-
+# ######################### Core Method 6
 def _optional_text(value: Any) -> str | None:
     if value is None:
         return None
