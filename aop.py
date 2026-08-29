@@ -816,6 +816,7 @@ def main():
                 pass
 
             if total_articles > 0:    # symbol might not exist
+                print ( f"Building Neo4j GraphDB entries for {news_symbol}..." )
                 kgraphdb = neo4j_auradb("AOP_AURA", args)           # create an inst of an Neo4j AURA Knowledge Graph DB
                 try:
                     kgraphdb.con_neo4j_auradb("AOP_AURA")           # connect to free Neo4j AURA DB 
