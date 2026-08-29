@@ -835,7 +835,7 @@ def main():
         print("========== Alpha Vantage Market Data Test ==========")
         
         # Test symbol search
-        test_symbol = "AMD"
+        test_symbol = "YDES"
  
         # Test global quote
         print(f"\nGetting global quote for {test_symbol}...")
