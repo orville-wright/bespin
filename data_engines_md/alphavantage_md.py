@@ -854,9 +854,6 @@ def main():
         
         """
 
-
-        """
-        """
         time.sleep(5)
         # Test daily data
         print(f"\nGetting daily data for {test_symbol}...")
@@ -898,8 +895,9 @@ def main():
             print(f"Market status retrieved successfully")
         """
         
-        time.sleep(5)
         # Test market news
+        """
+        time.sleep(5)
         print(f"\nGetting market news for {test_symbol}...")
         news_data = av.market_news(tickers=test_symbol, limit=50)
         if news_data and 'feed' in news_data:
@@ -911,6 +909,7 @@ def main():
                 print(f"Published: {article.get('time_published')}")
                 print(f"Sentiment: {article.get('overall_sentiment_label')} ({article.get('overall_sentiment_score')})")
                 print(f"URL: {article.get('url')}")
+        """
         
         
     except Exception as e:
