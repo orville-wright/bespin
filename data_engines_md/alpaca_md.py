@@ -269,6 +269,12 @@ class alpaca_md:
         # Independent check #1: the surviving tail must be the session the snapshot calls "previous".
         # If these disagree, the two data sources are out of sync and the shock calculation is meaningless.
         if last_session != prior_session:
+            print ( "============== Session Data Error ==============" )
+            print ( f"LAST session:\n{last_session}" )
+            print ( "============== ================== ==============" )
+            print ( f"PREV session:\n{prior_session}" )
+            print ( "============== Session Data Error ==============" )
+
             raise ValueError(
                 f"ERROR: Data Error: History ends @ {last_session} but... "
                 f"Previous daily Timeseries ends @  {prior_session}."
