@@ -34,6 +34,7 @@ from typing import Any
 from data_engines_md.alpaca_md import alpaca_md
 from price_shock import PriceShockCalculator
 from divergence_engine import DivergenceEngine
+from supabase_engine import publish_run_to_supabase
 
 # logging setup
 logging.basicConfig(level=logging.INFO)
@@ -1272,6 +1273,34 @@ def main() -> int:
         required=False,
         default=False,
     )
+    parser.add_argument(
+        "--publish-supabase",
+        help="publish composite-score evidence rows to Supabase",
+        action="store_true",
+        dest="bool_publish_supabase",
+        required=False,
+        default=False,
+    )
+    parser.add_argument(
+        "--supabase-dry-run",
+        help="build Supabase payloads and print counts without writing",
+        action="store_true",
+        dest="bool_supabase_dry_run",
+        required=False,
+        default=False,
+    )
+    parser.add_argument(
+        "--supabase-instance-id",
+        default=None,
+        help="writer instance id, e.g. orville-sfo or wilbur-akl. "
+             "Defaults to BESPIN_INSTANCE_ID.",
+    )
+    parser.add_argument(
+        "--bespin-version",
+        default=None,
+        help="version/provenance string stored on heatmap_runs. "
+             "Defaults to BESPIN_VERSION.",
+    )
     parser.add_argument('-v','--verbose', help='verbose error logging', action='store_true', dest='bool_verbose', required=False, default=False)
 
     args = parser.parse_args()
@@ -1358,6 +1387,28 @@ def main() -> int:
     print("\n\n--------------------- News / Price Divergence Alert Engine ---------------------")
     print(divergence_result.interpretation)
     print ("\n\n")
+
+    if args.bool_publish_supabase or args.bool_supabase_dry_run:
+        publish_result = publish_run_to_supabase(
+            instance_id=args.supabase_instance_id,
+            dry_run=args.bool_supabase_dry_run,
+            symbol=args.symbol.upper(),
+            run_epoch=run_epoch,
+            records=records,
+            scorer=scorer,
+            composite_report=report,
+            polarity_report=polarity_report,
+            divergence_result=divergence_result,
+            bespin_version=args.bespin_version,
+        )
+        mode = "DRY RUN" if publish_result.dry_run else "WRITE"
+        print(f"Supabase publish {mode}: "
+              f"run_id={publish_result.run_id} / "
+              f"articles={publish_result.articles_publishable}/{publish_result.articles_seen} / "
+              f"rows={publish_result.rows_publishable} / "
+              f"article_divergences={publish_result.divergences_logged} / "
+              f"triggers={publish_result.triggers_logged} / "
+              f"skipped={publish_result.skipped}")
 
 
 if __name__ == "__main__":
