@@ -519,6 +519,11 @@ class DivergenceEngine:
             if volume.volume_ratio is not None
             else ""
         )
+        # TODO: Buld a pure dict{} of the interpretation and return that instead
+        # - composite score can print it's report by passing tghe dict
+        # - and supabase engine can just embed thenative  returned dict in its payload
+        # - that was the WebUX has a pure dict to work with and not a long messy text string
+
         return (
             f"Stock symbol:  {symbol:6} // Severity: {severity.value} // Divergence alert: {divergence_type.value}\n"
             f"Price moved:  {price.daily_return:+7.2%} // News/Price movement shock score: {price.final_price_shock_score:.3f}\n"

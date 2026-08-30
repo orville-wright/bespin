@@ -247,6 +247,9 @@ class SupabaseEngine:
             )
         return divergences
 
+    # ###########################
+    # prepare and buuld the final data package
+    #
     def _build_divergence_trigger(
         self,
         *,
