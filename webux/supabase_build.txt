@@ -190,3 +190,26 @@ CREATE POLICY read_triggers ON triggers
     FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY read_divergences ON article_divergences
     FOR SELECT TO anon, authenticated USING (true);
+
+
+-- =====================================================================
+-- Grants: RLS controls row visibility, but Postgres roles still need
+-- ordinary table privileges. The service_role key bypasses RLS for
+-- writer operations, but it does NOT bypass missing GRANT privileges.
+-- =====================================================================
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+GRANT SELECT ON articles TO anon, authenticated, service_role;
+GRANT SELECT ON heatmap_runs TO anon, authenticated, service_role;
+GRANT SELECT ON heatmap_rows TO anon, authenticated, service_role;
+GRANT SELECT ON triggers TO anon, authenticated, service_role;
+GRANT SELECT ON article_divergences TO anon, authenticated, service_role;
+
+GRANT INSERT ON articles TO service_role;
+GRANT INSERT ON heatmap_runs TO service_role;
+GRANT INSERT ON heatmap_rows TO service_role;
+GRANT INSERT ON triggers TO service_role;
+GRANT INSERT ON article_divergences TO service_role;
+
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
