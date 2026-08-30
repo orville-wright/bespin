@@ -385,7 +385,8 @@ class CompositeScorer:
     def legacy_corpus_profile(
             self,
             symbol: str,
-            articles: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+            articles: Iterable[Mapping[str, Any]],
+            print_report: bool = True) -> dict[str, Any]:
         """
         Print the legacy scan-end "Sentiment Profile Analysis" block,
         computed from LMDB corpus chunk tallies (UNWEIGHTED - this is
@@ -425,9 +426,10 @@ class CompositeScorer:
 
         total_chunks = sum(chunk_tally.values())
         if total_chunks == 0:
-            print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
-            print(f"Symbol:         {symbol}")
-            print("Sentiment:      NO SCOREABLE CHUNKS IN CORPUS")
+            if print_report:
+                print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
+                print(f"Symbol:         {symbol}")
+                print("Sentiment:      NO SCOREABLE CHUNKS IN CORPUS")
             return {"symbol": symbol, "state": "no_scoreable_chunks"}
 
         # ---- bucket means (the engine's *_t inputs) ----
@@ -450,9 +452,10 @@ class CompositeScorer:
         total_articles = positive_c + negative_c
         if total_articles == 0:
             # engine returns None here; state it explicitly instead
-            print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
-            print(f"Symbol:         {symbol}")
-            print("Sentiment:      NO DIRECTIONAL CHUNKS IN CORPUS (all neutral)")
+            if print_report:
+                print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
+                print(f"Symbol:         {symbol}")
+                print("Sentiment:      NO DIRECTIONAL CHUNKS IN CORPUS (all neutral)")
             return {"symbol": symbol, "state": "no_directional_chunks",
                     "total_chunks": total_chunks}
 
@@ -493,34 +496,40 @@ class CompositeScorer:
         base, next_base, sentiment_label, progress_pct = \
             self._compute_band(net_sentiment)
 
-        print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
-        print(f"Symbol:         {symbol}")
-        print(f"Sentiment:      {sentiment_label}   | Directionally biased -> {bias} ")
-        print(f"Base sentiment: {base}")
-        print(f"Band Progress:  {progress_pct}%\t| through {base} band")
-        # round() not :.4f - byte-matches the engine's dict-value prints
-        print(f"Signal clarity: {round(clarity, 4)}")
-        print(f"Signal convctn: {round(net_sentiment, 4)}\t| {bias}")
-        print(f"Net Score:      {net_sentiment:+.3f}\t| Sentiment Oscilator Direction")
-        print(f"Signal purity:  {confidence:.1%}\t| Dominant Signal Share")
-        print("\nSentiment Composition:")
-        print(f"Positivity:     {positive_share:.1%}\t| (Directional signal mass:  {strengths['positive']:.3f})")
-        print(f"Neutrality:     {neutral_share:.1%}\t| (Non-directional ambiguity: {strengths['neutral']:.3f})")
-        print(f"Negativity:     {negative_share:.1%}\t| (Directional signal mass:  {strengths['negative']:.3f})")
-        print()
+        if print_report:
+            print(f"=================== Sentiment Profile Analysis for: {symbol} ===================")
+            print(f"Symbol:         {symbol}")
+            print(f"Sentiment:      {sentiment_label}   | Directionally biased -> {bias} ")
+            print(f"Base sentiment: {base}")
+            print(f"Band Progress:  {progress_pct}%\t| through {base} band")
+            # round() not :.4f - byte-matches the engine's dict-value prints
+            print(f"Signal clarity: {round(clarity, 4)}")
+            print(f"Signal convctn: {round(net_sentiment, 4)}\t| {bias}")
+            print(f"Net Score:      {net_sentiment:+.3f}\t| Sentiment Oscilator Direction")
+            print(f"Signal purity:  {confidence:.1%}\t| Dominant Signal Share")
+            print("\nSentiment Composition:")
+            print(f"Positivity:     {positive_share:.1%}\t| (Directional signal mass:  {strengths['positive']:.3f})")
+            print(f"Neutrality:     {neutral_share:.1%}\t| (Non-directional ambiguity: {strengths['neutral']:.3f})")
+            print(f"Negativity:     {negative_share:.1%}\t| (Directional signal mass:  {strengths['negative']:.3f})")
+            print()
 
         return {
             "symbol": symbol,
             "state": "profiled",
             "sentiment": sentiment_label,
             "base_sentiment": base,
+            "directional_bias": bias,
             "band_progress": progress_pct,
             "net_score": round(net_sentiment, 4),
+            "signal_conviction": round(net_sentiment, 4),
             "signal_clarity": round(clarity, 4),
             "signal_purity": round(confidence, 4),
             "positive_share": round(positive_share, 4),
             "neutral_share": round(neutral_share, 4),
             "negative_share": round(negative_share, 4),
+            "positive_strength": round(positive_strength, 4),
+            "neutral_strength": round(neutral_strength, 4),
+            "negative_strength": round(negative_strength, 4),
             "total_chunks": total_chunks,
         }
 
@@ -1346,9 +1355,16 @@ def main() -> int:
     # Materialize ONCE: the LMDB stream is single-use, but the legacy
     # profile and the weighted metrics both need the full corpus.
     records = list(scorer.load_symbol_articles_from_lmdb(args.symbol, args.db_path))
+    x_legacy_profile_report = None
 
     if args.bool_no_profile is False:
         x_legacy_profile_report = scorer.legacy_corpus_profile(args.symbol.upper(), records)
+    elif args.bool_publish_supabase or args.bool_supabase_dry_run:
+        x_legacy_profile_report = scorer.legacy_corpus_profile(
+            args.symbol.upper(),
+            records,
+            print_report=False,
+        )
         
     if args.bool_no_heatmap is False:
         x_heatmap_report = scorer.age_heat_map(args.symbol.upper(), records, run_epoch)
@@ -1382,6 +1398,8 @@ def main() -> int:
     symbol=args.symbol.upper(),
     composite_report=report,
     market=price_shock_input,
+    legacy_report=x_legacy_profile_report,
+    polarity_report=polarity_report,
     )
 
     print("\n\n--------------------- News / Price Divergence Alert Engine ---------------------")
@@ -1398,6 +1416,7 @@ def main() -> int:
             scorer=scorer,
             composite_report=report,
             polarity_report=polarity_report,
+            sentiment_metrics=x_legacy_profile_report,
             divergence_result=divergence_result,
             bespin_version=args.bespin_version,
         )

@@ -130,6 +130,7 @@ CREATE TABLE triggers (
     symbol        text NOT NULL,
     triggered_at  timestamptz NOT NULL,
     trigger_type  text NOT NULL,
+    sentiment_metrics jsonb,
     payload       jsonb
 );
 
@@ -140,6 +141,14 @@ COMMENT ON TABLE triggers IS
     'Candidate-surfacing events (e.g. unusual_volume) with observer '
     'instance tagged. payload carries the raw trigger row, e.g. '
     'price, pct_change, volume, vol_pct.';
+
+COMMENT ON COLUMN triggers.sentiment_metrics IS
+    'Run-level News Sentiment Profile metrics emitted by '
+    'composite_score. Kept separate from payload, which carries the '
+    'trigger/divergence event body.';
+
+-- Existing deployments can apply this idempotent migration:
+-- ALTER TABLE triggers ADD COLUMN IF NOT EXISTS sentiment_metrics jsonb;
 
 
 -- ############################# Table #5

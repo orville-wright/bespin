@@ -8,7 +8,7 @@ The writer follows the schema in webux/supabase_build.txt:
   * heatmap_runs are append-only and unique per instance/symbol/run_epoch
   * heatmap_rows store the exact per-run voting weights
   * article_divergences records article-strength disagreements
-  * triggers can carry the computed news/price divergence payload
+  * triggers carry divergence payload plus sentiment_metrics jsonb
 
 Credentials are intentionally read from environment variables. Do not
 commit Supabase service-role secrets to this repository.
@@ -95,6 +95,7 @@ class SupabaseEngine:
         scorer: Any,
         composite_report: Mapping[str, Any],
         polarity_report: Mapping[str, Any] | None = None,
+        sentiment_metrics: Mapping[str, Any] | None = None,
         divergence_result: Any | None = None,
         bespin_version: str | None = None,
     ) -> SupabasePublishResult:
@@ -115,6 +116,7 @@ class SupabaseEngine:
             symbol=symbol,
             run_epoch=run_epoch,
             divergence_result=divergence_result,
+            sentiment_metrics=sentiment_metrics,
         )
 
         if self.dry_run:
@@ -256,6 +258,7 @@ class SupabaseEngine:
         symbol: str,
         run_epoch: float,
         divergence_result: Any | None,
+        sentiment_metrics: Mapping[str, Any] | None,
     ) -> dict[str, Any] | None:
         if divergence_result is None:
             return None
@@ -270,6 +273,7 @@ class SupabaseEngine:
             "triggered_at": self._iso_from_epoch(run_epoch),
             "trigger_type": "news_price_divergence",
             "payload": payload,
+            "sentiment_metrics": dict(sentiment_metrics or {}),
         }
 
     def _insert_run(
