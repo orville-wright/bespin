@@ -28,7 +28,7 @@ DEFAULT_LMDB_PATH = Path("datastore") / "LMDB_0001"
 
 # ################################# Class ENUM 1
 # Core Class ENUM
-# Named constant values for Type Safety and Validation
+# Named constant values for Type Safety and Validation) -> dict
 class DivergenceSeverity(str, Enum):
     NONE = "None"
     WATCH = "Watch"
@@ -195,7 +195,7 @@ class DivergenceResult:
     news_direction: str
     is_price_shock: bool
     is_news_vacuum: bool
-    interpretation: str
+    interpretation: dict
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -513,23 +513,57 @@ class DivergenceEngine:
         severity: DivergenceSeverity,
         divergence_type: DivergenceType,
         volume: VolumeShockMetrics,
-    ) -> str:
-        volume_text = (
-            f"// Volume is: {volume.volume_ratio:.2f} X Historical average !"
-            if volume.volume_ratio is not None
-            else ""
-        )
+        ):
+ 
+ 
+    # DELETE ME : deprecated - converted to return a dict, but I dont know how to define that
+    #) -> str:
+    #    volume_text = (
+    #        f"// Volume is: {volume.volume_ratio:.2f} X Historical average !"
+    #        if volume.volume_ratio is not None
+    #        else "Nominal volume"
+    #    )
         # TODO: Buld a pure dict{} of the interpretation and return that instead
         # - composite score can print it's report by passing tghe dict
         # - and supabase engine can just embed thenative  returned dict in its payload
         # - that was the WebUX has a pure dict to work with and not a long messy text string
+        # IMPLIMENTED by @dbrace
 
+        int_report_dict = dict()      # ensure dict is clean
+        
+        _prc_moved = f"{price.daily_return:+7.2%}"
+        _newsprc_shock_score = f"{price.final_price_shock_score:.3f}"
+        _comp_news_score = f"{news.composite_score:+.4f}"
+        _fresh_neff = f"{news.n_eff:.2f}"
+        _vacuum_gap = f"{coverage_gap:.1%}"
+        _final_divg_score = f"{score:.3f}"
+
+        if volume.volume_ratio is not None:
+            volume_text = ( f"Volume is: {volume.volume_ratio:.2f} X Historical average !" )
+        else:
+            volume_text = "Nominal volume"
+ 
+        int_report_dict.update({"symbol": symbol})
+        int_report_dict.update({"severity": severity.value})
+        int_report_dict.update({"divergence_alert": divergence_type.value})
+        int_report_dict.update({"price_moved": _prc_moved})
+        int_report_dict.update({"newsprc_shock_score": _newsprc_shock_score})
+        int_report_dict.update({"comp_news_score": _comp_news_score})
+        int_report_dict.update({"n_eff": _fresh_neff})
+        int_report_dict.update({"news_vacuum": _vacuum_gap})
+        int_report_dict.update({"final_div_score": _final_divg_score})
+        int_report_dict.update({"hist_vol_opinion": volume_text})
+        
+        return int_report_dict
+        """
+        DELETE ME: deprecated in favor or returning a dict{}
         return (
             f"Stock symbol:  {symbol:6} // Severity: {severity.value} // Divergence alert: {divergence_type.value}\n"
             f"Price moved:  {price.daily_return:+7.2%} // News/Price movement shock score: {price.final_price_shock_score:.3f}\n"
             f"Composite news score:     {news.composite_score:+.4f} with Freshness (n_eff): {news.n_eff:.2f}\n"
-            f"News coverage vaccum gap: {coverage_gap:.1%} \nOverall Divergence score alert: {score:.3f} {volume_text}"
+            f"News coverage vacuum gap: {coverage_gap:.1%} \nOverall Divergence score alert: {score:.3f} {volume_text}"
         )
+        """
 
     @staticmethod
     def _coerce_news(news: NewsMetrics | Mapping[str, Any]) -> NewsMetrics:
