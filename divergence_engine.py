@@ -531,8 +531,8 @@ class DivergenceEngine:
 
         int_report_dict = dict()      # ensure dict is clean
         
-        _prc_moved = f"{price.daily_return:+7.2%}"
-        _newsprc_shock_score = f"{price.final_price_shock_score:.3f}"
+        _prc_moved = f"{float(price.daily_return):+7.2f}"
+        _newsprc_shock_score = f"{float(price.final_price_shock_score):.3f}"
         _comp_news_score = f"{news.composite_score:+.4f}"
         _fresh_neff = f"{news.n_eff:.2f}"
         _vacuum_gap = f"{coverage_gap:.1%}"
@@ -546,7 +546,7 @@ class DivergenceEngine:
         int_report_dict.update({"symbol": symbol})
         int_report_dict.update({"severity": severity.value})
         int_report_dict.update({"divergence_alert": divergence_type.value})
-        int_report_dict.update({"price_moved": _prc_moved})
+        int_report_dict.update({"price_moved_pct": _prc_moved})
         int_report_dict.update({"newsprc_shock_score": _newsprc_shock_score})
         int_report_dict.update({"comp_news_score": _comp_news_score})
         int_report_dict.update({"n_eff": _fresh_neff})
