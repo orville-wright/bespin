@@ -1407,11 +1407,11 @@ def main() -> int:
     # print the News/Price Divergence report from structured dict elements
     # done this way b/c the dict is used to embed iside supabase table, so we want to use that single source of truth
     _dri = divergence_result.interpretation
-    print ( f"Stock symbol:  {_dri["symbol"]:6} // Severity: {_dri["severity"]} // Divergence alert: {_dri["divergence_alert"]}\n"
-            f"Price moved:  {_dri["price_moved"]:+7.2}% // News-to-Price move shock score: {_dri["newsprc_shock_score"]:.3f}\n"
-            f"Composite news score: {_dri["comp_news_score"]:+.4f} with Freshness (n_eff): {_dri["n_eff"]:.2f}\n"
-            f"News vacuum gap:      {_dri["news_vacuum"]:.1}% \nOverall Divergence score alert: {_dri["final_div_score"]:.3f} "
-            f"// Volume opinion: {_dri["hist_vol_opinion"]}"
+    print ( f"Stock symbol:  {_dri['symbol']:6} // Severity: {_dri['severity']} // Divergence alert: {_dri['divergence_alert']}\n"
+            f"Price moved:  {_dri['price_moved_pct']:+7.2}% // News-to-Price move shock score: {_dri['newsprc_shock_score']:.3f}\n"
+            f"Composite news score: {_dri['comp_news_score']:+.4f} with Freshness (n_eff): {_dri['n_eff']:.2f}\n"
+            f"News vacuum gap:      {_dri['news_vacuum']:.1}% \nOverall Divergence score alert: {_dri['final_div_score']:.3f} "
+            f"// Volume opinion: {_dri['hist_vol_opinion']}"
         )
 
     
