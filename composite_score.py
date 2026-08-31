@@ -864,9 +864,9 @@ class CompositeScorer:
                     and tally["negative"] == self._to_int(article.get("negative_count"))
                 )
                 if counts_consistent is False:
-                    logging.error(f"%s          - LMDB sentiment Chunk tally mismatch on: {_urlhash}: computed={tally}" % cmi_debug )
+                    logging.error(f"%s          - LMDB sentiment Chunk tally mismatch on: {_urlhash}" % cmi_debug )
                     logging.error(f"%s          - Computed tally: {tally}" % cmi_debug )
-                    logging.error(f"%s          - Actual tally:   P: {sum_positive} / Z: {sum_neutral} / N: {sum_negative}" % cmi_debug )
+                    logging.error(f"%s          - Actual tally:   P: {sum_positive/chunks_used} / Z: {sum_neutral} / N: {sum_negative}\n" % cmi_debug )
 
             # R1: MEAN reduction - one-article-one-vote.
             return {
