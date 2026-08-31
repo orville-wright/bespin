@@ -222,7 +222,7 @@ class yf_unvoljs:
         logging.info('ins.#%s.up_unvol_listall() - IN' % self.yti )
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
-        list_up = self.up_df0.sort_values(by='52wk_Pct', ascending=False )
+        list_up = self.up_df0.sort_values(by='Pct_change', ascending=False )
         list_up.reset_index(inplace=True, drop=True)           # reset index each time so its guaranteed sequential
         logging.info('ins.#%s.up_unvol_listall() - DONE' % self.yti )
         return list_up
