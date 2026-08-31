@@ -1410,7 +1410,7 @@ def main() -> int:
     
     print(
     f"Stock symbol:  {_dri['symbol']:6} // Severity: {_dri['severity']} // Divergence alert: {_dri['divergence_alert']}\n"
-    f"Price moved:  {_dri['price_moved_pct']:+7.2f}% // News-to-Price move shock score: {_dri['newsprc_shock_score']:.3f}\n"
+    f"Price moved:  {_dri['price_moved_pct']:+.2%} // News-to-Price move shock score: {_dri['newsprc_shock_score']:.3f}\n"
     f"Composite news score: {_dri['comp_news_score']:+.4f} with Freshness (n_eff): {_dri['n_eff']:.2f}\n"
     f"News vacuum gap:      {_dri['news_vacuum']:.1%}\nOverall Divergence score alert: {_dri['final_div_score']:.3f} "
     f"// Volume opinion: {_dri['hist_vol_opinion']}"
