@@ -543,16 +543,18 @@ class DivergenceEngine:
         else:
             volume_text = "Nominal volume"
  
-        int_report_dict.update({"symbol": symbol})
-        int_report_dict.update({"severity": severity.value})
-        int_report_dict.update({"divergence_alert": divergence_type.value})
-        int_report_dict.update({"price_moved_pct": _prc_moved})
-        int_report_dict.update({"newsprc_shock_score": _newsprc_shock_score})
-        int_report_dict.update({"comp_news_score": _comp_news_score})
-        int_report_dict.update({"n_eff": _fresh_neff})
-        int_report_dict.update({"news_vacuum": _vacuum_gap})
-        int_report_dict.update({"final_div_score": _final_divg_score})
-        int_report_dict.update({"hist_vol_opinion": volume_text})
+        int_report_dict = {
+            "symbol": symbol,
+            "severity": severity.value,
+            "divergence_alert": divergence_type.value,
+            "price_moved_pct": float(price.daily_return),
+            "newsprc_shock_score": float(price.final_price_shock_score),
+            "comp_news_score": news.composite_score,
+            "n_eff": news.n_eff,
+            "news_vacuum": coverage_gap,
+            "final_div_score": score,
+            "hist_vol_opinion": volume_text,
+        }
         
         return int_report_dict
         """
