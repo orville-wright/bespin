@@ -866,7 +866,7 @@ class CompositeScorer:
                 if counts_consistent is False:
                     logging.error(f"%s          - LMDB sentiment Chunk tally mismatch on: {_urlhash}" % cmi_debug )
                     logging.error(f"%s          - Computed tally: {tally}" % cmi_debug )
-                    logging.error(f"%s          - Actual tally:   Pos: {sum_positive:.4f} / Neu: {sum_neutral:4f} / Neg: {sum_negative:.4f}\n" % cmi_debug )
+                    logging.error(f"%s          - Actual tally:   Pos: {sum_positive:.4f} / Neu: {sum_neutral:.4f} / Neg: {sum_negative:.4f}\n" % cmi_debug )
 
             # R1: MEAN reduction - one-article-one-vote.
             return {
