@@ -73,7 +73,13 @@ else:
 ################# 1
 # book_deep
 def dump_lmdb_by_key(lmdb_instance, key_filter):
-    """Filter LMDB entries by stock ticker (element #2) or URL hash fragment (element #3).
+    """
+    Filter LMDB entries by stock ticker (LMDB primark key element #2) or URL hash fragment (primary key element #3).
+    e.g. primary key : 0001.YDES.e6e1c98884593bef4bb921a3b0231aaeb620add2eb78651bacee004684618719
+        PK-element-1 : 001 (not filterable as yet)
+        PK-element-2 : symbol
+        PK-element-3 : urlhash
+    
     Will print  Parent dict and all blocklet chunk sub-dicts for each matching entry. 
     Will not print article text filed
 
