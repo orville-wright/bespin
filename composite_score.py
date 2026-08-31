@@ -857,15 +857,16 @@ class CompositeScorer:
             # R6: consistency check vs stored per-label tallies, only
             # when the stored counts exist to check against.
             counts_consistent = True
-            if all(key in article for key in
-                   ("positive_count", "neutral_count", "negative_count")):
+            if all(key in article for key in ("positive_count", "neutral_count", "negative_count")):
                 counts_consistent = (
                     tally["positive"] == self._to_int(article.get("positive_count"))
                     and tally["neutral"] == self._to_int(article.get("neutral_count"))
                     and tally["negative"] == self._to_int(article.get("negative_count"))
                 )
                 if counts_consistent is False:
-                    logging.error(f"%s          - Chunk tally mismatch vs stored counts on {_urlhash}: computed={tally}" % cmi_debug )
+                    logging.error(f"%s          - LMDB sentiment Chunk tally mismatch on: {_urlhash}: computed={tally}" % cmi_debug )
+                    logging.error(f"%s          - Computed tally: {tally}" % cmi_debug )
+                    logging.error(f"%s          - Actual tally:   P: {sum_positive} / Z: {sum_neutral} / N: {sum_negative}" % cmi_debug )
 
             # R1: MEAN reduction - one-article-one-vote.
             return {
