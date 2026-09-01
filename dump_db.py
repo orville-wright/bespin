@@ -97,6 +97,8 @@ def dump_lmdb_by_key(lmdb_instance, key_filter, urlhash):
     3rd cmline param is Yes/No to dump the ZSTD compressed article text field. If Yes, will decompress and print the full article text.
     1 = Yes, 0 = No. Default = 0
     """
+    if article_limit is None:
+        article_limit = int(0)  # No limit if not specified
     try:
         with lmdb_instance.RO_env.begin() as txn:
             cursor = txn.cursor()
