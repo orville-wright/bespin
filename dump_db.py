@@ -75,20 +75,25 @@ else:
 def dump_lmdb_by_key(lmdb_instance, key_filter):
     """
     Filter LMDB entries by stock ticker (LMDB primark key element #2) or URL hash fragment (primary key element #3).
-    e.g. primary key : 0001.YDES.e6e1c98884593bef4bb921a3b0231aaeb620add2eb78651bacee004684618719
+    Full Key format: {db_id}.{ticker}.{url_hash}
+    
+    e.g.  0001.YDES.e6e1c98884593bef4bb921a3b0231aaeb620add2eb78651bacee004684618719
+    e.g.  0001.XRX.f308c6c74e14976ac6e940c20a329c5e063cf5cfde402d591cfcd28ace1c2b2d
         PK-element-1 : 001 (not filterable as yet)
         PK-element-2 : symbol
         PK-element-3 : urlhash
     
-    Will print  Parent dict and all blocklet chunk sub-dicts for each matching entry. 
-    Will not print article text filed
-
-    Full Key format: {db_id}.{ticker}.{url_hash}
-        e.g.  0001.XRX.f308c6c74e14976ac6e940c20a329c5e063cf5cfde402d591cfcd28ace1c2b2d
-        
+    Note:
+    - Filtering by symbol will print all LMBD entries that match the symbol
+    - Filtering by urlhash will only print the single article that matches the urlhash (useful if youre looking at 1 article).
         Filter Matching rules:
         - ticker  : case-insensitive exact match  (e.g. -k XRX)
         - url_hash: case-sensitive substring match (e.g. -k f308c6)
+
+    Will print Parent dict and all blocklet chunk sub-dicts for each matching entry. 
+    Will not print article the contents of the article's full stored text field (i.e. data in "ZSTD article blob":)
+
+        
     """
     try:
         with lmdb_instance.RO_env.begin() as txn:
@@ -130,11 +135,12 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 try:
                     _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
                     print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
+                    
                 except KeyError:
-                    print ( f"LMDB entry has no ZSTD compressed article entry." )
+                    print ( "LMDB entry has no ZSTD compressed article entry." )
 
-                print ( f"Text metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
-                print ( f"\nChunk sub-dict data")
+                print ( f"\nText metrics:  Total characters: {_v_dict["chars_count"]} / Total words: {_v_dict["total_words"]} Total tokens: {_v_dict["total_tokens"]}" )
+                print ( "\nChunk sub-dict data")
 
                 _v_key = 0  # chunk sub dict allways starts at 000 - ensure reset for each run
 
@@ -152,6 +158,33 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                                 print(f"  {k}: {v}\t", end="")
                                 cycle = int(1)
                         print()  # Empty line for spacing
+
+                        _v_dict = json.loads(value.decode('utf-8'))
+                        working_article = _v_dict["article"]        # article number
+                        print ( f"LMBD Database: {db_id} / Dumping {article_limit} Articles entries for: {ticker_filter}" ) 
+                        print ( f"================= News article:  {working_article} / Item {matches} of {article_limit}  ====================================" )
+                        try:
+                            _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
+                            b64_binencd_cmprssd_data = base64.b64decode(_zstd_article_text)
+                            #print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
+                            decompressor = zstd.ZstdDecompressor()
+                            zstd_blob_uncompressed = decompressor.decompress(b64_binencd_cmprssd_data).decode('utf-8')
+                            #= zstd.ZstdDecompressor().decompress(_zstd_article_text).decode('utf-8')
+                            print ( f"{zstd_blob_uncompressed}" )                                                        
+                            matches += 1
+                            if matches > article_limit:
+                                print ( f"Limit of {article_limit} reached for ticker filter '{ticker_filter}'. Stopping article dump.\n" )
+                                break
+                            total += 1
+                        except KeyError:
+                            print ( "LMDB entry has no ZSTD compressed article entry." )
+                            total += 1
+                        except Exception as e:
+                            print ( f"Error decompressing ZSTD article blob: {e}" )
+                            total += 1
+
+
+
 
                 """
                 for _v_chunk_dict in range(int(_v_dict["chunk_count"])):  # silent ERRIR here. Inconsistently counts from 0 & 1 for diff extractors
@@ -256,7 +289,7 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                 parts = [p.strip() for p in key_str.split('.')]
                 if len(parts) != 3:
                     total += 1
-                    print ( f"Bad keys - not 3 parts !!")
+                    print ( "Bad keys - not 3 parts !!")
                     continue                         # skip any malformed keys
 
                 db_id, ticker_symbol, url_hash = parts
@@ -282,7 +315,7 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
                             break
                         total += 1
                     except KeyError:
-                        print ( f"LMDB entry has no ZSTD compressed article entry." )
+                        print ( "LMDB entry has no ZSTD compressed article entry." )
                         total += 1
                     except Exception as e:
                         print ( f"Error decompressing ZSTD article blob: {e}" )
@@ -317,7 +350,7 @@ lmdb_inst.open_lmdb_RO("RO_DUMP")
 # -b' or '--basic'
 # bool_basic
 if args['bool_basic'] is True:
-    print( f"Simple dump of the full LMDV... ")
+    print( "Simple dump of the full LMDV... ")
     dump_lmdb_basic(lmdb_inst)
     lmdb_inst.close_lmdb("BASIC_DUMP")
     sys.exit(0)
@@ -367,15 +400,26 @@ elif args.get('bool_articles'):
 # - if urlhash, it will explicitly match just that urlhash (which are mostly 99% unique)
 elif args['bool_deep'] is True:
     if args['key_filter'] is not None:
-        print( f"Full dump filtered by key: {args['key_filter']}")
-        dump_lmdb_by_key(lmdb_inst, args['key_filter'])
-        lmdb_inst.close_lmdb("DEEP_DUMP")
-        sys.exit(0)
-    else:
-        print ( "ERROR: Deep dump of values requries a key filter [add -k or --key option] !" )
-        print ( " " )
-        parser.print_help()
-        sys.exit(1)
+        _key_options = args['key_filter']
+        try:
+            _urlhash = _key_options[1]
+            match _urlhash:
+                case None:
+                    print("No URLhash id found - not filtering for specific article !")
+                case str(fucker):
+                case _:
+                    print ("Fall thru DEFAULT on key parameter...")
+       
+                    
+            print( f"Full dump filtered by key: {args['key_filter']}")
+            dump_lmdb_by_key(lmdb_inst, args['key_filter'])
+            lmdb_inst.close_lmdb("DEEP_DUMP")
+            sys.exit(0)
+        else:
+            print ( "ERROR: Deep dump of values requries a key filter [add -k or --key option] !" )
+            print ( " " )
+            parser.print_help()
+            sys.exit(1)
 
 # -x or --xray
 # dump_lmdb_xray
