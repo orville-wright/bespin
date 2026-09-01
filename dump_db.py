@@ -336,7 +336,7 @@ lmdb_inst.open_lmdb_RO("RO_DUMP")
 # bool_basic
 # if args.bool_verbose is True: 
 
-if args.bool_basic is True:
+if args['bool_basic'] is True:
     print( "List entire LMDV in simple format... ")
     dump_lmdb_basic(lmdb_inst)
     lmdb_inst.close_lmdb("BASIC_DUMP")
