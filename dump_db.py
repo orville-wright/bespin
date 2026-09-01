@@ -72,7 +72,8 @@ else:
 
 ################# 1
 # book_deep
-def dump_lmdb_by_key(lmdb_instance, key_filter):
+# dump_lmdb_by_key(lmdb_inst, args['key_filter'], urlhash=_urlhash)
+def dump_lmdb_by_key(lmdb_instance, key_filter, urlhash):
     """
     Filter LMDB entries by stock ticker (LMDB primark key element #2) or URL hash fragment (primary key element #3).
     Full Key format: {db_id}.{ticker}.{url_hash}
@@ -91,9 +92,10 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
         - url_hash: case-sensitive substring match (e.g. -k f308c6)
 
     Will print Parent dict and all blocklet chunk sub-dicts for each matching entry. 
-    Will not print article the contents of the article's full stored text field (i.e. data in "ZSTD article blob":)
+    Will not print article the contents of the article's full stored text field (i.e. data in "ZSTD article blob"
 
-        
+    3rd cmline param is Yes/No to dump the ZSTD compressed article text field. If Yes, will decompress and print the full article text.
+    1 = Yes, 0 = No. Default = 0
     """
     try:
         with lmdb_instance.RO_env.begin() as txn:
@@ -135,7 +137,11 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                 try:
                     _zstd_article_text = _v_dict["zstd_blob"]  # test if dic has ZSTD compressed article entry
                     print ( f"ZSTD article blob: {_zstd_article_text[:100]}{'...' if len(_zstd_article_text) > 1 else ''}" )
-                    
+                    if urlhash == 1:
+                        b64_binencd_cmprssd_data = base64.b64decode(_zstd_article_text)
+                        decompressor = zstd.ZstdDecompressor()
+                        zstd_blob_uncompressed = decompressor.decompress(b64_binencd_cmprssd_data).decode('utf-8')
+                        print ( f"{zstd_blob_uncompressed}" )
                 except KeyError:
                     print ( "LMDB entry has no ZSTD compressed article entry." )
 
@@ -182,27 +188,6 @@ def dump_lmdb_by_key(lmdb_instance, key_filter):
                         except Exception as e:
                             print ( f"Error decompressing ZSTD article blob: {e}" )
                             total += 1
-
-
-
-
-                """
-                for _v_chunk_dict in range(int(_v_dict["chunk_count"])):  # silent ERRIR here. Inconsistently counts from 0 & 1 for diff extractors
-                    _v_key = f"{_v_chunk_dict:03}"
-                    try: 
-                        _v_sub_dict = (_v_dict[_v_key])
-                    except Exception as e:
-                        print (f"Error Type: {type(e).__name__}")
-                        break
-                    else:
-                        print ( f"  ======================================= Chunk blocklet : {_v_key} of ({_v_dict["chunk_count"]}) =======================================" )
-                        print ( f"  Chunk KEY: {_v_key} / Chunk id: {_v_sub_dict["chunk"]} / Ticker: {_v_sub_dict["symbol"]}" )
-                        print ( f"  N-grams:    {_v_sub_dict["n-grams"]} / Tokens: {_v_sub_dict["tokenz"]} / Alphas: {_v_sub_dict["alphas"]}" )
-                        print ( f"  Chunk sentement:    {_v_sub_dict["sent_type"]} / Sentment score: {_v_sub_dict["sent_score"]} / Chunker used: {_v_sub_dict["trct_state"]}" )
-                        matches += 1
-                        _v_key = 0
-                        _v_chunk_dict = 0
-                """
                 
                 print (" ")
             print(f"\nKey filter '{key_filter}': {matches} match(es) from {total} total entries")
@@ -349,8 +334,10 @@ lmdb_inst.open_lmdb_RO("RO_DUMP")
 
 # -b' or '--basic'
 # bool_basic
-if args['bool_basic'] is True:
-    print( "Simple dump of the full LMDV... ")
+# if args.bool_verbose is True: 
+
+if args.bool_basic is True:
+    print( "List entire LMDV in simple format... ")
     dump_lmdb_basic(lmdb_inst)
     lmdb_inst.close_lmdb("BASIC_DUMP")
     sys.exit(0)
@@ -398,7 +385,8 @@ elif args.get('bool_articles'):
 # key can be symbol ticker or urlhash
 # - if ticker symbol, it will recursively print all records for that symbol
 # - if urlhash, it will explicitly match just that urlhash (which are mostly 99% unique)
-elif args['bool_deep'] is True:
+#elif args['bool_deep'] is True:
+elif args.bool_deep is True: 
     if args['key_filter'] is not None:
         _key_options = args['key_filter']
         try:
@@ -406,20 +394,26 @@ elif args['bool_deep'] is True:
             match _urlhash:
                 case None:
                     print("No URLhash id found - not filtering for specific article !")
-                case str(fucker):
+                case str(_urlhash):
+                    print(f"Dumping article TEXT for URLhash: {_urlhash}")
                 case _:
                     print ("Fall thru DEFAULT on key parameter...")
-       
-                    
+
             print( f"Full dump filtered by key: {args['key_filter']}")
-            dump_lmdb_by_key(lmdb_inst, args['key_filter'])
+            dump_lmdb_by_key(lmdb_inst, args['key_filter'], urlhash=_urlhash)
             lmdb_inst.close_lmdb("DEEP_DUMP")
             sys.exit(0)
-        else:
-            print ( "ERROR: Deep dump of values requries a key filter [add -k or --key option] !" )
-            print ( " " )
+
+        except (IndexError, ValueError) as e:
+            print(f"ERROR: Invalid parameters provided: {e}")
             parser.print_help()
-            sys.exit(1)
+            sys.exit(2)
+    
+    else:
+        print ( "ERROR: Deep dump requries a key filter use  -k or --key option]..." )
+        print ( " " )
+        parser.print_help()
+        sys.exit(1)
 
 # -x or --xray
 # dump_lmdb_xray
