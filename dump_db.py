@@ -385,8 +385,8 @@ elif args.get('bool_articles'):
 # key can be symbol ticker or urlhash
 # - if ticker symbol, it will recursively print all records for that symbol
 # - if urlhash, it will explicitly match just that urlhash (which are mostly 99% unique)
-#elif args['bool_deep'] is True:
-elif args.bool_deep is True: 
+ 
+elif args['bool_deep'] is True:
     if args['key_filter'] is not None:
         _key_options = args['key_filter']
         try:
