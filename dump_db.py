@@ -121,7 +121,7 @@ def dump_lmdb_by_key(lmdb_instance, key_filter, urlhash):
                     continue
 
                 matched_on = "ticker" if ticker_match else "url_hash"
-                #value_str = value.decode('utf-8')
+                ticker_filter = ticker.upper() if ticker_match else "NONE"
 
                 _v_dict = json.loads(value.decode('utf-8'))
                 working_article = _v_dict["article"]        # article number
