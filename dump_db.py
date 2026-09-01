@@ -249,27 +249,6 @@ def dump_lmdb_xray(lmdb_instance, key_filter):
         print(f"dump_lmdb_xray Error: {e}")
     return 0
 
-################# 3
-def dump_lmdb_basic(lmdb_instance):
-    # you must manually open the DB yourself first...
-    try:
-        with lmdb_instance.RO_env.begin() as txn:
-            cursor = txn.cursor()
-            count = 0
-            for key, value in cursor:
-                key_str = key.decode('utf-8')
-                value_str = value.decode('utf-8')
-                print(f"{count:03} / KEY: {key_str} / {value_str[:40]}{'...' if len(value_str) > 40 else ''}")
-                count += 1            
-        return 1
-    except lmdb.Error as e:
-        print(f"LMDB Open Error: {e}")
-        return 2
-    except Exception as e:
-        print(f"Dump RO mode - Error Exception: {e}")
-        return 0
-
-################# 4
 # ################################## 2
 # -a or --article
 # parser.add_argument('-n','--newsai-sent', help='AI NLP News sentiment AI for 1 stock', nargs="*", dest='newsai_sent', required=False, default=False)
@@ -328,7 +307,36 @@ def dump_lmdb_articles(lmdb_instance, ticker_filter, article_limit):
     except Exception as e:
         print( f"dump_lmdb_by_key Error: {e}")
     return 0
-        
+
+################# 3
+def dump_lmdb_basic(lmdb_instance):
+    # you must manually open the DB yourself first...
+    try:
+        with lmdb_instance.RO_env.begin() as txn:
+            cursor = txn.cursor()
+            count = 0
+            for key, value in cursor:
+                key_str = key.decode('utf-8')
+                value_str = value.decode('utf-8')
+                print(f"{count:03} / KEY: {key_str} / {value_str[:40]}{'...' if len(value_str) > 40 else ''}")
+                count += 1            
+        return 1
+    except lmdb.Error as e:
+        print(f"LMDB Open Error: {e}")
+        return 2
+    except Exception as e:
+        print(f"Dump RO mode - Error Exception: {e}")
+        return 0
+
+
+# ################################## main()
+# differnt ways to dump the LMDB...
+# 1. dump_lmdb_by_key       : bool_deep        : -d or --deep (reqwuires a key filter)
+# 2. dump_lmdb_xray         : bool_xray        : -x or --xray
+# 3. dump_lmdb_basic()      : no switches / no options
+# 4. dump_lmdb_articles()   : bool_articles     : -a or --articles
+#    NOTE: -k or --key = your supplied filter
+
 ################# Main()
 lmdb_dbname = "LMDB_0001"
 lmdb_inst = lmdb_io_eng("RO_DUMP", lmdb_dbname, args)
@@ -338,14 +346,6 @@ lmdb_inst.open_lmdb_RO("RO_DUMP")
 # lmdb_env = {}       # LMDB global instance, opened @ main::newsai_sent
 # RO_env = {}         # LMDB environment instance for RO mode
 # RW_env = {}         # LMDB environment instance for RW mode
-
-# ################################## main()
-# differnt ways to dump the LMDB...
-# 1. dump_lmdb_by_key       : bool_deep        : -d or --deep (reqwuires a key filter)
-# 2. dump_lmdb_xray         : bool_xray        : -x or --xray
-# 3. dump_lmdb_basic()      : no switches / no options
-# 4. dump_lmdb_articles()   : bool_articles     : -a or --articles
-#    NOTE: -k or --key = your supplied filter
 
 # -b' or '--basic'
 # bool_basic
