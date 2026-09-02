@@ -12,9 +12,9 @@ LIVE_TRADING_BASE_URL = "https://api.alpaca.markets/v2/"
 VALID_FEEDS = {"iex", "sip", "delayed_sip", "boats", "overnight", "otc"}
 ALPACA_ENDPOINT = "https://paper-api.alpaca.markets/v2"
 
-ALPACA_API_KEY = os.getenv("ALPACA_API-KEY")
+ALPACA_API_KEY = os.getenv('ALPACA_API_KEY')
 
-ALPACA_SEC_KEY = os.getenv("ALPACA_SEC-KEY")
+ALPACA_SEC_KEY = os.getenv('ALPACA_SEC_KEY')
 
 client = TradingClient(ALPACA_API_KEY, ALPACA_SEC_KEY, paper=True)
 
