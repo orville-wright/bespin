@@ -1,0 +1,228 @@
+
+
+Supabase architetcure and design for Global UNified Screener platform
+
+--------------------------------------------------- 1 -----------------------------------------------------------
+
+screened_candidate_targets table
+================================
+
+Alpaca dot notation is locked in a enforced
+Userid's are: wilbur-akl / orville-sfo 
+- These are constrained at the database layer so a typo in either data population scripts get rejected rather than quietly creating
+  a third phantom collector user.
+
+
+
+********************************************************
+SQL creation code for table: screened_candidate_targets
+********************************************************
+
+
+-- ============================================================
+-- SCREENED_CANDIDATE_TARGETS
+-- Shared pool for independently-run stock screeners.
+-- Collectors: wilbur-akl (Auckland), orville-sfo (San Francisco)
+-- Symbol convention: Alpaca canonical — UPPERCASE, dot separator
+-- All timestamps: timestamptz (UTC)
+-- Session date:    derived from America/New_York exchange session,
+--                  NEVER from the collector's local clock
+-- ============================================================
+
+create table public.screened_candidate_targets (
+    id               bigint generated always as identity primary key,
+
+    -- ---- identity (composite natural key) ----
+    symbol           text        not null,
+    screener_name    text        not null,
+    target_session   date        not null,
+
+    -- ---- provenance ----
+    collector        text        not null,
+    screener_version text,
+    rationale        text,
+    metrics          jsonb,
+
+    -- ---- timing ----
+    screened_at      timestamptz not null,
+    ingested_at      timestamptz not null default now(),
+
+    -- ---- constraints ----
+    constraint uq_symbol_screener_session
+        unique (symbol, screener_name, target_session),
+
+    constraint chk_symbol_canonical
+        check (symbol = upper(symbol)
+               and symbol ~ '^[A-Z]{1,5}(\.[A-Z]{1,2})?$'),
+
+    constraint chk_collector_known
+        check (collector in ('wilbur-akl', 'orville-sfo')),
+
+    constraint chk_screener_name_nonempty
+        check (length(trim(screener_name)) > 0),
+
+    constraint chk_metrics_is_object
+        check (metrics is null or jsonb_typeof(metrics) = 'object')
+);
+
+-- ---- indexes: three distinct access patterns ----
+
+-- today's full watchlist
+create index idx_sct_session
+    on public.screened_candidate_targets (target_session desc);
+
+-- one symbol's history across all screeners
+create index idx_sct_symbol_session
+    on public.screened_candidate_targets (symbol, target_session desc);
+
+-- one screener's history, for performance evaluation
+create index idx_sct_screener_session
+    on public.screened_candidate_targets (screener_name, target_session desc);
+
+-- optional: only if you start querying inside metrics
+-- create index idx_sct_metrics on public.screened_candidate_targets using gin (metrics);
+
+-- ---- documentation ----
+comment on table public.screened_candidate_targets is
+    'Pooled output of independent stock screeners run by wilbur-akl and orville-sfo. One row per (symbol, screener, session).';
+comment on column public.screened_candidate_targets.symbol is
+    'Alpaca canonical ticker: uppercase, dot separator for share classes (BRK.B).';
+comment on column public.screened_candidate_targets.target_session is
+    'US trading session the candidate targets. Derived from America/New_York, not the collectors local date.';
+comment on column public.screened_candidate_targets.screened_at is
+    'UTC instant the screener produced this hit. Set by the script via datetime.now(timezone.utc).';
+comment on column public.screened_candidate_targets.ingested_at is
+    'UTC instant the row reached the database. Diverges from screened_at on backfills.';
+comment on column public.screened_candidate_targets.metrics is
+    'Screener-specific numeric output. Schema-free by design; screeners emit different keys.';
+
+
+
+--------------------------------------------------- 2 -----------------------------------------------------------
+
+Row-level security
+====================
+New Supabase tables have RLS enabled by default, and with no policy every query returns zero rows with no error.
+Since both scripts authenticate with the service role key (which bypasses RLS entirely), you have two options. Explicit is better:
+
+
+*********************
+SQL creation code RLS
+*********************
+
+alter table public.screened_candidate_targets enable row level security;
+
+-- Service role bypasses RLS regardless; this documents the intent
+-- and leaves the door shut for anon/authenticated keys.
+create policy "service_role_full_access"
+    on public.screened_candidate_targets
+    for all
+    to service_role
+    using (true)
+    with check (true);
+
+
+--------------------------------------------------- 2 -----------------------------------------------------------
+
+**********************
+Example SQL query code
+**********************
+
+Tabel Query SQL
+
+create or replace view public.v_daily_conviction as
+select
+    target_session,
+    symbol,
+    count(distinct screener_name) as screener_count,
+    count(distinct collector)     as collector_count,
+    array_agg(distinct screener_name order by screener_name) as flagged_by,
+    array_agg(distinct collector     order by collector)     as found_by,
+    max(screened_at)              as latest_hit
+from public.screened_candidate_targets
+group by target_session, symbol;
+
+
+
+
+--------------------------------------------------- 3 -----------------------------------------------------------
+
+The WebUX  dashboard is the consumer of this databse view. It makes a view worth having, for three reasons that all point the same way.
+
+No pandas in the loop.
+- If the dashboard is a web frontend hitting PostgREST directly, supabase.from('v_daily_conviction').select('*') is one call returning
+  display-ready rows. Without the view, either the frontend pulls raw rows and re-implements the aggregation in JavaScript, or you stand
+  up a Python service purely to do the "groupby" function.
+- The first duplicates logic in a second language
+- The second adds a hop for no reason.
+
+Payload size.
+- The aggregation collapses N screener-hits into one row per symbol.
+- On a watchlist that's maybe 200 raw rows down to 80. This is trivial today, but the ratio holds as you add screeners, and The
+  aggregation happens in Postgres rather than over the wire.
+
+Single definition of conviction.
+- This is the one that actually matters. Once a number is on a dashboard both of you look at, it needs to mean one thing.
+- If it's computed in the frontend and also in your analysis notebooks, they will drift, and you'll spend an evening reconciling why the
+dashboard says NVDA is tier-2 and your notebook says tier-1.
+
+Notes/Warnings:
+===============
+1). cross_confirmed variable:
+This is a plain boolean rather than making the frontend evaluate collector_count === 2.
+That threshold is a piece of domain logic — it belongs next to the data, not scattered across UI components.
+If you later decide three collectors changes the rule, you edit one view.
+
+2). hits variable:
+This is the important one as a dashboard almost certainly wants a master-detail interaction. - a row per symbol,
+and expanding it shows why each screener flagged it. Without this, clicking a row triggers a second round-trip to
+fetch the detail. With it, the detail arrives with the summary and expansion is instant. It lands in JavaScript
+as an array of objects, ready to map over.
+
+The cost is payload — you're carrying every rationale string whether or not the user expands anything.
+At watchlist scale that's fine. If it ever isn't, drop hits and fetch detail on demand.
+
+3). Views inherit RLS from the underlying table.
+By default a view runs with the creator's permissions (security definer behavior for views specifically).
+On Postgres 15+ you can make this explicit:
+
+
+****************************************************
+SQL creation code for View (for no-code WebUX reads)
+****************************************************
+
+create or replace view public.v_daily_conviction
+with (security_invoker = on) as
+select
+    target_session,
+    symbol,
+    count(distinct screener_name)                            as screener_count,
+    count(distinct collector)                                as collector_count,
+    array_agg(distinct screener_name order by screener_name) as flagged_by,
+    array_agg(distinct collector     order by collector)     as found_by,
+    max(screened_at)                                         as latest_hit,
+    min(screened_at)                                         as first_hit,
+    (count(distinct collector) = 2)                          as cross_confirmed,
+    jsonb_agg(
+        jsonb_build_object(
+            'screener',  screener_name,
+            'collector', collector,
+            'version',   screener_version,
+            'rationale', rationale,
+            'metrics',   metrics
+        ) order by screener_name
+    )                                                        as hits
+from public.screened_candidate_targets
+group by target_session, symbol;
+
+
+NOTES/Warnings
+===============
+One thing that isn't done yet:
+- The view will return NULL in hits for nothing, but it will aggregate across all sessions with no filter.
+- Every dashboard query needs "where target_session = ...", otherwise you get the entire history grouped.
+- The idx_sct_session index makes that filter cheap, but the filter has to actually be there — a view can't enforce it for you.
+
+The remaining open piece on the write side is the target_session derivation:
+- That's the one line where Auckland and San Francisco can silently disagree, and it's worth both scripts importing the same
+helper rather than each implementing it. Happy to work through that when you get to it.
