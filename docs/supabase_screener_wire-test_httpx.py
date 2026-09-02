@@ -156,8 +156,8 @@ class Rest:
 
 # ------------------------------------------------------------------
 def main() -> int:
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_SERVICE_KEY")
+    url = os.environ.get("BESPIN_SUPABASE_URL")
+    key = os.environ.get("BESPIN_SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
         print("ERROR: set SUPABASE_URL and SUPABASE_SERVICE_KEY", file=sys.stderr)
         return 2
