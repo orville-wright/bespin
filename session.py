@@ -29,6 +29,11 @@ from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
 
+# Bump ONLY when the resolution rule itself changes -- not for typos or
+# docstrings. Stamped into metrics so rows computed under different rules
+# are distinguishable after the fact.
+SESSION_LOGIC_VERSION = "2026-09-02.1"
+
 # Longest observed US market closure is well under this. 10 calendar days
 # gives comfortable margin for holiday clusters and weather closures.
 LOOKAHEAD_DAYS = 10
