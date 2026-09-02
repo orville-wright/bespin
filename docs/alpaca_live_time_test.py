@@ -1,9 +1,16 @@
 
 import sys
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
 from alpaca.trading.client import TradingClient
+
+# .parent gets 'sub_folder', .parent.parent gets 'project_root'
+parent_dir = Path(__file__).resolve().parent.parent
+# Add to path and import
+sys.path.append(str(parent_dir))
+
 from session import get_target_session, describe, ET
 
 
