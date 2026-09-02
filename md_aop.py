@@ -4,7 +4,7 @@ import os
 
 import requests
 import dotenv
-import websockets.client  # Force-loads the client module into the websockets namespace
+# import websockets.client  # Force-loads the client module into the websockets namespace
 import asyncio
 import random
 import pandas as pd
