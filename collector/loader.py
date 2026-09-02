@@ -60,6 +60,14 @@ TABLE = "screened_candidate_targets"
 CONFLICT = "symbol,screener_name,target_session"
 CHUNK_SIZE = 500
 
+# Environment variable names, per the Bespin .env convention.
+ENV_COLLECTOR = "BESPIN_COLLECTOR"
+ENV_ALPACA_KEY = "ALPACA_API_KEY"
+ENV_ALPACA_SECRET = "ALPACA_SEC_KEY"
+ENV_SUPABASE_URL = "BESPIN_SUPABASE_URL"
+ENV_SUPABASE_KEY = "BESPIN_SUPABASE_SERVICE_ROLE_KEY"
+ENV_BESPIN_VERSION = "BESPIN_VERSION"
+
 ARCHIVE_DIR = Path(__file__).resolve().parent / "archive"
 
 
@@ -251,11 +259,11 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
 
     try:
         # ---- credentials --------------------------------------
-        collector = _require("BESPIN_COLLECTOR")
+        collector = _require(ENV_COLLECTOR)
         if collector not in VALID_COLLECTORS:
             raise LoaderError(
                 "config",
-                f"BESPIN_COLLECTOR={collector!r} is not one of {VALID_COLLECTORS}",
+                f"{ENV_COLLECTOR}={collector!r} is not one of {VALID_COLLECTORS}",
             )
         result["collector"] = collector
 
@@ -273,8 +281,8 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
                 "alpaca-py is not installed. Run: uv sync --only-group collector",
             ) from None
 
-        api_key = _require("ALPACA_API_KEY")
-        sec_key = _require("ALPACA_SEC_KEY")
+        api_key = _require(ENV_ALPACA_KEY)
+        sec_key = _require(ENV_ALPACA_SECRET)
         client = TradingClient(api_key, sec_key, paper=api_key.startswith("PK"))
 
         now_utc = datetime.now(timezone.utc)
@@ -304,7 +312,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
                 "metrics": {
                     "source_rank": r["source_rank"],
                     "session_logic": SESSION_LOGIC_VERSION,
-                    "bespin_version": os.environ.get("BESPIN_VERSION", "unknown"),
+                    "bespin_version": os.environ.get(ENV_BESPIN_VERSION, "unknown"),
                     **r["metrics"],
                 },
             }
@@ -317,7 +325,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
             log("dry run: skipping upsert")
             result["rows_upserted"] = 0
         else:
-            db = Rest(_require("BESPIN_SUPABASE_URL"), _require("BESPIN_SUPABASE_SERVICE_ROLE_KEY"))
+            db = Rest(_require(ENV_SUPABASE_URL), _require(ENV_SUPABASE_KEY))
             try:
                 for i in range(0, len(payload), CHUNK_SIZE):
                     db.upsert(TABLE, payload[i:i + CHUNK_SIZE], CONFLICT)
