@@ -1,8 +1,19 @@
+
+import os
+from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
 from alpaca.trading.client import TradingClient
 from session import get_target_session, describe, ET
 
-client = TradingClient(API_KEY, API_SECRET, paper=True)
+
+DATA_BASE_URL = "https://data.alpaca.markets/v2/"
+PAPER_TRADING_BASE_URL = "https://paper-api.alpaca.markets/v2/"
+LIVE_TRADING_BASE_URL = "https://api.alpaca.markets/v2/"
+VALID_FEEDS = {"iex", "sip", "delayed_sip", "boats", "overnight", "otc"}
+ALPACA_ENDPOINT = "https://paper-api.alpaca.markets/v2"
+
+    
+client = TradingClient(ALPACA_API_KEY, ALPACA_SEC_KEY, paper=True)
 
 print(describe(client))
 
