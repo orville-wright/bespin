@@ -5,7 +5,7 @@ Identical coverage to wire_test.py but talks to PostgREST directly, so it
 needs no `supabase` SDK and therefore no `realtime`/`websockets` stack.
 
 Requires:  httpx, pandas  (both already in the project)
-Env vars:  SUPABASE_URL, SUPABASE_SERVICE_KEY
+Env vars:  BESPIN_SUPABASE_URL, BESPIN_SUPABASE_SERVICE_ROLE_KEY
 
 Run:       python wire_test_httpx.py
 """
@@ -159,7 +159,7 @@ def main() -> int:
     url = os.environ.get("BESPIN_SUPABASE_URL")
     key = os.environ.get("BESPIN_SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
-        print("ERROR: set SUPABASE_URL and SUPABASE_SERVICE_KEY", file=sys.stderr)
+        print("ERROR: set BESPIN_SUPABASE_URL and BESPIN_SUPABASE_SERVICE_ROLE_KEY", file=sys.stderr)
         return 2
 
     db = Rest(url, key)

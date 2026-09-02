@@ -6,7 +6,7 @@ insert, read back, null-beta round-trip, upsert idempotency, constraint
 rejection. Uses sentinel session 2099-01-01 and deletes everything it wrote.
 
 Requires:  pip install supabase pandas
-Env vars:  SUPABASE_URL, SUPABASE_SERVICE_KEY
+Env vars:  BESPIN_SUPABASE_URL, BESPIN_SUPABASE_SERVICE_ROLE_KEY
 
 Run:       python wire_test.py
 """
@@ -106,7 +106,7 @@ def main() -> int:
     url = os.environ.get("BESPIN_SUPABASE_URL")
     key = os.environ.get("BESPIN_SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
-        print("ERROR: set SUPABASE_URL and SUPABASE_SERVICE_KEY", file=sys.stderr)
+        print("ERROR: set BESPIN_SUPABASE_URL and BESPIN_SUPABASE_SERVICE_ROLE_KEY", file=sys.stderr)
         return 2
 
     sb = create_client(url, key)
