@@ -317,7 +317,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
             log("dry run: skipping upsert")
             result["rows_upserted"] = 0
         else:
-            db = Rest(_require("SUPABASE_URL"), _require("SUPABASE_SERVICE_KEY"))
+            db = Rest(_require("BESPIN_SUPABASE_URL"), _require("BESPIN_SUPABASE_SERVICE_ROLE_KEY"))
             try:
                 for i in range(0, len(payload), CHUNK_SIZE):
                     db.upsert(TABLE, payload[i:i + CHUNK_SIZE], CONFLICT)
