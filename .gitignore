@@ -151,6 +151,8 @@ tasks/
 .chrome_cache/
 
 # Bespin specific
+archive/
+archive/*
 collector/archive/
 collector/archive/*
 datastore/*
