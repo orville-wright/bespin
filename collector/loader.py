@@ -175,8 +175,8 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
 
         rows.append({"symbol": symbol, "source_rank": rank, "metrics": metrics})
 
-    log(f"preflight: {len(rows)} rows, {len(seen)} unique symbols, "
-        f"{len(warnings)} warning(s)")
+    log(f"INFO:     Preflight: {len(rows)} Rows / {len(seen)} Unique symbols / "
+        f"{len(warnings)} warnings")
     return rows, warnings
 
 
@@ -205,7 +205,7 @@ def archive_csv(src: Path, target_session: date, screener_name: str) -> Path:
     stamp = datetime.now(timezone.utc).strftime("%H%M%S")
     dest = dest_dir / f"{screener_name}_{stamp}.csv"
     shutil.copy2(src, dest)
-    log(f"archived: {dest}")
+    log(f"INFO:     Archived: {dest}")
     return dest
 
 
@@ -315,8 +315,8 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
 
         result["target_session"] = target_session.isoformat()
         result["screened_at"] = now_utc.isoformat()
-        log(f"session: target_session={target_session} "
-            f"(now_utc={now_utc.isoformat(timespec='seconds')})")
+        log(f"INFO:     Collector date: {target_session} / UTC Target Session date: "
+            f"{now_utc.isoformat(timespec='seconds')}")
 
         # ---- 3. archive ---------------------------------------
         result["archived_to"] = str(archive_csv(csv_path, target_session, screener_name))
@@ -354,7 +354,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
             finally:
                 db.close()
             result["rows_upserted"] = len(payload)
-            log(f"upserted {len(payload)} rows into {TABLE}")
+            log(f"INFO:     UPSERTED {len(payload)} Data Rows into Supabase tabe: {TABLE}")
 
         result["ok"] = True
 
@@ -401,7 +401,7 @@ def main(*, screener_name: str, screener_version: str, rationale: str) -> int:
     )
 
     # The one and only thing on stdout.
-    print(json.dumps(result, indent=2))
+    print( f"\nSupabase UPSERT Data Package sent:\n{json.dumps(result, indent=2)}" )
     return 0 if result["ok"] else 1
 
 
