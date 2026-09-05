@@ -1,9 +1,31 @@
 #!/usr/bin/env python3
 """
-loader.py -- shared logic for all Bespin screener loaders.
+ETL Data Loader fengine or Supabase UPSERT operations
+- Reads a previosuly prepared ETL CSV datafile (done by an Agentic ETL system/prompt)
+- **CRITICAL** CSV file **location** is handed to this laoder (not the actual file)
+- Engine reads the CSV file from the location handed to it
+    *WARN: If the path is wrong, the laoder will fail to find the CSV file... and fial.
+- Loadre Structures a Supabase data package for ingestion from the source CSV file
+- Executes a Supabase UPSERT into table: screened_canddiate_targets
+- archives a copy of the source CSV file into REPO/archive (.gitignored)
+- prints resutls
+  
+This Supabase  engine has shared loader logic for all Bespin Stock screener loader operations.
+- Finviz.com        - Implimented
+- TradingView.com   - in Dev
+- SeekingAlpha.cm   - Investigating
+- StockRover.com    - Investigating
+- Koygin.com        - Investigating
 
-Not invoked directly. Each screener has a thin wrapper in this directory
-that pins its identity and calls run().  See finviz_momentum.py.
+This Engine is NOT invoked directly as a runable standalone module.
+- Each screener has a thin wrapper in this directory
+- That wrapper pins the screeners identity and key runtime values 
+- It then calls run(), which imports and executes the loader engine arround it
+    - See finviz_momentum.py for example/template
+    - you can manually run a screener wrapper from the shell for eval/testing.
+    - loader engine has CSV file structure knonwledge and logic encoded in
+    - If a screener and its paired CVS datafile introduce new data columns, they will need to
+      be encoded into the core loader engine. 
 
 Contract:
   stdout  ->  exactly one JSON object, nothing else. Claude parses this.
@@ -68,7 +90,7 @@ ENV_SUPABASE_URL = "BESPIN_SUPABASE_URL"
 ENV_SUPABASE_KEY = "BESPIN_SUPABASE_SERVICE_ROLE_KEY"
 ENV_BESPIN_VERSION = "BESPIN_VERSION"
 
-ARCHIVE_DIR = Path(__file__).resolve().parent / "archive"
+ARCHIVE_DIR = Path(__file__).resolve().parents[1] / "archive"
 
 
 class LoaderError(Exception):
