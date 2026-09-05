@@ -28,6 +28,7 @@ import argparse
 import json
 import os
 import platform
+import socket
 import subprocess
 import sys
 import threading
@@ -61,7 +62,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Bespin Screener API",
+    title="Bespin Candidate Screener API",
     description="HTTP front-end for collector/loader.py screener upserts.",
     version="1.0.0",
     lifespan=lifespan,
@@ -121,9 +122,14 @@ def dryrun(req: ScreenerRequest) -> dict:
 @app.get("/status")
 def status() -> dict:
     """Current server status/info."""
+    
+    hostname, local_ip = get_host_info()
+
     return {
         "status": "running",
         "server": "bespin_scr_api_svr",
+        "hostname": hostname,
+        "local_IP": local_ip,
         "pid": os.getpid(),
         "started_at": SERVER_STARTED_AT.isoformat(),
         "uptime_seconds": round(time.monotonic() - SERVER_STARTED_MONOTONIC, 1),
@@ -188,6 +194,17 @@ def shutdown() -> dict:
     threading.Thread(target=_delayed_exit, daemon=True).start()
     return {"message": "Bespin Screener API server is shutting down", "pid": os.getpid()}
 
+def get_host_info():
+    hostname = socket.gethostname()
+    try:
+        # Doesn't actually open a connection, just picks the outbound-facing interface
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        local_ip = socket.gethostbyname(hostname)
+    return hostname, local_ip
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Bespin Screener API server")
