@@ -103,7 +103,7 @@ def _run_loader(req: ScreenerRequest, *, dry_run: bool) -> dict:
         dry_run=dry_run,
     )
     # Mirrors loader.py's CLI contract: exactly one JSON object printed.
-    print(json.dumps(result, indent=2))
+    print( f"\nINFO:     Supabase UPSERT Data Package:\n{json.dumps(result, indent=2)}" )
     return result
 
 

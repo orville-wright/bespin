@@ -257,7 +257,7 @@ class Rest:
                         "upsert", f"network failure after {retries} attempts: {e}"
                     ) from None
             wait = 2 ** (attempt - 1)
-            log(f"  upsert attempt {attempt} failed, retrying in {wait}s")
+            log(f"INFO:     UPSERT attempt {attempt} failed, retrying in {wait}s")
             time.sleep(wait)
 
     def close(self) -> None:
@@ -354,16 +354,17 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
             finally:
                 db.close()
             result["rows_upserted"] = len(payload)
-            log(f"INFO:     UPSERTED {len(payload)} Data Rows into Supabase tabe: {TABLE}")
+            log(f"INFO:     UPSERTED {len(payload)} Data Rows into Supabase table: {TABLE}")
+            log(f"INFO:     Supabase SQL Ingest logic and Table rules auto-dedupe: {TABLE}")
 
         result["ok"] = True
 
     except LoaderError as e:
         result.update(stage=e.stage, error=str(e), detail=e.detail)
-        log(f"FAILED [{e.stage}]: {e}")
+        log(f"FAILED:   [{e.stage}]: {e}")
     except Exception as e:                                    # noqa: BLE001
         result.update(stage="unexpected", error=f"{type(e).__name__}: {e}")
-        log(f"FAILED [unexpected]: {type(e).__name__}: {e}")
+        log(f"FAILED:   [unexpected]: {type(e).__name__}: {e}")
 
     result["duration_ms"] = round((time.monotonic() - started) * 1000)
     return result
@@ -401,7 +402,7 @@ def main(*, screener_name: str, screener_version: str, rationale: str) -> int:
     )
 
     # The one and only thing on stdout.
-    print( f"\nSupabase UPSERT Data Package sent:\n{json.dumps(result, indent=2)}" )
+    print(json.dumps(result, indent=2))
     return 0 if result["ok"] else 1
 
 
