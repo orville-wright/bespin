@@ -411,13 +411,16 @@ def _load_env(explicit: Path | None) -> None:
     except ImportError:
         log("note: python-dotenv not installed; relying on the ambient environment")
         return
+    
     if explicit:
         load_dotenv(explicit)
-        log(f"loaded env: {explicit}")
+        log(f"INFO:     Loaded env: {explicit}")
+        log(f"INFO:     Archive dir: {ARCHIVE_DIR}")
         return
     found = find_dotenv(usecwd=False)          # walks up from this file
     if found:
         load_dotenv(found)
-        log(f"loaded env: {found}")
+        log(f"INFO:     Loaded env: {found}")
+        log(f"INFO:     Archive dir: {ARCHIVE_DIR}")
     else:
-        log("note: no .env found; relying on the ambient environment")
+        log("INFO:      Warning - NO .env file found. Relying on the ambient environment")
