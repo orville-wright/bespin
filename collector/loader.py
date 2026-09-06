@@ -404,7 +404,7 @@ def main(*, screener_name: str, screener_version: str, rationale: str) -> int:
     # The one and only thing on stdout.
     #print(json.dumps(result, indent=2))
     upsdate = datetime.now(timezone.utc).strftime("%H%M%S")
-    print( f"INFO:     Supabase UPSERT Data package @ {upsdate}" )
+    print( f"INFO:     WTF is this - Where and When does this print: {upsdate}" )
     print(result)
     return 0 if result["ok"] else 1
 
