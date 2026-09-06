@@ -404,8 +404,9 @@ def main(*, screener_name: str, screener_version: str, rationale: str) -> int:
     # The one and only thing on stdout.
     #print(json.dumps(result, indent=2))
     upsdate = datetime.now(timezone.utc)
-    print( f"INFO:     WTF is this - Where and When does this print: {upsdate}" )
-    print(result)
+    print( f"INFO:     Supabase UPSERT Data Package @ {upsdate}" )
+    print ( f"\n{result}\n")      # dont print json.dumps(result, indent=2). too long and gets truncated in logs
+
     return 0 if result["ok"] else 1
 
 
