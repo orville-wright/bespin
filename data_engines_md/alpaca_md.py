@@ -64,20 +64,20 @@ class alpaca_md:
         self.api_key, self.api_key_env_var = self._first_env_value(
             "APCA_API_KEY_ID",
             "ALPACA_API_KEY",
-            "ALPACA_API-KEY",
+            "ALPACA_API_KEY",
         )
         self.secret_key, self.secret_key_env_var = self._first_env_value(
             "APCA_API_SECRET_KEY",
             "ALPACA_SECRET_KEY",
             "ALPACA_API_SECRET_KEY",
-            "ALPACA_SEC-KEY",
+            "ALPACA_SEC_KEY",
         )
         
         if not self.api_key or not self.secret_key:
             raise ValueError(
                 "Alpaca API credentials not found. Set APCA_API_KEY_ID and "
-                "APCA_API_SECRET_KEY in .env. Legacy ALPACA_API-KEY and "
-                "ALPACA_SEC-KEY are also supported."
+                "APCA_API_SECRET_KEY in .env. Legacy ALPACA_API_KEY and "
+                "ALPACA_SEC_KEY are also supported."
             )
 
 # #################### 2
