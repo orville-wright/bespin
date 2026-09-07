@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-ETL Data Loader fengine or Supabase UPSERT operations
-- Reads a previosuly prepared ETL CSV datafile (done by an Agentic ETL system/prompt)
+ETL Data Loader engine or Supabase UPSERT operations for: finviz_technical_small
+- this ETL loader is precisely structured for finviz_technical_small ONLY
+- Reads a pre-prepared ETL CSV datafile (done by an Agentic ETL sub system & prompt)
 - **CRITICAL** CSV file **location** is handed to this laoder (not the actual file)
 - Engine reads the CSV file from the location handed to it
     *WARN: If the path is wrong, the laoder will fail to find the CSV file... and fial.
@@ -10,18 +11,19 @@ ETL Data Loader fengine or Supabase UPSERT operations
 - archives a copy of the source CSV file into REPO/archive (.gitignored)
 - prints resutls
   
-This Supabase  engine has shared loader logic for all Bespin Stock screener loader operations.
-- Finviz.com        - Implimented
+Supabase will ingest 5 screener platroms
+- The loader engine logic is specific to each one. If the screener structure changes, this engine breaks!
+- Finviz.com        - Implimented       - (this ETL loader engine)
 - TradingView.com   - in Dev
 - SeekingAlpha.cm   - Investigating
 - StockRover.com    - Investigating
-- Koygin.com        - Investigating
+- Koyfin.com        - Investigating
 
 This Engine is NOT invoked directly as a runable standalone module.
 - Each screener has a thin wrapper in this directory
 - That wrapper pins the screeners identity and key runtime values 
 - It then calls run(), which imports and executes the loader engine arround it
-    - See finviz_momentum.py for example/template
+    - See finviz_technical_small.py for example/template
     - you can manually run a screener wrapper from the shell for eval/testing.
     - loader engine has CSV file structure knonwledge and logic encoded in
     - If a screener and its paired CVS datafile introduce new data columns, they will need to
@@ -41,6 +43,7 @@ Pipeline:
 Failing early keeps the error pointed at the CSV rather than at the wire.
 """
 
+# ###############################################################
 from __future__ import annotations
 
 import argparse
@@ -63,7 +66,7 @@ if str(_REPO_ROOT) not in sys.path:
 from session import SESSION_LOGIC_VERSION, get_target_session  # noqa: E402
 
 # ------------------------------------------------------------------
-# Contract -- the CSV shape every screener generator must produce
+# Contract: the CSV shape that finviz_technical_small screener generator must produce
 # ------------------------------------------------------------------
 REQUIRED_COLUMNS = [
     "num", "ticker", "beta", "atr",

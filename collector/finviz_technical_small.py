@@ -10,8 +10,8 @@ identity so it cannot be mistyped on the command line and for FastAPI server sup
 usage: finviz_technical_small.py [-h] [--dry-run] [--env-file ENV_FILE] csv_path
 
 Examples:
-    python collector/finviz_momentum.py path\\to\\scraped.csv
-    uv run collector/finviz_momentum.py path\\to\\scraped.csv --dry-run
+    python collector/finviz_technical_small.py path\\to\\scraped.csv
+    uv run collector/finviz_technical_small.py path\\to\\scraped.csv --dry-run
     
 
 positional arguments resolved from loader.py:
