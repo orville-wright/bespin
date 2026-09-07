@@ -130,7 +130,7 @@ def _run_loader(req: ScreenerRequest, *, dry_run: bool, source_mode: str | None 
             _record_upsert_transaction(source_mode, False)
         raise
     # Mirrors loader.py's CLI contract: exactly one JSON object printed.
-    upsdate = datetime.now(timezone.utc)
+    upsdate = datetime.now().astimezone().replace(microsecond=0)
     print( f"INFO:     Supabase UPSERT Data Package @ {upsdate}" )
     print ( f"\n{result}\n")      # dont print json.dumps(result, indent=2). too long and gets truncated in logs
 
