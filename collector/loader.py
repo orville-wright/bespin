@@ -68,13 +68,7 @@ from session import SESSION_LOGIC_VERSION, get_target_session  # noqa: E402
 # ------------------------------------------------------------------
 # Contract: the CSV shape that finviz_technical_small screener generator must produce
 # ------------------------------------------------------------------
-REQUIRED_COLUMNS = [
-    "num", "ticker", "beta", "atr",
-    "sma20_pct", "sma50_pct", "sma200_pct",
-    "high_52w_pct", "low_52w_pct",
-    "rsi", "price", "change_pct", "change_from_open_pct", "gap_pct",
-    "volume",
-]
+REQUIRED_COLUMNS = ["default_1", "default_2", "default_3", "default_4"]
 
 INT_FIELDS = {"num", "volume"}
 KEY_EXCLUDE = ("num", "ticker")
@@ -95,6 +89,8 @@ ENV_BESPIN_VERSION = "BESPIN_VERSION"
 
 ARCHIVE_DIR = Path(__file__).resolve().parents[1] / "archive"
 
+# The current Working Screener dict
+s1 = {}     # active screener definition
 
 class LoaderError(Exception):
     """Fatal, with a stage label for the JSON envelope."""
@@ -109,6 +105,33 @@ def log(msg: str) -> None:
     """Human output. stderr only -- stdout is reserved for the JSON."""
     print(msg, file=sys.stderr)
 
+def activate_screener(screener) -> None:
+    smatch = screener
+    
+    match smatch:
+        case "s1" | "fvz_test_scr_1":
+            s1["url"] = "https://www.finviz.com"
+            s1["name"] = "fvz_test_scr_1"
+            s1["version"] = "v1"
+            s1["rationale"] = "Small_cap 300m-2b price gain > 5pct pct change > than 5pct"
+            s1["columns"] = ["num", "ticker", "beta", "atr", "sma20_pct", "sma50_pct",
+                                "sma200_pct", "high_52w_pct", "low_52w_pct", "rsi", "price",
+                                "change_pct", "change_from_open_pct", "gap_pct", "volume",
+                                ]
+        case "s2" | "tdv-1_dtechs_100m_2b_up10pct":
+            s1["url"] = "https://www.tradingview.com"
+            s1["name"] = "tdv-1_dtechs_100m_2b_up10pct"
+            s1["version"] = "v1"
+            s1["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with  Day Trad technicals"
+            s1["columns"] = ["num", "ticker", "beta", "atr", "sma20_pct", "sma50_pct", "sma200_pct",
+                                "high_52w_pct", "low_52w_pct", "rsi", "price", "change_pct",
+                                "change_from_open_pct", "gap_pct,volume",
+                                ]
+        case _:
+            print ( f"INVALID screener name: {screener}" )
+
+    return
+
 
 # ------------------------------------------------------------------
 # 1. Preflight
@@ -118,11 +141,14 @@ def to_canonical(symbol: str) -> str:
     return symbol.strip().upper().replace("-", ".")
 
 
+# Process the CSV data file
+#
 def load_csv(path: Path) -> tuple[list[dict], list[str]]:
     """Parse and validate. Returns (rows, warnings). Raises on fatal issues."""
     if not path.exists():
         raise LoaderError("preflight", f"CSV not found: {path}")
 
+    REQUIRED_COLUMNS = s1["columns"]
     warnings: list[str] = []
 
     # utf-8-sig strips a BOM if a Windows tool added one.
@@ -220,10 +246,6 @@ class Rest:
     Minimal PostgREST client. No SDK, no websockets, no realtime.
     """
 
-    # our portfolio Well known, tested and safe screeners
-    s1 = {}
-    s2 = {}
-    
     def __init__(self, url: str, key: str, timeout: float = 30.0):
         self.base = url.rstrip("/") + "/rest/v1"
         self.client = httpx.Client(
@@ -273,38 +295,13 @@ class Rest:
         return
 
 
-    def init_screener(self, screener) -> None:
-        # Initalize a well known, tested and safe screeners
-        self.match = screener
-        
-        match self.match:
-            case "s1" | "fvz_test_scr_1":
-                self.s1["url"] = "https://www.finviz.com"
-                self.s1["name"] = "fvz_test_scr_1"
-                self.s1["version"] = "v1"
-                self.s1["rationale"] = "Small_cap 300m-2b price gain > 5pct pct change > than 5pct"
-                self.s1["columns"] = ["num", "ticker", "beta", "atr", "sma20_pct", "sma50_pct",
-                                    "sma200_pct", "high_52w_pct", "low_52w_pct", "rsi", "price",
-                                    "change_pct", "change_from_open_pct", "gap_pct", "volume",
-                                    ]
-            case "s2" | "tdv-1_dtechs_100m_2b_up10pct":
-                self.s2["url"] = "https://www.tradingview.com"
-                self.s2["name"] = "tdv-1_dtechs_100m_2b_up10pct"
-                self.s2["version"] = "v1"
-                self.s2["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with  Day Trad technicals"
-                self.s2["columns"] = ["num", "ticker", "beta", "atr", "sma20_pct", "sma50_pct", "sma200_pct",
-                                    "high_52w_pct", "low_52w_pct", "rsi", "price", "change_pct",
-                                    "change_from_open_pct", "gap_pct,volume",
-                                    ]
-            case _:
-                print ( f"INVALID screener name: {screener}" )
-
-        return
-
-
     def close(self) -> None:
         self.client.close()
 
+
+###################################################################
+# anything above here is old deprecated code... maybe ???
+###################################################################
 
 # ------------------------------------------------------------------
 # 4. Orchestration
@@ -320,6 +317,10 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
         "dry_run": dry_run,
         "warnings": [],
     }
+
+    # activate screen column structure keyed from name
+    activate_screener(screener_name)
+    log(f"INFO:     Activated screener: {s1["name"]} @ {s1["url"]}" )
 
     try:
         # ---- credentials --------------------------------------
