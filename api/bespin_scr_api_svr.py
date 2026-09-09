@@ -55,7 +55,7 @@ SERVER_STARTED_MONOTONIC = time.monotonic()
 SERVER_STARTED_AT = datetime.now(timezone.utc)
 SERVER_STARTED_AT_LOCAL = datetime.now().astimezone()
 
-DEFAULT_SCREENER_NAME = "finviz_technical_small"
+DEFAULT_SCREENER_NAME = "ERROR_no_name"
 DEFAULT_SCREENER_VERSION = "v1"
 DEFAULT_RATIONALE = "Small-cap technical screen, price >$5, volume >10x avg"
 
@@ -90,14 +90,17 @@ app = FastAPI(
 
 
 class ScreenerRequest(BaseModel):
-    """Shared parameters for path-based API requests."""
+    """
+    Pydantic Data Class
+    Shared parameters for path-based API requests.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     csv_path: str = Field(
         ...,
         description="Full path to the scraped screener CSV file.",
-        examples=[r"C:\Users\dbrace\code\bespin\collector\archive\2026-09-03\finviz_technical_small_143000.csv"],
+        examples=[r"C:\Users\dbrace\code\bespin\archive\2026-09-03\finviz_technical_small_143000.csv"],
     )
     screener_name: str = Field(
         DEFAULT_SCREENER_NAME,

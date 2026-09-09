@@ -79,7 +79,7 @@ REQUIRED_COLUMNS = [
 INT_FIELDS = {"num", "volume"}
 KEY_EXCLUDE = ("num", "ticker")
 
-VALID_COLLECTORS = ("wilbur-akl", "orville-sfo")
+VALID_COLLECTORS = ("wilbur-akl", "orville-sfo", "ai-finv-sfo", "ai-trdv-sfo")
 
 TABLE = "screened_candidate_targets"
 CONFLICT = "symbol,screener_name,target_session"
@@ -216,8 +216,14 @@ def archive_csv(src: Path, target_session: date, screener_name: str) -> Path:
 # 3. PostgREST
 # ------------------------------------------------------------------
 class Rest:
-    """Minimal PostgREST client. No SDK, no websockets, no realtime."""
+    """
+    Minimal PostgREST client. No SDK, no websockets, no realtime.
+    """
 
+    # our portfolio Well known, tested and safe screeners
+    s1 = {}
+    s2 = {}
+    
     def __init__(self, url: str, key: str, timeout: float = 30.0):
         self.base = url.rstrip("/") + "/rest/v1"
         self.client = httpx.Client(
@@ -228,6 +234,7 @@ class Rest:
             },
             timeout=timeout,
         )
+
 
     def upsert(self, table: str, rows: list[dict], on_conflict: str,
                retries: int = 3) -> None:
@@ -262,6 +269,38 @@ class Rest:
             wait = 2 ** (attempt - 1)
             log(f"INFO:     UPSERT attempt {attempt} failed, retrying in {wait}s")
             time.sleep(wait)
+
+        return
+
+
+    def init_screener(self, screener) -> None:
+        # Initalize a well known, tested and safe screeners
+        self.match = screener
+        
+        match self.match:
+            case "s1" | "fvz_test_scr_1":
+                self.s1["url"] = "https://www.finviz.com"
+                self.s1["name"] = "fvz_test_scr_1"
+                self.s1["version"] = "v1"
+                self.s1["rationale"] = "Small_cap 300m-2b price gain > 5pct pct change > than 5pct"
+                self.s1["columns"] = ["num", "ticker", "beta", "atr", "sma20_pct", "sma50_pct",
+                                    "sma200_pct", "high_52w_pct", "low_52w_pct", "rsi", "price",
+                                    "change_pct", "change_from_open_pct", "gap_pct", "volume",
+                                    ]
+            case "s2" | "tdv-1_dtechs_100m_2b_up10pct":
+                self.s2["url"] = "https://www.tradingview.com"
+                self.s2["name"] = "tdv-1_dtechs_100m_2b_up10pct"
+                self.s2["version"] = "v1"
+                self.s2["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with  Day Trad technicals"
+                self.s2["columns"] = ["num", "ticker", "beta", "atr", "sma20_pct", "sma50_pct", "sma200_pct",
+                                    "high_52w_pct", "low_52w_pct", "rsi", "price", "change_pct",
+                                    "change_from_open_pct", "gap_pct,volume",
+                                    ]
+            case _:
+                print ( f"INVALID screener name: {screener}" )
+
+        return
+
 
     def close(self) -> None:
         self.client.close()
