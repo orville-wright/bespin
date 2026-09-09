@@ -71,7 +71,7 @@ from session import SESSION_LOGIC_VERSION, get_target_session  # noqa: E402
 REQUIRED_COLUMNS = ["default_1", "default_2", "default_3", "default_4"]
 
 INT_FIELDS = {"num", "volume"}
-KEY_EXCLUDE = ("num", "ticker")
+KEY_EXCLUDE = ("num", "symbol")
 
 VALID_COLLECTORS = ("wilbur-akl", "orville-sfo", "ai-finv-sfo", "ai-trdv-sfo")
 
@@ -187,7 +187,7 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
         if not symbol.replace(".", "").isalpha():
             raise LoaderError(
                 "preflight",
-                f"line {i}: Symbol {ticker!r} -> {symbol!r} is not canonical "
+                f"Row {i}: Symbol {ticker!r} -> {symbol!r} is not canonical "
                 f"(expected letters and an optional dot)",
             )
 
