@@ -146,15 +146,18 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
     if not path.exists():
         raise LoaderError("preflight", f"CSV not found: {path}")
 
-    REQUIRED_COLUMNS = s1["columns"]
+    REQUIRED_COLUMNS = s1["columns"]    # actuvate the correct column structure
     warnings: list[str] = []
 
+    # Phase 1
     # utf-8-sig strips a BOM if a Windows tool added one.
     with open(path, newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         header = reader.fieldnames or []
         raw = list(reader)
 
+    # Phase 2
+    # scan column names
     missing = [c for c in REQUIRED_COLUMNS if c not in header]
     if missing:
         raise LoaderError(
@@ -167,26 +170,32 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
     if extra:
         warnings.append(f"unrecognised columns carried into metrics: {extra}")
 
+    # Phase 3
+    # scane for rows of real data
     if not raw:
         raise LoaderError("preflight", "CSV has a header but no data rows")
 
+    # check each data row, starting by skipping columns names (line 1)
+    # Rule: The CSV must have a Stock Symbol
     rows, seen = [], {}
     for i, r in enumerate(raw, start=2):          # line 1 is the header
-        ticker = (r.get("ticker") or "").strip()
+        ticker = (r.get("symbol") or "").strip()
         if not ticker:
-            raise LoaderError("preflight", f"line {i}: empty ticker")
+            raise LoaderError("preflight", f"Data Row {i}: Missing symbol")
 
         symbol = to_canonical(ticker)
         if not symbol.replace(".", "").isalpha():
             raise LoaderError(
                 "preflight",
-                f"line {i}: ticker {ticker!r} -> {symbol!r} is not canonical "
+                f"line {i}: Symbol {ticker!r} -> {symbol!r} is not canonical "
                 f"(expected letters and an optional dot)",
             )
+
+        # check for duplicate symbols
         if symbol in seen:
             raise LoaderError(
                 "preflight",
-                f"line {i}: duplicate ticker {symbol} (first seen line {seen[symbol]})",
+                f"Data Row {i}: Duplicate Symbol {symbol} (first seen @ Row {seen[symbol]})",
             )
         seen[symbol] = i
 
@@ -198,7 +207,7 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
 
         rank = _parse_number(r.get("num"), "num", i)
         if rank is None:
-            raise LoaderError("preflight", f"line {i}: empty num")
+            raise LoaderError("preflight", f"Row {i}: Empty num")
 
         rows.append({"symbol": symbol, "source_rank": rank, "metrics": metrics})
 
