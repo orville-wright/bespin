@@ -114,19 +114,17 @@ def activate_screener(screener) -> None:
             s1["name"] = "fvz_test_scr_1"
             s1["version"] = "v1"
             s1["rationale"] = "Small_cap 300m-2b price gain > 5pct pct change > than 5pct"
-            s1["columns"] = ["num", "ticker", "beta", "atr", "sma20_pct", "sma50_pct",
-                                "sma200_pct", "high_52w_pct", "low_52w_pct", "rsi", "price",
-                                "change_pct", "change_from_open_pct", "gap_pct", "volume",
-                                ]
+            s1["columns"] = ["num", "symbol", "beta", "atr", "sma20_pct", "sma50_pct",
+                            "sma200_pct", "high_52w_pct", "low_52w_pct", "rsi", "price",
+                            "change_pct", "change_from_open_pct", "gap_pct", "volume", ]
         case "s2" | "tdv-1_dtechs_100m_2b_up10pct":
             s1["url"] = "https://www.tradingview.com"
             s1["name"] = "tdv-1_dtechs_100m_2b_up10pct"
             s1["version"] = "v1"
             s1["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with  Day Trad technicals"
-            s1["columns"] = ["num", "ticker", "beta", "atr", "sma20_pct", "sma50_pct", "sma200_pct",
-                                "high_52w_pct", "low_52w_pct", "rsi", "price", "change_pct",
-                                "change_from_open_pct", "gap_pct,volume",
-                                ]
+            s1["columns"] = ["num", "symbol", "co_name", "price", "change_from_open_pct", "rsi_14d",
+                            "rel_vol_1d", "vwap", "ema20", "mfi_14d", "atr_14d", "atr_14d_pct",
+                            "tech_rating", ]
         case _:
             print ( f"INVALID screener name: {screener}" )
 
