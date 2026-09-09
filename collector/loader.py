@@ -73,7 +73,7 @@ REQUIRED_COLUMNS = ["default_1", "default_2", "default_3", "default_4"]
 INT_FIELDS = {"num", "volume"}
 KEY_EXCLUDE = ("num", "symbol", "co_name", "tech_rating")      # keys to exclude from the Metrics
 
-VALID_COLLECTORS = ("wilbur-akl", "orville-sfo", "ai-finv-sfo", "ai-trdv-sfo")
+VALID_COLLECTORS = ("wilbur-akl", "orville-sfo", "ai-orville-sfo", "ai-wilbur-sfo")
 
 TABLE = "screened_candidate_targets"
 CONFLICT = "symbol,screener_name,target_session"
