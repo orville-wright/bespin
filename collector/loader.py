@@ -422,7 +422,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
                 db.close()
             result["rows_upserted"] = len(payload)
             log(f"INFO:     UPSERTED {len(payload)} Data Rows into Supabase table: {TABLE}")
-            log(f"INFO:     Supabase SQL Ingest logic and Table rules auto-dedupe: {TABLE}")
+            log(f"INFO:     Table: {TABLE} upsert rules: auto-dedupe on symbol, ignore CSV num col")
 
         result["ok"] = True
 
