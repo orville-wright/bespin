@@ -70,9 +70,6 @@ from session import SESSION_LOGIC_VERSION, get_target_session  # noqa: E402
 # ------------------------------------------------------------------
 REQUIRED_COLUMNS = ["default_1", "default_2", "default_3", "default_4"]
 
-INT_FIELDS = {"num", "volume"}
-KEY_EXCLUDE = ("num", "symbol", "co_name", "tech_rating")      # keys to exclude from the Metrics
-
 VALID_COLLECTORS = ("wilbur-akl", "orville-sfo", "ai-orville-sfo", "ai-wilbur-akl")
 
 TABLE = "screened_candidate_targets"
@@ -121,13 +118,26 @@ def activate_screener(screener) -> None:
             s1["url"] = "https://www.tradingview.com"
             s1["name"] = "tdv-1_dtechs_100m_2b_up10pct"
             s1["version"] = "v1"
-            s1["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with  Day Trad technicals"
+            s1["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with Day Trad technicals"
             s1["columns"] = ["num", "symbol", "co_name", "price", "change_from_open_pct", "rsi_14d",
                             "rel_vol_1d", "vwap", "ema20", "mfi_14d", "atr_14d", "atr_14d_pct",
                             "tech_rating", ]
+        case "s3" | "srv_cash_roi_pe_equity_1":
+            s1["url"] = "https://www.stockrover.com"
+            s1["name"] = "srv_cash_roi_pe_equity_1"
+            s1["version"] = "v1"
+            s1["rationale"] = "Mid_cap 250m-7b Cashflow FreeCashflow NetCash DebtEquity ROE PE technicals"
+            s1["columns"] = ["symbol", "company", "price", "price_chg_pct", "mkt_cap_usd",
+                            "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
+                            "cflow_pershare", "buyback_yield", "debt_equity", "pricebook_ratio",
+                            "fwd_yield", "freecash_sales_pct", ]
         case _:
             print ( f"INVALID screener name: {screener}" )
-
+            s1["url"] = "http://example.com"
+            s1["name"] = "INVALID_Screeer_Name"
+            s1["version"] = "v1"
+            s1["rationale"] = "ERROR the screener name passed is invalid and unrecognized"
+            s1["columns"] = ["Default_1", "Default_2", "Default_3", "Default_4", "Default_5", ]
     return
 
 
@@ -176,7 +186,9 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
         raise LoaderError("preflight", "CSV has a header but no data rows")
 
     # check each data row, starting by skipping columns names (line 1)
-    # Rule: The CSV must have a Stock Symbol
+    # - Cast numbers as Int() or Float() - anything else is a error state
+    # - Ignore test string data fields (company name, comments, status etc)
+    # - Rule: The CSV must have a Num colums and a Stock Symbol column (since their entire system keys on Stock symbol everywhere)
     rows, seen = [], {}
     for i, r in enumerate(raw, start=2):          # line 1 is the header
         ticker = (r.get("symbol") or "").strip()
@@ -200,6 +212,9 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
         seen[symbol] = i
 
         metrics: dict = {}
+        # WARN: When a new screener table is added, you must check its data structure
+        # - This is where you tune the loader to exclude non numberic non int() and non float() vlaues
+        KEY_EXCLUDE = ("num", "symbol", "co_name", "company", "tech_rating")      # keys to exclude from Int and Float numerical casting
         for k, v in r.items():
             if k in KEY_EXCLUDE or k is None:
                 continue
@@ -218,6 +233,8 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
 
 def _parse_number(value, field: str, line: int):
     """Empty string -> None (JSON null). Never produces NaN."""
+
+    INT_FIELDS = {"num", "volume"}  # these are column names that must absoluetly be cast as Intergers int()
     if value is None:
         return None
     v = value.strip()
