@@ -120,7 +120,7 @@ def activate_screener(screener) -> None:
             s1["version"] = "v1"
             s1["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with Day Trad technicals"
             s1["columns"] = ["num", "symbol", "co_name", "price", "change_from_open_pct", "rsi_14d",
-                            "rel_vol_1d", "vwap", "ema20", "mfi_14d", "atr_14d", "atr_14d_pct",
+                            "rel_vol_1d", "vwap", "ema50", "mfi_14d", "atr_14d", "atr_14d_pct",
                             "tech_rating", ]
         case "s3" | "srv_cash_roi_pe_equity_1":
             s1["url"] = "https://www.stockrover.com"
