@@ -127,7 +127,7 @@ def activate_screener(screener) -> None:
             s1["name"] = "srv_cash_roi_pe_equity_1"
             s1["version"] = "v1"
             s1["rationale"] = "Mid_cap 250m-7b Cashflow FreeCashflow NetCash DebtEquity ROE PE technicals"
-            s1["columns"] = ["symbol", "company", "price", "price_chg_pct", "mkt_cap_usd",
+            s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "mkt_cap_usd",
                             "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
                             "cflow_pershare", "buyback_yield", "debt_equity", "pricebook_ratio",
                             "fwd_yield", "freecash_sales_pct", ]
@@ -181,7 +181,7 @@ def load_csv(path: Path) -> tuple[list[dict], list[str]]:
         warnings.append(f"unrecognised columns carried into metrics: {extra}")
 
     # Phase 3
-    # scane for rows of real data
+    # scan for rows of real data
     if not raw:
         raise LoaderError("preflight", "CSV has a header but no data rows")
 
