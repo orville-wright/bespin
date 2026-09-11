@@ -139,13 +139,13 @@ def activate_screener(screener) -> None:
                             "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
                             "cflow_pershare", "buyback_yield", "debt_equity", "pricebook_ratio",
                             "fwd_yield", "freecash_sales_pct", ]
-        case "s4" | "svr_chris_personal_1":
+        case "s4" | "srv_chris_personal_1":
             s1["url"] = "https://www.stockrover.com"
-            s1["name"] = "svr_chris_personal_1"
+            s1["name"] = "srv_chris_personal_1"
             s1["version"] = "v1"
             s1["rationale"] = "Micro-cap focused on high RVOL and float technicals"
             s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "volume",
-                            "avg_vol3m", "float", "shares_out", "pub_float_pct",
+                            "avg_vol3m", "vol_avg_vol3m_pct",  "float", "shares_out", "pub_float_pct",
                             "insd_owner_pct", "inst_owner_pct", "mkt_cap_usd", ]
         case _:
             print ( f"INVALID screener name: {screener}" )
