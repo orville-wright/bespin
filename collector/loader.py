@@ -103,6 +103,14 @@ def log(msg: str) -> None:
     print(msg, file=sys.stderr)
 
 def activate_screener(screener) -> None:
+    # this function his a helper for preflight and run() to activate the correct screener structure keyed from screener name
+    # WARNING: 
+    # - column names must match the CSV file structure for the screener being processed
+    # - Column name must also match the real column names in the ral website table
+    #
+    # New screeners must be added here to be recognized and processed correctly.
+    # Rationale should be updated to reflect the screener's purpose and logic.
+    # - If a screener is not recognized, the loader will fail and exit with an error. 
     smatch = screener
     
     match smatch:
@@ -131,6 +139,14 @@ def activate_screener(screener) -> None:
                             "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
                             "cflow_pershare", "buyback_yield", "debt_equity", "pricebook_ratio",
                             "fwd_yield", "freecash_sales_pct", ]
+        case "s4" | "svr_chris_personal_1":
+            s1["url"] = "https://www.stockrover.com"
+            s1["name"] = "svr_chris_personal_1"
+            s1["version"] = "v1"
+            s1["rationale"] = "Micro-cap focused on high RVOL and float technicals"
+            s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "volume",
+                            "avg_vol3m", "float", "shares_out", "pub_float_pct",
+                            "insd_owner_pct", "inst_owner_pct", "mkt_cap_usd", ]
         case _:
             print ( f"INVALID screener name: {screener}" )
             s1["url"] = "http://example.com"
