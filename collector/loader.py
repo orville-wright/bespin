@@ -131,7 +131,7 @@ def activate_screener(screener) -> None:
                             "rel_vol_1d", "vwap", "ema50", "mfi_14d", "atr_14d", "atr_14d_pct",
                             "tech_rating", ]
         case "s3" | "srv_cash_roi_pe_equity_1":
-            s1["url"] = "https://www.stockrover.com"
+            s1["url"] = "https://www.stockrover.com/screeners/table/432/s_4/"
             s1["name"] = "srv_cash_roi_pe_equity_1"
             s1["version"] = "v1"
             s1["rationale"] = "Mid_cap 250m-7b Cashflow FreeCashflow NetCash DebtEquity ROE PE technicals"
@@ -140,7 +140,7 @@ def activate_screener(screener) -> None:
                             "cflow_pershare", "buyback_yield", "debt_equity", "pricebook_ratio",
                             "fwd_yield", "freecash_sales_pct", ]
         case "s4" | "srv_chris_personal_1":
-            s1["url"] = "https://www.stockrover.com"
+            s1["url"] = "hhttps://www.stockrover.com/screeners/table/432/s_36/"
             s1["name"] = "srv_chris_personal_1"
             s1["version"] = "v1"
             s1["rationale"] = "Micro-cap focused on high RVOL and float technicals"
