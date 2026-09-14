@@ -3,12 +3,11 @@
 bespin_scr_api_svr.py -- Bespin Screener API server (FastAPI)
 
 Wraps collector/loader.py behind an HTTP API so screener CSVs can be
-upserted (or dry-run validated) without shelling out to the CLI wrappers
-(e.g. collector/finviz_technical_small.py).
+upserted (or dry-run validated) without shelling out to a CLI wrapper.
 
-Does not modify collector/loader.py or collector/finviz_technical_small.py --
-this module only imports loader.py's public run() function and reuses its
-module-level constants (ARCHIVE_DIR, env var names, etc).
+Does not modify collector/loader.py -- this module only imports loader.py's
+public run() function and reuses its module-level constants (ARCHIVE_DIR,
+env var names, etc).
 
 Endpoints:
   POST /upsertpath    -- validate + upsert a server-accessible CSV path
@@ -100,12 +99,12 @@ class ScreenerRequest(BaseModel):
     csv_path: str = Field(
         ...,
         description="Full path to the scraped screener CSV file.",
-        examples=[r"C:\Users\dbrace\code\bespin\archive\2026-09-03\finviz_technical_small_143000.csv"],
+        examples=[r"C:\Users\dbrace\code\bespin\archive\2026-09-03\fvz_test_scr_1_143000.csv"],
     )
     screener_name: str = Field(
         DEFAULT_SCREENER_NAME,
-        description="Screener identity, e.g. 'finviz_technical_small'.",
-        examples=["finviz_technical_small"],
+        description="Screener identity, e.g. 'fvz_test_scr_1'.",
+        examples=["fvz_test_scr_1"],
     )
     screener_version: str = Field(
         DEFAULT_SCREENER_VERSION,

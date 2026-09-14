@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-ETL Data Loader engine or Supabase UPSERT operations for: finviz_technical_small
-- this ETL loader is precisely structured for finviz_technical_small ONLY
+ETL Data Loader engine for Supabase UPSERT operations, shared across screeners
+- activate_screener() keys the CSV column contract and identity per screener_name
 - Reads a pre-prepared ETL CSV datafile (done by an Agentic ETL sub system & prompt)
 - **CRITICAL** CSV file **location** is handed to this laoder (not the actual file)
 - Engine reads the CSV file from the location handed to it
@@ -20,11 +20,8 @@ Supabase will ingest 5 screener platroms
 - Koyfin.com        - Investigating
 
 This Engine is NOT invoked directly as a runable standalone module.
-- Each screener has a thin wrapper in this directory
-- That wrapper pins the screeners identity and key runtime values 
-- It then calls run(), which imports and executes the loader engine arround it
-    - See finviz_technical_small.py for example/template
-    - you can manually run a screener wrapper from the shell for eval/testing.
+- Callers (the API server, or a CLI wrapper) resolve a screener via activate_screener()
+  and call run(), which executes the loader engine around it
     - loader engine has CSV file structure knonwledge and logic encoded in
     - If a screener and its paired CVS datafile introduce new data columns, they will need to
       be encoded into the core loader engine. 
@@ -65,11 +62,6 @@ if str(_REPO_ROOT) not in sys.path:
 
 from session import SESSION_LOGIC_VERSION, get_target_session  # noqa: E402
 
-# ------------------------------------------------------------------
-# Contract: the CSV shape that finviz_technical_small screener generator must produce
-# ------------------------------------------------------------------
-REQUIRED_COLUMNS = ["default_1", "default_2", "default_3", "default_4"]
-
 VALID_COLLECTORS = ("wilbur-akl", "orville-sfo", "ai-orville-sfo", "ai-wilbur-akl")
 
 TABLE = "screened_candidate_targets"
@@ -86,9 +78,6 @@ ENV_BESPIN_VERSION = "BESPIN_VERSION"
 
 ARCHIVE_DIR = Path(__file__).resolve().parents[1] / "archive"
 
-# The current Working Screener dict
-s1 = {}     # active screener definition
-
 class LoaderError(Exception):
     """Fatal, with a stage label for the JSON envelope."""
 
@@ -102,69 +91,72 @@ def log(msg: str) -> None:
     """Human output. stderr only -- stdout is reserved for the JSON."""
     print(msg, file=sys.stderr)
 
-def activate_screener(screener) -> None:
-    # this function his a helper for preflight and run() to activate the correct screener structure keyed from screener name
-    # WARNING: 
-    # - column names must match the CSV file structure for the screener being processed
-    # - Column name must also match the real column names in the ral website table
-    #
-    # New screeners must be added here to be recognized and processed correctly.
-    # Rationale should be updated to reflect the screener's purpose and logic.
-    # - If a screener is not recognized, the loader will fail and exit with an error. 
-    smatch = screener
-    
-    match smatch:
+def activate_screener(screener: str) -> dict:
+    """
+    Resolve a screener_name/alias to its config (url, name, version, collector,
+    rationale, columns). Returns a fresh dict per call -- no shared mutable state --
+    so concurrent requests for different screeners (e.g. from the API server)
+    can't race and corrupt each other's column schema.
+    WARNING:
+    - column names must match the CSV file structure for the screener being processed
+    - Column name must also match the real column names in the real website table
+    New screeners must be added here to be recognized and processed correctly.
+    If a screener is not recognized, the loader will fail and exit with an error.
+    """
+    config: dict = {}
+
+    match screener:
         case "s1" | "fvz_test_scr_1":
-            s1["url"] = "https://www.finviz.com"
-            s1["name"] = "fvz_test_scr_1"
-            s1["version"] = "v1"
-            s1["collector"] = "orville-sfo"
-            s1["rationale"] = "Small_cap 300m-2b price gain > 5pct pct change > than 5pct"
-            s1["columns"] = ["num", "symbol", "beta", "atr", "sma20_pct", "sma50_pct",
+            config["url"] = "https://www.finviz.com"
+            config["name"] = "fvz_test_scr_1"
+            config["version"] = "v1"
+            config["collector"] = "orville-sfo"
+            config["rationale"] = "Small_cap 300m-2b price gain > 5pct pct change > than 5pct"
+            config["columns"] = ["num", "symbol", "beta", "atr", "sma20_pct", "sma50_pct",
                             "sma200_pct", "high_52w_pct", "low_52w_pct", "rsi", "price",
                             "change_pct", "change_from_open_pct", "gap_pct", "volume", ]
-            
+
         case "s2" | "tdv-1_dtechs_100m_2b_up10pct":
-            s1["url"] = "https://www.tradingview.com"
-            s1["name"] = "tdv-1_dtechs_100m_2b_up10pct"
-            s1["version"] = "v1"
-            s1["collector"] = "ai-orville-sfo"
-            s1["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with Day Trad technicals"
-            s1["columns"] = ["num", "symbol", "co_name", "price", "change_from_open_pct", "rsi_14d",
+            config["url"] = "https://www.tradingview.com"
+            config["name"] = "tdv-1_dtechs_100m_2b_up10pct"
+            config["version"] = "v1"
+            config["collector"] = "ai-orville-sfo"
+            config["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with Day Trad technicals"
+            config["columns"] = ["num", "symbol", "co_name", "price", "change_from_open_pct", "rsi_14d",
                             "rel_vol_1d", "vwap", "ema50", "mfi_14d", "atr_14d", "atr_14d_pct",
                             "tech_rating", ]
-            
+
         case "s3" | "srv_cash_roi_pe_equity_1":
-            s1["url"] = "https://www.stockrover.com/screeners/table/432/s_4/"
-            s1["name"] = "srv_cash_roi_pe_equity_1"
-            s1["version"] = "v1"
-            s1["collector"] = "ai-wilbur-akl"
-            s1["rationale"] = "Mid_cap 250m-7b Cashflow FreeCashflow NetCash DebtEquity ROE PE technicals"
-            s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "mkt_cap_usd",
+            config["url"] = "https://www.stockrover.com/screeners/table/432/s_4/"
+            config["name"] = "srv_cash_roi_pe_equity_1"
+            config["version"] = "v1"
+            config["collector"] = "ai-wilbur-akl"
+            config["rationale"] = "Mid_cap 250m-7b Cashflow FreeCashflow NetCash DebtEquity ROE PE technicals"
+            config["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "mkt_cap_usd",
                             "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
                             "cflow_pershare", "buyback_yield", "debt_equity", "pricebook_ratio",
                             "fwd_yield", "freecash_sales_pct", ]
-            
+
         case "s4" | "srv_chris_personal_1":
-            s1["url"] = "hhttps://www.stockrover.com/screeners/table/432/s_36/"
-            s1["name"] = "srv_chris_personal_1"
-            s1["version"] = "v1"
-            s1["collector"] = "ai-wilbur-akl"
-            s1["rationale"] = "Micro-cap focused on high RVOL and float technicals"
-            s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "volume",
+            config["url"] = "hhttps://www.stockrover.com/screeners/table/432/s_36/"
+            config["name"] = "srv_chris_personal_1"
+            config["version"] = "v1"
+            config["collector"] = "ai-wilbur-akl"
+            config["rationale"] = "Micro-cap focused on high RVOL and float technicals"
+            config["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "volume",
                             "avg_vol3m", "vol_avg_vol3m_pct",  "float", "shares_out", "pub_float_pct",
                             "insd_owner_pct", "inst_owner_pct", "mkt_cap_usd", ]
-            
-        case _:
-            print ( f"INVALID screener name: {screener}" )
-            s1["url"] = "http://example.com"
-            s1["name"] = "INVALID_Screeer_Name"
-            s1["version"] = "v1"
-            s1["collector"] = "NOBODY"
-            s1["rationale"] = "ERROR the screener name passed is invalid and unrecognized"
-            s1["columns"] = ["Default_1", "Default_2", "Default_3", "Default_4", "Default_5", ]
 
-    return
+        case _:
+            log(f"INVALID screener name: {screener}")
+            config["url"] = "http://example.com"
+            config["name"] = "INVALID_Screeer_Name"
+            config["version"] = "v1"
+            config["collector"] = "NOBODY"
+            config["rationale"] = "ERROR the screener name passed is invalid and unrecognized"
+            config["columns"] = ["Default_1", "Default_2", "Default_3", "Default_4", "Default_5", ]
+
+    return config
 
 
 # ------------------------------------------------------------------
@@ -177,12 +169,12 @@ def to_canonical(symbol: str) -> str:
 
 # Process the CSV data file
 #
-def load_csv(path: Path) -> tuple[list[dict], list[str]]:
+def load_csv(path: Path, screener: dict) -> tuple[list[dict], list[str]]:
     """Parse and validate. Returns (rows, warnings). Raises on fatal issues."""
     if not path.exists():
         raise LoaderError("preflight", f"CSV not found: {path}")
 
-    REQUIRED_COLUMNS = s1["columns"]    # actuvate the correct column structure
+    REQUIRED_COLUMNS = screener["columns"]    # activate the correct column structure
     warnings: list[str] = []
 
     # Phase 1
@@ -354,16 +346,14 @@ class Rest:
         self.client.close()
 
 
-###################################################################
-# anything above here is old deprecated code... maybe ???
-###################################################################
-
 # ------------------------------------------------------------------
 # 4. Orchestration
 # ------------------------------------------------------------------
-def run(*, screener_name: str, screener_version: str, collector: str, rationale: str,
+def run(*, screener_name: str, screener_version: str, rationale: str,
         csv_path: Path, dry_run: bool = False) -> dict:
     started = time.monotonic()
+    screener = activate_screener(screener_name)
+    collector = screener["collector"]
     result: dict = {
         "ok": False,
         "screener_name": screener_name,
@@ -374,16 +364,10 @@ def run(*, screener_name: str, screener_version: str, collector: str, rationale:
         "warnings": [],
     }
 
-    # DELETE ME: activate screen column structure keyed from screener name
-    # this is now done in main()
-    #activate_screener(screener_name)
-    #collector = s1["collector"]
-    
-    log(f"INFO:     Activated screener: {s1['name']} @ {s1['url']} for collector: {collector}" )
+    log(f"INFO:     Activated screener: {screener['name']} @ {screener['url']} for collector: {collector}")
 
     try:
         # ---- credentials --------------------------------------
-        # collector = _require(ENV_COLLECTOR)
         if collector not in VALID_COLLECTORS:
             raise LoaderError(
                 "config",
@@ -392,7 +376,7 @@ def run(*, screener_name: str, screener_version: str, collector: str, rationale:
         result["collector"] = collector
 
         # ---- 1. preflight (no network) ------------------------
-        rows, warnings = load_csv(csv_path)
+        rows, warnings = load_csv(csv_path, screener)
         result["warnings"] = warnings
         result["rows_read"] = len(rows)
 
@@ -497,14 +481,9 @@ def main(*, screener_name: str, screener_version: str, rationale: str) -> int:
 
     _load_env(args.env_file)
 
-    # activate screen column structure keyed from screener name
-    activate_screener(screener_name)
-    collector = s1["collector"]
-
     result = run(
         screener_name=screener_name,
         screener_version=screener_version,
-        collector=collector,
         rationale=rationale,
         csv_path=args.csv_path,
         dry_run=args.dry_run,
