@@ -118,6 +118,7 @@ def activate_screener(screener) -> None:
             s1["url"] = "https://www.finviz.com"
             s1["name"] = "fvz_test_scr_1"
             s1["version"] = "v1"
+            s1["collector"] = "orville-sfo"
             s1["rationale"] = "Small_cap 300m-2b price gain > 5pct pct change > than 5pct"
             s1["columns"] = ["num", "symbol", "beta", "atr", "sma20_pct", "sma50_pct",
                             "sma200_pct", "high_52w_pct", "low_52w_pct", "rsi", "price",
@@ -127,6 +128,7 @@ def activate_screener(screener) -> None:
             s1["url"] = "https://www.tradingview.com"
             s1["name"] = "tdv-1_dtechs_100m_2b_up10pct"
             s1["version"] = "v1"
+            s1["collector"] = "ai-orville-sfo"
             s1["rationale"] = "Mid_cap 250m-5b price > 5 pct change> 10% with Day Trad technicals"
             s1["columns"] = ["num", "symbol", "co_name", "price", "change_from_open_pct", "rsi_14d",
                             "rel_vol_1d", "vwap", "ema50", "mfi_14d", "atr_14d", "atr_14d_pct",
@@ -136,6 +138,7 @@ def activate_screener(screener) -> None:
             s1["url"] = "https://www.stockrover.com/screeners/table/432/s_4/"
             s1["name"] = "srv_cash_roi_pe_equity_1"
             s1["version"] = "v1"
+            s1["collector"] = "ai-orville-sfo"
             s1["rationale"] = "Mid_cap 250m-7b Cashflow FreeCashflow NetCash DebtEquity ROE PE technicals"
             s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "mkt_cap_usd",
                             "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
@@ -146,6 +149,7 @@ def activate_screener(screener) -> None:
             s1["url"] = "hhttps://www.stockrover.com/screeners/table/432/s_36/"
             s1["name"] = "srv_chris_personal_1"
             s1["version"] = "v1"
+            s1["collector"] = "ai-wilbur-akl"
             s1["rationale"] = "Micro-cap focused on high RVOL and float technicals"
             s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "volume",
                             "avg_vol3m", "vol_avg_vol3m_pct",  "float", "shares_out", "pub_float_pct",
@@ -156,6 +160,7 @@ def activate_screener(screener) -> None:
             s1["url"] = "http://example.com"
             s1["name"] = "INVALID_Screeer_Name"
             s1["version"] = "v1"
+            s1["collector"] = "NOBODY"
             s1["rationale"] = "ERROR the screener name passed is invalid and unrecognized"
             s1["columns"] = ["Default_1", "Default_2", "Default_3", "Default_4", "Default_5", ]
 
@@ -274,6 +279,11 @@ def _parse_number(value, field: str, line: int):
 # 2. Archive -- written before any database call
 # ------------------------------------------------------------------
 def archive_csv(src: Path, target_session: date, screener_name: str) -> Path:
+    """
+    Saves a copy of the CSV file to the local archive directory that the API server is running on.
+    Typically is the repo:/arcbhive/RUN_DATE/filename.csv
+    WARNING: The archive is .gitignored and not backed up. CSV file is a temp copy for debugging purposes.
+    """
     dest_dir = ARCHIVE_DIR / target_session.isoformat()
     dest_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%H%M%S")
@@ -351,7 +361,7 @@ class Rest:
 # ------------------------------------------------------------------
 # 4. Orchestration
 # ------------------------------------------------------------------
-def run(*, screener_name: str, screener_version: str, rationale: str,
+def run(*, screener_name: str, screener_version: str, collector: str, rationale: str,
         csv_path: Path, dry_run: bool = False) -> dict:
     started = time.monotonic()
     result: dict = {
@@ -364,9 +374,10 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
         "warnings": [],
     }
 
-    # activate screen column structure keyed from name
-    activate_screener(screener_name)
-    collector = s1["collector"]
+    # DELETE ME: activate screen column structure keyed from screener name
+    # this is now done in main()
+    #activate_screener(screener_name)
+    #collector = s1["collector"]
     
     log(f"INFO:     Activated screener: {s1['name']} @ {s1['url']} / collector: {collector}" )
 
@@ -376,7 +387,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
         if collector not in VALID_COLLECTORS:
             raise LoaderError(
                 "config",
-                f"{ENV_COLLECTOR}={collector!r} is not one of {VALID_COLLECTORS}",
+                f"{collector!r} is not one of {VALID_COLLECTORS}",
             )
         result["collector"] = collector
 
@@ -386,6 +397,8 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
         result["rows_read"] = len(rows)
 
         # ---- 2. session ---------------------------------------
+        # this sets up a globally unified time reference for the entire loader run, so that
+        # all rows are tagged with the same target_session and screened_at timestamp from SFO or AKL
         try:
             from alpaca.trading.client import TradingClient
         except ImportError:
@@ -483,6 +496,10 @@ def main(*, screener_name: str, screener_version: str, rationale: str) -> int:
     args = parser.parse_args()
 
     _load_env(args.env_file)
+
+    # activate screen column structure keyed from screener name
+    activate_screener(screener_name)
+    collector = s1["collector"]
 
     result = run(
         screener_name=screener_name,
