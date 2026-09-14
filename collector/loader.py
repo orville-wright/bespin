@@ -375,11 +375,11 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
 
     try:
         # ---- credentials --------------------------------------
-        collector = _require(ENV_COLLECTOR)     # picks up the default colltector from the .env file
+        #collector = _require(ENV_COLLECTOR)     # picks up the default colltector from the .env file
         if collector not in VALID_COLLECTORS:
             raise LoaderError(
                 "config",
-                f"{ENV_COLLECTOR}={collector!r} is not one of {VALID_COLLECTORS}",
+                f"{collector!r} is not one of {VALID_COLLECTORS}",
             )
         result["collector"] = collector
 
