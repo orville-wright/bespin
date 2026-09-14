@@ -379,7 +379,7 @@ def run(*, screener_name: str, screener_version: str, collector: str, rationale:
     #activate_screener(screener_name)
     #collector = s1["collector"]
     
-    log(f"INFO:     Activated screener: {s1['name']} @ {s1['url']} / collector: {collector}" )
+    log(f"INFO:     Activated screener: {s1['name']} @ {s1['url']} for collector: {collector}" )
 
     try:
         # ---- credentials --------------------------------------
