@@ -138,7 +138,7 @@ def activate_screener(screener) -> None:
             s1["url"] = "https://www.stockrover.com/screeners/table/432/s_4/"
             s1["name"] = "srv_cash_roi_pe_equity_1"
             s1["version"] = "v1"
-            s1["collector"] = "ai-orville-sfo"
+            s1["collector"] = "ai-wilbur-akl"
             s1["rationale"] = "Mid_cap 250m-7b Cashflow FreeCashflow NetCash DebtEquity ROE PE technicals"
             s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "mkt_cap_usd",
                             "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
