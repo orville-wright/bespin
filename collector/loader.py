@@ -122,6 +122,7 @@ def activate_screener(screener) -> None:
             s1["columns"] = ["num", "symbol", "beta", "atr", "sma20_pct", "sma50_pct",
                             "sma200_pct", "high_52w_pct", "low_52w_pct", "rsi", "price",
                             "change_pct", "change_from_open_pct", "gap_pct", "volume", ]
+            
         case "s2" | "tdv-1_dtechs_100m_2b_up10pct":
             s1["url"] = "https://www.tradingview.com"
             s1["name"] = "tdv-1_dtechs_100m_2b_up10pct"
@@ -130,6 +131,7 @@ def activate_screener(screener) -> None:
             s1["columns"] = ["num", "symbol", "co_name", "price", "change_from_open_pct", "rsi_14d",
                             "rel_vol_1d", "vwap", "ema50", "mfi_14d", "atr_14d", "atr_14d_pct",
                             "tech_rating", ]
+            
         case "s3" | "srv_cash_roi_pe_equity_1":
             s1["url"] = "https://www.stockrover.com/screeners/table/432/s_4/"
             s1["name"] = "srv_cash_roi_pe_equity_1"
@@ -139,6 +141,7 @@ def activate_screener(screener) -> None:
                             "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
                             "cflow_pershare", "buyback_yield", "debt_equity", "pricebook_ratio",
                             "fwd_yield", "freecash_sales_pct", ]
+            
         case "s4" | "srv_chris_personal_1":
             s1["url"] = "hhttps://www.stockrover.com/screeners/table/432/s_36/"
             s1["name"] = "srv_chris_personal_1"
@@ -147,6 +150,7 @@ def activate_screener(screener) -> None:
             s1["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "volume",
                             "avg_vol3m", "vol_avg_vol3m_pct",  "float", "shares_out", "pub_float_pct",
                             "insd_owner_pct", "inst_owner_pct", "mkt_cap_usd", ]
+            
         case _:
             print ( f"INVALID screener name: {screener}" )
             s1["url"] = "http://example.com"
@@ -154,6 +158,7 @@ def activate_screener(screener) -> None:
             s1["version"] = "v1"
             s1["rationale"] = "ERROR the screener name passed is invalid and unrecognized"
             s1["columns"] = ["Default_1", "Default_2", "Default_3", "Default_4", "Default_5", ]
+
     return
 
 
@@ -353,6 +358,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
         "ok": False,
         "screener_name": screener_name,
         "screener_version": screener_version,
+        "collector": collector,
         "csv_path": str(csv_path),
         "dry_run": dry_run,
         "warnings": [],
@@ -360,11 +366,13 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
 
     # activate screen column structure keyed from name
     activate_screener(screener_name)
-    log(f"INFO:     Activated screener: {s1["name"]} @ {s1["url"]}" )
+    collector = s1["collector"]
+    
+    log(f"INFO:     Activated screener: {s1['name']} @ {s1['url']} / collector: {collector}" )
 
     try:
         # ---- credentials --------------------------------------
-        collector = _require(ENV_COLLECTOR)
+        # collector = _require(ENV_COLLECTOR)
         if collector not in VALID_COLLECTORS:
             raise LoaderError(
                 "config",
@@ -479,6 +487,7 @@ def main(*, screener_name: str, screener_version: str, rationale: str) -> int:
     result = run(
         screener_name=screener_name,
         screener_version=screener_version,
+        collector=collector,
         rationale=rationale,
         csv_path=args.csv_path,
         dry_run=args.dry_run,
