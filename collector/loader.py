@@ -126,16 +126,16 @@ def activate_screener(screener: str) -> dict:
                             "rel_vol_1d", "vwap", "ema50", "mfi_14d", "atr_14d", "atr_14d_pct",
                             "tech_rating", ]
 
-        case "s3" | "srv_cash_roi_pe_equity_1":
-            config["url"] = "https://www.stockrover.com/screeners/table/432/s_4/"
-            config["name"] = "srv_cash_roi_pe_equity_1"
+        case "s3" | "srv_pe_cash_roe":
+            config["url"] = "https://www.stockrover.com/screeners/table/432/s_38/"
+            config["name"] = "srv_pe_cash_roe"
             config["version"] = "v1"
             config["collector"] = "ai-wilbur-akl"
-            config["rationale"] = "Mid_cap 250m-7b Cashflow FreeCashflow NetCash DebtEquity ROE PE technicals"
-            config["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "mkt_cap_usd",
+            config["rationale"] = "Mid_cap 500m-1b FreeCashflow NetCash DebtEquity ROE PE technicals"
+            config["columns"] = ["num", "symbol", "company", "price", "price_chg_pct", "mkt_cap",
                             "netcash_mcap_pct", "pe_earnings", "reton_equity", "free_cashflow",
                             "cflow_pershare", "buyback_yield", "debt_equity", "pricebook_ratio",
-                            "fwd_yield", "freecash_sales_pct", ]
+                            "fwd_yield", ]
 
         case "s4" | "srv_chris_personal_1":
             config["url"] = "hhttps://www.stockrover.com/screeners/table/432/s_36/"

@@ -56,7 +56,7 @@ SERVER_STARTED_AT_LOCAL = datetime.now().astimezone()
 
 DEFAULT_SCREENER_NAME = "ERROR_no_name"
 DEFAULT_SCREENER_VERSION = "v1"
-DEFAULT_RATIONALE = "Small-cap technical screen, price >$5, volume >10x avg"
+DEFAULT_RATIONALE = "This is a default rationale. Make sure its set for each screener run"
 
 _UPSERT_COUNTER_LOCK = threading.Lock()
 UPSERT_TRANSACTION_COUNTERS = {
