@@ -69,7 +69,7 @@ CONFLICT = "symbol,screener_name,target_session"
 CHUNK_SIZE = 500
 
 # Environment variable names, per the Bespin .env convention.
-ENV_COLLECTOR = "BESPIN_COLLECTOR"
+ENV_COLLECTOR = "not-assigned-sfo"
 ENV_ALPACA_KEY = "ALPACA_API_KEY"
 ENV_ALPACA_SECRET = "ALPACA_SEC_KEY"
 ENV_SUPABASE_URL = "BESPIN_SUPABASE_URL"
@@ -354,6 +354,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
     started = time.monotonic()
     screener = activate_screener(screener_name)
     collector = screener["collector"]
+    ENV_COLLECTOR = collector       # set the collector identify on a per screener basis
     result: dict = {
         "ok": False,
         "screener_name": screener_name,

@@ -200,7 +200,7 @@ def status() -> dict:
     """Current server status/info."""
     
     hostname, local_ip = get_host_info()
-
+    
     return {
         "status": "running",
         "server": "bespin_scr_api_svr",
@@ -215,7 +215,7 @@ def status() -> dict:
         "python_version": platform.python_version(),
         "archive_dir": str(loader.ARCHIVE_DIR),
         "archive_dir_exists": loader.ARCHIVE_DIR.exists(),
-        "collector_env": os.environ.get(loader.ENV_COLLECTOR),
+        "collector_env": loader.ENV_COLLECTOR,
         "bespin_version": os.environ.get(loader.ENV_BESPIN_VERSION, "unknown"),
         "upsert_transactions": _upsert_transaction_status(),
     }
