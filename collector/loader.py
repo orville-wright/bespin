@@ -365,7 +365,7 @@ def run(*, screener_name: str, screener_version: str, rationale: str,
         "warnings": [],
     }
 
-    log(f"INFO:     Activated screener: {screener['name']} @ {screener['url']} for collector: {collector}")
+    log(f"INFO:     Activate scrnr: {screener['name']} @ {screener['url']} - collector: {collector}")
 
     try:
         # ---- credentials --------------------------------------
