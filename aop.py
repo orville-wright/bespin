@@ -280,10 +280,10 @@ def main():
         yf_un_vol_activity.build_df(0)           # 0 = UP Unusual volume
 
         # find lowest price stock in unusuall UP volume list
-        _prep_up_list = yf_un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
-        yf_un_vol_activity.quant_analysis_1a()      # mutate _prep_up_list to generate new columns for Conviction_Score & Dollar_Vol
+        #_prep_up_list = yf_un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
+        #yf_un_vol_activity.quant_analysis_1a()      # mutate _prep_up_list to generate new columns for Conviction_Score & Dollar_Vol
         _up_yf_unvols = yf_un_vol_activity.up_unvol_listall()
-        
+
         _ulp = _up_yf_unvols['Cur_price'].min()                  # find lowest price row in DF
         _uminv = _up_yf_unvols['Cur_price'].idxmin()             # get index ID of lowest price row
         _yf_got_it = _up_yf_unvols.loc[_uminv]       # get full row of lowest price stock @ idxmin
