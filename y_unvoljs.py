@@ -215,14 +215,14 @@ class yf_unvoljs:
 # method #3
     def up_unvol_listall(self):
         """
-        Prepare a list from this NASDAQ unusual UP volume stocks DF.
+        Prepare a list from this YAHOO Finaince unusual UP volume stocks DF.
         NOTE: This will sort by % Change & rest the index to match the new sort order.
               but will return a temp DF (list_up). Not the orignal DF up_df0
         """
         logging.info('ins.#%s.up_unvol_listall() - IN' % self.yti )
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
-        list_up = self.up_df0.sort_values(by='Pct_change', ascending=False )
+        list_up = self.up_df0[self.up_df0['Pct_change'] >= 0.0].sort_values(by='Pct_change', ascending=False)
         list_up.reset_index(inplace=True, drop=True)           # reset index each time so its guaranteed sequential
         logging.info('ins.#%s.up_unvol_listall() - DONE' % self.yti )
         return list_up
@@ -230,12 +230,12 @@ class yf_unvoljs:
 #####################################################
 # method #4
     def down_unvol_listall(self):
-        """Print the full DataFrame table list of NASDAQ unusual DOWN volumes"""
+        """Print the full DataFrame table list of YAHOO Finance unusual DOWN volumes"""
         """Sorted by % Change"""
         logging.info('ins.#%s.down_unvol_listall() - IN' % self.yti )
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
-        list_down = self.down_df1.sort_values(by='Pct_change', ascending=False )
+        list_down = self.up_df0[self.up_df0['Pct_change'] < 0.0].sort_values(by='Pct_change', ascending=False)
         list_down.reset_index(inplace=True, drop=True)           # reset index each time so its guaranteed sequential
         logging.info('ins.#%s.down_unvol_listall() - DONE' % self.yti )
         return list_down
@@ -250,4 +250,41 @@ class yf_unvoljs:
         self.df2.drop('Row', axis=1, inplace=True )
         logging.info('ins.#%s.up_down_combo() - DONE' % self.yti )
         print ( f"{self.df2}" )
+        return
+
+# method 5
+    def quant_analysis_1a(self):
+        """
+        Quantitative Analysis
+        Adds 2 new columns to the DataFrame for further analysis of the unusual volume data.
+        1. Dollar Volume (Cur_price X Vol): 
+            - Measures liquidity to ensure you can enter and exit positions without excessive slippage.
+
+        2.Conviction Score (Pct_change X Vol_pct):
+            - Measures the combined intensity of price momentum and unusual institutional buying volume.
+
+        self.up_df0 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Exchange', 'Time' ] )
+        self.down_df1 = pd.DataFrame(columns=[ 'Row', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Exchange', 'Time' ] )
+        self.df2 = pd.DataFrame(columns=[ 'ERank', 'Symbol', 'Co_name', 'Cur_price', 'Prc_change', 'Pct_change', "Vol", '52wk_Pct', 'Exchange', 'Time' ] )
+
+
+        # Ensure relevant columns are numeric
+        cols = ["Cur_price", "Pct_change", "Vol", "Vol_pct"]
+        df[cols] = df[cols].apply(pd.to_numeric, errors="coerce")
+
+        # 1. Calculate Dollar Volume (Current Price * Volume)
+        df["Dollar_Vol"] = df["Cur_price"] * df["Vol"]
+
+        # 2. Calculate Conviction Score (Percent Change * Relative Volume %)
+        df["Conviction_Score"] = df["Pct_change"] * df["Vol_pct"]
+
+        # 3. Sort by Conviction Score in descending order
+        df_sorted = df.sort_values(by="Conviction_Score", ascending=False)
+
+                
+        """
+
+        self.up_df0["Dolr_Vol"] = self.up_df0["Cur_price"] * self.up_df0["Vol"]
+        self.up_df0["Conv_Score"] = self.up_df0["Pct_change"] * self.up_df0["Vol_pct"]
+        self.up_df0 = self.up_df0.sort_values(by="Conv_Score", ascending=False)
         return
