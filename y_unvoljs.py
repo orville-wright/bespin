@@ -222,7 +222,7 @@ class yf_unvoljs:
         logging.info('ins.#%s.up_unvol_listall() - IN' % self.yti )
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
-        self.list_up = self.up_df0[self.up_df0['Pct_change'] >= 0.0].sort_values(by='Pct_change', ascending=False)
+        self.list_up = self.up_df0[self.up_df0['Pct_change'] >= 0.01].sort_values(by='Pct_change', ascending=False)
 
         # now mutate the DF to add 2 new columns for further analysis of the unusual volume data.
         self.list_up["Dolr_Vol"] = self.list_up["Cur_price"] * self.list_up["Vol"]
