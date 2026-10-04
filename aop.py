@@ -282,16 +282,28 @@ def main():
         # find lowest price stock in unusuall UP volume list
         #_prep_up_list = yf_un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
         #yf_un_vol_activity.quant_analysis_1a()      # mutate _prep_up_list to generate new columns for Conviction_Score & Dollar_Vol
+
         _up_yf_unvols = yf_un_vol_activity.up_unvol_listall()
 
-        _ulp = _up_yf_unvols['Cur_price'].min()                  # find lowest price row in DF
-        _uminv = _up_yf_unvols['Cur_price'].idxmin()             # get index ID of lowest price row
-        _yf_got_it = _up_yf_unvols.loc[_uminv]       # get full row of lowest price stock @ idxmin
+        # redundant code, but leaving it here for now for clarity
+        # _ulp = _up_yf_unvols['Cur_price'].min()         # find lowest price row in DF
+        # _uminv = _up_yf_unvols['Cur_price'].idxmin()    # get index ID of lowest price row
+        # _yf_got_it = _up_yf_unvols.loc[_uminv]          # get full row of lowest price stock @ idxmin
+        # _ulsym = _yf_got_it.at['Symbol']            # get symbol of lowest price item @ index_id
+        # _ulname = _yf_got_it.at['Co_name']          # get name of lowest price item @ index_id
+        # _upct = _yf_got_it.at['Pct_change']         # get %change of lowest price item @ index_id
 
-        _ulsym = _yf_got_it.at['Symbol']            # get symbol of lowest price item @ index_id
-        _ulname = _yf_got_it.at['Co_name']          # get name of lowest price item @ index_id
-        _upct = _yf_got_it.at['Pct_change']         # get %change of lowest price item @ index_id
+        best_low_buy = _up_yf_unvols.sort_values(
+            by=['Conv_Score', 'Cur_price'], 
+            ascending=[False, True]
+        ).head(1)
 
+        _ulp = best_low_buy['Cur_price'].values[0]
+        _uminv = best_low_buy.index[0]
+        _ulsym = best_low_buy['Symbol'].values[0]
+        _ulname = best_low_buy['Co_name'].values[0]
+        _upct = best_low_buy['Pct_change'].values[0]
+        
         print ( f"Best low-buy OPPTY: #{_uminv} - {_ulname.rstrip()} ({_ulsym.rstrip()}) @ ${_ulp} / {_upct}% gain" )
         print ( " " )
         print ( f"{_up_yf_unvols}" )
