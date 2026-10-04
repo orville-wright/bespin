@@ -285,10 +285,10 @@ class yf_unvoljs:
         """
 
         self.up_df0["Dolr_Vol"] = self.up_df0["Cur_price"] * self.up_df0["Vol"]
-        self.up_df0['Dolr_Vol'] = self.up_df0['Dol_Vol'].round(0).astype('Int64')
+        self.up_df0['Dolr_Vol'] = self.up_df0['Dolr_Vol'].round(0).astype('Int64')
 
         self.up_df0["Conv_Score"] = self.up_df0["Pct_change"] * self.up_df0["52wk_Pct"]
         self.up_df0['Conv_Score'] = self.up_df0['Conv_Score'].round(2)
-        
+
         self.up_df0 = self.up_df0.sort_values(by="Conv_Score", ascending=False)
         return
