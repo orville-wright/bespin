@@ -293,18 +293,34 @@ def main():
         # _ulname = _yf_got_it.at['Co_name']          # get name of lowest price item @ index_id
         # _upct = _yf_got_it.at['Pct_change']         # get %change of lowest price item @ index_id
 
-        best_low_buy = _up_yf_unvols.sort_values(
+
+        # Find highest conviction score first, then lowest price second
+        best_high_roi = _up_yf_unvols.sort_values(
             by=['Conv_Score', 'Cur_price'], 
             ascending=[False, True]
         ).head(1)
 
-        _ulp = best_low_buy['Cur_price'].values[0]
-        _uminv = best_low_buy.index[0]
-        _ulsym = best_low_buy['Symbol'].values[0]
-        _ulname = best_low_buy['Co_name'].values[0]
-        _upct = best_low_buy['Pct_change'].values[0]
+        _bhroi_prc = best_high_roi['Cur_price'].values[0]
+        _bhroi_idx = best_high_roi.index[0]
+        _bhroi_sym = best_high_roi['Symbol'].values[0]
+        _bhroi_name = best_high_roi['Co_name'].values[0]
+        _bhroi_pct = best_high_roi['Pct_change'].values[0]
+
+        # Find Lowest price first, then highest conviction score
+        best_low_buy = _up_yf_unvols.sort_values(
+            by=['Cur_price', 'Conv_score'], 
+            ascending=[True, False]
+        ).head(1)
+
+        _blb_prc = best_low_buy['Cur_price'].values[0]
+        _blb_idx = best_low_buy.index[0]
+        _blb_sym = best_low_buy['Symbol'].values[0]
+        _blb_name = best_low_buy['Co_name'].values[0]
+        _blb_pct = best_low_buy['Pct_change'].values[0]
+
         
-        print ( f"Best low-buy OPPTY: #{_uminv} - {_ulname.rstrip()} ({_ulsym.rstrip()}) @ ${_ulp} / {_upct}% gain" )
+        print ( f"Best low-buy OPPTY:  #{_blb_idx} - {_blb_name.rstrip()} ({_blb_sym.rstrip()}) @ ${_blb_prc} / {_blb_pct}% gain" )
+        print ( f"Best high ROI OPPTY: #{_bhroi_idx} - {_bhroi_name.rstrip()} ({_bhroi_sym.rstrip()}) @ ${_bhroi_prc} / {_bhroi_pct}% gain" )
         print ( " " )
         print ( f"{_up_yf_unvols}" )
         
