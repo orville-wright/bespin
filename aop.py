@@ -308,7 +308,7 @@ def main():
 
         # Find Lowest price first, then highest conviction score
         best_low_buy = _up_yf_unvols.sort_values(
-            by=['Cur_price', 'Conv_score'], 
+            by=['Cur_price', 'Conv_Score'], 
             ascending=[True, False]
         ).head(1)
 
