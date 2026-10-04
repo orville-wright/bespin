@@ -222,19 +222,19 @@ class yf_unvoljs:
         logging.info('ins.#%s.up_unvol_listall() - IN' % self.yti )
         pd.set_option('display.max_rows', None)
         pd.set_option('max_colwidth', 30)
-        list_up = self.up_df0[self.up_df0['Pct_change'] >= 0.0].sort_values(by='Pct_change', ascending=False)
+        self.list_up = self.up_df0[self.up_df0['Pct_change'] >= 0.0].sort_values(by='Pct_change', ascending=False)
 
         # now mutate the DF to add 2 new columns for further analysis of the unusual volume data.
-        self.up_df0["Dolr_Vol"] = self.up_df0["Cur_price"] * self.up_df0["Vol"]
-        self.up_df0['Dolr_Vol'] = self.up_df0['Dolr_Vol'].round(0).astype('Int64')
-        self.up_df0["Conv_Score"] = self.up_df0["Pct_change"] * self.up_df0["52wk_Pct"]
-        self.up_df0['Conv_Score'] = self.up_df0['Conv_Score'].round(2)
+        self.list_up["Dolr_Vol"] = self.list_up["Cur_price"] * self.list_up["Vol"]
+        self.list_up['Dolr_Vol'] = self.list_up['Dolr_Vol'].round(0).astype('Int64')
+        self.list_up["Conv_Score"] = self.list_up["Pct_change"] * self.list_up["52wk_Pct"]
+        self.list_up['Conv_Score'] = self.list_up['Conv_Score'].round(2)
 
         # final sort structure is by Conviction Score (Pct_change X Vol_pct) to measure the combined intensity of price momentum and unusual institutional buying volume.
-        self.up_df0 = self.up_df0.sort_values(by="Conv_Score", ascending=False)
-        list_up.reset_index(inplace=True, drop=True)           # reset index each time so its guaranteed sequential
+        self.list_up = self.list_up.sort_values(by="Conv_Score", ascending=False)
+        self.list_up.reset_index(inplace=True, drop=True)           # reset index each time so its guaranteed sequential
         logging.info('ins.#%s.up_unvol_listall() - DONE' % self.yti )
-        return list_up
+        return self.list_up
 
 #####################################################
 # method #4
