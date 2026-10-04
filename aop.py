@@ -284,7 +284,7 @@ def main():
 
         _ulp = _up_yf_unvols['Cur_price'].min()                  # find lowest price row in DF
         _uminv = _up_yf_unvols['Cur_price'].idxmin()             # get index ID of lowest price row
-        _yf_got_it = _up_yf_unvols.loc[uminv]       # lowest price row in DF
+        _yf_got_it = _up_yf_unvols.loc[_uminv]       # get full row of lowest price stock @ idxmin
 
         _ulsym = _yf_got_it.at['Symbol']            # get symbol of lowest price item @ index_id
         _ulname = _yf_got_it.at['Co_name']          # get name of lowest price item @ index_id
