@@ -216,12 +216,12 @@ def main():
         recommended.update(small_cap_dataset.screener_logic())
         print ( " ")
 
-# process Nasdaq.com unusual_vol ################
+# UNUSUAL VOLUMES ################
     if args['bool_uvol'] is True:
         
-        # UNUSUAL Volumes directly from NASDAQ.com for NASDAQ stocks only !
+        # ###### UNUSUAL Volumes directly from NASDAQ.com for NASDAQ stocks only !
         #
-        print ( "========== NASDAQ only Unusually high Volume / Up =============================================" )
+        print ( "========== NASDAQ only Unusually high Volume / UP =============================================" )
         un_vol_activity = un_volumes(1, args)       # instantiate NEW nasdaq data class, args = global var
         un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
 
@@ -250,49 +250,20 @@ def main():
         #recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(un_vol_activity.up_df0.loc[uminv, ['Pct_change']][0]) )
         recommended['2'] = ('Unusual vol:', ulsym.rstrip(), '$'+str(ulp), ulname.rstrip(), '+%'+str(upct) )
 
-        """
-        ########### YAHOO FINANCE UNUSUAL VOLUME  ################
-        # UNUSUAL Volumes directly from Finaince Yahoo.com
-        # Stocks originate from many/any/all exchanges that Yahoo.com is tracking. So list is random.
-        # Could also include NASDAQ stocks from Nasdaq explcit list
+        # ###### YAHOO FINANCE UNUSUAL VOLUME
+        # WARNING: 
+        # UNUSUAL Volumes directly from Finaince Yahoo.com inclused Stocksfrom many/any/all exchanges
+        # that Yahoo.com is tracking. So output list is more randomized and Could also include 
+        # NASDAQ stocks shown in the Nasdaq explcit Unvols list
 
-        print ( "========== Finaince Yahoo.com Unusual Volume movers / Broad Spectrum  view ===================" )
-        y_unvol_reader = y_cookiemonster(2)        # instantiate class of cookiemonster
-
-        y_unvol_dataset = y_unvol(1)               # instantiate class
-        y_unvol_dataset.init_dummy_session()       # setup cookie jar and headers
- 
-        y_unvol_dataset.ext_req = y_unvol_reader.get_js_data('finance.yahoo.com/markets/stocks/unusual-volume-stocks/?start=0&count=20')
-        y_unvol_dataset.ext_get_data(1)
-
-        x = y_unvol_dataset.build_uv_df0()     # build full dataframe
-        y_unvol_dataset.build_top10()          # show top 10
-        y_unvol_dataset.print_top10()          # print it
-        print ( " " )
-        """
-
-########### Testing new JSON YF Unusual VOLUME extractor ################
-        print ( "========== YF JSON mode Unusually high Volume ========================================" )
+        print ( "========== YF Unusually high Volume / UP ========================================" )
         yf_un_vol_activity = yf_unvoljs(1, args)       # instantiate NEW nasdaq data class, args = global var
         yf_un_vol_activity.get_un_vol_data()           # extract JSON data (Up & DOWN) from api.nasdaq.com
 
         # should test success of extract before attempting DF population
         yf_un_vol_activity.build_df(0)           # 0 = UP Unusual volume
 
-        # find lowest price stock in unusuall UP volume list
-        #_prep_up_list = yf_un_vol_activity.up_unvol_listall()      # temp DF, nicely ordered & indexed of unusual UP vol activity
-        #yf_un_vol_activity.quant_analysis_1a()      # mutate _prep_up_list to generate new columns for Conviction_Score & Dollar_Vol
-
         _up_yf_unvols = yf_un_vol_activity.up_unvol_listall()
-
-        # redundant code, but leaving it here for now for clarity
-        # _ulp = _up_yf_unvols['Cur_price'].min()         # find lowest price row in DF
-        # _uminv = _up_yf_unvols['Cur_price'].idxmin()    # get index ID of lowest price row
-        # _yf_got_it = _up_yf_unvols.loc[_uminv]          # get full row of lowest price stock @ idxmin
-        # _ulsym = _yf_got_it.at['Symbol']            # get symbol of lowest price item @ index_id
-        # _ulname = _yf_got_it.at['Co_name']          # get name of lowest price item @ index_id
-        # _upct = _yf_got_it.at['Pct_change']         # get %change of lowest price item @ index_id
-
 
         # Find highest conviction score first, then lowest price second
         best_high_roi = _up_yf_unvols.sort_values(
@@ -309,7 +280,7 @@ def main():
         # Find Lowest price first, then highest conviction score
         best_low_buy = _up_yf_unvols.sort_values(
             by=['Cur_price', 'Conv_Score'], 
-            ascending=[True, True]
+            ascending=[True, False]
         ).head(1)
 
         _blb_prc = best_low_buy['Cur_price'].values[0]
